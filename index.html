@@ -4,6 +4,13 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>تحدي الثلاثة</title>
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#c9a84c">
+<link rel="apple-touch-icon" href="icon-192.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="تحدي">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;700;900&family=Cairo:wght@400;600;900&display=swap" rel="stylesheet">
 <style>
 :root {
@@ -140,6 +147,8 @@ body {
 .cat-history  { background:rgba(210,140,80,0.13);  color:#d28c50; border:1px solid rgba(210,140,80,0.3); }
 .cat-sports   { background:rgba(80,200,120,0.12);  color:#50c878; border:1px solid rgba(80,200,120,0.3); }
 .cat-arts     { background:rgba(200,100,200,0.12); color:#c864c8; border:1px solid rgba(200,100,200,0.3); }
+.cat-saudi    { background:rgba(46,160,67,0.14);   color:#3cb95a; border:1px solid rgba(46,160,67,0.32); }
+.cat-movies   { background:rgba(224,86,122,0.13);  color:#e0567a; border:1px solid rgba(224,86,122,0.3); }
 .q-num { font-size:0.76rem; color:var(--muted); }
 .question { font-family:'Tajawal',sans-serif; font-size:clamp(1rem,3vw,1.25rem); font-weight:700; line-height:1.65; margin-bottom:20px; color:var(--text); }
 .turn-indicator { display:flex; align-items:center; gap:10px; background:#1e1e2a; border-radius:12px; padding:10px 15px; margin-bottom:16px; border:1px solid var(--border); font-size:0.85rem; transition:all 0.3s; }
@@ -564,6 +573,19 @@ body.theme-purple { --dark:#f4f0fb; --card-bg:#ffffff; --border:#e4d8f5; --text:
 .online-opt.wrong { border-color:var(--wrong); background:rgba(224,92,92,0.18); opacity:0.7; }
 .online-opt.disabled { pointer-events:none; }
 .online-status { text-align:center; margin-top:16px; font-family:'Tajawal',sans-serif; font-weight:700; color:var(--muted); min-height:24px; }
+.online-emoji-row { display:flex; flex-wrap:wrap; gap:8px; }
+.online-emoji { width:42px; height:42px; display:flex; align-items:center; justify-content:center; font-size:1.4rem; background:var(--option-bg); border:2px solid var(--border); border-radius:12px; cursor:pointer; transition:transform 0.1s; }
+.online-emoji:active { transform:scale(0.9); }
+.online-emoji.sel { border-color:var(--gold); background:rgba(201,168,76,0.18); }
+.online-dist { display:flex; flex-direction:column; gap:8px; margin-top:14px; }
+.odist-row { background:var(--card-bg); border:1px solid var(--border); border-radius:12px; padding:8px 12px; position:relative; overflow:hidden; }
+.odist-row.correct { border-color:var(--correct); }
+.odist-fill { position:absolute; top:0; right:0; bottom:0; background:rgba(201,168,76,0.16); transition:width 0.6s ease; z-index:0; }
+.odist-row.correct .odist-fill { background:rgba(61,186,122,0.22); }
+.odist-content { position:relative; z-index:1; display:flex; align-items:center; gap:8px; font-family:'Tajawal',sans-serif; font-weight:700; }
+.odist-mark { width:22px; }
+.odist-text { flex:1; }
+.odist-count { color:var(--muted); font-size:0.85rem; }
 .online-reveal-head { text-align:center; font-family:'Tajawal',sans-serif; font-weight:900; font-size:1.4rem; padding:18px; border-radius:16px; }
 .online-reveal-head.good { background:rgba(61,186,122,0.15); color:var(--correct); }
 .online-reveal-head.bad { background:rgba(224,92,92,0.12); color:var(--wrong); }
@@ -648,7 +670,7 @@ body.theme-purple { --dark:#f4f0fb; --card-bg:#ffffff; --border:#e4d8f5; --text:
   <div class="logo">
     <h1>🏆 تحدي الثلاثة</h1>
     <div class="ornament"><div class="orn-line"></div><div class="orn-dot"></div><div class="orn-line r"></div></div>
-    <p>٧ فئات • ١٧٥+ سؤال</p>
+    <p>٩ فئات • ٢٠٠+ سؤال</p>
   </div>
 
   <!-- Theme Picker -->
@@ -681,6 +703,10 @@ body.theme-purple { --dark:#f4f0fb; --card-bg:#ffffff; --border:#e4d8f5; --text:
   </div>
 
   <div id="onlineSetup" style="display:none">
+    <div class="online-panel" style="margin-bottom:14px">
+      <div class="online-panel-title">😀 اختر رمزك</div>
+      <div class="online-emoji-row" id="onlineEmojiRow"></div>
+    </div>
     <div class="online-panel">
       <div class="online-panel-title">🆕 إنشاء غرفة</div>
       <div class="online-panel-sub">اختر الفئة وعدد الأسئلة من فوق، ثم أنشئ غرفة وشارك الرمز مع أصحابك.</div>
@@ -745,6 +771,8 @@ body.theme-purple { --dark:#f4f0fb; --card-bg:#ffffff; --border:#e4d8f5; --text:
     <button class="cat-tab" onclick="setCat('history',this)">📜 تاريخ</button>
     <button class="cat-tab" onclick="setCat('sports',this)">⚽ رياضة</button>
     <button class="cat-tab" onclick="setCat('arts',this)">🎨 ثقافة وفنون</button>
+    <button class="cat-tab" onclick="setCat('saudi',this)">🇸🇦 السعودية</button>
+    <button class="cat-tab" onclick="setCat('movies',this)">🎬 أفلام ومسلسلات</button>
   </div>
 
   <div class="section-title">🔢 عدد الأسئلة</div>
@@ -1006,6 +1034,7 @@ body.theme-purple { --dark:#f4f0fb; --card-bg:#ffffff; --border:#e4d8f5; --text:
   <!-- Reveal / between-questions leaderboard -->
   <div id="onlineReveal" class="online-stage" style="display:none">
     <div class="online-reveal-head" id="onlineRevealHead"></div>
+    <div class="online-dist" id="onlineDist"></div>
     <div class="lobby-players-title" style="margin-top:18px">🏅 الترتيب</div>
     <div class="online-leaderboard" id="onlineLeaderboard"></div>
     <div id="onlineRevealWait" class="online-wait-note">السؤال التالي بعد لحظات…</div>
@@ -1055,6 +1084,8 @@ const catLabels = {
   history:  {label:'📜 تاريخ',        cls:'cat-history'},
   sports:   {label:'⚽ رياضة',        cls:'cat-sports'},
   arts:     {label:'🎨 ثقافة وفنون', cls:'cat-arts'},
+  saudi:    {label:'🇸🇦 السعودية',    cls:'cat-saudi'},
+  movies:   {label:'🎬 أفلام ومسلسلات', cls:'cat-movies'},
 };
 
 const allQuestions = [
@@ -1247,6 +1278,34 @@ const allQuestions = [
   {cat:'arts',q:'من هو الشاعر العربي الذي لُقّب بـ"شاعر العرب الأكبر"؟',opts:['امرؤ القيس','المتنبي','أبو تمام'],ans:1,exp:'المتنبي أبو الطيب أحمد شاعر العصر العباسي، يُعدّ من أعظم شعراء العرب على الإطلاق.'},
   {cat:'arts',q:'في أي سنة أُسّست دار الأوبرا الملكية في لندن؟',opts:['1732','1858','1900'],ans:0,exp:'دار الأوبرا الملكية Covent Garden تأسّست عام 1732 وهي من أعرق المسارح في بريطانيا.'},
   {cat:'arts',q:'ما هو اسم الفيلم الذي فاز بأكبر عدد من جوائز الأوسكار؟',opts:['تيتانيك','بن هور','عودة الملك'],ans:2,exp:'عودة الملك (2003) فاز بـ 11 أوسكارًا دون أن يخسر أيًّا من الجوائز التي رُشّح لها.'},
+
+  // ── السعودية ──
+  {cat:'saudi',q:'ما هي عاصمة المملكة العربية السعودية؟',opts:['جدة','الرياض','مكة المكرمة'],ans:1,exp:'الرياض هي عاصمة المملكة العربية السعودية وأكبر مدنها.'},
+  {cat:'saudi',q:'في أي عام ميلادي تأسست المملكة العربية السعودية (التوحيد)؟',opts:['1932','1945','1925'],ans:0,exp:'وحّد الملك عبدالعزيز البلاد وأُعلنت المملكة العربية السعودية عام 1932م (1351هـ).'},
+  {cat:'saudi',q:'من هو مؤسس المملكة العربية السعودية؟',opts:['الملك سعود','الملك عبدالعزيز آل سعود','الملك فيصل'],ans:1,exp:'الملك عبدالعزيز بن عبدالرحمن آل سعود هو موحّد المملكة ومؤسسها.'},
+  {cat:'saudi',q:'ما هي العملة الرسمية للسعودية؟',opts:['الدرهم','الريال','الدينار'],ans:1,exp:'الريال السعودي هو العملة الرسمية للمملكة.'},
+  {cat:'saudi',q:'كم عدد المناطق الإدارية في المملكة؟',opts:['10','13','15'],ans:1,exp:'تنقسم المملكة إلى 13 منطقة إدارية.'},
+  {cat:'saudi',q:'ما اسم رؤية المملكة للتنمية المستقبلية؟',opts:['رؤية 2025','رؤية 2030','رؤية 2040'],ans:1,exp:'رؤية 2030 هي خطة التحول الوطني التي أُطلقت عام 2016م.'},
+  {cat:'saudi',q:'في أي مدينة تقع الكعبة المشرفة؟',opts:['المدينة المنورة','مكة المكرمة','الطائف'],ans:1,exp:'الكعبة المشرفة تقع في المسجد الحرام بمكة المكرمة.'},
+  {cat:'saudi',q:'ما اسم أكبر صحراء رملية متصلة جنوب المملكة؟',opts:['النفود الكبير','الربع الخالي','الدهناء'],ans:1,exp:'الربع الخالي أكبر صحراء رملية متصلة في العالم، تقع جنوب وشرق المملكة.'},
+  {cat:'saudi',q:'ما اسم أكبر شركة نفط في السعودية؟',opts:['سابك','أرامكو السعودية','معادن'],ans:1,exp:'أرامكو السعودية من أكبر شركات النفط في العالم.'},
+  {cat:'saudi',q:'ما اسم المدينة المستقبلية الكبرى في شمال غرب المملكة؟',opts:['القدية','نيوم','مدينة الملك عبدالله'],ans:1,exp:'نيوم مشروع مدينة مستقبلية ضخمة في منطقة تبوك ضمن رؤية 2030.'},
+  {cat:'saudi',q:'كم مرة فاز المنتخب السعودي بكأس آسيا؟',opts:['مرة واحدة','مرتين','ثلاث مرات'],ans:2,exp:'فاز الأخضر السعودي بكأس آسيا 3 مرات: 1984 و1988 و1996.'},
+  {cat:'saudi',q:'ما اسم عاصمة المنطقة الشرقية وأكبر مدنها؟',opts:['الخبر','الدمام','الجبيل'],ans:1,exp:'الدمام هي عاصمة المنطقة الشرقية وأكبر مدنها.'},
+
+  // ── أفلام ومسلسلات ──
+  {cat:'movies',q:'من قام بدور "آيرون مان" في أفلام مارفل؟',opts:['كريس إيفانز','روبرت داوني جونيور','مارك رافالو'],ans:1,exp:'الممثل روبرت داوني جونيور جسّد شخصية توني ستارك (آيرون مان).'},
+  {cat:'movies',q:'من أخرج فيلم "تايتانيك"؟',opts:['ستيفن سبيلبرغ','جيمس كاميرون','كريستوفر نولان'],ans:1,exp:'جيمس كاميرون أخرج تايتانيك (1997) وأيضاً سلسلة أفاتار.'},
+  {cat:'movies',q:'كم عدد أفلام سلسلة "هاري بوتر"؟',opts:['سبعة','ثمانية','عشرة'],ans:1,exp:'سلسلة هاري بوتر السينمائية تتكوّن من 8 أفلام.'},
+  {cat:'movies',q:'من بطل سلسلة أفلام "المهمة المستحيلة"؟',opts:['توم كروز','مات ديمون','ليام نيسون'],ans:0,exp:'توم كروز يؤدي دور إيثان هانت في سلسلة Mission: Impossible.'},
+  {cat:'movies',q:'أي شركة أنتجت سلسلة أفلام "حكاية لعبة Toy Story"؟',opts:['دريم ووركس','بيكسار','وارنر'],ans:1,exp:'استوديوهات بيكسار أنتجت Toy Story، أول فيلم رسوم متحركة كامل ثلاثي الأبعاد.'},
+  {cat:'movies',q:'ما اسم بطل فيلم "الأسد الملك"؟',opts:['موفاسا','سيمبا','سكار'],ans:1,exp:'سيمبا هو الشبل الذي يصبح ملكاً في فيلم The Lion King.'},
+  {cat:'movies',q:'من أخرج ثلاثية "سيد الخواتم"؟',opts:['بيتر جاكسون','جورج لوكاس','ريدلي سكوت'],ans:0,exp:'بيتر جاكسون أخرج ثلاثية The Lord of the Rings.'},
+  {cat:'movies',q:'ما المسلسل الذي تدور أحداثه حول الصراع على "العرش الحديدي"؟',opts:['Game of Thrones','The Witcher','Vikings'],ans:0,exp:'مسلسل Game of Thrones مقتبس من روايات جورج آر آر مارتن.'},
+  {cat:'movies',q:'من بطل سلسلة أفلام "قراصنة الكاريبي"؟',opts:['براد بيت','جوني ديب','أورلاندو بلوم'],ans:1,exp:'جوني ديب يؤدي دور القبطان جاك سبارو في Pirates of the Caribbean.'},
+  {cat:'movies',q:'ما اسم الدمية الخشبية التي يكبر أنفها عند الكذب؟',opts:['بينوكيو','بامبي','دامبو'],ans:0,exp:'بينوكيو شخصية كرتونية شهيرة لدمية خشبية يطول أنفها عند الكذب.'},
+  {cat:'movies',q:'في أي شركة عُرضت مسلسلات وأفلام مثل "Stranger Things"؟',opts:['Netflix','HBO','Disney'],ans:0,exp:'مسلسل Stranger Things من إنتاج وعرض منصة نتفليكس.'},
+  {cat:'movies',q:'ما اسم البطل الخارق الذي يرتدي بدلة العنكبوت؟',opts:['سوبرمان','سبايدر مان','باتمان'],ans:1,exp:'سبايدر مان (الرجل العنكبوت) من أشهر أبطال مارفل الخارقين.'},
 ];
 
 // Auto-assign difficulty levels to questions
@@ -1368,6 +1427,7 @@ function setGameMode(mode) {
   document.getElementById('teamSetup').style.display = mode === 'teams' ? 'block' : 'none';
   document.getElementById('onlineSetup').style.display = mode === 'online' ? 'block' : 'none';
   document.getElementById('localExtras').style.display = mode === 'online' ? 'none' : 'block';
+  if (mode === 'online') renderOnlineEmojiPicker();
 }
 
 function toggleRandom() {
@@ -2533,13 +2593,28 @@ const FIREBASE_CONFIG = {
 
 let fb = { app:null, db:null };
 let online = {
-  code:null, isHost:false, playerId:null, name:null, timer:15,
+  code:null, isHost:false, playerId:null, name:null, timer:15, avatar:'🦁',
   questions:[], qIndex:0, count:0,
   playersRef:null, stateRef:null, listeners:[],
   qStartAt:0, answered:false, localTimerInt:null, hostTickTimeout:null
 };
 const ONLINE_BASE_PTS = 1000;
-const ONLINE_REVEAL_MS = 4500;
+const ONLINE_REVEAL_MS = 5000;
+const ONLINE_EMOJIS = ['🦁','🦊','🦅','🐯','🦄','🐼','🐸','🐵','🐲','🦖','😎','🤖','👻','🐱','🐶','🦉','🐺','🦝'];
+
+function renderOnlineEmojiPicker() {
+  const row = document.getElementById('onlineEmojiRow');
+  if (!row) return;
+  if (!ONLINE_EMOJIS.includes(online.avatar)) online.avatar = ONLINE_EMOJIS[Math.floor(Math.random()*ONLINE_EMOJIS.length)];
+  row.innerHTML = '';
+  ONLINE_EMOJIS.forEach(e => {
+    const d = document.createElement('div');
+    d.className = 'online-emoji' + (e===online.avatar ? ' sel' : '');
+    d.textContent = e;
+    d.onclick = () => { online.avatar = e; renderOnlineEmojiPicker(); };
+    row.appendChild(d);
+  });
+}
 
 function ensureFirebase() {
   if (!FIREBASE_CONFIG.databaseURL) {
@@ -2588,7 +2663,7 @@ async function createRoom() {
     meta:{ status:'lobby', timer:online.timer, count:pool.length, createdAt:firebase.database.ServerValue.TIMESTAMP },
     state:{ phase:'lobby', qIndex:0 }
   });
-  await roomRef.child('players/'+online.playerId).set({ name, score:0, joinedAt:firebase.database.ServerValue.TIMESTAMP });
+  await roomRef.child('players/'+online.playerId).set({ name, avatar:online.avatar, score:0, joinedAt:firebase.database.ServerValue.TIMESTAMP });
   attachRoomListeners(code);
   enterOnlineScreen(); showOnlineStage('onlineLobby');
   document.getElementById('roomCodeDisplay').textContent = code;
@@ -2609,7 +2684,7 @@ async function joinRoom() {
   if (meta.status!=='lobby') { showToast('⚠️ اللعبة بدأت بالفعل', 'var(--wrong)'); return; }
   Object.assign(online, { code, isHost:false, playerId:uid(), name, timer:meta.timer||15, count:meta.count||0 });
   const pRef = roomRef.child('players/'+online.playerId);
-  await pRef.set({ name, score:0, joinedAt:firebase.database.ServerValue.TIMESTAMP });
+  await pRef.set({ name, avatar:online.avatar, score:0, joinedAt:firebase.database.ServerValue.TIMESTAMP });
   pRef.onDisconnect().remove();
   attachRoomListeners(code);
   enterOnlineScreen(); showOnlineStage('onlineLobby');
@@ -2641,8 +2716,8 @@ function renderLobbyPlayers(players) {
   ids.forEach(id=>{
     const chip = document.createElement('div');
     chip.className = 'lobby-player-chip';
-    const pre = players[id].name==='سهى' ? '💜 ' : (id===online.playerId?'⭐ ':'🙂 ');
-    chip.textContent = pre + players[id].name;
+    const av = players[id].name==='سهى' ? '💜' : (players[id].avatar || '🙂');
+    chip.textContent = av + ' ' + players[id].name + (id===online.playerId ? ' (أنت)' : '');
     box.appendChild(chip);
   });
 }
@@ -2682,9 +2757,11 @@ async function hostReveal(i) {
   const plSnap = await fb.db.ref('rooms/'+online.code+'/players').once('value');
   const players = plSnap.val() || {};
   const updates = {};
+  const dist = [0,0,0];
   Object.keys(players).forEach(pid=>{
     const a = ans[pid];
     let pts = 0;
+    if (a && typeof a.choice==='number' && a.choice>=0 && a.choice<dist.length) dist[a.choice]++;
     if (a && a.choice===q.ans) {
       const frac = Math.max(0, Math.min(1, 1 - (a.timeMs/(online.timer*1000))));
       pts = Math.round(ONLINE_BASE_PTS*0.5 + ONLINE_BASE_PTS*0.5*frac);
@@ -2694,7 +2771,7 @@ async function hostReveal(i) {
     updates['answers/'+i+'/'+pid+'/pts'] = pts;
   });
   await fb.db.ref('rooms/'+online.code).update(updates);
-  await fb.db.ref('rooms/'+online.code+'/state').update({ phase:'reveal', ans:q.ans });
+  await fb.db.ref('rooms/'+online.code+'/state').update({ phase:'reveal', ans:q.ans, dist });
   clearTimeout(online.hostTickTimeout);
   online.hostTickTimeout = setTimeout(()=>{
     if (i+1 < online.count) hostBroadcastQuestion(i+1);
@@ -2749,11 +2826,35 @@ function submitOnlineAnswer(idx, el) {
 function showReveal(s) {
   clearInterval(online.localTimerInt);
   showOnlineStage('onlineReveal');
+  const opts = (s.current && s.current.opts) || [];
+  const dist = s.dist || [];
+  const total = dist.reduce((a,b)=>a+b,0) || 0;
+  // Distribution bars with correct answer highlighted
+  const distBox = document.getElementById('onlineDist');
+  distBox.innerHTML = '';
+  const letters = ['أ','ب','ج','د'];
+  opts.forEach((opt,idx)=>{
+    const count = dist[idx] || 0;
+    const pct = total ? Math.round(count/total*100) : 0;
+    const isCorrect = idx === s.ans;
+    const row = document.createElement('div');
+    row.className = 'odist-row' + (isCorrect ? ' correct' : '');
+    row.innerHTML = `<div class="odist-fill" style="width:${pct}%"></div>`
+      + `<div class="odist-content"><div class="odist-mark">${isCorrect?'✅':letters[idx]}</div>`
+      + `<div class="odist-text">${opt}</div><div class="odist-count">${count}</div></div>`;
+    distBox.appendChild(row);
+  });
+  // My result + sound
   fb.db.ref('rooms/'+online.code+'/answers/'+online.qIndex+'/'+online.playerId).once('value').then(snap=>{
     const a = snap.val();
     const head = document.getElementById('onlineRevealHead');
-    if (a && a.correct) { head.className='online-reveal-head good'; head.textContent=`✅ إجابة صحيحة! +${a.pts||0}`; }
-    else { head.className='online-reveal-head bad'; head.textContent = a ? '❌ إجابة خاطئة' : '⌛ لم تجب في الوقت'; }
+    if (a && a.correct) {
+      head.className='online-reveal-head good'; head.textContent=`✅ إجابة صحيحة! +${a.pts||0}`;
+      try { soundCorrect(); } catch(e){}
+    } else {
+      head.className='online-reveal-head bad'; head.textContent = a ? '❌ إجابة خاطئة' : '⌛ لم تجب في الوقت';
+      try { soundWrong(); } catch(e){}
+    }
   });
 }
 
@@ -2764,7 +2865,8 @@ function renderLeaderboard(players) {
   arr.forEach((p,i)=>{
     const row = document.createElement('div');
     row.className = 'olb-row' + (p.id===online.playerId?' me':'');
-    row.innerHTML = `<div class="olb-rank">${i+1}</div><div class="olb-name">${p.name}</div><div class="olb-score">${p.score||0}</div>`;
+    const av = p.name==='سهى' ? '💜' : (p.avatar || '🙂');
+    row.innerHTML = `<div class="olb-rank">${i+1}</div><div class="olb-name">${av} ${p.name}</div><div class="olb-score">${p.score||0}</div>`;
     box.appendChild(row);
   });
 }
@@ -2800,6 +2902,11 @@ function copyRoomCode() {
   if (navigator.clipboard) navigator.clipboard.writeText(code);
   showToast('📋 تم نسخ الرمز: '+code, 'var(--gold)');
 }
+// ── PWA: register service worker ──
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', () => navigator.serviceWorker.register('sw.js').catch(()=>{}));
+}
+
 function leaveRoom() {
   clearInterval(online.localTimerInt);
   clearTimeout(online.hostTickTimeout);
