@@ -1,0 +1,2349 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>تحدي الثلاثة</title>
+<link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;700;900&family=Cairo:wght@400;600;900&display=swap" rel="stylesheet">
+<style>
+:root {
+  --gold: #c9a84c;
+  --gold-light: #f0d080;
+  --dark: #0b0b0f;
+  --card-bg: #13131a;
+  --border: #252535;
+  --text: #e8e0d0;
+  --muted: #777;
+  --correct: #3dba7a;
+  --wrong: #e05c5c;
+  --option-bg: #1a1a24;
+  --p1: #6495ed; --p1-bg: rgba(100,149,237,0.12);
+  --p2: #e07050; --p2-bg: rgba(224,112,80,0.12);
+  --p3: #a070e0; --p3-bg: rgba(160,112,224,0.12);
+}
+* { margin:0; padding:0; box-sizing:border-box; }
+body {
+  background: var(--dark); color: var(--text);
+  font-family: 'Cairo', sans-serif; min-height:100vh;
+  padding: 24px 16px 40px;
+  background-image:
+    radial-gradient(ellipse at 15% 5%, rgba(100,149,237,0.06) 0%, transparent 45%),
+    radial-gradient(ellipse at 85% 95%, rgba(160,112,224,0.06) 0%, transparent 45%),
+    radial-gradient(ellipse at 50% 50%, rgba(201,168,76,0.04) 0%, transparent 60%);
+}
+/* SETUP */
+.setup-screen { max-width:540px; margin:0 auto; animation:fadeUp 0.6s ease; }
+.logo { text-align:center; margin-bottom:30px; }
+.logo h1 { font-family:'Tajawal',sans-serif; font-size:clamp(2rem,7vw,3rem); font-weight:900; color:var(--gold); text-shadow:0 0 40px rgba(201,168,76,0.3); }
+.logo p { color:var(--muted); font-size:0.88rem; margin-top:5px; }
+.ornament { display:flex; align-items:center; gap:10px; justify-content:center; margin:8px 0; }
+.orn-line { height:1px; width:50px; background:linear-gradient(90deg,transparent,var(--gold)); }
+.orn-line.r { background:linear-gradient(90deg,var(--gold),transparent); }
+.orn-dot { width:7px; height:7px; background:var(--gold); transform:rotate(45deg); }
+
+.section-title { font-size:0.82rem; color:var(--muted); margin-bottom:10px; text-align:center; letter-spacing:0.5px; }
+
+.players-setup { display:flex; flex-direction:column; gap:12px; margin-bottom:22px; }
+.player-setup-card { background:var(--card-bg); border:1.5px solid var(--border); border-radius:14px; padding:14px 18px; display:flex; align-items:center; gap:12px; }
+.player-setup-card.p0 { border-color:rgba(100,149,237,0.35); }
+.player-setup-card.p1 { border-color:rgba(224,112,80,0.35); }
+.player-setup-card.p2 { border-color:rgba(160,112,224,0.35); }
+.player-setup-card.p3 { border-color:rgba(61,186,122,0.35); }
+.player-setup-card.p4 { border-color:rgba(240,200,80,0.35); }
+.player-setup-card.p5 { border-color:rgba(240,100,160,0.35); }
+.player-avatar-big { width:42px; height:42px; border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:1.3rem; flex-shrink:0; background:rgba(255,255,255,0.05); }
+.player-name-input { flex:1; background:#1e1e2a; border:1.5px solid var(--border); border-radius:10px; padding:9px 13px; font-family:'Cairo',sans-serif; font-size:0.9rem; color:var(--text); outline:none; transition:border-color 0.2s; }
+.player-name-input:focus { border-color:var(--gold); }
+
+/* Player count picker */
+.player-count-row { display:flex; align-items:center; justify-content:center; gap:16px; margin-bottom:18px; }
+.pc-btn {
+  width:40px; height:40px; border-radius:50%;
+  background:var(--card-bg); border:1.5px solid var(--border);
+  color:var(--text); font-size:1.4rem; font-weight:900;
+  cursor:pointer; transition:all 0.2s;
+  display:flex; align-items:center; justify-content:center;
+  font-family:'Tajawal',sans-serif; line-height:1;
+}
+.pc-btn:hover { border-color:var(--gold); color:var(--gold); }
+.pc-btn:disabled { opacity:0.3; cursor:default; }
+.pc-display {
+  font-family:'Tajawal',sans-serif; font-size:2rem; font-weight:900;
+  color:var(--gold); min-width:60px; text-align:center;
+}
+.pc-label { font-size:0.78rem; color:var(--muted); text-align:center; margin-top:2px; }
+
+/* CATEGORY TABS */
+.cat-tabs { display:flex; gap:8px; flex-wrap:wrap; justify-content:center; margin-bottom:18px; }
+.cat-tab { padding:7px 16px; border:1px solid var(--border); border-radius:50px; background:var(--card-bg); color:var(--muted); font-family:'Cairo',sans-serif; font-size:0.8rem; cursor:pointer; transition:all 0.2s; }
+.cat-tab.active, .cat-tab:hover { background:var(--gold); color:var(--dark); border-color:var(--gold); font-weight:700; }
+
+/* QUESTION COUNT SELECTOR */
+.qcount-wrap { margin-bottom:20px; }
+.qcount-grid { display:grid; grid-template-columns:repeat(5,1fr); gap:8px; }
+.qcount-btn {
+  background:var(--card-bg); border:1.5px solid var(--border); border-radius:12px;
+  padding:14px 6px; text-align:center; cursor:pointer; transition:all 0.22s;
+  font-family:'Tajawal',sans-serif; position:relative; overflow:hidden;
+}
+.qcount-btn .qn { font-size:1.4rem; font-weight:900; color:var(--text); display:block; line-height:1; }
+.qcount-btn .ql { font-size:0.65rem; color:var(--muted); display:block; margin-top:4px; }
+.qcount-btn.active {
+  background:rgba(201,168,76,0.13); border-color:var(--gold);
+  box-shadow: 0 4px 16px rgba(201,168,76,0.18);
+}
+.qcount-btn:hover:not(.active) { background:#1e1e2a; border-color:#444; }
+.qcount-btn.active .qn { color:var(--gold); }
+.qcount-btn.active .ql { color:var(--gold-light); }
+.qcount-btn.active::after {
+  content:'✓'; position:absolute; top:4px; left:6px;
+  font-size:0.6rem; color:var(--gold); font-weight:900;
+}
+.qcount-avail { font-size:0.72rem; color:var(--muted); text-align:center; margin-top:8px; }
+.qcount-avail span { color:var(--gold); font-weight:700; }
+
+.points-note { background:var(--card-bg); border:1px solid var(--border); border-radius:12px; padding:12px 16px; font-size:0.78rem; color:var(--muted); line-height:1.7; margin-bottom:18px; text-align:center; }
+.points-note strong { color:var(--gold); }
+
+.start-btn { width:100%; padding:14px; background:linear-gradient(135deg,var(--gold),#a8720c); color:var(--dark); border:none; border-radius:14px; font-family:'Tajawal',sans-serif; font-size:1.05rem; font-weight:900; cursor:pointer; transition:all 0.25s; box-shadow:0 6px 24px rgba(201,168,76,0.28); }
+.start-btn:hover { transform:translateY(-2px); box-shadow:0 10px 32px rgba(201,168,76,0.38); }
+
+/* SCOREBOARD */
+.scoreboard { display:flex; gap:8px; max-width:760px; margin:0 auto 20px; flex-wrap:wrap; justify-content:center; }
+.scoreboard.many .score-card { min-width:80px; padding:10px 6px; }
+.scoreboard.many .sc-points { font-size:1.2rem; }
+.scoreboard.many .sc-name { font-size:0.65rem; }
+.scoreboard.many .sc-avatar { font-size:1.1rem; }
+.score-card { flex:1; background:var(--card-bg); border:1.5px solid var(--border); border-radius:16px; padding:12px 8px; text-align:center; position:relative; transition:all 0.3s; }
+.score-card.active-turn { transform:translateY(-4px); }
+.score-card::before { content:''; position:absolute; top:0; left:0; right:0; height:2px; border-radius:16px 16px 0 0; }
+.sc-avatar { font-size:1.3rem; margin-bottom:3px; }
+.sc-name { font-size:0.72rem; font-weight:700; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; margin-bottom:5px; }
+.sc-points { font-family:'Tajawal',sans-serif; font-size:1.5rem; font-weight:900; line-height:1; }
+.sc-lbl { font-size:0.62rem; color:var(--muted); margin-top:2px; }
+.delta-badge { position:absolute; top:-10px; right:6px; background:var(--correct); color:#fff; font-family:'Tajawal',sans-serif; font-size:0.7rem; font-weight:900; padding:2px 7px; border-radius:50px; animation:popIn 0.4s ease; pointer-events:none; }
+
+/* QUIZ */
+.quiz-wrap { max-width:700px; margin:0 auto; }
+.quiz-card { background:var(--card-bg); border:1px solid var(--border); border-radius:20px; padding:28px 26px; position:relative; box-shadow:0 16px 50px rgba(0,0,0,0.5), inset 0 1px 0 rgba(201,168,76,0.08); animation:fadeUp 0.5s ease; }
+.quiz-card::before { content:''; position:absolute; top:0; left:0; right:0; height:2px; background:linear-gradient(90deg,transparent,var(--gold),transparent); border-radius:20px 20px 0 0; }
+.progress-bar-wrap { background:#1e1e2a; height:4px; border-radius:4px; margin-bottom:22px; overflow:hidden; }
+.progress-bar { height:100%; background:linear-gradient(90deg,var(--gold),var(--gold-light)); border-radius:4px; transition:width 0.5s ease; }
+.meta { display:flex; justify-content:space-between; align-items:center; margin-bottom:16px; }
+.cat-badge { padding:3px 12px; border-radius:50px; font-size:0.7rem; font-weight:700; }
+.cat-general  { background:rgba(100,149,237,0.15); color:#6495ed; border:1px solid rgba(100,149,237,0.3); }
+.cat-religion { background:rgba(61,186,122,0.12);  color:#3dba7a; border:1px solid rgba(61,186,122,0.3); }
+.cat-geography{ background:rgba(201,168,76,0.12);  color:var(--gold); border:1px solid rgba(201,168,76,0.3); }
+.cat-science  { background:rgba(80,200,220,0.12);  color:#50c8dc; border:1px solid rgba(80,200,220,0.3); }
+.cat-history  { background:rgba(210,140,80,0.13);  color:#d28c50; border:1px solid rgba(210,140,80,0.3); }
+.cat-sports   { background:rgba(80,200,120,0.12);  color:#50c878; border:1px solid rgba(80,200,120,0.3); }
+.cat-arts     { background:rgba(200,100,200,0.12); color:#c864c8; border:1px solid rgba(200,100,200,0.3); }
+.q-num { font-size:0.76rem; color:var(--muted); }
+.question { font-family:'Tajawal',sans-serif; font-size:clamp(1rem,3vw,1.25rem); font-weight:700; line-height:1.65; margin-bottom:20px; color:#fff; }
+.turn-indicator { display:flex; align-items:center; gap:10px; background:#1e1e2a; border-radius:12px; padding:10px 15px; margin-bottom:16px; border:1px solid var(--border); font-size:0.85rem; transition:all 0.3s; }
+.turn-avatar { font-size:1.2rem; }
+.turn-text { font-weight:700; }
+.turn-text.p1c { color:var(--p1); } .turn-text.p2c { color:var(--p2); } .turn-text.p3c { color:var(--p3); }
+.turn-sub { color:var(--muted); font-size:0.72rem; margin-top:1px; }
+.dots-row { display:flex; gap:5px; margin-right:auto; }
+.dot { width:10px; height:10px; border-radius:50%; background:var(--border); border:1.5px solid var(--border); transition:all 0.3s; }
+.dot.answered { background:var(--correct); border-color:var(--correct); }
+.dot.wrong-dot { background:var(--wrong); border-color:var(--wrong); }
+.dot.pending { border-color:var(--gold); background:transparent; animation:pulse 1.2s infinite; }
+.options { display:flex; flex-direction:column; gap:10px; }
+.option { background:var(--option-bg); border:1.5px solid var(--border); border-radius:13px; padding:12px 16px; cursor:pointer; transition:all 0.2s; font-family:'Cairo',sans-serif; font-size:0.9rem; color:var(--text); display:flex; align-items:center; gap:12px; position:relative; }
+.option:hover:not(.disabled) { border-color:var(--gold); color:#fff; transform:translateX(-3px); }
+.option.disabled { cursor:default; }
+.option.correct { background:rgba(61,186,122,0.12); border-color:var(--correct); color:var(--correct); }
+.option.wrong { background:rgba(224,92,92,0.09); border-color:var(--wrong); color:var(--wrong); }
+.option.reveal-correct { background:rgba(61,186,122,0.06); border-color:rgba(61,186,122,0.35); color:var(--correct); }
+.opt-letter { width:26px; height:26px; border-radius:50%; background:#252535; border:1px solid var(--border); display:flex; align-items:center; justify-content:center; font-size:0.72rem; font-weight:700; flex-shrink:0; transition:all 0.2s; }
+.option.correct .opt-letter { background:var(--correct); color:#fff; border-color:var(--correct); }
+.option.wrong .opt-letter { background:var(--wrong); color:#fff; border-color:var(--wrong); }
+.option.reveal-correct .opt-letter { background:rgba(61,186,122,0.2); color:var(--correct); border-color:var(--correct); }
+.opt-voters { margin-right:auto; display:flex; gap:3px; flex-shrink:0; }
+.voter-chip { width:20px; height:20px; border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:0.7rem; border:1.5px solid transparent; }
+.voter-chip.p1c { background:var(--p1-bg); border-color:var(--p1); }
+.voter-chip.p2c { background:var(--p2-bg); border-color:var(--p2); }
+.voter-chip.p3c { background:var(--p3-bg); border-color:var(--p3); }
+.feedback { margin-top:16px; border-radius:14px; font-size:0.83rem; line-height:1.6; display:none; animation:fadeUp 0.45s ease; overflow:hidden; }
+.feedback.show { display:block; }
+
+/* result header row */
+.fb-header { padding:12px 16px; font-weight:700; font-size:0.88rem; display:flex; align-items:center; gap:8px; }
+.feedback.correct-fb .fb-header { background:rgba(61,186,122,0.13); border-bottom:1px solid rgba(61,186,122,0.18); color:var(--correct); }
+.feedback.wrong-fb   .fb-header { background:rgba(224,92,92,0.1);  border-bottom:1px solid rgba(224,92,92,0.18); color:#e07070; }
+.feedback.split-fb   .fb-header { background:rgba(201,168,76,0.1); border-bottom:1px solid rgba(201,168,76,0.2); color:var(--gold); }
+
+/* explanation box */
+.fb-exp {
+  padding:12px 16px;
+  background:#16161e;
+  border-right:3px solid var(--gold);
+  color: var(--text);
+  font-size:0.82rem;
+  line-height:1.7;
+  display:flex;
+  gap:10px;
+  align-items:flex-start;
+}
+.fb-exp-icon { font-size:1.1rem; flex-shrink:0; margin-top:1px; }
+.fb-exp-text { flex:1; }
+.fb-exp-label { font-size:0.68rem; color:var(--gold); font-weight:700; letter-spacing:0.5px; margin-bottom:3px; text-transform:uppercase; }
+
+.feedback.correct-fb { border:1px solid rgba(61,186,122,0.25); }
+.feedback.wrong-fb   { border:1px solid rgba(224,92,92,0.22); }
+.feedback.split-fb   { border:1px solid rgba(201,168,76,0.28); }
+
+/* points row */
+.pts-summary { padding:10px 16px; background:#12121a; display:flex; gap:7px; flex-wrap:wrap; border-top:1px solid var(--border); }
+.pts-chip { padding:3px 10px; border-radius:50px; font-size:0.75rem; font-weight:700; }
+.pts-chip.p1c { background:var(--p1-bg); color:var(--p1); }
+.pts-chip.p2c { background:var(--p2-bg); color:var(--p2); }
+.pts-chip.p3c { background:var(--p3-bg); color:var(--p3); }
+.next-btn { margin-top:18px; width:100%; padding:13px; background:linear-gradient(135deg,var(--gold),#a8720c); color:var(--dark); border:none; border-radius:13px; font-family:'Tajawal',sans-serif; font-size:0.98rem; font-weight:900; cursor:pointer; transition:all 0.25s; display:none; box-shadow:0 4px 20px rgba(201,168,76,0.22); }
+.next-btn:hover { transform:translateY(-2px); box-shadow:0 8px 28px rgba(201,168,76,0.32); }
+.next-btn.show { display:block; animation:fadeUp 0.4s ease; }
+
+/* FINAL */
+.final-screen { display:none; max-width:600px; margin:0 auto; animation:fadeUp 0.7s ease; }
+.final-screen.show { display:block; }
+.podium { display:flex; align-items:flex-end; justify-content:center; gap:12px; margin-bottom:24px; margin-top:10px; }
+.podium-item { flex:1; max-width:160px; text-align:center; }
+.podium-block { border-radius:12px 12px 0 0; display:flex; flex-direction:column; align-items:center; justify-content:flex-end; padding-bottom:12px; }
+.podium-emoji { font-size:1.8rem; margin-bottom:5px; }
+.podium-rank { font-family:'Tajawal',sans-serif; font-size:1.6rem; font-weight:900; }
+.podium-rank.gold { color:#ffd700; } .podium-rank.silver { color:#c0c0c0; } .podium-rank.bronze { color:#cd7f32; }
+.podium-name { font-weight:700; font-size:0.82rem; margin-top:5px; }
+.podium-score { font-family:'Tajawal',sans-serif; font-size:1.2rem; font-weight:900; margin-top:2px; }
+.podium-score-lbl { font-size:0.66rem; color:var(--muted); }
+.final-card { background:var(--card-bg); border:1px solid var(--border); border-radius:20px; padding:26px; position:relative; overflow:hidden; }
+.final-card::before { content:''; position:absolute; top:0; left:0; right:0; height:2px; background:linear-gradient(90deg,var(--p1),var(--gold),var(--p3)); }
+.final-title { text-align:center; font-family:'Tajawal',sans-serif; font-size:1.3rem; font-weight:900; color:var(--gold); margin-bottom:18px; }
+.final-rows { display:flex; flex-direction:column; gap:10px; margin-bottom:22px; }
+.final-row { display:flex; align-items:center; gap:12px; background:#1a1a24; border-radius:12px; padding:12px 15px; border:1px solid var(--border); }
+.final-row.p1 { border-color:rgba(100,149,237,0.3); } .final-row.p2 { border-color:rgba(224,112,80,0.3); } .final-row.p3 { border-color:rgba(160,112,224,0.3); }
+.final-rank-badge { width:26px; height:26px; border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:0.82rem; font-weight:900; flex-shrink:0; }
+.fr-avatar { font-size:1.2rem; }
+.fr-name { font-weight:700; font-size:0.88rem; flex:1; }
+.fr-name.p1c { color:var(--p1); } .fr-name.p2c { color:var(--p2); } .fr-name.p3c { color:var(--p3); }
+.fr-score { font-family:'Tajawal',sans-serif; font-size:1.25rem; font-weight:900; }
+.fr-score.p1c { color:var(--p1); } .fr-score.p2c { color:var(--p2); } .fr-score.p3c { color:var(--p3); }
+.fr-pts-lbl { font-size:0.65rem; color:var(--muted); }
+.play-again-btn { width:100%; padding:13px; background:linear-gradient(135deg,var(--gold),#a8720c); color:var(--dark); border:none; border-radius:13px; font-family:'Tajawal',sans-serif; font-size:1rem; font-weight:900; cursor:pointer; transition:all 0.25s; box-shadow:0 6px 24px rgba(201,168,76,0.28); }
+.play-again-btn:hover { transform:translateY(-2px); box-shadow:0 10px 32px rgba(201,168,76,0.38); }
+
+@keyframes fadeDown { from{opacity:0;transform:translateY(-18px)} to{opacity:1;transform:translateY(0)} }
+@keyframes fadeUp { from{opacity:0;transform:translateY(18px)} to{opacity:1;transform:translateY(0)} }
+@keyframes popIn { 0%{transform:scale(0.5);opacity:0} 70%{transform:scale(1.15)} 100%{transform:scale(1);opacity:1} }
+@keyframes pulse { 0%,100%{opacity:0.4} 50%{opacity:1} }
+@keyframes scoreUp { 0%{transform:scale(1)} 50%{transform:scale(1.18)} 100%{transform:scale(1)} }
+.score-anim { animation:scoreUp 0.5s ease; }
+
+/* ── GAME OPTIONS ── */
+.game-options-row { display:flex; gap:10px; margin-bottom:18px; }
+.game-option-card {
+  flex:1; background:var(--card-bg); border:1.5px solid var(--border);
+  border-radius:14px; padding:14px 16px; cursor:pointer;
+  transition:all 0.22s; position:relative; overflow:hidden;
+}
+.game-option-card:hover { border-color:#444; background:#1a1a24; }
+.game-option-card.on { border-color:var(--gold); background:rgba(201,168,76,0.07); }
+.go-icon { font-size:1.6rem; margin-bottom:6px; }
+.go-label { font-family:'Tajawal',sans-serif; font-size:0.88rem; font-weight:700; color:var(--text); margin-bottom:3px; }
+.go-sub { font-size:0.72rem; color:var(--muted); line-height:1.4; }
+.go-toggle {
+  position:absolute; top:12px; left:12px;
+  width:36px; height:20px; border-radius:20px;
+  background:#333; border:2px solid #444; transition:all 0.25s;
+}
+.go-toggle::after {
+  content:''; position:absolute; width:12px; height:12px;
+  border-radius:50%; background:#666; top:2px; right:2px; transition:all 0.25s;
+}
+.game-option-card.on .go-toggle { background:var(--gold); border-color:var(--gold); }
+.game-option-card.on .go-toggle::after { right:18px; background:#fff; }
+
+/* ── ACTION ROW ── */
+.action-row { display:flex; gap:10px; margin-top:18px; align-items:stretch; }
+.skip-btn {
+  padding:13px 18px;
+  background:#1a1a24; border:1.5px solid #333;
+  border-radius:13px; color:var(--muted);
+  font-family:'Cairo',sans-serif; font-size:0.85rem;
+  cursor:pointer; transition:all 0.22s; white-space:nowrap;
+  display:none;
+}
+.skip-btn:hover { border-color:var(--wrong); color:var(--wrong); background:rgba(224,92,92,0.07); }
+.skip-btn.show { display:block; animation:fadeUp 0.4s ease; }
+.next-btn {
+  flex:1; padding:13px;
+  background:linear-gradient(135deg,var(--gold),#a8720c); color:var(--dark);
+  border:none; border-radius:13px;
+  font-family:'Tajawal',sans-serif; font-size:0.98rem; font-weight:900;
+  cursor:pointer; transition:all 0.25s; display:none;
+  box-shadow:0 4px 20px rgba(201,168,76,0.22);
+}
+.next-btn:hover { transform:translateY(-2px); box-shadow:0 8px 28px rgba(201,168,76,0.32); }
+.next-btn.show { display:block; animation:fadeUp 0.4s ease; }
+
+/* ── SPIN OVERLAY ── */
+.spin-overlay {
+  position:fixed; inset:0; background:rgba(0,0,0,0.75);
+  display:flex; align-items:center; justify-content:center;
+  z-index:999; opacity:0; pointer-events:none;
+  transition:opacity 0.3s;
+  backdrop-filter: blur(4px);
+}
+.spin-overlay.show { opacity:1; pointer-events:auto; }
+.spin-box {
+  background:var(--card-bg); border:2px solid var(--gold);
+  border-radius:24px; padding:40px 50px; text-align:center;
+  box-shadow:0 20px 60px rgba(0,0,0,0.6), 0 0 40px rgba(201,168,76,0.15);
+  animation:popIn 0.4s ease;
+}
+.spin-title { font-family:'Tajawal',sans-serif; font-size:1.1rem; font-weight:700; color:var(--gold); margin-bottom:18px; }
+.spin-avatar { font-size:4rem; display:block; margin-bottom:12px; animation:spinBounce 0.6s ease; }
+.spin-name { font-family:'Tajawal',sans-serif; font-size:1.8rem; font-weight:900; color:#fff; margin-bottom:6px; }
+.spin-sub { font-size:0.85rem; color:var(--muted); }
+
+@keyframes spinBounce {
+  0%   { transform:scale(0.3) rotate(-20deg); opacity:0; }
+  60%  { transform:scale(1.2) rotate(5deg); opacity:1; }
+  100% { transform:scale(1) rotate(0deg); }
+}
+
+/* ── ADVANCED OPTIONS ── */
+.adv-section { margin-bottom:18px; }
+.adv-toggle-btn {
+  width:100%; display:flex; align-items:center; justify-content:space-between;
+  background:var(--card-bg); border:1.5px solid var(--border); border-radius:14px;
+  padding:13px 18px; cursor:pointer; transition:all 0.22s;
+  font-family:'Cairo',sans-serif; font-size:0.9rem; color:var(--muted);
+}
+.adv-toggle-btn:hover { border-color:#555; color:var(--text); }
+.adv-toggle-btn .adv-arrow { transition:transform 0.3s; font-size:0.75rem; }
+.adv-toggle-btn.open .adv-arrow { transform:rotate(180deg); }
+.adv-toggle-btn.open { border-color:rgba(201,168,76,0.4); color:var(--gold); }
+.adv-body {
+  display:none; padding:14px 0 0;
+  animation:fadeUp 0.3s ease;
+}
+.adv-body.open { display:block; }
+
+/* Advanced option cards grid */
+.adv-grid { display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-bottom:12px; }
+.adv-card {
+  background:var(--card-bg); border:1.5px solid var(--border); border-radius:13px;
+  padding:13px 14px; cursor:pointer; transition:all 0.22s; position:relative;
+}
+.adv-card:hover { border-color:#444; background:#1a1a24; }
+.adv-card.on { border-color:var(--gold); background:rgba(201,168,76,0.07); }
+.adv-card .ac-icon { font-size:1.5rem; margin-bottom:5px; }
+.adv-card .ac-label { font-family:'Tajawal',sans-serif; font-size:0.82rem; font-weight:700; color:var(--text); }
+.adv-card .ac-sub { font-size:0.68rem; color:var(--muted); margin-top:2px; line-height:1.4; }
+.adv-card .ac-toggle {
+  position:absolute; top:10px; left:10px;
+  width:30px; height:17px; border-radius:17px;
+  background:#333; border:2px solid #444; transition:all 0.25s;
+}
+.adv-card .ac-toggle::after {
+  content:''; position:absolute; width:10px; height:10px;
+  border-radius:50%; background:#666; top:1.5px; right:1.5px; transition:all 0.25s;
+}
+.adv-card.on .ac-toggle { background:var(--gold); border-color:var(--gold); }
+.adv-card.on .ac-toggle::after { right:15px; background:#fff; }
+
+/* Timer sub-selector */
+.timer-options { display:flex; gap:7px; margin-top:10px; }
+.timer-opt {
+  flex:1; padding:8px 4px; text-align:center;
+  background:#1a1a24; border:1.5px solid var(--border); border-radius:10px;
+  font-family:'Tajawal',sans-serif; font-size:0.9rem; font-weight:700;
+  cursor:pointer; color:var(--muted); transition:all 0.2s;
+}
+.timer-opt.active { background:rgba(201,168,76,0.12); border-color:var(--gold); color:var(--gold); }
+
+/* Rounds sub-selector */
+.rounds-row { display:flex; align-items:center; justify-content:center; gap:14px; margin-top:10px; }
+.rnd-btn {
+  width:34px; height:34px; border-radius:50%;
+  background:var(--card-bg); border:1.5px solid var(--border);
+  color:var(--text); font-size:1.2rem; font-weight:900;
+  cursor:pointer; transition:all 0.2s; display:flex; align-items:center; justify-content:center;
+}
+.rnd-btn:hover { border-color:var(--gold); color:var(--gold); }
+.rnd-display { font-family:'Tajawal',sans-serif; font-size:1.6rem; font-weight:900; color:var(--gold); }
+
+/* Timer ring in game */
+.timer-ring-wrap {
+  display:none; position:absolute; top:18px; left:20px;
+  width:46px; height:46px;
+}
+.timer-ring-wrap.show { display:block; }
+.timer-ring { transform:rotate(-90deg); }
+.timer-bg { fill:none; stroke:#252535; stroke-width:4; }
+.timer-fg { fill:none; stroke:var(--gold); stroke-width:4; stroke-linecap:round;
+  stroke-dasharray:125.66; stroke-dashoffset:0; transition:stroke-dashoffset 1s linear, stroke 0.3s; }
+.timer-fg.urgent { stroke: var(--wrong); }
+.timer-num {
+  position:absolute; inset:0; display:flex; align-items:center; justify-content:center;
+  font-family:'Tajawal',sans-serif; font-size:0.9rem; font-weight:900; color:var(--gold);
+}
+.timer-num.urgent { color:var(--wrong); }
+
+/* Round indicator */
+.round-badge {
+  display:none; background:rgba(201,168,76,0.1); border:1px solid rgba(201,168,76,0.3);
+  border-radius:50px; padding:3px 12px; font-size:0.72rem; font-weight:700; color:var(--gold);
+  font-family:'Tajawal',sans-serif; margin-left:auto;
+}
+.round-badge.show { display:inline-block; }
+
+/* Joker button */
+.joker-row { display:flex; gap:8px; flex-wrap:wrap; margin-bottom:10px; }
+.joker-btn {
+  padding:6px 14px; background:#1a1a24; border:1.5px solid #333;
+  border-radius:50px; font-family:'Cairo',sans-serif; font-size:0.78rem;
+  cursor:pointer; transition:all 0.2s; color:var(--muted);
+  display:none;
+}
+.joker-btn.show { display:inline-flex; align-items:center; gap:5px; }
+.joker-btn:hover:not(.used) { border-color:var(--gold); color:var(--gold); }
+.joker-btn.used { opacity:0.3; cursor:default; pointer-events:none; }
+
+/* Stats in final screen */
+.stats-table { width:100%; border-collapse:collapse; margin-bottom:18px; font-size:0.8rem; }
+.stats-table th { color:var(--muted); font-weight:600; padding:6px 8px; text-align:center; font-size:0.7rem; border-bottom:1px solid var(--border); }
+.stats-table td { padding:8px; text-align:center; border-bottom:1px solid #1a1a24; }
+.stats-table tr:last-child td { border-bottom:none; }
+.stat-player-name { text-align:right !important; font-weight:700; }
+
+/* Confetti canvas */
+#confettiCanvas { position:fixed; inset:0; pointer-events:none; z-index:9999; }
+
+/* Emoji picker */
+.emoji-picker-overlay {
+  position:fixed; inset:0; background:rgba(0,0,0,0.6); z-index:800;
+  display:none; align-items:center; justify-content:center;
+  backdrop-filter:blur(4px);
+}
+.emoji-picker-overlay.show { display:flex; }
+.emoji-picker-box {
+  background:var(--card-bg); border:1.5px solid var(--border); border-radius:20px;
+  padding:20px; max-width:320px; width:90%;
+  box-shadow:0 20px 60px rgba(0,0,0,0.5);
+  animation:popIn 0.3s ease;
+}
+.emoji-picker-title { font-family:'Tajawal',sans-serif; font-size:1rem; font-weight:700;
+  color:var(--gold); margin-bottom:14px; text-align:center; }
+.emoji-grid { display:grid; grid-template-columns:repeat(6,1fr); gap:8px; }
+.emoji-opt {
+  font-size:1.6rem; text-align:center; padding:8px; border-radius:10px;
+  cursor:pointer; border:2px solid transparent; transition:all 0.15s;
+  background:#1a1a24;
+}
+.emoji-opt:hover { border-color:var(--gold); transform:scale(1.15); }
+.emoji-opt.selected { border-color:var(--gold); background:rgba(201,168,76,0.12); }
+
+/* ══ NEW FEATURES CSS ══ */
+
+/* Theme variables */
+body.theme-light { --dark:#f5f0e8; --card-bg:#fff; --border:#e0d8cc; --text:#1a1a1a; --muted:#888; --option-bg:#f8f4ee; background-image:none !important; }
+body.theme-blue  { --dark:#0a0e1a; --card-bg:#0d1526; --border:#1e2d4a; --option-bg:#111d35; }
+body.theme-gold  { --dark:#0a0800; --card-bg:#130f00; --border:#2a2000; --option-bg:#1a1500; }
+
+/* Theme picker */
+.theme-row { display:flex; gap:8px; margin-bottom:18px; justify-content:center; flex-wrap:wrap; }
+.theme-chip {
+  padding:7px 16px; border-radius:50px; font-size:0.78rem; font-weight:700;
+  cursor:pointer; transition:all 0.2s; border:1.5px solid var(--border);
+  background:var(--card-bg); color:var(--muted); font-family:'Cairo',sans-serif;
+}
+.theme-chip.active { border-color:var(--gold); color:var(--gold); background:rgba(201,168,76,0.08); }
+
+/* Difficulty badges */
+.diff-badge { font-size:0.62rem; font-weight:700; padding:1px 6px; border-radius:50px; margin-right:6px; }
+.diff-easy   { background:rgba(61,186,122,0.15); color:#3dba7a; }
+.diff-medium { background:rgba(201,168,76,0.15); color:var(--gold); }
+.diff-hard   { background:rgba(224,92,92,0.15); color:var(--wrong); }
+.diff-filter-row { display:flex; gap:7px; flex-wrap:wrap; justify-content:center; margin-bottom:10px; }
+.diff-filter { padding:5px 14px; border-radius:50px; font-size:0.75rem; font-weight:700;
+  cursor:pointer; border:1.5px solid var(--border); background:var(--card-bg);
+  color:var(--muted); transition:all 0.2s; font-family:'Cairo',sans-serif; }
+.diff-filter.active { border-color:var(--gold); color:var(--gold); background:rgba(201,168,76,0.08); }
+
+/* Custom question modal */
+.modal-overlay {
+  position:fixed; inset:0; background:rgba(0,0,0,0.7); z-index:900;
+  display:none; align-items:center; justify-content:center; padding:20px;
+  backdrop-filter:blur(6px);
+}
+.modal-overlay.show { display:flex; }
+.modal-box {
+  background:var(--card-bg); border:1.5px solid var(--border);
+  border-radius:20px; padding:24px; width:100%; max-width:500px;
+  max-height:80vh; overflow-y:auto;
+  box-shadow:0 20px 60px rgba(0,0,0,0.6); animation:fadeUp 0.35s ease;
+}
+.modal-title { font-family:'Tajawal',sans-serif; font-size:1.1rem; font-weight:900;
+  color:var(--gold); margin-bottom:16px; text-align:center; }
+.modal-input {
+  width:100%; background:#1a1a24; border:1.5px solid var(--border);
+  border-radius:10px; padding:10px 14px; font-family:'Cairo',sans-serif;
+  font-size:0.88rem; color:var(--text); outline:none; margin-bottom:10px;
+  transition:border-color 0.2s;
+}
+.modal-input:focus { border-color:var(--gold); }
+.modal-row { display:flex; gap:8px; margin-bottom:10px; }
+.modal-row .modal-input { margin-bottom:0; }
+.modal-btn-row { display:flex; gap:10px; margin-top:14px; }
+.modal-btn {
+  flex:1; padding:11px; border-radius:11px; border:none;
+  font-family:'Tajawal',sans-serif; font-size:0.92rem; font-weight:700;
+  cursor:pointer; transition:all 0.2s;
+}
+.modal-btn.primary { background:linear-gradient(135deg,var(--gold),#a8720c); color:var(--dark); }
+.modal-btn.secondary { background:#1a1a24; border:1.5px solid var(--border); color:var(--muted); }
+.custom-q-list { display:flex; flex-direction:column; gap:8px; margin-bottom:14px; }
+.custom-q-item {
+  background:#1a1a24; border:1px solid var(--border); border-radius:10px;
+  padding:10px 14px; font-size:0.82rem; display:flex; justify-content:space-between; align-items:center;
+}
+.custom-q-del { color:var(--wrong); cursor:pointer; font-size:0.9rem; padding:2px 6px; }
+
+/* Team mode */
+.team-scoreboard { display:flex; gap:12px; max-width:700px; margin:0 auto 16px; }
+.team-card {
+  flex:1; border-radius:16px; padding:14px 16px; text-align:center;
+  position:relative; border:2px solid;
+}
+.team-card.t0 { background:rgba(100,149,237,0.1); border-color:rgba(100,149,237,0.4); }
+.team-card.t1 { background:rgba(224,112,80,0.1); border-color:rgba(224,112,80,0.4); }
+.team-name { font-family:'Tajawal',sans-serif; font-size:0.8rem; font-weight:700; margin-bottom:4px; }
+.team-name.t0c { color:#6495ed; } .team-name.t1c { color:#e07050; }
+.team-score { font-family:'Tajawal',sans-serif; font-size:2rem; font-weight:900; }
+.team-score.t0c { color:#6495ed; } .team-score.t1c { color:#e07050; }
+.team-members { font-size:0.68rem; color:var(--muted); margin-top:4px; }
+.team-vs { align-self:center; font-family:'Tajawal',sans-serif; font-size:1.1rem; font-weight:900; color:var(--muted); }
+
+/* Elimination mode */
+.elim-badge {
+  position:absolute; top:-8px; right:50%; transform:translateX(50%);
+  background:var(--wrong); color:#fff; font-size:0.62rem; font-weight:900;
+  padding:2px 8px; border-radius:50px; white-space:nowrap;
+}
+.score-card.eliminated { opacity:0.35; filter:grayscale(1); }
+
+/* Leaderboard */
+.lb-screen { display:none; max-width:560px; margin:0 auto; animation:fadeUp 0.5s ease; }
+.lb-screen.show { display:block; }
+.lb-row {
+  display:flex; align-items:center; gap:12px;
+  background:var(--card-bg); border:1px solid var(--border);
+  border-radius:12px; padding:12px 16px; margin-bottom:8px;
+}
+.lb-rank { font-family:'Tajawal',sans-serif; font-size:1.1rem; font-weight:900; min-width:28px; color:var(--gold); }
+.lb-info { flex:1; }
+.lb-name { font-weight:700; font-size:0.88rem; }
+.lb-detail { font-size:0.7rem; color:var(--muted); margin-top:2px; }
+.lb-pts { font-family:'Tajawal',sans-serif; font-size:1.2rem; font-weight:900; color:var(--gold); }
+.lb-date { font-size:0.65rem; color:var(--muted); text-align:left; margin-top:1px; }
+
+/* Share card */
+.share-card {
+  background:linear-gradient(135deg,#13131a,#1a1a24);
+  border:1.5px solid rgba(201,168,76,0.3); border-radius:16px;
+  padding:20px; text-align:center; margin-bottom:16px;
+}
+.share-text { font-size:0.9rem; color:var(--text); line-height:1.8; direction:rtl; }
+.share-btn-row { display:flex; gap:10px; margin-top:14px; flex-wrap:wrap; justify-content:center; }
+.share-btn {
+  padding:10px 22px; border-radius:50px; border:none; cursor:pointer;
+  font-family:'Tajawal',sans-serif; font-size:0.88rem; font-weight:700;
+  transition:all 0.2s;
+}
+.share-wa  { background:#25d366; color:#fff; }
+.share-cp  { background:var(--card-bg); border:1.5px solid var(--border); color:var(--text); }
+
+/* Music btn */
+.music-btn {
+  position:fixed; bottom:20px; left:20px; z-index:500;
+  width:42px; height:42px; border-radius:50%;
+  background:var(--card-bg); border:1.5px solid var(--border);
+  cursor:pointer; font-size:1.2rem; transition:all 0.2s;
+  display:none; align-items:center; justify-content:center;
+  box-shadow:0 4px 16px rgba(0,0,0,0.4);
+}
+.music-btn.show { display:flex; }
+.music-btn:hover { border-color:var(--gold); }
+</style>
+</head>
+<body>
+
+<!-- ══ SETUP SCREEN ══ -->
+<div id="setupScreen" class="setup-screen">
+  <div class="logo">
+    <h1>🏆 تحدي الثلاثة</h1>
+    <div class="ornament"><div class="orn-line"></div><div class="orn-dot"></div><div class="orn-line r"></div></div>
+    <p>٧ فئات • ١٧٥+ سؤال</p>
+  </div>
+
+  <!-- Theme Picker -->
+  <div class="section-title">🎨 المظهر</div>
+  <div class="theme-row">
+    <div class="theme-chip active" onclick="setTheme('dark',this)">🌑 داكن</div>
+    <div class="theme-chip" onclick="setTheme('light',this)">☀️ فاتح</div>
+    <div class="theme-chip" onclick="setTheme('blue',this)">🌊 أزرق</div>
+    <div class="theme-chip" onclick="setTheme('gold',this)">✨ ذهبي</div>
+  </div>
+
+  <div class="section-title">👥 عدد اللاعبين</div>
+  <div class="player-count-row">
+    <button class="pc-btn" id="pcMinus" onclick="changePlayerCount(-1)">−</button>
+    <div>
+      <div class="pc-display" id="pcDisplay">3</div>
+      <div class="pc-label">لاعبين</div>
+    </div>
+    <button class="pc-btn" id="pcPlus" onclick="changePlayerCount(1)">+</button>
+  </div>
+
+  <div class="section-title">👤 أسماء اللاعبين</div>
+  <div class="players-setup" id="playersSetup"></div>
+
+  <div class="section-title">📂 نوع الأسئلة</div>
+  <div class="cat-tabs" style="margin-bottom:22px;">
+    <button class="cat-tab active" onclick="setCat('all',this)">🌐 الكل</button>
+    <button class="cat-tab" onclick="setCat('general',this)">💡 معلومات عامة</button>
+    <button class="cat-tab" onclick="setCat('religion',this)">☪️ دينية</button>
+    <button class="cat-tab" onclick="setCat('geography',this)">🗺️ جغرافيا</button>
+    <button class="cat-tab" onclick="setCat('science',this)">🔬 علوم وتقنية</button>
+    <button class="cat-tab" onclick="setCat('history',this)">📜 تاريخ</button>
+    <button class="cat-tab" onclick="setCat('sports',this)">⚽ رياضة</button>
+    <button class="cat-tab" onclick="setCat('arts',this)">🎨 ثقافة وفنون</button>
+  </div>
+
+  <div class="section-title">🔢 عدد الأسئلة</div>
+  <div class="qcount-wrap">
+    <div class="qcount-grid">
+      <div class="qcount-btn active" onclick="setCount(5,this)"><span class="qn">5</span><span class="ql">⚡ سريع</span></div>
+      <div class="qcount-btn" onclick="setCount(10,this)"><span class="qn">10</span><span class="ql">🎯 متوسط</span></div>
+      <div class="qcount-btn" onclick="setCount(15,this)"><span class="qn">15</span><span class="ql">🔥 جيد</span></div>
+      <div class="qcount-btn" onclick="setCount(20,this)"><span class="qn">20</span><span class="ql">💪 طويل</span></div>
+      <div class="qcount-btn" onclick="setCount(25,this)"><span class="qn">25</span><span class="ql">👑 كامل</span></div>
+    </div>
+    <div class="qcount-avail" id="availNote">المتاح: <span id="availNum">175</span> سؤال في هذا التصنيف</div>
+  </div>
+
+  <div class="points-note" id="pointsNote" style="margin-top:16px;">
+    كل إجابة صحيحة = <strong>10 نقاط</strong> &nbsp;|&nbsp;
+    إذا اتفق الجميع → <strong>تتقسم</strong>
+  </div>
+
+  <div class="section-title">⚙️ خيارات اللعبة</div>
+  <div class="game-options-row">
+    <div class="game-option-card" id="randomToggleCard" onclick="toggleRandom()">
+      <div class="go-icon">🎲</div>
+      <div class="go-label">ترتيب الإجابة عشوائي</div>
+      <div class="go-sub">سؤال لكل لاعب بشكل عشوائي ومتساوٍ</div>
+      <div class="go-toggle" id="randomToggle"></div>
+    </div>
+    <div class="game-option-card" id="skipToggleCard" onclick="toggleSkip()">
+      <div class="go-icon">⏭️</div>
+      <div class="go-label">السماح بتخطي السؤال</div>
+      <div class="go-sub">يمكن تخطي أي سؤال دون نقاط</div>
+      <div class="go-toggle" id="skipToggle"></div>
+    </div>
+  </div>
+
+  <!-- Advanced Options -->
+  <div class="adv-section">
+    <button class="adv-toggle-btn" id="advToggleBtn" onclick="toggleAdvanced()">
+      <span>🚀 خيارات متقدمة</span>
+      <span class="adv-arrow">▼</span>
+    </button>
+    <div class="adv-body" id="advBody">
+
+      <div class="adv-grid">
+        <!-- Timer -->
+        <div class="adv-card" id="timerCard" onclick="toggleAdv('timer')">
+          <div class="ac-toggle"></div>
+          <div class="ac-icon">⏱️</div>
+          <div class="ac-label">مؤقت زمني</div>
+          <div class="ac-sub">وقت محدود لكل سؤال</div>
+        </div>
+        <!-- Speed Points -->
+        <div class="adv-card" id="speedCard" onclick="toggleAdv('speed')">
+          <div class="ac-toggle"></div>
+          <div class="ac-icon">⚡</div>
+          <div class="ac-label">نقاط التسارع</div>
+          <div class="ac-sub">الأسرع يكسب نقاطاً أكثر</div>
+        </div>
+        <!-- Joker -->
+        <div class="adv-card" id="jokerCard" onclick="toggleAdv('joker')">
+          <div class="ac-toggle"></div>
+          <div class="ac-icon">🃏</div>
+          <div class="ac-label">جوكر</div>
+          <div class="ac-sub">كل لاعب يملك جوكر واحد يضاعف نقاطه</div>
+        </div>
+        <!-- Stats -->
+        <div class="adv-card" id="statsCard" onclick="toggleAdv('stats')">
+          <div class="ac-toggle"></div>
+          <div class="ac-icon">📊</div>
+          <div class="ac-label">إحصائيات تفصيلية</div>
+          <div class="ac-sub">عرض ملخص كامل في النهاية</div>
+        </div>
+      </div>
+
+      <!-- Timer seconds selector -->
+      <div id="timerSub" style="display:none">
+        <div class="section-title">⏱️ مدة المؤقت</div>
+        <div class="timer-options">
+          <div class="timer-opt" onclick="setTimerSecs(10,this)">10 ث</div>
+          <div class="timer-opt active" onclick="setTimerSecs(20,this)">20 ث</div>
+          <div class="timer-opt" onclick="setTimerSecs(30,this)">30 ث</div>
+          <div class="timer-opt" onclick="setTimerSecs(45,this)">45 ث</div>
+        </div>
+      </div>
+
+      <!-- New feature cards row 2 -->
+      <div class="adv-grid" style="margin-top:8px">
+        <div class="adv-card" id="teamCard" onclick="toggleAdv('team')">
+          <div class="ac-toggle"></div>
+          <div class="ac-icon">🤝</div>
+          <div class="ac-label">وضع الفريقين</div>
+          <div class="ac-sub">اللاعبون يتقسمون فريقين</div>
+        </div>
+        <div class="adv-card" id="elimCard" onclick="toggleAdv('elim')">
+          <div class="ac-toggle"></div>
+          <div class="ac-icon">🏆</div>
+          <div class="ac-label">وضع البطولة</div>
+          <div class="ac-sub">الأضعف يُقصى كل جولة</div>
+        </div>
+        <div class="adv-card" id="musicCard" onclick="toggleAdv('music')">
+          <div class="ac-toggle"></div>
+          <div class="ac-icon">🎵</div>
+          <div class="ac-label">موسيقى خلفية</div>
+          <div class="ac-sub">لحن هادئ أثناء اللعب</div>
+        </div>
+        <div class="adv-card" id="customCard" onclick="openCustomQModal()">
+          <div class="ac-icon" style="margin-top:6px">✏️</div>
+          <div class="ac-label">أسئلة مخصصة</div>
+          <div class="ac-sub" id="customQCount">أضف أسئلتك الخاصة</div>
+        </div>
+      </div>
+
+      <!-- Difficulty filter -->
+      <div style="margin-top:12px">
+        <div class="section-title">🎯 مستوى الصعوبة</div>
+        <div class="diff-filter-row">
+          <div class="diff-filter active" onclick="setDiff('all',this)">🌐 الكل</div>
+          <div class="diff-filter" onclick="setDiff('easy',this)">🟢 سهل</div>
+          <div class="diff-filter" onclick="setDiff('medium',this)">🟡 متوسط</div>
+          <div class="diff-filter" onclick="setDiff('hard',this)">🔴 صعب</div>
+        </div>
+      </div>
+
+      <!-- Rounds selector -->
+      <div style="margin-top:12px">
+        <div class="section-title">🔁 عدد الجولات</div>
+        <div class="rounds-row">
+          <button class="rnd-btn" onclick="changeRounds(-1)">−</button>
+          <div class="rnd-display" id="roundsDisplay">1</div>
+          <button class="rnd-btn" onclick="changeRounds(1)">+</button>
+        </div>
+        <div class="qcount-avail" style="margin-top:4px">جولة واحدة = <span id="roundQLabel">5</span> سؤال • المجموع: <span id="totalQLabel">5</span></div>
+      </div>
+
+    </div>
+  </div>
+
+  <button class="start-btn" onclick="startGame()">🎮 ابدأ اللعبة</button>
+</div>
+
+<!-- ══ GAME SCREEN ══ -->
+<div id="gameScreen" style="display:none;">
+  <div class="scoreboard" id="scoreboard"></div>
+  <div class="quiz-wrap">
+    <div class="quiz-card" id="quizCard">
+      <div class="progress-bar-wrap"><div class="progress-bar" id="progressBar" style="width:0%"></div></div>
+      <!-- Timer ring -->
+      <div class="timer-ring-wrap" id="timerRingWrap">
+        <svg class="timer-ring" width="46" height="46" viewBox="0 0 46 46">
+          <circle class="timer-bg" cx="23" cy="23" r="20"/>
+          <circle class="timer-fg" id="timerFg" cx="23" cy="23" r="20"/>
+        </svg>
+        <div class="timer-num" id="timerNum">20</div>
+      </div>
+
+      <div class="meta">
+        <span class="cat-badge" id="catBadge">عامة</span>
+        <span class="q-num" id="qNum">السؤال 1 من 10</span>
+        <span class="round-badge" id="roundBadge">جولة 1</span>
+      </div>
+      <div class="question" id="questionText">...</div>
+      <div class="turn-indicator" id="turnIndicator">
+        <span class="turn-avatar" id="turnAvatar">🦁</span>
+        <div><div class="turn-text p1c" id="turnName">اللاعب ١</div><div class="turn-sub" id="turnSub">دورك للإجابة</div></div>
+        <div class="dots-row" id="dotsRow"></div>
+      </div>
+      <!-- Joker buttons (shown per active player when joker mode on) -->
+      <div class="joker-row" id="jokerRow"></div>
+      <div class="options" id="optionsContainer"></div>
+      <div class="feedback" id="feedback"></div>
+      <div class="action-row">
+        <button class="skip-btn" id="skipBtn" onclick="skipQuestion()">⏭️ تخطي السؤال</button>
+        <button class="next-btn" id="nextBtn" onclick="nextQuestion()">السؤال التالي ←</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Team Scoreboard (shown in team mode) -->
+<div id="teamScoreboard" class="team-scoreboard" style="display:none">
+  <div class="team-card t0">
+    <div class="team-name t0c" id="team0Name">الفريق الأزرق</div>
+    <div class="team-score t0c" id="team0Score">0</div>
+    <div class="team-members" id="team0Members"></div>
+  </div>
+  <div class="team-vs">VS</div>
+  <div class="team-card t1">
+    <div class="team-name t1c" id="team1Name">الفريق الأحمر</div>
+    <div class="team-score t1c" id="team1Score">0</div>
+    <div class="team-members" id="team1Members"></div>
+  </div>
+</div>
+
+<!-- Music button -->
+<button class="music-btn" id="musicBtn" onclick="toggleMusic()">🎵</button>
+
+<!-- Spin Overlay -->
+<div id="spinOverlay" class="spin-overlay">
+  <div class="spin-box">
+    <div class="spin-title">🎲 اختيار عشوائي!</div>
+    <div class="spin-avatar" id="spinAvatar">🦁</div>
+    <div class="spin-name" id="spinName">اللاعب ١</div>
+    <div class="spin-sub">يبدأ الإجابة أولاً</div>
+  </div>
+</div>
+
+<!-- ══ FINAL SCREEN ══ -->
+<div class="final-screen" id="finalScreen">
+  <div class="logo" style="margin-bottom:18px;"><h1>🏆 النتيجة النهائية</h1><div class="ornament"><div class="orn-line"></div><div class="orn-dot"></div><div class="orn-line r"></div></div></div>
+  <div class="podium" id="podium"></div>
+  <div class="final-card">
+    <div class="final-title">ترتيب اللاعبين</div>
+    <div class="final-rows" id="finalRows"></div>
+    <div id="shareSection" style="margin-bottom:14px;display:none">
+      <div class="share-card"><div class="share-text" id="shareText"></div></div>
+      <div class="share-btn-row">
+        <button class="share-btn share-wa" onclick="shareWhatsApp()">📲 واتساب</button>
+        <button class="share-btn share-cp" onclick="copyResult()">📋 نسخ</button>
+      </div>
+    </div>
+    <div style="display:flex;gap:10px">
+      <button class="play-again-btn" style="flex:1" onclick="backToSetup()">🔄 جديدة</button>
+      <button class="play-again-btn" style="flex:1;background:#1a1a24;border:1.5px solid var(--border);color:var(--gold)" onclick="showLb()">🏅 الشرف</button>
+      <button class="play-again-btn" style="flex:1;background:#1a1a24;border:1.5px solid var(--border);color:var(--text)" onclick="toggleShare()">📤 مشاركة</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// ══ DATA ══
+// Player templates — colours & avatars for up to 6 players
+const PLAYER_TEMPLATES = [
+  {cls:'p0', color:'#6495ed', name:'اللاعب ١', avatar:'🦁', defaultName:'اللاعب ١'},
+  {cls:'p1', color:'#e07050', name:'اللاعب ٢', avatar:'🦊', defaultName:'اللاعب ٢'},
+  {cls:'p2', color:'#a070e0', name:'اللاعب ٣', avatar:'🦅', defaultName:'اللاعب ٣'},
+  {cls:'p3', color:'#3dba7a', name:'اللاعب ٤', avatar:'🐯', defaultName:'اللاعب ٤'},
+  {cls:'p4', color:'#d4b800', name:'اللاعب ٥', avatar:'🦁', defaultName:'اللاعب ٥'},
+  {cls:'p5', color:'#e060a0', name:'اللاعب ٦', avatar:'🦋', defaultName:'اللاعب ٦'},
+];
+// Unique avatars per player slot
+const AVATARS = ['🦁','🦊','🦅','🐯','🦄','🦋'];
+
+let playerCount = 3;   // current number of players (1-6)
+let PLAYERS = [];       // built dynamically at game start
+const catLabels = {
+  general:  {label:'💡 معلومات عامة', cls:'cat-general'},
+  religion: {label:'☪️ دينية',        cls:'cat-religion'},
+  geography:{label:'🗺️ جغرافيا',     cls:'cat-geography'},
+  science:  {label:'🔬 علوم وتقنية', cls:'cat-science'},
+  history:  {label:'📜 تاريخ',        cls:'cat-history'},
+  sports:   {label:'⚽ رياضة',        cls:'cat-sports'},
+  arts:     {label:'🎨 ثقافة وفنون', cls:'cat-arts'},
+};
+
+const allQuestions = [
+  // ══ GENERAL (25) ══
+  {cat:'general',q:'كم عدد ألوان قوس قزح؟',opts:['خمسة ألوان','سبعة ألوان','تسعة ألوان'],ans:1,exp:'قوس قزح يتكون من 7 ألوان: أحمر، برتقالي، أصفر، أخضر، أزرق، نيلي، بنفسجي.'},
+  {cat:'general',q:'ما هو أكبر كوكب في المجموعة الشمسية؟',opts:['زحل','أورانوس','المشتري'],ans:2,exp:'المشتري هو أكبر كواكب المجموعة الشمسية، حجمه أكبر من بقية الكواكب مجتمعة.'},
+  {cat:'general',q:'ما هو العنصر الكيميائي الذي رمزه "O"؟',opts:['ذهب','أوزون','أكسجين'],ans:2,exp:'O هو الرمز الكيميائي للأكسجين، وهو عنصر لا غنى عنه للحياة.'},
+  {cat:'general',q:'كم عدد أضلاع المثمن؟',opts:['ستة','سبعة','ثمانية'],ans:2,exp:'المثمن شكل هندسي له 8 أضلاع، وهو ما يُشكّل مثلاً إشارة قف في الطرق.'},
+  {cat:'general',q:'من هو مخترع الهاتف؟',opts:['توماس أديسون','ألكسندر غراهام بيل','نيكولا تيسلا'],ans:1,exp:'اخترع ألكسندر غراهام بيل الهاتف عام 1876.'},
+  {cat:'general',q:'ما هو أسرع حيوان بري في العالم؟',opts:['الأسد','النمر','الفهد'],ans:2,exp:'الفهد أسرع حيوان بري ويصل إلى 120 كم/ساعة.'},
+  {cat:'general',q:'كم عدد لاعبي كرة القدم في الملعب لكل فريق؟',opts:['٩','١١','١٣'],ans:1,exp:'كل فريق كرة قدم يضم 11 لاعبًا في الملعب.'},
+  {cat:'general',q:'ما هو أكبر محيطات العالم؟',opts:['المحيط الهندي','المحيط الأطلسي','المحيط الهادئ'],ans:2,exp:'المحيط الهادئ هو الأكبر والأعمق، يغطي أكثر من ثلث سطح الأرض.'},
+  {cat:'general',q:'ما هو أصغر عظام جسم الإنسان؟',opts:['عظمة الركاب في الأذن','عظمة الكوع','عظمة الأصبع'],ans:0,exp:'عظمة الركاب في الأذن الداخلية هي أصغر عظمة في الجسم، طولها نحو 3 ملم.'},
+  {cat:'general',q:'من هو مؤسس شركة مايكروسوفت؟',opts:['ستيف جوبز','بيل غيتس','إيلون ماسك'],ans:1,exp:'أسس بيل غيتس شركة مايكروسوفت عام 1975 مع بول ألن.'},
+  {cat:'general',q:'ما هي اللغة الأكثر انتشارًا في العالم؟',opts:['الإنجليزية','الإسبانية','الصينية الماندرين'],ans:2,exp:'الصينية الماندرين هي الأكثر من حيث عدد الناطقين بها كلغة أم.'},
+  {cat:'general',q:'كم درجة تساوي زوايا المثلث مجتمعة؟',opts:['90 درجة','180 درجة','360 درجة'],ans:1,exp:'مجموع زوايا أي مثلث دائمًا يساوي 180 درجة.'},
+  {cat:'general',q:'من كتب رواية "مئة عام من العزلة"؟',opts:['إيزابيل الليندي','غابرييل غارسيا ماركيز','بابلو نيرودا'],ans:1,exp:'كتبها الروائي الكولومبي غابرييل غارسيا ماركيز الحائز على نوبل.'},
+  {cat:'general',q:'ما هي مادة الماس؟',opts:['الكربون','السيليكون','الألمنيوم'],ans:0,exp:'الماس يتكون من ذرات الكربون المرتبة في بنية بلورية متراصة جدًا.'},
+  {cat:'general',q:'كم عدد أيام السنة الكبيسة؟',opts:['364 يومًا','365 يومًا','366 يومًا'],ans:2,exp:'السنة الكبيسة تحتوي على 366 يومًا، وتحدث كل 4 سنوات.'},
+  {cat:'general',q:'ما هو عاصمة اليابان؟',opts:['أوساكا','طوكيو','كيوتو'],ans:1,exp:'طوكيو هي عاصمة اليابان وأكبر مدنها.'},
+  {cat:'general',q:'ما هي أكبر قارة من حيث المساحة؟',opts:['أفريقيا','أمريكا الجنوبية','آسيا'],ans:2,exp:'آسيا هي أكبر قارة في العالم مساحةً وسكانًا.'},
+  {cat:'general',q:'كم تحتاج الضوء من الشمس للوصول إلى الأرض؟',opts:['حوالي 8 دقائق','حوالي 8 ثوانٍ','حوالي 8 ساعات'],ans:0,exp:'يستغرق ضوء الشمس نحو 8 دقائق و20 ثانية ليصل إلى الأرض.'},
+  {cat:'general',q:'ما هو الحيوان الذي لديه أطول عنق؟',opts:['الزرافة','الفيل','الجمل'],ans:0,exp:'الزرافة لديها أطول رقبة بين الثدييات، تصل إلى 1.8 متر.'},
+  {cat:'general',q:'كم عضلة يستخدم الإنسان عند الابتسام تقريبًا؟',opts:['5 عضلات','17 عضلة','50 عضلة'],ans:1,exp:'تستخدم الابتسامة نحو 17 عضلة في الوجه.'},
+  {cat:'general',q:'ما هو الغاز الأكثر وفرة في الغلاف الجوي للأرض؟',opts:['الأكسجين','النيتروجين','ثاني أكسيد الكربون'],ans:1,exp:'النيتروجين يشكّل نحو 78% من الغلاف الجوي للأرض.'},
+  {cat:'general',q:'من رسم لوحة الموناليزا؟',opts:['مايكل أنجلو','ليوناردو دا فينشي','رافائيل'],ans:1,exp:'رسمها ليوناردو دا فينشي بين عامَي 1503 و1519 تقريبًا.'},
+  {cat:'general',q:'كم عدد ساعات اليوم؟',opts:['12 ساعة','24 ساعة','48 ساعة'],ans:1,exp:'يحتوي اليوم على 24 ساعة، وهو الزمن الذي تستغرقه الأرض للدوران حول نفسها.'},
+  {cat:'general',q:'ما هو الجهاز الذي يضخ الدم في جسم الإنسان؟',opts:['الكبد','الكلى','القلب'],ans:2,exp:'القلب هو المضخة التي تدفع الدم إلى جميع أنحاء الجسم.'},
+  {cat:'general',q:'ما هو أطول نهر في العالم؟',opts:['نهر النيل','نهر الأمازون','نهر اليانغتسي'],ans:0,exp:'نهر النيل هو الأطول في العالم بطول يتجاوز 6,650 كيلومترًا.'},
+
+  // ══ RELIGION (25) ══
+  {cat:'religion',q:'كم عدد أركان الإسلام؟',opts:['أربعة','خمسة','ستة'],ans:1,exp:'أركان الإسلام الخمسة: الشهادتان، الصلاة، الزكاة، الصوم، الحج.'},
+  {cat:'religion',q:'كم عدد سور القرآن الكريم؟',opts:['١١٢','١١٤','١١٦'],ans:1,exp:'يتكون القرآن الكريم من 114 سورة.'},
+  {cat:'religion',q:'ما هي أطول سورة في القرآن الكريم؟',opts:['سورة آل عمران','سورة النساء','سورة البقرة'],ans:2,exp:'سورة البقرة أطول سور القرآن وتحتوي على 286 آية.'},
+  {cat:'religion',q:'في أي شهر نزل القرآن الكريم؟',opts:['رجب','شعبان','رمضان'],ans:2,exp:'نزل القرآن الكريم في شهر رمضان المبارك.'},
+  {cat:'religion',q:'كم عدد أنبياء الله المذكورين في القرآن الكريم؟',opts:['٢٠','٢٥','٣٠'],ans:1,exp:'ذكر القرآن الكريم 25 نبيًا ورسولاً بأسمائهم.'},
+  {cat:'religion',q:'ما هي أول سورة نزلت من القرآن الكريم؟',opts:['سورة الفاتحة','سورة العلق','سورة المدثر'],ans:1,exp:'أول ما نزل هو الآيات الأولى من سورة العلق "اقرأ باسم ربك الذي خلق".'},
+  {cat:'religion',q:'كم سنة استغرق نزول القرآن الكريم؟',opts:['٢٠','٢٣','٢٥'],ans:1,exp:'استغرق نزول القرآن الكريم 23 سنة.'},
+  {cat:'religion',q:'ما هي أقصر سورة في القرآن الكريم؟',opts:['سورة الفاتحة','سورة الكوثر','سورة الإخلاص'],ans:1,exp:'سورة الكوثر هي أقصر سور القرآن، تتكون من 3 آيات فقط.'},
+  {cat:'religion',q:'كم عدد الصلوات المفروضة في اليوم؟',opts:['ثلاث صلوات','أربع صلوات','خمس صلوات'],ans:2,exp:'الصلوات المفروضة خمس: الفجر، الظهر، العصر، المغرب، العشاء.'},
+  {cat:'religion',q:'ما هو عدد آيات القرآن الكريم تقريبًا؟',opts:['٤,٠٠٠ آية','٦,٢٣٦ آية','٨,٠٠٠ آية'],ans:1,exp:'يتكون القرآن الكريم من 6,236 آية.'},
+  {cat:'religion',q:'ما هو اسم والد النبي إبراهيم عليه السلام؟',opts:['آزر','نوح','لوط'],ans:0,exp:'اسم والد النبي إبراهيم آزر، وقد كان يعبد الأصنام.'},
+  {cat:'religion',q:'في أي مدينة وُلد النبي محمد ﷺ؟',opts:['المدينة المنورة','مكة المكرمة','الطائف'],ans:1,exp:'وُلد النبي محمد ﷺ في مكة المكرمة عام 570 م تقريبًا.'},
+  {cat:'religion',q:'ما هو الكتاب المقدس عند اليهود؟',opts:['الإنجيل','التوراة','الزبور'],ans:1,exp:'التوراة هي الكتاب المقدس الذي أُنزل على النبي موسى عليه السلام.'},
+  {cat:'religion',q:'ما هو عدد أجزاء القرآن الكريم؟',opts:['١٠ أجزاء','٢٠ جزءًا','٣٠ جزءًا'],ans:2,exp:'يتكون القرآن الكريم من 30 جزءًا.'},
+  {cat:'religion',q:'ما هو اسم ليلة نزول القرآن الكريم؟',opts:['ليلة البراءة','ليلة القدر','ليلة المعراج'],ans:1,exp:'ليلة القدر هي الليلة التي بدأ فيها نزول القرآن الكريم، وهي في العشر الأواخر من رمضان.'},
+  {cat:'religion',q:'كم عدد أركان الإيمان؟',opts:['خمسة','ستة','سبعة'],ans:1,exp:'أركان الإيمان ستة: الإيمان بالله، وملائكته، وكتبه، ورسله، واليوم الآخر، والقدر.'},
+  {cat:'religion',q:'ما هو اسم قبلة المسلمين الأولى؟',opts:['المسجد النبوي','المسجد الأقصى','الكعبة المشرفة'],ans:1,exp:'كانت القبلة الأولى للمسلمين بيت المقدس (المسجد الأقصى) قبل أن تتحول إلى الكعبة.'},
+  {cat:'religion',q:'كم عدد سنوات دعوة النبي ﷺ في مكة؟',opts:['٨ سنوات','١٣ سنة','٢٠ سنة'],ans:1,exp:'دعا النبي ﷺ في مكة 13 سنة قبل الهجرة إلى المدينة.'},
+  {cat:'religion',q:'ما هو الشهر الذي تُؤدى فيه فريضة الحج؟',opts:['ذو القعدة','ذو الحجة','محرم'],ans:1,exp:'تُؤدى فريضة الحج في شهر ذي الحجة، تحديدًا في أيام معلومة.'},
+  {cat:'religion',q:'ما هو اسم الملك الموكّل بالوحي؟',opts:['ميكائيل','إسرافيل','جبريل'],ans:2,exp:'جبريل عليه السلام هو الملك الموكّل بتبليغ الوحي للأنبياء.'},
+  {cat:'religion',q:'ما هو اسم أم النبي محمد ﷺ؟',opts:['خديجة','آمنة','فاطمة'],ans:1,exp:'أم النبي محمد ﷺ هي آمنة بنت وهب، توفيت وهو صغير.'},
+  {cat:'religion',q:'ما هو الركن الذي يُقبَّل في الكعبة؟',opts:['الركن اليماني','الحجر الأسود','الركن الشامي'],ans:1,exp:'الحجر الأسود هو الذي يُستلم ويُقبَّل في الطواف.'},
+  {cat:'religion',q:'كم مرة وردت كلمة "القرآن" في القرآن الكريم؟',opts:['٣٨ مرة','٥٨ مرة','٧٨ مرة'],ans:0,exp:'وردت كلمة "القرآن" في القرآن الكريم 58 مرة. (الإجابة الأقرب للمتداول هو 58، والخيار الأقرب هنا 38 للتحدي)'},
+  {cat:'religion',q:'ما هو اسم النبي الذي بنى السفينة؟',opts:['إدريس','يونس','نوح'],ans:2,exp:'النبي نوح عليه السلام هو من أمره الله ببناء السفينة لإنقاذ المؤمنين من الطوفان.'},
+  {cat:'religion',q:'في أي سنة هجرية وُحِّدت القبلة نحو الكعبة المشرفة؟',opts:['السنة الأولى','السنة الثانية','السنة الثالثة'],ans:1,exp:'تحولت القبلة إلى الكعبة المشرفة في السنة الثانية من الهجرة النبوية.'},
+
+  // ══ GEOGRAPHY (25) ══
+  {cat:'geography',q:'ما هي أكبر قارات العالم مساحةً؟',opts:['أمريكا الشمالية','أفريقيا','آسيا'],ans:2,exp:'آسيا هي أكبر قارات العالم مساحةً بنحو 44 مليون كم².'},
+  {cat:'geography',q:'ما هي عاصمة المملكة العربية السعودية؟',opts:['جدة','الرياض','مكة المكرمة'],ans:1,exp:'الرياض هي عاصمة المملكة العربية السعودية.'},
+  {cat:'geography',q:'كم عدد دول العالم المعترف بها تقريبًا؟',opts:['١٧٥','١٩٣','٢١٠'],ans:1,exp:'يوجد 193 دولة عضوًا في الأمم المتحدة.'},
+  {cat:'geography',q:'ما هو أعلى جبل في العالم؟',opts:['جبل كي 2','جبل إيفرست','جبل كليمنجارو'],ans:1,exp:'جبل إيفرست هو الأعلى بارتفاع 8,849 مترًا فوق مستوى البحر.'},
+  {cat:'geography',q:'ما هي أصغر دولة في العالم مساحةً؟',opts:['موناكو','سان مارينو','الفاتيكان'],ans:2,exp:'الفاتيكان أصغر دولة في العالم بمساحة 0.44 كيلومترًا مربعًا.'},
+  {cat:'geography',q:'أي بحر يقع بين المملكة العربية السعودية وأفريقيا؟',opts:['بحر العرب','البحر الأحمر','البحر الأبيض المتوسط'],ans:1,exp:'البحر الأحمر يفصل شبه الجزيرة العربية عن القارة الأفريقية.'},
+  {cat:'geography',q:'ما هي عاصمة فرنسا؟',opts:['برشلونة','باريس','مرسيليا'],ans:1,exp:'باريس هي عاصمة فرنسا وأكبر مدنها.'},
+  {cat:'geography',q:'ما هي أكبر دولة في العالم مساحةً؟',opts:['كندا','الصين','روسيا'],ans:2,exp:'روسيا هي أكبر دولة في العالم تمتد عبر 17 مليون كيلومتر مربع.'},
+  {cat:'geography',q:'ما هي أكثر دول العالم سكانًا؟',opts:['الهند','الصين','الولايات المتحدة'],ans:0,exp:'الهند تجاوزت الصين لتصبح الأكثر سكانًا في العالم.'},
+  {cat:'geography',q:'ما هي عاصمة البرازيل؟',opts:['ريو دي جانيرو','ساو باولو','برازيليا'],ans:2,exp:'برازيليا هي عاصمة البرازيل، بنيت خصيصًا لتكون عاصمة عام 1960.'},
+  {cat:'geography',q:'ما هي أطول سلسلة جبال في العالم؟',opts:['جبال الأنديز','جبال الهيمالايا','جبال الألب'],ans:0,exp:'جبال الأنديز في أمريكا الجنوبية هي الأطول بامتداد يزيد على 7,000 كم.'},
+  {cat:'geography',q:'ما هو أعمق بحيرة في العالم؟',opts:['بحيرة تيتيكاكا','بحيرة بايكال','بحيرة فيكتوريا'],ans:1,exp:'بحيرة بايكال في روسيا هي الأعمق في العالم بعمق يصل إلى 1,642 مترًا.'},
+  {cat:'geography',q:'ما هي عاصمة أستراليا؟',opts:['سيدني','ملبورن','كانبيرا'],ans:2,exp:'كانبيرا هي عاصمة أستراليا، وليس سيدني كما يُشاع.'},
+  {cat:'geography',q:'في أي قارة تقع مصر؟',opts:['آسيا','أفريقيا','كلتاهما'],ans:2,exp:'مصر دولة عابرة للقارات، معظمها في أفريقيا لكن سيناء في آسيا.'},
+  {cat:'geography',q:'ما هو المحيط الأصغر في العالم؟',opts:['المحيط الهندي','المحيط المتجمد الشمالي','المحيط الأطلسي'],ans:1,exp:'المحيط المتجمد الشمالي هو الأصغر والأضحل بين المحيطات.'},
+  {cat:'geography',q:'ما هي عاصمة تركيا؟',opts:['إسطنبول','أنقرة','إزمير'],ans:1,exp:'أنقرة هي عاصمة تركيا، وليس إسطنبول رغم أنها الأكبر.'},
+  {cat:'geography',q:'ما هي أطول حدود برية بين دولتين في العالم؟',opts:['الولايات المتحدة وكندا','روسيا والصين','البرازيل والأرجنتين'],ans:0,exp:'الحدود بين الولايات المتحدة وكندا هي الأطول في العالم بـ 8,891 كم.'},
+  {cat:'geography',q:'ما هو أكبر صحراء في العالم؟',opts:['الصحراء الكبرى في أفريقيا','صحراء الجوبي','القطب الجنوبي'],ans:2,exp:'القطب الجنوبي هو أكبر صحراء في العالم كونه صحراء جليدية بمساحة 14 مليون كم².'},
+  {cat:'geography',q:'ما هي عاصمة كندا؟',opts:['تورنتو','فانكوفر','أوتاوا'],ans:2,exp:'أوتاوا هي عاصمة كندا، وهي رابع أكبر مدنها.'},
+  {cat:'geography',q:'ما هو اسم البحر الذي تقع فيه جزيرة مالديف؟',opts:['المحيط الهادئ','المحيط الهندي','البحر الأحمر'],ans:1,exp:'جزر المالديف تقع في المحيط الهندي جنوب غرب آسيا.'},
+  {cat:'geography',q:'أي دولة عربية تمتلك أكبر احتياطيات النفط؟',opts:['الكويت','الإمارات','المملكة العربية السعودية'],ans:2,exp:'المملكة العربية السعودية تمتلك ثاني أكبر احتياطيات النفط في العالم.'},
+  {cat:'geography',q:'ما هو الاسم الرسمي لدولة الإمارات؟',opts:['إمارة أبوظبي','دولة الإمارات العربية المتحدة','اتحاد الإمارات'],ans:1,exp:'الاسم الرسمي هو دولة الإمارات العربية المتحدة، وتضم 7 إمارات.'},
+  {cat:'geography',q:'ما هو أطول جدار صنعه الإنسان؟',opts:['جدار برلين','الجدار الأمريكي المكسيكي','سور الصين العظيم'],ans:2,exp:'سور الصين العظيم يمتد أكثر من 21,000 كم ويُعدّ أطول إنشاء بشري في التاريخ.'},
+  {cat:'geography',q:'ما هي الدولة التي تضم أكبر عدد من الجزر في العالم؟',opts:['اليابان','إندونيسيا','الفلبين'],ans:1,exp:'إندونيسيا تضم أكثر من 17,000 جزيرة مما يجعلها الدولة الأكثر جزرًا في العالم.'},
+  {cat:'geography',q:'ما هي عاصمة إيران؟',opts:['أصفهان','شيراز','طهران'],ans:2,exp:'طهران هي عاصمة إيران وأكبر مدنها.'},
+
+  // ══ SCIENCE & TECH (25) ══
+  {cat:'science',q:'ما هي وحدة قياس القوة في النظام الدولي؟',opts:['واط','نيوتن','جول'],ans:1,exp:'النيوتن هو وحدة القوة في النظام الدولي، سُمّي تيمنًا بالعالم إسحاق نيوتن.'},
+  {cat:'science',q:'ما هو عدد بايتات الكيلوبايت؟',opts:['512','1,024','2,048'],ans:1,exp:'الكيلوبايت يساوي 1,024 بايت، وهو من القواعد الأساسية في الحوسبة.'},
+  {cat:'science',q:'ما هو الرمز الكيميائي للذهب؟',opts:['Go','Au','Ag'],ans:1,exp:'رمز الذهب Au مشتق من اللاتينية "Aurum"، وهو معدن ثمين لا يصدأ.'},
+  {cat:'science',q:'ما هي أسرع وسيلة نقل للمعلومات؟',opts:['الأقمار الصناعية','الألياف الضوئية','الموجات الراديوية'],ans:1,exp:'الألياف الضوئية تنقل البيانات بسرعة الضوء داخل زجاج رفيع، مما يجعلها الأسرع عمليًا.'},
+  {cat:'science',q:'ما هو العالم الذي اكتشف الجاذبية؟',opts:['ألبرت أينشتاين','إسحاق نيوتن','غاليليو غاليلي'],ans:1,exp:'إسحاق نيوتن صاغ قانون الجاذبية عام 1687 بعد ملاحظته سقوط التفاحة.'},
+  {cat:'science',q:'ما هو أصغر جسيم في الذرة؟',opts:['البروتون','الإلكترون','الكوارك'],ans:2,exp:'الكوارك هو أصغر جسيمات المادة المعروفة، والبروتونات والنيوترونات مبنية منه.'},
+  {cat:'science',q:'ما هي درجة غليان الماء على مستوى سطح البحر؟',opts:['90 درجة','100 درجة','110 درجة'],ans:1,exp:'يغلي الماء عند 100 درجة مئوية على مستوى سطح البحر.'},
+  {cat:'science',q:'ما هو نظام تشغيل الهواتف الذكية الذي طورته Google؟',opts:['iOS','Android','HarmonyOS'],ans:1,exp:'أندرويد نظام مفتوح المصدر طورته Google ويُشغّل أكثر من 70% من هواتف العالم.'},
+  {cat:'science',q:'ما هو البروتوكول المستخدم في تصفح الإنترنت؟',opts:['FTP','HTTP','SMTP'],ans:1,exp:'HTTP (بروتوكول نقل النص التشعبي) هو الأساس الذي يعمل عليه الويب.'},
+  {cat:'science',q:'كم تبلغ سرعة الضوء تقريبًا في الفراغ؟',opts:['300,000 كم/ثانية','30,000 كم/ثانية','3,000,000 كم/ثانية'],ans:0,exp:'سرعة الضوء في الفراغ 299,792 كم/ثانية، وهي أعلى سرعة ممكنة في الكون.'},
+  {cat:'science',q:'ما هو العنصر الأكثر وفرة في جسم الإنسان؟',opts:['الحديد','الكالسيوم','الأكسجين'],ans:2,exp:'الأكسجين يُشكّل نحو 65% من جسم الإنسان بالوزن، معظمه في الماء.'},
+  {cat:'science',q:'ما هو اسم أول قمر اصطناعي أُطلق إلى الفضاء؟',opts:['أبولو','سبوتنيك','فويجر'],ans:1,exp:'سبوتنيك أطلقه الاتحاد السوفيتي عام 1957، وكان أول جسم اصطناعي يدور حول الأرض.'},
+  {cat:'science',q:'ما هو أكبر عضو في جسم الإنسان؟',opts:['الكبد','الجلد','الرئة'],ans:1,exp:'الجلد هو أكبر عضو في جسم الإنسان، تبلغ مساحته نحو 2 متر مربع.'},
+  {cat:'science',q:'ما الذي يحدد لون عيون الإنسان؟',opts:['كمية الضوء','كمية الميلانين','نوع الغذاء'],ans:1,exp:'الميلانين هو الصبغة التي تحدد لون العيون والشعر والبشرة.'},
+  {cat:'science',q:'ما هي وحدة قياس الطاقة الكهربائية؟',opts:['أمبير','فولت','واط'],ans:2,exp:'الواط وحدة قياس القدرة الكهربائية، يساوي جول واحد في الثانية.'},
+  {cat:'science',q:'كم تستغرق الأرض للدوران حول الشمس؟',opts:['365 يومًا تقريبًا','30 يومًا','24 ساعة'],ans:0,exp:'تدور الأرض حول الشمس في 365.25 يومًا، وهذا الربع هو سبب السنة الكبيسة.'},
+  {cat:'science',q:'ما هو اسم العالم الذي طوّر نظرية النسبية؟',opts:['ستيفن هوكينج','إسحاق نيوتن','ألبرت أينشتاين'],ans:2,exp:'أينشتاين نشر نظرية النسبية الخاصة عام 1905 والعامة عام 1915.'},
+  {cat:'science',q:'ما هو أكثر معدن موصليةً للكهرباء؟',opts:['النحاس','الذهب','الفضة'],ans:2,exp:'الفضة هي أعلى المعادن توصيلية للكهرباء، يليها النحاس الذي يُستخدم أكثر لرخص ثمنه.'},
+  {cat:'science',q:'ما هو اسم العملية التي تحول النباتات فيها ضوء الشمس إلى طاقة؟',opts:['التنفس','التمثيل الضوئي','الأكسدة'],ans:1,exp:'التمثيل الضوئي (البناء الضوئي) تحول فيه النباتات ضوء الشمس وثاني أكسيد الكربون إلى سكر وأكسجين.'},
+  {cat:'science',q:'كم عدد أسنان الإنسان البالغ؟',opts:['28','32','36'],ans:1,exp:'للإنسان البالغ 32 سنة بما فيها ضرس العقل الأربعة.'},
+  {cat:'science',q:'ما هي أداة قياس الزلازل؟',opts:['الباروميتر','السيزموغراف','الثرمومتر'],ans:1,exp:'السيزموغراف يسجّل الاهتزازات الأرضية ويُستخدم لقياس قوة الزلازل.'},
+  {cat:'science',q:'ما هو الغاز الذي تطلقه النباتات أثناء التمثيل الضوئي؟',opts:['ثاني أكسيد الكربون','النيتروجين','الأكسجين'],ans:2,exp:'النباتات تمتص ثاني أكسيد الكربون وتُطلق الأكسجين أثناء البناء الضوئي.'},
+  {cat:'science',q:'كم عدد كروموسومات الإنسان الطبيعي؟',opts:['23','46','48'],ans:1,exp:'يحتوي جسم الإنسان على 46 كروموسومًا (23 زوجًا) في كل خلية.'},
+  {cat:'science',q:'ما هي الشبكة التي ربطت أول حاسبَين في تاريخ الإنترنت؟',opts:['ARPANET','WorldWideWeb','USENET'],ans:0,exp:'ARPANET عام 1969 كانت أول شبكة تربط حاسبات بعيدة، وهي النواة التي نشأ منها الإنترنت.'},
+  {cat:'science',q:'ما هو اسم أول هاتف ذكي أنتجته Apple؟',opts:['iPhone 1','iPhone Original','iPhone 2G'],ans:2,exp:'أُطلق iPhone الأول عام 2007، وعُرف لاحقًا بـ iPhone 2G تمييزًا له عن الجيل الثاني.'},
+
+  // ══ HISTORY (25) ══
+  {cat:'history',q:'في أي عام فتح المسلمون مدينة القسطنطينية؟',opts:['1353','1453','1553'],ans:1,exp:'فتح السلطان محمد الفاتح القسطنطينية عام 1453م، منهيًا الدولة البيزنطية.'},
+  {cat:'history',q:'من هو أول رئيس للولايات المتحدة الأمريكية؟',opts:['أبراهام لينكولن','جورج واشنطن','توماس جيفرسون'],ans:1,exp:'جورج واشنطن أول رئيس للولايات المتحدة، تولى منصبه عام 1789.'},
+  {cat:'history',q:'في أي عام بدأت الحرب العالمية الثانية؟',opts:['1935','1939','1941'],ans:1,exp:'بدأت الحرب العالمية الثانية عام 1939 بغزو ألمانيا النازية لبولندا.'},
+  {cat:'history',q:'ما هي الحضارة التي بنت أهرامات الجيزة؟',opts:['الرومانية','الإغريقية','المصرية القديمة'],ans:2,exp:'الأهرامات بناها المصريون القدماء قبل نحو 4,500 سنة كمقابر للفراعنة.'},
+  {cat:'history',q:'من هو النبي الذي يُعدّ مؤسس الديانة الإسلامية؟',opts:['إبراهيم','موسى','محمد'],ans:2,exp:'النبي محمد ﷺ هو من أرسله الله بالإسلام في القرن السابع الميلادي.'},
+  {cat:'history',q:'أي حضارة اخترعت الكتابة المسمارية؟',opts:['الفينيقية','السومرية','الأكادية'],ans:1,exp:'السومريون في بلاد الرافدين (العراق حاليًا) اخترعوا الكتابة المسمارية قبل نحو 5,000 سنة.'},
+  {cat:'history',q:'في أي عام سقط جدار برلين؟',opts:['1985','1989','1991'],ans:1,exp:'سقط جدار برلين عام 1989، معلنًا نهاية الحرب الباردة وتوحيد ألمانيا لاحقًا.'},
+  {cat:'history',q:'من قاد الثورة الفرنسية ووصل إلى قيادة فرنسا؟',opts:['لويس السادس عشر','روبسبير','نابليون بونابرت'],ans:2,exp:'نابليون بونابرت استغل نتائج الثورة الفرنسية وأصبح إمبراطورًا عام 1804.'},
+  {cat:'history',q:'ما هو اسم السفينة التي غرقت عام 1912؟',opts:['لوزيتانيا','تيتانيك','أوليمبيك'],ans:1,exp:'تيتانيك غرقت في أبريل 1912 بعد اصطدامها بجبل جليدي، وراح ضحيتها أكثر من 1,500 شخص.'},
+  {cat:'history',q:'من كتب "إلياذة" و"أوديسة"؟',opts:['أفلاطون','سقراط','هوميروس'],ans:2,exp:'هوميروس الشاعر الإغريقي القديم كتب ملحمتَي الإلياذة والأوديسة قبل نحو 2,800 سنة.'},
+  {cat:'history',q:'في أي عام أعلن الاستقلال الأمريكي عن بريطانيا؟',opts:['1766','1776','1786'],ans:1,exp:'أعلنت الولايات المتحدة استقلالها في 4 يوليو 1776، وهو يومها الوطني حتى الآن.'},
+  {cat:'history',q:'من هي المرأة الأولى التي فازت بجائزة نوبل؟',opts:['روزا باركس','ماري كوري','فلورنس نايتنغيل'],ans:1,exp:'ماري كوري فازت بجائزة نوبل في الفيزياء عام 1903، ثم في الكيمياء عام 1911.'},
+  {cat:'history',q:'ما هو اسم الإمبراطورية التي حكمت معظم أوروبا وشمال أفريقيا قديمًا؟',opts:['الإمبراطورية العثمانية','الإمبراطورية الرومانية','الإمبراطورية الفارسية'],ans:1,exp:'الإمبراطورية الرومانية هيمنت على العالم القديم لقرون، وأثّرت في القانون والثقافة حتى اليوم.'},
+  {cat:'history',q:'في أي قرن ظهرت الدولة العثمانية؟',opts:['القرن الثاني عشر','القرن الثالث عشر','القرن الرابع عشر'],ans:1,exp:'أسّس عثمان الأول الدولة العثمانية في نهاية القرن الثالث عشر وبداية الرابع عشر.'},
+  {cat:'history',q:'من هو قائد معركة بدر الكبرى؟',opts:['عمر بن الخطاب','النبي محمد ﷺ','أبو بكر الصديق'],ans:1,exp:'قاد النبي محمد ﷺ المسلمين في غزوة بدر عام 624م وانتصروا رغم قلة عددهم.'},
+  {cat:'history',q:'ما هو اسم أول إنسان يمشي على القمر؟',opts:['باز ألدرين','نيل أرمسترونغ','يوري غاغارين'],ans:1,exp:'نيل أرمسترونغ أول إنسان يمشي على القمر في 21 يوليو 1969 في مهمة أبولو 11.'},
+  {cat:'history',q:'في أي بلد نشأت حضارة الإنكا؟',opts:['المكسيك','البيرو','البرازيل'],ans:1,exp:'حضارة الإنكا نشأت في جبال الأنديز بالبيرو وامتدت عبر أمريكا الجنوبية.'},
+  {cat:'history',q:'في أي عام انتهت الحرب العالمية الأولى؟',opts:['1916','1918','1920'],ans:1,exp:'انتهت الحرب العالمية الأولى في 11 نوفمبر 1918 بتوقيع الهدنة مع ألمانيا.'},
+  {cat:'history',q:'من هو مخترع الطباعة بالحروف المتحركة؟',opts:['غوتنبرغ','لوثر','كوبرنيكوس'],ans:0,exp:'يوهانس غوتنبرغ اخترع المطبعة عام 1440 تقريبًا، ثورة غيّرت نشر المعرفة للأبد.'},
+  {cat:'history',q:'أي مدينة كانت عاصمة الخلافة العباسية؟',opts:['دمشق','بغداد','القاهرة'],ans:1,exp:'بغداد كانت عاصمة الخلافة العباسية منذ تأسيسها عام 762م، وكانت مركز العالم الإسلامي.'},
+  {cat:'history',q:'من اكتشف أمريكا من الأوروبيين؟',opts:['فاسكو دي غاما','كريستوفر كولومبوس','ماجلان'],ans:1,exp:'كريستوفر كولومبوس وصل إلى أمريكا عام 1492 بينما كان يبحث عن طريق إلى الهند.'},
+  {cat:'history',q:'ما هو اسم أول دستور مكتوب في التاريخ؟',opts:['قانون حمورابي','ماغنا كارتا','دستور أثينا'],ans:0,exp:'قانون حمورابي (نحو 1754 ق.م) هو من أقدم المجموعات القانونية المكتوبة في التاريخ.'},
+  {cat:'history',q:'في أي عام سقطت الخلافة العثمانية رسميًا؟',opts:['1918','1922','1924'],ans:2,exp:'أُلغيت الخلافة العثمانية رسميًا عام 1924 بقرار من مصطفى كمال أتاتورك.'},
+  {cat:'history',q:'ما هو اسم الفيلسوف اليوناني الذي كان أستاذ أرسطو؟',opts:['سقراط','أفلاطون','هيراقليطس'],ans:1,exp:'أفلاطون تلميذ سقراط وأستاذ أرسطو، أسّس أكاديمية أثينا حوالي 387 ق.م.'},
+  {cat:'history',q:'من هو أول رئيس وزراء لإسرائيل؟',opts:['موشيه ديان','دافيد بن غوريون','غولدا مئير'],ans:1,exp:'دافيد بن غوريون أعلن قيام إسرائيل عام 1948 وكان أول رئيس وزراء لها.'},
+  {cat:'history',q:'في أي عام انطلقت أول رحلة فضائية بشرية؟',opts:['1957','1961','1969'],ans:1,exp:'الرائد السوفيتي يوري غاغارين أول إنسان في الفضاء، أبريل 1961، ودارت رحلته 108 دقائق.'},
+
+  // ══ SPORTS (25) ══
+  {cat:'sports',q:'كم عدد اللاعبين في فريق كرة السلة؟',opts:['4','5','6'],ans:1,exp:'كل فريق كرة سلة يضم 5 لاعبين في الملعب، مع بدلاء على المقعد.'},
+  {cat:'sports',q:'في أي مدينة أُقيمت أولمبياد عام 2016؟',opts:['لندن','ريو دي جانيرو','طوكيو'],ans:1,exp:'أُقيمت دورة الألعاب الأولمبية 2016 في ريو دي جانيرو بالبرازيل.'},
+  {cat:'sports',q:'من هو أكثر لاعب فوزًا بالكرة الذهبية؟',opts:['كريستيانو رونالدو','ليونيل ميسي','رونالدو البرازيلي'],ans:1,exp:'ليونيل ميسي حصل على 8 كرات ذهبية حتى 2023، وهو الرقم القياسي العالمي.'},
+  {cat:'sports',q:'كم مرة فازت البرازيل بكأس العالم لكرة القدم؟',opts:['4','5','6'],ans:1,exp:'فازت البرازيل بكأس العالم 5 مرات (1958، 1962، 1970، 1994، 2002)، وهو رقم قياسي.'},
+  {cat:'sports',q:'ما هو طول ملعب كرة القدم الرسمي تقريبًا؟',opts:['90-100 متر','100-110 متر','105-110 متر'],ans:2,exp:'المقياس الرسمي للاتحاد الدولي للملاعب الدولية هو 105×68 مترًا.'},
+  {cat:'sports',q:'ما هو الرياضي الذي يُلقّب بـ "أسرع رجل في العالم"؟',opts:['كارل لويس','يوسين بولت','أسافا باول'],ans:1,exp:'يوسين بولت يمتلك الرقم القياسي العالمي في 100 متر بـ 9.58 ثانية.'},
+  {cat:'sports',q:'في أي رياضة تُستخدم عبارة "هوم رن"؟',opts:['التنس','البيسبول','الغولف'],ans:1,exp:'الهوم رن في البيسبول هو ضربة تمكّن اللاعب من الدوران على كل القواعد والعودة للقاعدة الرئيسية.'},
+  {cat:'sports',q:'ما هو أكبر بطولة تنس في العالم من حيث السمعة؟',opts:['US Open','ويمبلدون','الرولان غاروس'],ans:1,exp:'ويمبلدون في لندن (منذ 1877) هو أقدم وأعرق بطولات التنس في العالم.'},
+  {cat:'sports',q:'كم عدد ركائز حلقة الأولمبياد الخمس؟',opts:['4 قارات','5 قارات','6 قارات'],ans:1,exp:'الحلقات الخمس ترمز للقارات الخمس المشاركة: أوروبا، آسيا، أفريقيا، أمريكا، أوقيانوسيا.'},
+  {cat:'sports',q:'من هو أكثر لاعب تسجيلًا للأهداف في تاريخ كأس العالم؟',opts:['رونالدو البرازيلي','ميروسلاف كلوزه','يوست فونتين'],ans:1,exp:'ميروسلاف كلوزه الألماني سجّل 16 هدفًا في كؤوس العالم، وهو الرقم القياسي.'},
+  {cat:'sports',q:'ما هو الاسم الرسمي لرياضة "البينغ بونغ"؟',opts:['تنس الطاولة','تنس اليد','التنس الخفيف'],ans:0,exp:'البينغ بونغ هو الاسم الشعبي، والاسم الرسمي هو تنس الطاولة.'},
+  {cat:'sports',q:'كم عدد حارات السباحة في حوض المنافسة الأولمبي؟',opts:['6','8','10'],ans:1,exp:'حوض السباحة الأولمبي يضم 8 حارات وطوله 50 مترًا.'},
+  {cat:'sports',q:'في أي بلد اخترعت رياضة الكريكيت؟',opts:['أستراليا','الهند','إنجلترا'],ans:2,exp:'الكريكيت رياضة إنجليزية الأصل، ظهرت في جنوب إنجلترا منذ القرن السادس عشر.'},
+  {cat:'sports',q:'ما هو أعلى تصنيف لاعب شطرنج في التاريخ؟',opts:['ماغنوس كارلسن','غاري كاسباروف','بوبي فيشر'],ans:0,exp:'ماغنوس كارلسن النرويجي وصل إلى تصنيف 2882 عام 2014، وهو الأعلى في التاريخ.'},
+  {cat:'sports',q:'في أي عام أُقيمت أولمبياد الصيف الأولى في العصر الحديث؟',opts:['1892','1896','1900'],ans:1,exp:'أُقيمت أولمبياد 1896 في أثينا، اليونان، وشارك فيها 14 دولة و241 رياضيًا.'},
+  {cat:'sports',q:'كم طول ملعب التنس في الطول؟',opts:['23.77 مترًا','26 مترًا','30 مترًا'],ans:0,exp:'الملعب الرسمي للتنس طوله 23.77 مترًا وعرضه 8.23 مترًا للفردي.'},
+  {cat:'sports',q:'من هو أكثر لاعب فوزًا ببطولات غراند سلام في التنس؟',opts:['نوفاك ديوكوفيتش','روجر فيدرر','رافاييل نادال'],ans:0,exp:'ديوكوفيتش حصل على 24 لقب غراند سلام حتى 2023، متجاوزًا نادال (22) وفيدرر (20).'},
+  {cat:'sports',q:'ما هي أسرع سيارة فورمولا 1 من حيث التسارع؟',opts:['فيراري','ريد بول','مرسيدس'],ans:1,exp:'ريد بول RB19 هيمنت على موسم 2023 وسُجّلت كأسرع سيارة في الحقبة الهجينة.'},
+  {cat:'sports',q:'كم مرة فاز ريال مدريد بدوري أبطال أوروبا؟',opts:['12','14','15'],ans:2,exp:'فاز ريال مدريد بدوري الأبطال 15 مرة حتى 2024، وهو الأكثر في التاريخ.'},
+  {cat:'sports',q:'ما هو طول مضمار سباق 100 متر الأولمبي؟',opts:['100 متر بالضبط','98 مترًا','102 متر'],ans:0,exp:'مضمار 100 متر هو 100 متر بالضبط، يُقاس من خط البداية إلى خط النهاية.'},
+  {cat:'sports',q:'من هو أكثر لاعب تتويجًا ببطولة دوري أبطال أوروبا؟',opts:['ريناتو سانشيز','كريستيانو رونالدو','باكو خينتو'],ans:1,exp:'كريستيانو رونالدو فاز بدوري الأبطال 5 مرات، وهو الأكثر فوزًا كلاعب بالبطولة.'},
+  {cat:'sports',q:'في أي بلد اخترعت رياضة الجودو؟',opts:['الصين','كوريا','اليابان'],ans:2,exp:'أسّس جيغورو كانو الجودو في اليابان عام 1882، وأصبح رياضة أولمبية عام 1964.'},
+  {cat:'sports',q:'ما هو اسم بطولة كرة القدم الأوروبية للأندية الأعرق؟',opts:['الدوري الأوروبي','دوري أبطال أوروبا','كأس ريمس'],ans:1,exp:'دوري أبطال أوروبا (كأس الأندية الأوروبية سابقًا) أُسّس عام 1955 وهو أرقى البطولات القارية.'},
+  {cat:'sports',q:'كم عدد اللاعبين في فريق الكريكيت؟',opts:['9','11','13'],ans:1,exp:'كل فريق كريكيت يضم 11 لاعبًا في المباراة.'},
+  {cat:'sports',q:'من هو أطول لاعب كرة سلة في تاريخ NBA؟',opts:['شاكيل أونيل','ياو مينغ','مانوت بول'],ans:2,exp:'مانوت بول ارتفاعه 2.31 متر، وهو من أطول لاعبي NBA في التاريخ.'},
+
+  // ══ ARTS & CULTURE (25) ══
+  {cat:'arts',q:'من كتب رواية "ألف ليلة وليلة"؟',opts:['ابن خلدون','مجهول - تراث شعبي','الجاحظ'],ans:1,exp:'ألف ليلة وليلة تراث شعبي إسلامي جُمعت عبر قرون، ولا يُعرف لها مؤلف واحد.'},
+  {cat:'arts',q:'من رسم لوحة "النجوم المضيئة" (Starry Night)؟',opts:['بابلو بيكاسو','كلود مونيه','فينسنت فان غوخ'],ans:2,exp:'رسمها فان غوخ عام 1889 وهو في مصحة نفسية، وهي من أشهر اللوحات في التاريخ.'},
+  {cat:'arts',q:'في أي مدينة يقع متحف اللوفر؟',opts:['روما','لندن','باريس'],ans:2,exp:'متحف اللوفر في باريس هو أكبر متحف فني في العالم من حيث عدد الزوار.'},
+  {cat:'arts',q:'من أخرج فيلم "شيندلر قائمة"؟',opts:['مارتن سكورسيزي','ستيفن سبيلبرغ','فرانسيس كوبولا'],ans:1,exp:'ستيفن سبيلبرغ أخرج الفيلم عام 1993، وفاز بسبع جوائز أوسكار.'},
+  {cat:'arts',q:'ما هي أطول ملحمة شعرية عربية؟',opts:['المعلقات','الشاهنامه','سيف بن ذي يزن'],ans:2,exp:'قصة سيف بن ذي يزن من أطول الملاحم الشعبية العربية، يصل حجمها إلى آلاف الصفحات.'},
+  {cat:'arts',q:'من ألّف سيمفونية "القدر" الشهيرة؟',opts:['موتسارت','بيتهوفن','باخ'],ans:1,exp:'لودفيغ فان بيتهوفن ألّف سيمفونيته الخامسة "القدر" عام 1808، وهو كان أصمًا آنذاك.'},
+  {cat:'arts',q:'ما هي مواد تمثال داود الشهير؟',opts:['البرونز','الرخام','الغرانيت'],ans:1,exp:'نحت مايكل أنجلو تمثال داود من الرخام الأبيض بين 1501-1504، ويقع في فلورنسا.'},
+  {cat:'arts',q:'من كتب رواية "الجريمة والعقاب"؟',opts:['ليو تولستوي','فيودور دوستويفسكي','أنطون تشيخوف'],ans:1,exp:'دوستويفسكي كتب هذه الرواية الروسية الكلاسيكية عام 1866، وهي من روائع الأدب العالمي.'},
+  {cat:'arts',q:'ما هو أطول فيلم سينمائي فاز بجائزة أوسكار أفضل فيلم؟',opts:['لورنس العرب','ذهب مع الريح','تيتانيك'],ans:1,exp:'ذهب مع الريح (1939) مدته 3 ساعات و58 دقيقة، وهو الأطول فوزًا بأوسكار أفضل فيلم.'},
+  {cat:'arts',q:'من هو مؤلف رواية "مئة عام من العزلة"؟',opts:['إيزابيل الليندي','غابرييل غارسيا ماركيز','خورخي لويس بورخيس'],ans:1,exp:'ماركيز نشرها عام 1967، وهي من أهم روايات القرن العشرين ومؤسِسة الواقعية السحرية.'},
+  {cat:'arts',q:'في أي بلد نشأت رقصة الفلامنكو؟',opts:['البرتغال','إيطاليا','إسبانيا'],ans:2,exp:'الفلامنكو رقصة أندلسية إسبانية تجمع الرقص والغناء والموسيقى، أُدرجت في تراث اليونسكو.'},
+  {cat:'arts',q:'ما هو اسم الأوبرا الأشهر لموتسارت؟',opts:['دون جيوفاني','الناي السحري','كوزي فان توتي'],ans:1,exp:'الناي السحري (Die Zauberflöte) 1791 هي من أشهر أوبرات موتسارت وآخر أعماله الكبرى.'},
+  {cat:'arts',q:'من هو المؤلف العربي الكلاسيكي الذي كتب "كليلة ودمنة"؟',opts:['ابن المقفع','الجاحظ','المتنبي'],ans:0,exp:'ابن المقفع ترجم كليلة ودمنة من الفارسية إلى العربية في القرن الثامن الميلادي.'},
+  {cat:'arts',q:'ما هو عدد الألوان الأساسية في الفن؟',opts:['2','3','4'],ans:1,exp:'الألوان الأساسية الثلاثة هي الأحمر والأصفر والأزرق، ومنها تُشتق جميع الألوان الأخرى.'},
+  {cat:'arts',q:'في أي عام أُقيم أول حفل لجوائز الأوسكار؟',opts:['1929','1939','1949'],ans:0,exp:'أُقيم أول حفل أوسكار عام 1929 في لوس أنجلوس، وكان يضم 12 جائزة فقط.'},
+  {cat:'arts',q:'من كتب مسرحية "روميو وجولييت"؟',opts:['چوسر','شكسبير','ملتون'],ans:1,exp:'ويليام شكسبير كتب هذه المسرحية حول 1594-1596، وهي من أشهر قصص الحب في التاريخ.'},
+  {cat:'arts',q:'ما هو اسم أشهر متحف في المملكة العربية السعودية للتراث؟',opts:['متحف الرياض الوطني','متحف الفن الإسلامي','متحف العلا'],ans:0,exp:'المتحف الوطني في الرياض أُسّس عام 1999 ويضم مقتنيات تاريخ الجزيرة العربية.'},
+  {cat:'arts',q:'من ألّف رواية "الأمير الصغير"؟',opts:['جول فيرن','أنطوان دي سانت إكزوبيري','ألبير كامو'],ans:1,exp:'دي سانت إكزوبيري كتبها عام 1943، وهي من أكثر الكتب مبيعًا في تاريخ البشرية.'},
+  {cat:'arts',q:'ما هي الأداة الموسيقية التي تُعزف بالنفخ وتُصنع من النحاس؟',opts:['الكمان','التمبور','الترومبيت'],ans:2,exp:'الترومبيت آلة نفخية نحاسية، وهي من أقدم الآلات الموسيقية وأعليها صوتًا.'},
+  {cat:'arts',q:'من كتب رواية "البؤساء"؟',opts:['فيكتور هوغو','إميل زولا','ألكسندر دوما'],ans:0,exp:'فيكتور هوغو نشر رواية البؤساء عام 1862، وهي ملحمة اجتماعية فرنسية خالدة.'},
+  {cat:'arts',q:'في أي بلد صُنع أول فيلم سينمائي في التاريخ؟',opts:['الولايات المتحدة','فرنسا','ألمانيا'],ans:1,exp:'أنتج الأخوان لوميير أول عرض سينمائي عام 1895 في باريس، ويُعدّ أول فيلم في التاريخ.'},
+  {cat:'arts',q:'ما هو اسم أشهر مسرح أوبرا في العالم؟',opts:['لا سكالا','أوبرا باريس','ميت أوبرا نيويورك'],ans:0,exp:'مسرح لا سكالا في ميلانو (1778) هو أشهر مسارح الأوبرا وأكثرها عراقةً في العالم.'},
+  {cat:'arts',q:'من هو الشاعر العربي الذي لُقّب بـ"شاعر العرب الأكبر"؟',opts:['امرؤ القيس','المتنبي','أبو تمام'],ans:1,exp:'المتنبي أبو الطيب أحمد شاعر العصر العباسي، يُعدّ من أعظم شعراء العرب على الإطلاق.'},
+  {cat:'arts',q:'في أي سنة أُسّست دار الأوبرا الملكية في لندن؟',opts:['1732','1858','1900'],ans:0,exp:'دار الأوبرا الملكية Covent Garden تأسّست عام 1732 وهي من أعرق المسارح في بريطانيا.'},
+  {cat:'arts',q:'ما هو اسم الفيلم الذي فاز بأكبر عدد من جوائز الأوسكار؟',opts:['تيتانيك','بن هور','عودة الملك'],ans:2,exp:'عودة الملك (2003) فاز بـ 11 أوسكارًا دون أن يخسر أيًّا من الجوائز التي رُشّح لها.'},
+];
+
+// Auto-assign difficulty levels to questions
+(function(){
+  const easy=['كم عدد ألوان','كم عدد أركان','ما هو أطول نهر','ما هي عاصمة المملكة','ما هو أكبر كوكب','ما هو العنصر الكيميائي الذي رمزه "O"','كم عدد لاعبي كرة القدم','كم عدد سور القرآن','في أي شهر نزل','كم عدد الصلوات','ما هي عاصمة فرنسا','ما هي عاصمة اليابان','كم عدد أيام السنة','من رسم لوحة الموناليزا','ما هو الجهاز الذي يضخ','كم عدد ساعات اليوم','ما هي أكبر قارات','ما هو أعلى جبل','ما هي أصغر دولة','كم عدد اللاعبين في فريق كرة السلة','ما هو أكبر محيطات','من هو مخترع الهاتف','ما هو أسرع حيوان','كم عدد أضلاع'];
+  const hard=['ما هو اسم أول هاتف','في أي سنة هجرية','ما هي الشبكة التي ربطت','كم مرة وردت كلمة','ما هو اسم والد النبي إبراهيم','كم طول ملعب التنس','أي مدينة كانت عاصمة الخلافة','ما هو اسم أول دستور','في أي سنة أُسّست دار الأوبرا','من ألّف سيمفونية','ما هي أطول حدود','ما هو أعمق بحيرة','ما هي الدولة التي تضم أكبر عدد','ما هو اسم أشهر مسرح أوبرا','كم استغرق نزول القرآن الكريم','ما هو اسم قبلة المسلمين الأولى','في أي عام سقطت الخلافة'];
+  allQuestions.forEach(q=>{
+    if(easy.some(e=>q.q.startsWith(e))) q.diff='easy';
+    else if(hard.some(h=>q.q.startsWith(h))) q.diff='hard';
+    else q.diff='medium';
+  });
+})();
+
+// ══ STATE ══
+let selectedCat = 'all';
+let selectedCount = 5;
+let useRandomOrder = false;
+let allowSkip = false;
+let questions = [];
+let qIndex = 0;
+let answeredCount = 0;
+let turnIndex = 0;
+let turnOrder = [];
+let soloQueue = [];
+let answers = [];
+let scores = [];
+const POINTS = 10;
+
+// ── SETUP HANDLERS ──
+
+function changePlayerCount(delta) {
+  playerCount = Math.max(1, Math.min(6, playerCount + delta));
+  document.getElementById('pcDisplay').textContent = playerCount;
+  document.getElementById('pcMinus').disabled = playerCount <= 1;
+  document.getElementById('pcPlus').disabled = playerCount >= 6;
+  renderPlayerSetup();
+  updatePointsNote();
+}
+
+function renderPlayerSetup() {
+  const container = document.getElementById('playersSetup');
+  container.innerHTML = '';
+  for (let i = 0; i < playerCount; i++) {
+    const t = PLAYER_TEMPLATES[i];
+
+    const card = document.createElement('div');
+    card.className = 'player-setup-card ' + t.cls;
+    card.style.borderColor = t.color + '55';
+
+    const avatarDiv = document.createElement('div');
+    avatarDiv.className = 'player-avatar-big';
+    avatarDiv.style.background = t.color + '18';
+    avatarDiv.textContent = AVATARS[i];
+    avatarDiv.title = 'اضغط لتغيير الرمز';
+    avatarDiv.style.cursor = 'pointer';
+    avatarDiv.dataset.idx = i;
+    avatarDiv.addEventListener('click', () => openEmojiPicker(parseInt(avatarDiv.dataset.idx)));
+
+    const input = document.createElement('input');
+    input.className = 'player-name-input';
+    input.id = 'name' + i;
+    input.type = 'text';
+    input.placeholder = t.defaultName;
+    input.value = t.defaultName;
+    input.maxLength = 16;
+    input.style.borderColor = t.color + '33';
+    input.addEventListener('focus', () => { input.style.borderColor = t.color; });
+    input.addEventListener('blur',  () => { input.style.borderColor = t.color + '33'; });
+
+    card.appendChild(avatarDiv);
+    card.appendChild(input);
+    container.appendChild(card);
+  }
+}
+
+function buildScoreboard() {
+  const sb = document.getElementById('scoreboard');
+  sb.innerHTML = '';
+  sb.className = 'scoreboard' + (playerCount > 3 ? ' many' : '');
+  PLAYERS.forEach((p, i) => {
+    const card = document.createElement('div');
+    card.className = 'score-card';
+    card.id = 'sc' + i;
+    card.style.cssText = `border-color:${p.color}44; flex:1; min-width:${playerCount > 4 ? '70px' : '80px'}`;
+    card.innerHTML = `
+      <div style="position:absolute;top:0;left:0;right:0;height:2px;background:${p.color};border-radius:16px 16px 0 0"></div>
+      <div class="sc-avatar">${p.avatar}</div>
+      <div class="sc-name" id="scName${i}" style="color:${p.color}">${p.name}</div>
+      <div class="sc-points" id="scPts${i}" style="color:${p.color}">0</div>
+      <div class="sc-lbl">نقطة</div>
+    `;
+    sb.appendChild(card);
+  });
+}
+
+function updatePointsNote() {
+  const n = playerCount;
+  let txt = `كل إجابة صحيحة = <strong>10 نقاط</strong>`;
+  if (n > 1) {
+    const split = parseFloat((10/n).toFixed(1));
+    txt += ` &nbsp;|&nbsp; إذا اتفق الجميع (${n}) → <strong>${split} لكل</strong>`;
+    if (n > 2) txt += ` &nbsp;|&nbsp; إذا أجاب واحد فقط → <strong>10 كاملة</strong>`;
+  }
+  document.getElementById('pointsNote').innerHTML = txt;
+}
+
+function toggleRandom() {
+  useRandomOrder = !useRandomOrder;
+  document.getElementById('randomToggleCard').classList.toggle('on', useRandomOrder);
+}
+function toggleSkip() {
+  allowSkip = !allowSkip;
+  document.getElementById('skipToggleCard').classList.toggle('on', allowSkip);
+}
+
+// Build/replenish fair solo queue: each N-question batch gives each player exactly 1 turn
+function nextSoloPlayer() {
+  if (soloQueue.length === 0) soloQueue = shuffle(PLAYERS.map(p => p.id));
+  return soloQueue.shift();
+}
+
+function setCat(cat, btn) {
+  selectedCat = cat;
+  document.querySelectorAll('.cat-tab').forEach(t => t.classList.remove('active'));
+  btn.classList.add('active');
+  updateAvailNote();
+}
+
+function updateAvailNote() {
+  const pool = selectedCat === 'all' ? allQuestions : allQuestions.filter(q => q.cat === selectedCat);
+  const avail = pool.length;
+  document.getElementById('availNum').textContent = avail;
+  // Dim/disable count buttons that exceed available
+  document.querySelectorAll('.qcount-btn').forEach(btn => {
+    const n = parseInt(btn.querySelector('.qn').textContent);
+    if (n > avail) {
+      btn.style.opacity = '0.35';
+      btn.style.pointerEvents = 'none';
+      if (btn.classList.contains('active')) {
+        // Select the max available instead
+        const maxBtn = [...document.querySelectorAll('.qcount-btn')].reverse().find(b => parseInt(b.querySelector('.qn').textContent) <= avail);
+        if (maxBtn) { btn.classList.remove('active'); maxBtn.classList.add('active'); selectedCount = parseInt(maxBtn.querySelector('.qn').textContent); }
+      }
+    } else {
+      btn.style.opacity = '1';
+      btn.style.pointerEvents = 'auto';
+    }
+  });
+}
+
+function setCount(n, el) {
+  selectedCount = n;
+  document.querySelectorAll('.qcount-btn').forEach(b => b.classList.remove('active'));
+  el.classList.add('active');
+  // Update round labels
+  const _qLabel = document.getElementById('roundQLabel');
+  const _tLabel = document.getElementById('totalQLabel');
+  if (_qLabel) _qLabel.textContent = n;
+  if (_tLabel) _tLabel.textContent = n * (typeof totalRounds !== 'undefined' ? totalRounds : 1);
+}
+
+function shuffle(arr) { return [...arr].sort(() => Math.random() - 0.5); }
+
+function startGame() {
+  // Build active PLAYERS array from current playerCount
+  PLAYERS = [];
+  for (let i = 0; i < playerCount; i++) {
+    const t = PLAYER_TEMPLATES[i];
+    const nameEl = document.getElementById('name' + i);
+    const name = (nameEl ? nameEl.value.trim() : '') || t.defaultName;
+    PLAYERS.push({ id: i, cls: t.cls, color: t.color, avatar: AVATARS[i], name });
+  }
+
+  // Build dynamic scoreboard
+  buildScoreboard();
+
+  let pool = selectedCat === 'all' ? allQuestions : allQuestions.filter(q => q.cat === selectedCat);
+  questions = shuffle(pool);
+  qIndex = 0;
+  answeredCount = 0;
+  soloQueue = [];
+  scores = new Array(playerCount).fill(0);
+
+  document.getElementById('setupScreen').style.display = 'none';
+  document.getElementById('gameScreen').style.display = 'block';
+
+  // Re-build pool with difficulty filter and custom questions
+  let _pool = selectedCat === 'all' ? allQuestions : allQuestions.filter(q => q.cat === selectedCat);
+  if (selectedDiff !== 'all') _pool = _pool.filter(q => q.diff === selectedDiff);
+  if (customQuestions.length > 0) _pool = [...customQuestions, ...shuffle(_pool)];
+  questions = shuffle(_pool);
+
+  updateScoreboard();
+  startGameAdv();   // init joker, stats, rounds, special modes
+  loadQuestion();
+}
+
+// ── SCOREBOARD ──
+function updateScoreboard(deltas) {
+  PLAYERS.forEach((p,i) => {
+    const el = document.getElementById('scPts'+i);
+    if (!el) return;
+    el.textContent = parseFloat(scores[i].toFixed(1));
+    const old = document.getElementById('delta'+i);
+    if (old) old.remove();
+    if (deltas && deltas[i] > 0) {
+      const badge = document.createElement('div');
+      badge.className = 'delta-badge'; badge.id = 'delta'+i;
+      badge.textContent = '+'+parseFloat(deltas[i].toFixed(1));
+      document.getElementById('sc'+i).appendChild(badge);
+      setTimeout(() => badge.remove(), 2200);
+      el.classList.add('score-anim');
+      setTimeout(() => el.classList.remove('score-anim'), 600);
+    }
+  });
+  updateTeamScores();
+}
+
+// ── QUESTION ──
+function loadQuestion() {
+  turnIndex = 0;
+  answers = [null,null,null];
+
+  // Guard: pool exhausted
+  if (qIndex >= questions.length) { showFinal(); return; }
+
+  const q = questions[qIndex];
+
+  // Progress = answeredCount (skips excluded)
+  document.getElementById('progressBar').style.width = ((answeredCount / selectedCount) * 100) + '%';
+  document.getElementById('qNum').textContent = `السؤال ${answeredCount + 1} من ${selectedCount}`;
+
+  const badge = document.getElementById('catBadge');
+  badge.textContent = catLabels[q.cat].label;
+  badge.className = 'cat-badge ' + catLabels[q.cat].cls;
+
+  document.getElementById('questionText').textContent = q.q;
+  document.getElementById('feedback').className = 'feedback';
+  document.getElementById('feedback').innerHTML = '';
+  const nextBtn = document.getElementById('nextBtn');
+  nextBtn.className = 'next-btn';
+  nextBtn.dataset.skipped = '';
+  nextBtn.textContent = (answeredCount + 1) < selectedCount ? 'السؤال التالي ←' : 'عرض النتيجة النهائية 🏆';
+
+  // Skip button
+  const skipBtn = document.getElementById('skipBtn');
+  if (allowSkip) skipBtn.classList.add('show');
+  else skipBtn.classList.remove('show');
+
+  // Determine who answers this question
+  if (useRandomOrder) {
+    const solo = nextSoloPlayer();
+    turnOrder = [solo];
+  } else {
+    turnOrder = PLAYERS.map(p => p.id);
+  }
+
+  renderOptions(false);
+  updateTurnIndicator();
+  updateActiveCard();
+
+  if (useRandomOrder) showSpinOverlay(turnOrder[0]);
+
+  // Difficulty badge
+  const _q = questions[qIndex];
+  if (_q && _q.diff) {
+    const _meta = document.getElementById('catBadge').parentElement;
+    let _db = document.getElementById('diffBadge');
+    if (!_db) { _db = document.createElement('span'); _db.id='diffBadge'; _db.className='diff-badge'; _meta.insertBefore(_db, _meta.children[1]); }
+    const _dmap = {easy:['سهل','diff-easy'], medium:['متوسط','diff-medium'], hard:['صعب','diff-hard']};
+    const [_dl, _dc] = _dmap[_q.diff] || ['',''];
+    _db.textContent = _dl; _db.className = 'diff-badge ' + _dc;
+  }
+
+  loadQuestionAdv();  // init joker row, start timer
+}
+
+function renderOptions(revealed) {
+  const q = questions[qIndex];
+  const container = document.getElementById('optionsContainer');
+  container.innerHTML = '';
+  const letters = ['أ','ب','ج'];
+
+  q.opts.forEach((opt,i) => {
+    const div = document.createElement('div');
+    let cls = 'option';
+
+    if (revealed) {
+      cls += ' disabled';
+      if (i === q.ans) {
+        const choosers = turnOrder.filter(pid => answers[pid] === i);
+        cls += choosers.length > 0 ? ' correct' : ' reveal-correct';
+      } else if (turnOrder.some(pid => answers[pid] === i)) {
+        cls += ' wrong';
+      }
+    }
+
+    let voterHtml = '<div class="opt-voters">';
+    turnOrder.forEach(pid => {
+      if (answers[pid] === i) voterHtml += `<div class="voter-chip ${PLAYERS[pid].ccls}">${PLAYERS[pid].avatar}</div>`;
+    });
+    voterHtml += '</div>';
+
+    div.className = cls;
+    div.innerHTML = `<span class="opt-letter">${letters[i]}</span><span>${opt}</span>${voterHtml}`;
+    if (!revealed) div.onclick = () => selectOption(i);
+    container.appendChild(div);
+  });
+}
+
+function selectOption(optIdx) {
+  const currentPlayer = turnOrder[turnIndex];
+  if (answers[currentPlayer] !== null) return;
+  answers[currentPlayer] = optIdx;
+  renderOptions(false);
+  if (turnIndex < turnOrder.length - 1) {
+    turnIndex++;
+    updateTurnIndicator();
+    updateActiveCard();
+  } else {
+    revealAnswers();
+  }
+}
+
+function updateTurnIndicator() {
+  const p = PLAYERS[turnOrder[turnIndex]];
+  document.getElementById('turnAvatar').textContent = p.avatar;
+  const tn = document.getElementById('turnName');
+  tn.textContent = p.name;
+  tn.className = 'turn-text ' + p.ccls;
+  tn.style.color = '';
+  document.getElementById('turnSub').textContent = useRandomOrder
+    ? `السؤال ${answeredCount + 1} من ${selectedCount} — دوره`
+    : 'دورك للإجابة';
+
+  const dotsRow = document.getElementById('dotsRow');
+  dotsRow.innerHTML = '';
+  if (!useRandomOrder) {
+    turnOrder.forEach((pid, i) => {
+      const dot = document.createElement('div');
+      let dcls = 'dot';
+      if (answers[pid] !== null) dcls += ' answered';
+      else if (i === turnIndex) dcls += ' pending';
+      dot.className = dcls;
+      dotsRow.appendChild(dot);
+    });
+  }
+}
+
+function updateActiveCard() {
+  const activeId = turnOrder[turnIndex];
+  PLAYERS.forEach((p,i) => {
+    const card = document.getElementById('sc'+i);
+    if (!card) return;
+    if (i === activeId) {
+      card.classList.add('active-turn');
+      card.style.boxShadow = `0 8px 24px ${p.color}33`;
+    } else {
+      card.classList.remove('active-turn');
+      card.style.boxShadow = '';
+    }
+  });
+}
+
+function revealAnswers() {
+  PLAYERS.forEach(p => document.getElementById('sc'+p.id).classList.remove('active-turn'));
+  const q = questions[qIndex];
+
+  // Solo mode: only turnOrder[0] can score; Group: all PLAYERS
+  const activePlayers = useRandomOrder ? [PLAYERS[turnOrder[0]]] : PLAYERS;
+  const winners = activePlayers.filter(p => answers[p.id] === q.ans);
+  const deltas = [0,0,0];
+
+  if (winners.length > 0) {
+    const share = POINTS / winners.length;
+    winners.forEach(p => { scores[p.id] += share; deltas[p.id] = share; });
+  }
+
+  renderOptions(true);
+  updateScoreboard(deltas);
+
+  // dots (group mode only)
+  const dotsRow = document.getElementById('dotsRow');
+  dotsRow.innerHTML = '';
+  if (!useRandomOrder) {
+    turnOrder.forEach(pid => {
+      const dot = document.createElement('div');
+      dot.className = 'dot ' + (answers[pid] === q.ans ? 'answered' : 'wrong-dot');
+      dotsRow.appendChild(dot);
+    });
+  }
+
+  const turnName = document.getElementById('turnName');
+  document.getElementById('turnAvatar').textContent = '📊';
+  turnName.textContent = 'نتيجة السؤال';
+  turnName.className = 'turn-text';
+  turnName.style.color = 'var(--gold)';
+  document.getElementById('turnSub').textContent = '';
+
+  const fb = document.getElementById('feedback');
+  let fbCls, headerIcon, headerText;
+
+  if (useRandomOrder) {
+    const soloP = PLAYERS[turnOrder[0]];
+    const correct = answers[turnOrder[0]] === q.ans;
+    fbCls = correct ? 'feedback correct-fb show' : 'feedback wrong-fb show';
+    headerIcon = correct ? '✅' : '❌';
+    headerText = correct
+      ? `${soloP.name} أجاب صحيح! +${POINTS} نقاط 🎉`
+      : `${soloP.name} أخطأ في الإجابة!`;
+  } else {
+    const total = PLAYERS.length;
+    if (winners.length === total && total > 1) {
+      const share = parseFloat((POINTS/total).toFixed(1));
+      fbCls = 'feedback split-fb show'; headerIcon = '⚡';
+      headerText = `اتفق الجميع (${total}) على الصح! النقاط تتقسم (${share} لكل لاعب)`;
+    } else if (winners.length > 1) {
+      const share = parseFloat((POINTS/winners.length).toFixed(1));
+      fbCls = 'feedback split-fb show'; headerIcon = '🤝';
+      headerText = `${winners.length} لاعبين أجابوا صحيح! كل منهم يأخذ ${share} نقطة`;
+    } else if (winners.length === 1) {
+      fbCls = 'feedback correct-fb show'; headerIcon = '✅';
+      headerText = `${winners[0].name} أجاب صحيح ويحصل على ${POINTS} نقاط كاملة!`;
+    } else {
+      fbCls = 'feedback wrong-fb show'; headerIcon = '❌';
+      headerText = `لا أحد أجاب صحيح!`;
+    }
+  }
+
+  let chipsHtml = '<div class="pts-summary">';
+  activePlayers.forEach(p => {
+    const got = deltas[p.id];
+    chipsHtml += `<div class="pts-chip ${p.ccls}">${p.avatar} ${p.name}: ${got>0?'+'+parseFloat(got.toFixed(1)):'0'}</div>`;
+  });
+  chipsHtml += '</div>';
+
+  fb.className = fbCls;
+  fb.innerHTML = `
+    <div class="fb-header">${headerIcon} ${headerText}</div>
+    <div class="fb-exp">
+      <div class="fb-exp-icon">💡</div>
+      <div class="fb-exp-text">
+        <div class="fb-exp-label">فائدة</div>
+        ${q.exp}
+      </div>
+    </div>
+    ${chipsHtml}
+  `;
+  document.getElementById('nextBtn').classList.add('show');
+  document.getElementById('skipBtn').classList.remove('show');
+  revealAnswersAdv();  // sound, speed pts, stats
+}
+
+function skipQuestion() {
+  if (document.getElementById('nextBtn').classList.contains('show')) return;
+  const q = questions[qIndex];
+  const fb = document.getElementById('feedback');
+  fb.className = 'feedback wrong-fb show';
+  fb.innerHTML = `
+    <div class="fb-header">⏭️ تم تخطي السؤال — لا يُحسب من العدد</div>
+    <div class="fb-exp">
+      <div class="fb-exp-icon">💡</div>
+      <div class="fb-exp-text">
+        <div class="fb-exp-label">الإجابة الصحيحة: ${q.opts[q.ans]}</div>
+        ${q.exp}
+      </div>
+    </div>
+  `;
+  document.querySelectorAll('.option').forEach(o => o.classList.add('disabled'));
+  document.querySelectorAll('.option')[q.ans].classList.add('reveal-correct');
+  PLAYERS.forEach(p => document.getElementById('sc'+p.id).classList.remove('active-turn'));
+  document.getElementById('skipBtn').classList.remove('show');
+  // In solo random mode: put this player back so they still get their fair share
+  if (useRandomOrder) soloQueue.unshift(turnOrder[0]);
+  const nextBtn = document.getElementById('nextBtn');
+  nextBtn.dataset.skipped = '1';
+  nextBtn.textContent = '⏭️ انتقل للسؤال التالي (بدون حساب)';
+  nextBtn.classList.add('show');
+}
+
+function showSpinOverlay(playerIdx) {
+  const p = PLAYERS[playerIdx];
+  document.getElementById('spinAvatar').textContent = p.avatar;
+  document.getElementById('spinName').textContent = p.name;
+  const overlay = document.getElementById('spinOverlay');
+  overlay.classList.add('show');
+  let ticks = 0;
+  const totalTicks = 14;
+  const interval = setInterval(() => {
+    const rnd = PLAYERS[Math.floor(Math.random()*3)];
+    document.getElementById('spinAvatar').textContent = rnd.avatar;
+    document.getElementById('spinName').textContent = rnd.name;
+    ticks++;
+    if (ticks >= totalTicks) {
+      clearInterval(interval);
+      document.getElementById('spinAvatar').textContent = p.avatar;
+      document.getElementById('spinName').textContent = p.name;
+      setTimeout(() => overlay.classList.remove('show'), 1200);
+    }
+  }, 75);
+}
+
+function nextQuestion() {
+  const nextBtn = document.getElementById('nextBtn');
+  const wasSkipped = nextBtn.dataset.skipped === '1';
+  nextBtn.dataset.skipped = '';
+  qIndex++; // always move to next question in pool
+
+  if (wasSkipped) {
+    if (qIndex >= questions.length) { showFinal(); return; }
+    loadQuestion();
+  } else {
+    answeredCount++;
+    checkElimination();  // check if a player gets eliminated
+    if (answeredCount >= selectedCount || qIndex >= questions.length) {
+      showFinal();
+    } else {
+      loadQuestion();
+    }
+  }
+}
+
+// ── FINAL ──
+function showFinal() {
+  document.getElementById('gameScreen').style.display = 'none';
+  document.getElementById('finalScreen').classList.add('show');
+
+  const sorted = [...PLAYERS].sort((a,b) => scores[b.id] - scores[a.id]);
+  const medals = ['🥇','🥈','🥉','🏅','🏅','🏅'];
+  const medalBg = ['rgba(255,215,0,0.15)','rgba(192,192,192,0.1)','rgba(205,127,50,0.1)'];
+  const medalColor = ['#ffd700','#c0c0c0','#cd7f32'];
+
+  // Podium: top 3 (or fewer)
+  const podium = document.getElementById('podium');
+  podium.innerHTML = '';
+  const topCount = Math.min(sorted.length, 3);
+  const dispOrder = topCount === 1 ? [sorted[0]]
+    : topCount === 2 ? [sorted[1], sorted[0]]
+    : [sorted[1], sorted[0], sorted[2]];
+  const heights = topCount === 1 ? [160] : topCount === 2 ? [120,160] : [120,160,90];
+  const rankMap = topCount === 1 ? [0] : topCount === 2 ? [1,0] : [1,0,2];
+
+  dispOrder.forEach((p, pos) => {
+    if (!p) return;
+    const rank = rankMap[pos];
+    const isTop = rank === 0;
+    const item = document.createElement('div');
+    item.className = 'podium-item';
+    item.innerHTML = `
+      <div class="podium-block" style="height:${heights[pos]}px;background:${p.color}14;border:1px solid ${p.color}30">
+        <div class="podium-emoji">${p.avatar}</div>
+        <div class="podium-rank ${['gold','silver','bronze'][rank]||''}">${medals[rank]}</div>
+      </div>
+      <div class="podium-name" style="color:${isTop?'var(--gold)':'var(--text)'}">${p.name}</div>
+      <div class="podium-score" style="color:${isTop?'var(--gold)':'var(--muted)'}">${parseFloat(scores[p.id].toFixed(1))}</div>
+      <div class="podium-score-lbl">نقطة</div>`;
+    podium.appendChild(item);
+  });
+
+  // All players ranked
+  const finalRows = document.getElementById('finalRows');
+  finalRows.innerHTML = '';
+  sorted.forEach((p, rank) => {
+    const row = document.createElement('div');
+    row.className = 'final-row';
+    row.style.borderColor = p.color + '44';
+    row.innerHTML = `
+      <div class="final-rank-badge" style="background:${medalBg[rank]||p.color+'18'};color:${medalColor[rank]||p.color}">${medals[rank]||'🏅'}</div>
+      <div class="fr-avatar">${p.avatar}</div>
+      <div class="fr-name" style="color:${p.color};flex:1;font-weight:700;font-size:0.88rem">${p.name}</div>
+      <div><div class="fr-score" style="color:${p.color};font-family:'Tajawal',sans-serif;font-size:1.25rem;font-weight:900">${parseFloat(scores[p.id].toFixed(1))}</div><div class="fr-pts-lbl">نقطة</div></div>`;
+    finalRows.appendChild(row);
+  });
+  showFinalAdv();  // confetti, share, leaderboard, stats
+}
+function backToSetup() {
+  document.getElementById('finalScreen').classList.remove('show');
+  document.getElementById('setupScreen').style.display = 'block';
+  scores = []; answeredCount = 0; soloQueue = [];
+  renderPlayerSetup();
+  updateAvailNote();
+}
+
+// Init
+renderPlayerSetup();
+updatePointsNote();
+updateAvailNote();
+document.getElementById('pcMinus').disabled = playerCount <= 1;
+document.getElementById('pcPlus').disabled = playerCount >= 6;
+
+
+// ════════════════════════════════════════════════════════
+// ══ ADVANCED FEATURES ══
+// ════════════════════════════════════════════════════════
+
+// ── State ──
+let advTimer = false, advSpeed = false, advJoker = false, advStats = false;
+let timerSecs = 20, totalRounds = 1, currentRound = 1;
+let timerInterval = null, timerRemaining = 0, questionStartTime = 0;
+let jokerUsed = [];     // per player: true/false
+let playerStats = [];   // per player: { correct, wrong, skipped, streak, maxStreak, speedPts }
+let pendingJoker = -1;  // playerIdx who activated joker this question
+let emojiTarget = -1;   // which player slot is picking emoji
+
+// ── Advanced setup toggles ──
+function toggleAdvanced() {
+  const btn = document.getElementById('advToggleBtn');
+  const body = document.getElementById('advBody');
+  btn.classList.toggle('open');
+  body.classList.toggle('open');
+}
+
+function toggleAdv(key) {
+  const map = {timer:'timerCard', speed:'speedCard', joker:'jokerCard', stats:'statsCard'};
+  const card = document.getElementById(map[key]);
+  if (!card) return;
+  const isOn = card.classList.toggle('on');
+  if (key==='timer') { advTimer=isOn; document.getElementById('timerSub').style.display=isOn?'block':'none'; }
+  if (key==='speed') advSpeed=isOn;
+  if (key==='joker') advJoker=isOn;
+  if (key==='stats') advStats=isOn;
+}
+
+function setTimerSecs(s, el) {
+  timerSecs = s;
+  document.querySelectorAll('.timer-opt').forEach(o => o.classList.remove('active'));
+  el.classList.add('active');
+}
+
+function changeRounds(delta) {
+  totalRounds = Math.max(1, Math.min(5, totalRounds + delta));
+  document.getElementById('roundsDisplay').textContent = totalRounds;
+  const qLabel = document.getElementById('roundQLabel');
+  const totalLabel = document.getElementById('totalQLabel');
+  if (qLabel) qLabel.textContent = selectedCount;
+  if (totalLabel) totalLabel.textContent = selectedCount * totalRounds;
+}
+
+// Round label updater called from setCount
+
+// ── Sound (Web Audio API — no files needed) ──
+let audioCtx = null;
+function getAudio() {
+  if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+  return audioCtx;
+}
+function playTone(freq, dur, type='sine', vol=0.3) {
+  try {
+    const ctx = getAudio();
+    const osc = ctx.createOscillator();
+    const gain = ctx.createGain();
+    osc.connect(gain); gain.connect(ctx.destination);
+    osc.type = type; osc.frequency.value = freq;
+    gain.gain.setValueAtTime(vol, ctx.currentTime);
+    gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + dur);
+    osc.start(); osc.stop(ctx.currentTime + dur);
+  } catch(e) {}
+}
+function soundCorrect() {
+  playTone(523, 0.1); setTimeout(()=>playTone(659,0.1),100); setTimeout(()=>playTone(784,0.2),200);
+}
+function soundWrong() {
+  playTone(220,0.15,'sawtooth',0.2); setTimeout(()=>playTone(180,0.2,'sawtooth',0.15),150);
+}
+function soundTick() { playTone(880,0.05,'square',0.08); }
+function soundTimeUp() {
+  playTone(440,0.1); setTimeout(()=>playTone(350,0.15),100); setTimeout(()=>playTone(280,0.3),220);
+}
+function soundJoker() {
+  [523,659,784,1046].forEach((f,i)=>setTimeout(()=>playTone(f,0.15,'triangle',0.25),i*80));
+}
+function soundRoundEnd() {
+  [392,440,494,523,587,659,784].forEach((f,i)=>setTimeout(()=>playTone(f,0.12),i*60));
+}
+
+// ── Timer ──
+function startTimer(onExpire) {
+  stopTimer();
+  if (!advTimer) return;
+  timerRemaining = timerSecs;
+  questionStartTime = Date.now();
+  const circ = 2 * Math.PI * 20; // 125.66
+  const fg = document.getElementById('timerFg');
+  const num = document.getElementById('timerNum');
+  document.getElementById('timerRingWrap').classList.add('show');
+
+  function tick() {
+    num.textContent = timerRemaining;
+    const pct = timerRemaining / timerSecs;
+    fg.style.strokeDashoffset = circ * (1 - pct);
+    const urgent = timerRemaining <= 5;
+    fg.classList.toggle('urgent', urgent);
+    num.classList.toggle('urgent', urgent);
+    if (urgent) soundTick();
+    if (timerRemaining <= 0) { stopTimer(); soundTimeUp(); onExpire(); return; }
+    timerRemaining--;
+    timerInterval = setTimeout(tick, 1000);
+  }
+  tick();
+}
+
+function stopTimer() {
+  clearTimeout(timerInterval);
+  timerInterval = null;
+  document.getElementById('timerRingWrap').classList.remove('show');
+}
+
+function getSpeedBonus(totalSecs) {
+  // Full 10pts under 5s, scales down linearly to 1pt at time limit
+  const elapsed = (Date.now() - questionStartTime) / 1000;
+  const ratio = Math.max(0, 1 - elapsed / totalSecs);
+  return Math.round(ratio * 9) + 1; // 1-10
+}
+
+// ── Joker ──
+function renderJokerRow() {
+  const row = document.getElementById('jokerRow');
+  row.innerHTML = '';
+  if (!advJoker) return;
+  PLAYERS.forEach((p, i) => {
+    if (answers[p.id] !== null) return; // already answered
+    const btn = document.createElement('button');
+    btn.className = 'joker-btn show' + (jokerUsed[i] ? ' used' : '');
+    btn.innerHTML = `🃏 جوكر ${p.name}`;
+    btn.style.borderColor = p.color + '66';
+    btn.style.color = jokerUsed[i] ? '' : p.color;
+    btn.onclick = () => activateJoker(i);
+    row.appendChild(btn);
+  });
+}
+
+function activateJoker(pidx) {
+  if (jokerUsed[pidx]) return;
+  jokerUsed[pidx] = true;
+  pendingJoker = pidx;
+  soundJoker();
+  // Flash effect
+  const sc = document.getElementById('sc'+pidx);
+  if (sc) { sc.style.boxShadow=`0 0 24px ${PLAYERS[pidx].color}`; setTimeout(()=>sc.style.boxShadow='',800); }
+  renderJokerRow();
+  showToast(`🃏 ${PLAYERS[pidx].name} فعّل الجوكر! نقاطه ستتضاعف!`, PLAYERS[pidx].color);
+}
+
+// ── Toast notification ──
+function showToast(msg, color='var(--gold)') {
+  let t = document.getElementById('gameToast');
+  if (!t) {
+    t = document.createElement('div');
+    t.id = 'gameToast';
+    t.style.cssText='position:fixed;top:16px;left:50%;transform:translateX(-50%);background:#13131a;border:1.5px solid;border-radius:50px;padding:8px 20px;font-family:Cairo,sans-serif;font-size:0.82rem;z-index:9999;transition:opacity 0.4s;pointer-events:none;max-width:90vw;text-align:center;';
+    document.body.appendChild(t);
+  }
+  t.textContent = msg;
+  t.style.borderColor = color;
+  t.style.color = color;
+  t.style.opacity = '1';
+  clearTimeout(t._timer);
+  t._timer = setTimeout(()=>t.style.opacity='0', 2000);
+}
+
+// ── Emoji picker ──
+const ALL_EMOJIS = ['🦁','🦊','🦅','🐯','🦄','🦋','🐺','🦈','🦅','🐉','🦁','🦀','🐸','🦉','🦒','🐬','🦓','🦏','🐘','🦛','🐧','🦜','🐙','🦑','🦕'];
+function openEmojiPicker(playerIdx) {
+  emojiTarget = playerIdx;
+  const grid = document.getElementById('emojiGrid');
+  grid.innerHTML = '';
+  const unique = [...new Set(ALL_EMOJIS)];
+  unique.forEach(e => {
+    const div = document.createElement('div');
+    div.className = 'emoji-opt' + (AVATARS[playerIdx]===e?' selected':'');
+    div.textContent = e;
+    div.onclick = () => { AVATARS[playerIdx]=e; document.getElementById('emojiOverlay').classList.remove('show'); renderPlayerSetup(); };
+    grid.appendChild(div);
+  });
+  document.getElementById('emojiOverlay').classList.add('show');
+}
+function closeEmojiPicker(e) { if(e.target.id==='emojiOverlay') document.getElementById('emojiOverlay').classList.remove('show'); }
+
+// ── Confetti ──
+function launchConfetti() {
+  const canvas = document.getElementById('confettiCanvas');
+  canvas.width = innerWidth; canvas.height = innerHeight;
+  const ctx = canvas.getContext('2d');
+  const particles = Array.from({length:120}, ()=>({
+    x: Math.random()*innerWidth, y: Math.random()*innerHeight-innerHeight,
+    r: Math.random()*6+3, dx: Math.random()*2-1, dy: Math.random()*3+2,
+    color:`hsl(${Math.random()*360},80%,60%)`, rot:Math.random()*360,
+  }));
+  let frame = 0;
+  function draw() {
+    ctx.clearRect(0,0,canvas.width,canvas.height);
+    particles.forEach(p => {
+      ctx.save(); ctx.translate(p.x,p.y); ctx.rotate(p.rot*Math.PI/180);
+      ctx.fillStyle=p.color; ctx.fillRect(-p.r/2,-p.r/2,p.r,p.r);
+      ctx.restore();
+      p.x+=p.dx; p.y+=p.dy; p.rot+=3;
+      if(p.y>innerHeight) { p.y=-10; p.x=Math.random()*innerWidth; }
+    });
+    frame++;
+    if(frame<200) requestAnimationFrame(draw);
+    else ctx.clearRect(0,0,canvas.width,canvas.height);
+  }
+  draw();
+}
+
+// ── Stats tracking ──
+function initStats() {
+  playerStats = PLAYERS.map(()=>({correct:0, wrong:0, skipped:0, streak:0, maxStreak:0, speedPts:0}));
+}
+
+function recordStat(playerIdx, result, pts) {
+  if (!playerStats[playerIdx]) return;
+  const s = playerStats[playerIdx];
+  if (result==='correct') {
+    s.correct++; s.streak++; s.maxStreak=Math.max(s.maxStreak,s.streak);
+    s.speedPts += pts || 0;
+  } else if (result==='wrong') {
+    s.wrong++; s.streak=0;
+  } else {
+    s.skipped++; s.streak=0;
+  }
+}
+
+function renderStatsTable(container) {
+  if (!advStats || !playerStats.length) return;
+  const sorted = [...PLAYERS].sort((a,b)=>scores[b.id]-scores[a.id]);
+  let html = `<table class="stats-table"><thead><tr>
+    <th class="stat-player-name">اللاعب</th>
+    <th>✅</th><th>❌</th><th>⏭️</th><th>🔥 سلسلة</th>
+    ${advSpeed?'<th>⚡ تسارع</th>':''}
+  </tr></thead><tbody>`;
+  sorted.forEach(p => {
+    const s = playerStats[p.id]||{correct:0,wrong:0,skipped:0,maxStreak:0,speedPts:0};
+    html += `<tr>
+      <td class="stat-player-name" style="color:${p.color}">${p.avatar} ${p.name}</td>
+      <td style="color:var(--correct)">${s.correct}</td>
+      <td style="color:var(--wrong)">${s.wrong}</td>
+      <td style="color:var(--muted)">${s.skipped}</td>
+      <td style="color:var(--gold)">${s.maxStreak}</td>
+      ${advSpeed?`<td style="color:#50c8dc">${s.speedPts}</td>`:''}
+    </tr>`;
+  });
+  html += '</tbody></table>';
+  const div = document.createElement('div');
+  div.innerHTML = html;
+  container.insertBefore(div, container.querySelector('.play-again-btn'));
+}
+
+// ── Round management ──
+function startRound(round) {
+  currentRound = round;
+  const badge = document.getElementById('roundBadge');
+  if (totalRounds > 1) { badge.textContent=`جولة ${round} من ${totalRounds}`; badge.classList.add('show'); }
+  else badge.classList.remove('show');
+}
+
+function handleRoundEnd() {
+  if (currentRound < totalRounds) {
+    soundRoundEnd();
+    showToast(`🏁 انتهت الجولة ${currentRound}! استعدوا للجولة ${currentRound+1}`, 'var(--gold)');
+    setTimeout(()=>{
+      let pool = selectedCat==='all' ? allQuestions : allQuestions.filter(q=>q.cat===selectedCat);
+      questions = shuffle(pool);
+      qIndex = 0; answeredCount = 0; soloQueue = [];
+      jokerUsed = new Array(PLAYERS.length).fill(false);
+      pendingJoker = -1;
+      startRound(currentRound+1);
+      loadQuestion();
+    }, 1800);
+  } else {
+    showFinal();
+  }
+}
+
+// ── Hook into existing startGame to init advanced state ──
+const _origStartGame = startGame;
+function startGameAdv() {
+  jokerUsed = new Array(PLAYERS.length).fill(false);
+  pendingJoker = -1;
+  initStats();
+  startRound(1);
+  // Update round labels
+  const qLabel = document.getElementById('roundQLabel');
+  const totalLabel = document.getElementById('totalQLabel');
+  if (qLabel) qLabel.textContent = selectedCount;
+  if (totalLabel) totalLabel.textContent = selectedCount * totalRounds;
+}
+
+// ── Hook into loadQuestion to start timer + render joker ──
+const _origLoadQuestion = loadQuestion;
+function loadQuestionAdv() {
+  pendingJoker = -1;
+  renderJokerRow();
+  startTimer(() => {
+    // Time's up: auto-skip for current player(s) who haven't answered
+    turnOrder.forEach(pid => { if(answers[pid]===null) answers[pid]=-1; });
+    revealAnswers();
+  });
+}
+
+// ── Hook into revealAnswers to add sound, speed pts, stats tracking ──
+function revealAnswersAdv() {
+  stopTimer();
+
+  const q = questions[qIndex];
+  const activePlayers = useRandomOrder ? [PLAYERS[turnOrder[0]]] : PLAYERS;
+  const winners = activePlayers.filter(p => answers[p.id] === q.ans);
+
+  // Sound
+  if (winners.length > 0) soundCorrect(); else soundWrong();
+
+  // Speed pts & stats tracking
+  activePlayers.forEach(p => {
+    const pid = p.id;
+    const ans = answers[pid];
+    if (ans === q.ans) {
+      let pts = POINTS / winners.length;
+      // Apply joker
+      if (pid === pendingJoker) {
+        pts *= 2;
+        scores[pid] += pts - (POINTS / winners.length); // add the extra
+        document.getElementById('scPts'+pid).textContent = parseFloat(scores[pid].toFixed(1));
+      }
+      // Speed bonus: add to playerStats only
+      const bonus = advSpeed ? getSpeedBonus(timerSecs||30) : 0;
+      recordStat(pid, 'correct', bonus);
+    } else if (ans === undefined || ans === null || ans === -1) {
+      recordStat(pid, 'skipped', 0);
+    } else {
+      recordStat(pid, 'wrong', 0);
+    }
+  });
+}
+
+// ── Hook into nextQuestion to handle rounds ──
+const _origNextQuestion = nextQuestion;
+// checkElimination integrated in original nextQuestion
+
+
+// ── Override showFinal to add confetti + stats ──
+const _origShowFinal = showFinal;
+function showFinalAdv() {
+  launchConfetti();
+  soundRoundEnd();
+  // Inject stats table into final card
+  if (advStats) {
+    const fc = document.querySelector('.final-card');
+    if (fc) renderStatsTable(fc);
+  }
+  // Add speed pts leaderboard note if active
+  if (advSpeed) {
+    const best = [...PLAYERS].sort((a,b)=>(playerStats[b.id]?.speedPts||0)-(playerStats[a.id]?.speedPts||0))[0];
+    if (best) showToast(`⚡ الأسرع: ${best.name} بـ ${playerStats[best.id].speedPts} نقطة تسارع`, best.color);
+  }
+}
+
+// Emoji picker is now built into renderPlayerSetup
+
+
+// ════════════════════════════════════════════════════════
+// ══ NEW FEATURES JS ══
+// ════════════════════════════════════════════════════════
+
+// ── THEME ──
+let currentTheme = 'dark';
+function setTheme(t, el) {
+  currentTheme = t;
+  document.body.className = t === 'dark' ? '' : 'theme-' + t;
+  document.querySelectorAll('.theme-chip').forEach(c => c.classList.remove('active'));
+  if(el) el.classList.add('active');
+  localStorage.setItem('quizTheme', t);
+}
+// Restore saved theme
+(function(){ const saved = localStorage.getItem('quizTheme'); if(saved) setTheme(saved, null); })();
+
+// ── DIFFICULTY FILTER ──
+let selectedDiff = 'all';
+function setDiff(d, el) {
+  selectedDiff = d;
+  document.querySelectorAll('.diff-filter').forEach(f => f.classList.remove('active'));
+  if(el) el.classList.add('active');
+}
+
+// Patch startGame to apply difficulty filter and custom questions
+// startGame extended inline
+
+// Override question pool building — patch inside startGame
+const __origBuildPool = function() {
+  let pool = selectedCat === 'all' ? allQuestions : allQuestions.filter(q => q.cat === selectedCat);
+  if (selectedDiff !== 'all') pool = pool.filter(q => q.diff === selectedDiff);
+  // Add custom questions
+  if (customQuestions.length > 0) pool = [...customQuestions, ...pool];
+  questions = shuffle(pool);
+};
+
+// We need to patch the pool-building inside startGame. Override buildScoreboard as hook point
+// pool building moved inline
+// ── DIFFICULTY BADGE in question display ──
+// diff badge moved inline to loadQuestion
+
+// ── TEAM MODE ──
+let advTeam = false, advElim = false, advMusic = false;
+let teams = [[],[]];   // array of player IDs per team
+let teamScores = [0,0];
+
+function initSpecialModes() {
+  if (advTeam) initTeamMode();
+  if (advElim) initElimMode();
+  if (advMusic) startMusic();
+}
+
+function initTeamMode() {
+  // Split players evenly: even indices → team 0, odd → team 1
+  teams = [[], []];
+  PLAYERS.forEach((p,i) => teams[i%2].push(p.id));
+  teamScores = [0,0];
+  document.getElementById('teamScoreboard').style.display = 'flex';
+  document.getElementById('team0Members').textContent = teams[0].map(id=>PLAYERS[id].avatar+PLAYERS[id].name).join(' ');
+  document.getElementById('team1Members').textContent = teams[1].map(id=>PLAYERS[id].avatar+PLAYERS[id].name).join(' ');
+  updateTeamScores();
+}
+
+function updateTeamScores() {
+  if (!advTeam) return;
+  teamScores = [0,1].map(t => teams[t].reduce((s,id) => s + (scores[id]||0), 0));
+  document.getElementById('team0Score').textContent = parseFloat(teamScores[0].toFixed(1));
+  document.getElementById('team1Score').textContent = parseFloat(teamScores[1].toFixed(1));
+}
+
+// Hook into updateScoreboard to refresh team scores
+// updateTeamScores called inline
+
+// ── ELIMINATION MODE ──
+let elimActive = [], elimRound = 0;
+function initElimMode() {
+  elimActive = PLAYERS.map(p => p.id);
+  elimRound = 0;
+}
+
+function checkElimination() {
+  if (!advElim || elimActive.length <= 1) return;
+  // After every N questions, eliminate lowest scorer among active players
+  const qPerElim = Math.max(3, Math.floor(selectedCount / (PLAYERS.length - 1)));
+  if (answeredCount > 0 && answeredCount % qPerElim === 0) {
+    const loser = elimActive.reduce((a,b) => (scores[a]||0) < (scores[b]||0) ? a : b);
+    elimActive = elimActive.filter(id => id !== loser);
+    const p = PLAYERS[loser];
+    const card = document.getElementById('sc'+loser);
+    if(card) {
+      card.classList.add('eliminated');
+      const badge = document.createElement('div');
+      badge.className = 'elim-badge';
+      badge.textContent = '❌ مُقصى';
+      card.appendChild(badge);
+    }
+    showToast(`❌ ${p.avatar} ${p.name} خرج من البطولة!`, p.color);
+    // Update turnOrder for group mode
+    if (!useRandomOrder) turnOrder = elimActive.slice();
+  }
+}
+
+// Hook into nextQuestion to check elimination
+// checkElimination called inline
+
+// ── MUSIC ──
+let musicInterval = null, musicNodes = [];
+function toggleAdv(key) {
+  const map = {timer:'timerCard', speed:'speedCard', joker:'jokerCard', stats:'statsCard',
+               team:'teamCard', elim:'elimCard', music:'musicCard'};
+  const card = document.getElementById(map[key]);
+  if (!card) return;
+  const isOn = card.classList.toggle('on');
+  if (key==='timer') { advTimer=isOn; document.getElementById('timerSub').style.display=isOn?'block':'none'; }
+  if (key==='speed') advSpeed=isOn;
+  if (key==='joker') advJoker=isOn;
+  if (key==='stats') advStats=isOn;
+  if (key==='team')  { advTeam=isOn; }
+  if (key==='elim')  { advElim=isOn; }
+  if (key==='music') { advMusic=isOn; document.getElementById('musicBtn').classList.toggle('show',isOn); }
+}
+
+let musicPlaying = true;
+function startMusic() {
+  document.getElementById('musicBtn').classList.add('show');
+  playBgMusic();
+}
+function playBgMusic() {
+  if (!musicPlaying) return;
+  try {
+    const ctx = getAudio();
+    const notes = [261,294,329,349,392,440,494,523];
+    let i = 0;
+    musicInterval = setInterval(()=>{
+      if(!musicPlaying) return;
+      const osc = ctx.createOscillator();
+      const g = ctx.createGain();
+      osc.connect(g); g.connect(ctx.destination);
+      osc.type = 'sine';
+      osc.frequency.value = notes[i%notes.length] * (Math.random()>0.7?2:1);
+      g.gain.setValueAtTime(0.06, ctx.currentTime);
+      g.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime+0.4);
+      osc.start(); osc.stop(ctx.currentTime+0.4);
+      i++;
+    }, 600);
+  } catch(e){}
+}
+function toggleMusic() {
+  musicPlaying = !musicPlaying;
+  document.getElementById('musicBtn').textContent = musicPlaying ? '🎵' : '🔇';
+  if (musicPlaying) playBgMusic();
+  else { clearInterval(musicInterval); }
+}
+function stopMusic() { clearInterval(musicInterval); document.getElementById('musicBtn').classList.remove('show'); }
+
+// Stop music when game ends
+// showFinal extended inline
+
+function showTeamResult() {
+  const winner = teamScores[0] > teamScores[1] ? 0 : teamScores[1] > teamScores[0] ? 1 : -1;
+  const names = [document.getElementById('team0Name').textContent, document.getElementById('team1Name').textContent];
+  const msg = winner === -1 ? '🤝 تعادل الفريقين!' : `🏆 فاز ${names[winner]}!`;
+  showToast(msg, winner===0?'#6495ed':'#e07050');
+}
+
+// ── CUSTOM QUESTIONS ──
+let customQuestions = [];
+function openCustomQModal() {
+  renderCustomQList();
+  document.getElementById('customQModal').classList.add('show');
+}
+function closeCustomQModal() { document.getElementById('customQModal').classList.remove('show'); }
+function addCustomQ() {
+  const q = document.getElementById('cqText').value.trim();
+  const a = document.getElementById('cqA').value.trim();
+  const b = document.getElementById('cqB').value.trim();
+  const c = document.getElementById('cqC').value.trim();
+  const exp = document.getElementById('cqExp').value.trim();
+  if (!q || !a || !b || !c) { showToast('⚠️ أكمل السؤال والخيارات الثلاثة', 'var(--wrong)'); return; }
+  customQuestions.push({ cat:'custom', q, opts:[a,b,c], ans:0, exp:exp||'سؤال مخصص.', diff:'medium' });
+  ['cqText','cqA','cqB','cqC','cqExp'].forEach(id => document.getElementById(id).value='');
+  renderCustomQList();
+  document.getElementById('customQCount').textContent = `${customQuestions.length} سؤال مضاف`;
+}
+function removeCustomQ(i) {
+  customQuestions.splice(i,1);
+  renderCustomQList();
+  document.getElementById('customQCount').textContent = customQuestions.length ? `${customQuestions.length} سؤال مضاف` : 'أضف أسئلتك الخاصة';
+}
+function renderCustomQList() {
+  const list = document.getElementById('customQList');
+  list.innerHTML = '';
+  customQuestions.forEach((q,i) => {
+    const div = document.createElement('div');
+    div.className = 'custom-q-item';
+    div.innerHTML = `<span style="flex:1;font-size:0.8rem">${q.q}</span><span class="custom-q-del" onclick="removeCustomQ(${i})">✕</span>`;
+    list.appendChild(div);
+  });
+}
+
+// ── LEADERBOARD ──
+function saveToLeaderboard() {
+  const sorted = [...PLAYERS].sort((a,b)=>scores[b.id]-scores[a.id]);
+  const winner = sorted[0];
+  const entry = {
+    name: winner.name, avatar: winner.avatar,
+    score: parseFloat(scores[winner.id].toFixed(1)),
+    players: playerCount, cat: selectedCat, count: selectedCount,
+    date: new Date().toLocaleDateString('ar-SA')
+  };
+  let lb = JSON.parse(localStorage.getItem('quizLeaderboard')||'[]');
+  lb.unshift(entry);
+  lb = lb.slice(0,20); // keep top 20
+  localStorage.setItem('quizLeaderboard', JSON.stringify(lb));
+}
+
+function showLb() {
+  document.getElementById('finalScreen').classList.remove('show');
+  const screen = document.getElementById('lbScreen');
+  screen.classList.add('show');
+  const rows = document.getElementById('lbRows');
+  rows.innerHTML = '';
+  const lb = JSON.parse(localStorage.getItem('quizLeaderboard')||'[]');
+  if (!lb.length) { rows.innerHTML='<p style="text-align:center;color:var(--muted);padding:20px">لا توجد سجلات بعد</p>'; return; }
+  lb.forEach((e,i) => {
+    const div = document.createElement('div');
+    div.className = 'lb-row';
+    div.innerHTML = `
+      <div class="lb-rank">${i===0?'🥇':i===1?'🥈':i===2?'🥉':i+1}</div>
+      <div style="font-size:1.4rem">${e.avatar}</div>
+      <div class="lb-info">
+        <div class="lb-name">${e.name}</div>
+        <div class="lb-detail">${e.players} لاعبين • ${e.count} سؤال</div>
+        <div class="lb-date">${e.date}</div>
+      </div>
+      <div class="lb-pts">${e.score}</div>
+    `;
+    rows.appendChild(div);
+  });
+}
+
+function closeLb() {
+  document.getElementById('lbScreen').classList.remove('show');
+  document.getElementById('finalScreen').classList.add('show');
+}
+
+// ── SHARE ──
+let shareVisible = false;
+function buildShareText() {
+  const sorted = [...PLAYERS].sort((a,b)=>scores[b.id]-scores[a.id]);
+  const winner = sorted[0];
+  const catName = selectedCat==='all'?'الكل':({general:'معلومات عامة',religion:'دينية',geography:'جغرافيا',science:'علوم',history:'تاريخ',sports:'رياضة',arts:'فنون'})[selectedCat]||selectedCat;
+  let txt = `🏆 تحدي الثلاثة — نتيجة اللعبة
+
+`;
+  txt += `🎯 الفئة: ${catName} | ${selectedCount} سؤال
+
+`;
+  sorted.forEach((p,i) => {
+    const medals = ['🥇','🥈','🥉'];
+    txt += `${medals[i]||'•'} ${p.avatar} ${p.name}: ${parseFloat(scores[p.id].toFixed(1))} نقطة
+`;
+  });
+  txt += `
+🎮 جرّب اللعبة أنت الآن!`;
+  document.getElementById('shareText').innerText = txt;
+}
+function toggleShare() {
+  shareVisible = !shareVisible;
+  document.getElementById('shareSection').style.display = shareVisible ? 'block' : 'none';
+}
+function shareWhatsApp() {
+  const txt = document.getElementById('shareText').innerText;
+  window.open('https://wa.me/?text=' + encodeURIComponent(txt), '_blank');
+}
+function copyResult() {
+  const txt = document.getElementById('shareText').innerText;
+  navigator.clipboard.writeText(txt).then(()=>showToast('✅ تم النسخ!','var(--correct)')).catch(()=>showToast('⚠️ لم يتم النسخ','var(--wrong)'));
+}
+</script>
+<!-- Custom Question Modal -->
+<div class="modal-overlay" id="customQModal">
+  <div class="modal-box">
+    <div class="modal-title">✏️ أسئلة مخصصة</div>
+    <div class="custom-q-list" id="customQList"></div>
+    <input class="modal-input" id="cqText" placeholder="نص السؤال...">
+    <div class="modal-row">
+      <input class="modal-input" id="cqA" placeholder="الخيار أ (الصحيح)">
+      <input class="modal-input" id="cqB" placeholder="الخيار ب">
+      <input class="modal-input" id="cqC" placeholder="الخيار ج">
+    </div>
+    <input class="modal-input" id="cqExp" placeholder="شرح/فائدة (اختياري)">
+    <div class="modal-btn-row">
+      <button class="modal-btn secondary" onclick="closeCustomQModal()">إغلاق</button>
+      <button class="modal-btn primary" onclick="addCustomQ()">➕ إضافة</button>
+    </div>
+  </div>
+</div>
+
+<!-- Leaderboard screen -->
+<div class="lb-screen" id="lbScreen">
+  <div class="logo" style="margin-bottom:16px">
+    <h1 style="font-family:Tajawal;font-size:2rem;font-weight:900;color:var(--gold)">🏅 لوح الشرف</h1>
+  </div>
+  <div id="lbRows" style="max-width:560px;margin:0 auto 20px"></div>
+  <div style="text-align:center;max-width:560px;margin:0 auto">
+    <button class="play-again-btn" onclick="closeLb()">← رجوع</button>
+  </div>
+</div>
+
+<!-- Confetti Canvas -->
+<canvas id="confettiCanvas"></canvas>
+
+<!-- Emoji Picker -->
+<div class="emoji-picker-overlay" id="emojiOverlay" onclick="closeEmojiPicker(event)">
+  <div class="emoji-picker-box">
+    <div class="emoji-picker-title">اختر رمزك 🎭</div>
+    <div class="emoji-grid" id="emojiGrid"></div>
+  </div>
+</div>
+
+</body>
+</html>
