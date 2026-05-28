@@ -512,6 +512,19 @@ body.theme-gold  { --dark:#0a0800; --card-bg:#130f00; --border:#2a2000; --option
 }
 .custom-q-del { color:var(--wrong); cursor:pointer; font-size:0.9rem; padding:2px 6px; }
 
+/* Game mode selector */
+.mode-row { display:flex; gap:12px; max-width:600px; margin:0 auto 22px; }
+.mode-card {
+  flex:1; background:var(--card-bg); border:1.5px solid var(--border);
+  border-radius:16px; padding:16px 12px; text-align:center; cursor:pointer;
+  transition:all 0.2s ease;
+}
+.mode-card:hover { border-color:var(--gold); }
+.mode-card.active { border-color:var(--gold); background:rgba(201,168,76,0.1); box-shadow:0 0 16px rgba(201,168,76,0.15); }
+.mode-icon { font-size:1.8rem; margin-bottom:6px; }
+.mode-label { font-family:'Tajawal',sans-serif; font-weight:900; font-size:1.05rem; color:var(--text); }
+.mode-sub { font-size:0.72rem; color:var(--muted); margin-top:3px; }
+
 /* Team mode */
 .team-scoreboard { display:flex; gap:12px; max-width:700px; margin:0 auto 16px; }
 .team-card {
@@ -598,18 +611,48 @@ body.theme-gold  { --dark:#0a0800; --card-bg:#130f00; --border:#2a2000; --option
     <div class="theme-chip" onclick="setTheme('gold',this)">✨ ذهبي</div>
   </div>
 
-  <div class="section-title">👥 عدد اللاعبين</div>
-  <div class="player-count-row">
-    <button class="pc-btn" id="pcMinus" onclick="changePlayerCount(-1)">−</button>
-    <div>
-      <div class="pc-display" id="pcDisplay">3</div>
-      <div class="pc-label">لاعبين</div>
+  <div class="section-title">🎮 نوع اللعب</div>
+  <div class="mode-row">
+    <div class="mode-card active" id="modeSoloCard" onclick="setGameMode('solo')">
+      <div class="mode-icon">👤</div>
+      <div class="mode-label">فردي</div>
+      <div class="mode-sub">كل لاعب يلعب لنفسه</div>
     </div>
-    <button class="pc-btn" id="pcPlus" onclick="changePlayerCount(1)">+</button>
+    <div class="mode-card" id="modeTeamsCard" onclick="setGameMode('teams')">
+      <div class="mode-icon">🤝</div>
+      <div class="mode-label">جماعي</div>
+      <div class="mode-sub">فريقان يتنافسان</div>
+    </div>
   </div>
 
-  <div class="section-title">👤 أسماء اللاعبين</div>
-  <div class="players-setup" id="playersSetup"></div>
+  <div id="soloSetup">
+    <div class="section-title">👥 عدد اللاعبين</div>
+    <div class="player-count-row">
+      <button class="pc-btn" id="pcMinus" onclick="changePlayerCount(-1)">−</button>
+      <div>
+        <div class="pc-display" id="pcDisplay">3</div>
+        <div class="pc-label">لاعبين</div>
+      </div>
+      <button class="pc-btn" id="pcPlus" onclick="changePlayerCount(1)">+</button>
+    </div>
+
+    <div class="section-title">👤 أسماء اللاعبين</div>
+    <div class="players-setup" id="playersSetup"></div>
+  </div>
+
+  <div id="teamSetup" style="display:none">
+    <div class="section-title">🤝 أسماء الفريقين</div>
+    <div class="players-setup">
+      <div class="player-setup-card p0" style="border-color:#6495ed55">
+        <div class="player-avatar-big" style="background:#6495ed18">🔵</div>
+        <input class="player-name-input" id="teamName0" type="text" maxlength="16" value="الفريق الأزرق" style="border-color:#6495ed33">
+      </div>
+      <div class="player-setup-card p1" style="border-color:#e0705055">
+        <div class="player-avatar-big" style="background:#e0705018">🔴</div>
+        <input class="player-name-input" id="teamName1" type="text" maxlength="16" value="الفريق الأحمر" style="border-color:#e0705033">
+      </div>
+    </div>
+  </div>
 
   <div class="section-title">📂 نوع الأسئلة</div>
   <div class="cat-tabs" style="margin-bottom:22px;">
@@ -708,12 +751,6 @@ body.theme-gold  { --dark:#0a0800; --card-bg:#130f00; --border:#2a2000; --option
 
       <!-- New feature cards row 2 -->
       <div class="adv-grid" style="margin-top:8px">
-        <div class="adv-card" id="teamCard" onclick="toggleAdv('team')">
-          <div class="ac-toggle"></div>
-          <div class="ac-icon">🤝</div>
-          <div class="ac-label">وضع الفريقين</div>
-          <div class="ac-sub">اللاعبون يتقسمون فريقين</div>
-        </div>
         <div class="adv-card" id="elimCard" onclick="toggleAdv('elim')">
           <div class="ac-toggle"></div>
           <div class="ac-icon">🏆</div>
@@ -1081,6 +1118,7 @@ const allQuestions = [
 // ══ STATE ══
 let selectedCat = 'all';
 let selectedCount = 5;
+let gameMode = 'solo';   // 'solo' = individual players, 'teams' = two teams
 let useRandomOrder = false;
 let allowSkip = false;
 let questions = [];
@@ -1143,12 +1181,12 @@ function renderPlayerSetup() {
 function buildScoreboard() {
   const sb = document.getElementById('scoreboard');
   sb.innerHTML = '';
-  sb.className = 'scoreboard' + (playerCount > 3 ? ' many' : '');
+  sb.className = 'scoreboard' + (PLAYERS.length > 3 ? ' many' : '');
   PLAYERS.forEach((p, i) => {
     const card = document.createElement('div');
     card.className = 'score-card';
     card.id = 'sc' + i;
-    card.style.cssText = `border-color:${p.color}44; flex:1; min-width:${playerCount > 4 ? '70px' : '80px'}`;
+    card.style.cssText = `border-color:${p.color}44; flex:1; min-width:${PLAYERS.length > 4 ? '70px' : '80px'}`;
     card.innerHTML = `
       <div style="position:absolute;top:0;left:0;right:0;height:2px;background:${p.color};border-radius:16px 16px 0 0"></div>
       <div class="sc-avatar">${p.avatar}</div>
@@ -1169,6 +1207,14 @@ function updatePointsNote() {
     if (n > 2) txt += ` &nbsp;|&nbsp; إذا أجاب واحد فقط → <strong>10 كاملة</strong>`;
   }
   document.getElementById('pointsNote').innerHTML = txt;
+}
+
+function setGameMode(mode) {
+  gameMode = mode;
+  document.getElementById('modeSoloCard').classList.toggle('active', mode === 'solo');
+  document.getElementById('modeTeamsCard').classList.toggle('active', mode === 'teams');
+  document.getElementById('soloSetup').style.display = mode === 'solo' ? 'block' : 'none';
+  document.getElementById('teamSetup').style.display = mode === 'teams' ? 'block' : 'none';
 }
 
 function toggleRandom() {
@@ -1229,13 +1275,20 @@ function setCount(n, el) {
 function shuffle(arr) { return [...arr].sort(() => Math.random() - 0.5); }
 
 function startGame() {
-  // Build active PLAYERS array from current playerCount
+  // Build active PLAYERS array — either individual players or two teams
   PLAYERS = [];
-  for (let i = 0; i < playerCount; i++) {
-    const t = PLAYER_TEMPLATES[i];
-    const nameEl = document.getElementById('name' + i);
-    const name = (nameEl ? nameEl.value.trim() : '') || t.defaultName;
-    PLAYERS.push({ id: i, cls: t.cls, color: t.color, avatar: AVATARS[i], name });
+  if (gameMode === 'teams') {
+    const n0 = (document.getElementById('teamName0').value.trim()) || 'الفريق الأزرق';
+    const n1 = (document.getElementById('teamName1').value.trim()) || 'الفريق الأحمر';
+    PLAYERS.push({ id: 0, cls: 'p0', color: '#6495ed', avatar: '🔵', name: n0 });
+    PLAYERS.push({ id: 1, cls: 'p1', color: '#e07050', avatar: '🔴', name: n1 });
+  } else {
+    for (let i = 0; i < playerCount; i++) {
+      const t = PLAYER_TEMPLATES[i];
+      const nameEl = document.getElementById('name' + i);
+      const name = (nameEl ? nameEl.value.trim() : '') || t.defaultName;
+      PLAYERS.push({ id: i, cls: t.cls, color: t.color, avatar: AVATARS[i], name });
+    }
   }
 
   // Build dynamic scoreboard
@@ -1246,7 +1299,7 @@ function startGame() {
   qIndex = 0;
   answeredCount = 0;
   soloQueue = [];
-  scores = new Array(playerCount).fill(0);
+  scores = new Array(PLAYERS.length).fill(0);
 
   document.getElementById('setupScreen').style.display = 'none';
   document.getElementById('gameScreen').style.display = 'block';
