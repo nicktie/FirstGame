@@ -52,7 +52,7 @@ body {
 .player-setup-card.p4 { border-color:rgba(240,200,80,0.35); }
 .player-setup-card.p5 { border-color:rgba(240,100,160,0.35); }
 .player-avatar-big { width:42px; height:42px; border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:1.3rem; flex-shrink:0; background:rgba(255,255,255,0.05); }
-.player-name-input { flex:1; background:#1e1e2a; border:1.5px solid var(--border); border-radius:10px; padding:9px 13px; font-family:'Cairo',sans-serif; font-size:0.9rem; color:var(--text); outline:none; transition:border-color 0.2s; }
+.player-name-input { flex:1; background:var(--option-bg); border:1.5px solid var(--border); border-radius:10px; padding:9px 13px; font-family:'Cairo',sans-serif; font-size:0.9rem; color:var(--text); outline:none; transition:border-color 0.2s; }
 .player-name-input:focus { border-color:var(--gold); }
 
 /* Player count picker */
@@ -141,7 +141,7 @@ body {
 .cat-sports   { background:rgba(80,200,120,0.12);  color:#50c878; border:1px solid rgba(80,200,120,0.3); }
 .cat-arts     { background:rgba(200,100,200,0.12); color:#c864c8; border:1px solid rgba(200,100,200,0.3); }
 .q-num { font-size:0.76rem; color:var(--muted); }
-.question { font-family:'Tajawal',sans-serif; font-size:clamp(1rem,3vw,1.25rem); font-weight:700; line-height:1.65; margin-bottom:20px; color:#fff; }
+.question { font-family:'Tajawal',sans-serif; font-size:clamp(1rem,3vw,1.25rem); font-weight:700; line-height:1.65; margin-bottom:20px; color:var(--text); }
 .turn-indicator { display:flex; align-items:center; gap:10px; background:#1e1e2a; border-radius:12px; padding:10px 15px; margin-bottom:16px; border:1px solid var(--border); font-size:0.85rem; transition:all 0.3s; }
 .turn-avatar { font-size:1.2rem; }
 .turn-text { font-weight:700; }
@@ -454,6 +454,7 @@ body {
 body.theme-light { --dark:#f5f0e8; --card-bg:#fff; --border:#e0d8cc; --text:#1a1a1a; --muted:#888; --option-bg:#f8f4ee; background-image:none !important; }
 body.theme-blue  { --dark:#0a0e1a; --card-bg:#0d1526; --border:#1e2d4a; --option-bg:#111d35; }
 body.theme-gold  { --dark:#0a0800; --card-bg:#130f00; --border:#2a2000; --option-bg:#1a1500; }
+body.theme-purple { --dark:#f4f0fb; --card-bg:#ffffff; --border:#e4d8f5; --text:#2a1740; --muted:#8d7aa8; --option-bg:#f7f2fd; --gold:#8b5cf6; --gold-light:#a78bfa; background-image:none !important; }
 
 /* Theme picker */
 .theme-row { display:flex; gap:8px; margin-bottom:18px; justify-content:center; flex-wrap:wrap; }
@@ -657,6 +658,7 @@ body.theme-gold  { --dark:#0a0800; --card-bg:#130f00; --border:#2a2000; --option
     <div class="theme-chip" onclick="setTheme('light',this)">☀️ فاتح</div>
     <div class="theme-chip" onclick="setTheme('blue',this)">🌊 أزرق</div>
     <div class="theme-chip" onclick="setTheme('gold',this)">✨ ذهبي</div>
+    <div class="theme-chip" onclick="setTheme('purple',this)">💜 بنفسجي</div>
   </div>
 
   <div class="section-title">🎮 نوع اللعب</div>
@@ -1314,6 +1316,11 @@ function renderPlayerSetup() {
     input.style.borderColor = t.color + '33';
     input.addEventListener('focus', () => { input.style.borderColor = t.color; });
     input.addEventListener('blur',  () => { input.style.borderColor = t.color + '33'; });
+    input.addEventListener('input', () => {
+      const idx = parseInt(avatarDiv.dataset.idx);
+      if (input.value.trim() === 'سهى') avatarDiv.textContent = '💜';
+      else if (avatarDiv.textContent === '💜') avatarDiv.textContent = AVATARS[idx];
+    });
 
     card.appendChild(avatarDiv);
     card.appendChild(input);
@@ -1433,7 +1440,8 @@ function startGame() {
       const t = PLAYER_TEMPLATES[i];
       const nameEl = document.getElementById('name' + i);
       const name = (nameEl ? nameEl.value.trim() : '') || t.defaultName;
-      PLAYERS.push({ id: i, cls: t.cls, color: t.color, avatar: AVATARS[i], name });
+      const avatar = (name === 'سهى') ? '💜' : AVATARS[i];
+      PLAYERS.push({ id: i, cls: t.cls, color: t.color, avatar, name });
     }
   }
 
@@ -2633,7 +2641,8 @@ function renderLobbyPlayers(players) {
   ids.forEach(id=>{
     const chip = document.createElement('div');
     chip.className = 'lobby-player-chip';
-    chip.textContent = (id===online.playerId?'⭐ ':'🙂 ') + players[id].name;
+    const pre = players[id].name==='سهى' ? '💜 ' : (id===online.playerId?'⭐ ':'🙂 ');
+    chip.textContent = pre + players[id].name;
     box.appendChild(chip);
   });
 }
@@ -2766,7 +2775,7 @@ async function showOnlineFinalStage() {
   const snap = await fb.db.ref('rooms/'+online.code+'/players').once('value');
   const players = snap.val() || {};
   const arr = Object.keys(players).map(id=>({id, ...players[id]})).sort((a,b)=>(b.score||0)-(a.score||0));
-  const medals=['🥇','🥈','🥉']; const heights=[160,120,90];
+  const medals=['🥇','🥈','🥉']; const heights=[120,160,90];
   const top = arr.slice(0,3);
   const disp = top.length===1?[top[0]] : top.length===2?[top[1],top[0]] : [top[1],top[0],top[2]];
   const rmap = top.length===1?[0] : top.length===2?[1,0] : [1,0,2];
