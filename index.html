@@ -1643,6 +1643,7 @@ function showFinal() {
 function backToSetup() {
   document.getElementById('finalScreen').classList.remove('show');
   document.getElementById('setupScreen').style.display = 'block';
+  document.getElementById('teamScoreboard').style.display = 'none';
   scores = []; answeredCount = 0; soloQueue = [];
   renderPlayerSetup();
   updateAvailNote();
@@ -1951,6 +1952,8 @@ function startGameAdv() {
   const totalLabel = document.getElementById('totalQLabel');
   if (qLabel) qLabel.textContent = selectedCount;
   if (totalLabel) totalLabel.textContent = selectedCount * totalRounds;
+  document.getElementById('teamScoreboard').style.display = 'none';
+  initSpecialModes();   // team / elimination / music
 }
 
 // ── Hook into loadQuestion to start timer + render joker ──
@@ -2019,6 +2022,8 @@ function showFinalAdv() {
     const best = [...PLAYERS].sort((a,b)=>(playerStats[b.id]?.speedPts||0)-(playerStats[a.id]?.speedPts||0))[0];
     if (best) showToast(`⚡ الأسرع: ${best.name} بـ ${playerStats[best.id].speedPts} نقطة تسارع`, best.color);
   }
+  if (advTeam) showTeamResult();
+  stopMusic();
 }
 
 // Emoji picker is now built into renderPlayerSetup
