@@ -527,6 +527,52 @@ body.theme-gold  { --dark:#0a0800; --card-bg:#130f00; --border:#2a2000; --option
 .mode-label { font-family:'Tajawal',sans-serif; font-weight:900; font-size:1.05rem; color:var(--text); }
 .mode-sub { font-size:0.72rem; color:var(--muted); margin-top:3px; }
 
+/* Online mode */
+.online-panel { background:var(--card-bg); border:1.5px solid var(--border); border-radius:16px; padding:18px; max-width:600px; margin:0 auto; }
+.online-panel-title { font-family:'Tajawal',sans-serif; font-weight:900; font-size:1.1rem; color:var(--gold); margin-bottom:4px; }
+.online-panel-sub { font-size:0.78rem; color:var(--muted); margin-bottom:12px; line-height:1.6; }
+.online-input { width:100%; padding:12px 14px; background:var(--option-bg); border:1.5px solid var(--border); border-radius:12px; color:var(--text); font-family:'Cairo',sans-serif; font-size:1rem; margin-bottom:8px; text-align:center; }
+.online-input:focus { outline:none; border-color:var(--gold); }
+.online-code-input { letter-spacing:8px; font-size:1.6rem; font-weight:900; font-family:'Tajawal',sans-serif; }
+.online-or { text-align:center; color:var(--muted); margin:16px auto; max-width:600px; font-weight:700; }
+.online-stage { max-width:600px; margin:0 auto; animation:fadeUp 0.5s ease; }
+.room-code-box { background:var(--card-bg); border:1.5px solid var(--gold); border-radius:18px; padding:18px; text-align:center; margin-bottom:18px; box-shadow:0 0 24px rgba(201,168,76,0.12); }
+.room-code-lbl { font-size:0.82rem; color:var(--muted); margin-bottom:6px; }
+.room-code { font-family:'Tajawal',sans-serif; font-size:2.6rem; font-weight:900; color:var(--gold); letter-spacing:10px; }
+.online-copy-btn { margin-top:10px; padding:8px 18px; background:rgba(201,168,76,0.15); border:1px solid var(--gold); color:var(--gold); border-radius:10px; cursor:pointer; font-family:'Cairo',sans-serif; font-size:0.85rem; }
+.lobby-players-title { font-family:'Tajawal',sans-serif; font-weight:700; font-size:0.95rem; color:var(--text); margin-bottom:10px; }
+.lobby-players { display:flex; flex-wrap:wrap; gap:8px; min-height:40px; }
+.lobby-player-chip { background:var(--option-bg); border:1px solid var(--border); border-radius:30px; padding:8px 14px; font-size:0.9rem; display:flex; align-items:center; gap:6px; animation:fadeUp 0.3s ease; }
+.online-wait-note { text-align:center; color:var(--muted); font-size:0.85rem; margin-top:18px; animation:pulse 1.6s ease infinite; }
+@keyframes pulse { 0%,100%{opacity:0.5} 50%{opacity:1} }
+.online-leave-btn { display:block; margin:18px auto 0; padding:8px 20px; background:transparent; border:1px solid var(--border); color:var(--muted); border-radius:10px; cursor:pointer; font-family:'Cairo',sans-serif; }
+.online-topbar { display:flex; justify-content:space-between; align-items:center; margin-bottom:14px; }
+.online-qnum { font-family:'Tajawal',sans-serif; font-weight:700; color:var(--muted); }
+.online-timer { width:54px; height:54px; border-radius:50%; background:var(--card-bg); border:3px solid var(--gold); display:flex; align-items:center; justify-content:center; font-family:'Tajawal',sans-serif; font-weight:900; font-size:1.4rem; color:var(--gold); }
+.online-timer.low { border-color:var(--wrong); color:var(--wrong); }
+.online-qcard { background:var(--card-bg); border:1.5px solid var(--border); border-radius:18px; padding:24px 18px; text-align:center; margin-bottom:16px; }
+.online-cat { font-size:0.8rem; color:var(--gold); margin-bottom:8px; }
+.online-qtext { font-family:'Tajawal',sans-serif; font-weight:700; font-size:1.3rem; line-height:1.6; color:var(--text); }
+.online-options { display:grid; grid-template-columns:1fr; gap:10px; }
+.online-opt { padding:18px 12px; border-radius:14px; border:2px solid var(--border); background:var(--option-bg); color:var(--text); font-family:'Tajawal',sans-serif; font-weight:700; font-size:1.05rem; cursor:pointer; text-align:center; transition:transform 0.12s ease, border-color 0.2s; min-height:64px; display:flex; align-items:center; justify-content:center; }
+.online-opt:active { transform:scale(0.97); }
+.online-opt.oc0 { border-color:#e05c5c66; } .online-opt.oc1 { border-color:#6495ed66; }
+.online-opt.oc2 { border-color:#d4b80066; } .online-opt.oc3 { border-color:#3dba7a66; }
+.online-opt.picked { border-color:var(--gold); background:rgba(201,168,76,0.2); box-shadow:0 0 16px rgba(201,168,76,0.25); }
+.online-opt.correct { border-color:var(--correct); background:rgba(61,186,122,0.22); }
+.online-opt.wrong { border-color:var(--wrong); background:rgba(224,92,92,0.18); opacity:0.7; }
+.online-opt.disabled { pointer-events:none; }
+.online-status { text-align:center; margin-top:16px; font-family:'Tajawal',sans-serif; font-weight:700; color:var(--muted); min-height:24px; }
+.online-reveal-head { text-align:center; font-family:'Tajawal',sans-serif; font-weight:900; font-size:1.4rem; padding:18px; border-radius:16px; }
+.online-reveal-head.good { background:rgba(61,186,122,0.15); color:var(--correct); }
+.online-reveal-head.bad { background:rgba(224,92,92,0.12); color:var(--wrong); }
+.online-leaderboard { display:flex; flex-direction:column; gap:8px; }
+.olb-row { display:flex; align-items:center; gap:10px; background:var(--card-bg); border:1px solid var(--border); border-radius:12px; padding:10px 14px; animation:fadeUp 0.3s ease; }
+.olb-row.me { border-color:var(--gold); }
+.olb-rank { font-family:'Tajawal',sans-serif; font-weight:900; color:var(--muted); width:26px; }
+.olb-name { flex:1; font-weight:700; }
+.olb-score { font-family:'Tajawal',sans-serif; font-weight:900; color:var(--gold); }
+
 /* Team mode */
 .team-scoreboard { display:flex; gap:12px; max-width:700px; margin:0 auto 16px; }
 .team-card {
@@ -625,6 +671,37 @@ body.theme-gold  { --dark:#0a0800; --card-bg:#130f00; --border:#2a2000; --option
       <div class="mode-label">جماعي</div>
       <div class="mode-sub">فريقان يتنافسان</div>
     </div>
+    <div class="mode-card" id="modeOnlineCard" onclick="setGameMode('online')">
+      <div class="mode-icon">🌐</div>
+      <div class="mode-label">أونلاين</div>
+      <div class="mode-sub">كل واحد من جواله • الأسرع يفوز</div>
+    </div>
+  </div>
+
+  <div id="onlineSetup" style="display:none">
+    <div class="online-panel">
+      <div class="online-panel-title">🆕 إنشاء غرفة</div>
+      <div class="online-panel-sub">اختر الفئة وعدد الأسئلة من فوق، ثم أنشئ غرفة وشارك الرمز مع أصحابك.</div>
+      <input class="online-input" id="hostName" type="text" maxlength="16" placeholder="اسمك (المضيف يلعب أيضاً)">
+      <div class="section-title" style="margin:14px 0 8px">⏱️ الوقت لكل سؤال</div>
+      <div class="timer-options" id="onlineTimerOpts">
+        <div class="timer-opt" onclick="setOnlineTimer(10,this)">10 ث</div>
+        <div class="timer-opt active" onclick="setOnlineTimer(15,this)">15 ث</div>
+        <div class="timer-opt" onclick="setOnlineTimer(20,this)">20 ث</div>
+        <div class="timer-opt" onclick="setOnlineTimer(30,this)">30 ث</div>
+      </div>
+      <button class="start-btn" style="margin-top:16px" onclick="createRoom()">🚀 إنشاء غرفة</button>
+    </div>
+
+    <div class="online-or">— أو —</div>
+
+    <div class="online-panel">
+      <div class="online-panel-title">🔗 انضمام لغرفة</div>
+      <div class="online-panel-sub">أدخل الرمز اللي وصلك من المضيف.</div>
+      <input class="online-input" id="joinName" type="text" maxlength="16" placeholder="اسمك">
+      <input class="online-input online-code-input" id="joinCode" type="text" inputmode="numeric" maxlength="6" placeholder="رمز الغرفة">
+      <button class="start-btn" style="margin-top:14px;background:linear-gradient(135deg,#6495ed,#3a6bc4)" onclick="joinRoom()">🎮 دخول</button>
+    </div>
   </div>
 
   <div id="soloSetup">
@@ -680,6 +757,7 @@ body.theme-gold  { --dark:#0a0800; --card-bg:#130f00; --border:#2a2000; --option
     <div class="qcount-avail" id="availNote">المتاح: <span id="availNum">175</span> سؤال في هذا التصنيف</div>
   </div>
 
+  <div id="localExtras">
   <div class="points-note" id="pointsNote" style="margin-top:16px;">
     كل إجابة صحيحة = <strong>10 نقاط</strong> &nbsp;|&nbsp;
     إذا اتفق الجميع → <strong>تتقسم</strong>
@@ -798,6 +876,7 @@ body.theme-gold  { --dark:#0a0800; --card-bg:#130f00; --border:#2a2000; --option
   </div>
 
   <button class="start-btn" onclick="startGame()">🎮 ابدأ اللعبة</button>
+  </div>
 </div>
 
 <!-- ══ GAME SCREEN ══ -->
@@ -888,9 +967,67 @@ body.theme-gold  { --dark:#0a0800; --card-bg:#130f00; --border:#2a2000; --option
   </div>
 </div>
 
+<!-- ══ ONLINE SCREEN (Kahoot-style) ══ -->
+<div id="onlineScreen" style="display:none">
+
+  <!-- Lobby -->
+  <div id="onlineLobby" class="online-stage">
+    <div class="logo" style="margin-bottom:14px"><h1>🌐 غرفة أونلاين</h1></div>
+    <div class="room-code-box">
+      <div class="room-code-lbl">رمز الغرفة</div>
+      <div class="room-code" id="roomCodeDisplay">------</div>
+      <button class="online-copy-btn" onclick="copyRoomCode()">📋 نسخ الرمز</button>
+    </div>
+    <div class="lobby-players-title">👥 اللاعبون: <span id="lobbyCount">0</span></div>
+    <div class="lobby-players" id="lobbyPlayers"></div>
+    <div id="lobbyHostControls" style="display:none">
+      <button class="start-btn" style="margin-top:16px" id="lobbyStartBtn" onclick="hostStartGame()">🚀 ابدأ اللعبة</button>
+    </div>
+    <div id="lobbyWaitNote" class="online-wait-note">في انتظار أن يبدأ المضيف اللعبة…</div>
+    <button class="online-leave-btn" onclick="leaveRoom()">↩️ خروج</button>
+  </div>
+
+  <!-- Question -->
+  <div id="onlineQuestion" class="online-stage" style="display:none">
+    <div class="online-topbar">
+      <div class="online-qnum" id="onlineQNum">السؤال 1</div>
+      <div class="online-timer" id="onlineTimer">15</div>
+    </div>
+    <div class="online-qcard">
+      <div class="online-cat" id="onlineCat"></div>
+      <div class="online-qtext" id="onlineQText">...</div>
+    </div>
+    <div class="online-options" id="onlineOptions"></div>
+    <div class="online-status" id="onlineStatus"></div>
+  </div>
+
+  <!-- Reveal / between-questions leaderboard -->
+  <div id="onlineReveal" class="online-stage" style="display:none">
+    <div class="online-reveal-head" id="onlineRevealHead"></div>
+    <div class="lobby-players-title" style="margin-top:18px">🏅 الترتيب</div>
+    <div class="online-leaderboard" id="onlineLeaderboard"></div>
+    <div id="onlineRevealWait" class="online-wait-note">السؤال التالي بعد لحظات…</div>
+  </div>
+
+  <!-- Final -->
+  <div id="onlineFinal" class="online-stage" style="display:none">
+    <div class="logo" style="margin-bottom:18px"><h1>🏆 النتيجة النهائية</h1></div>
+    <div class="podium" id="onlinePodium"></div>
+    <div class="final-card">
+      <div class="final-title">ترتيب اللاعبين</div>
+      <div class="final-rows" id="onlineFinalRows"></div>
+      <button class="play-again-btn" style="width:100%;margin-top:6px" onclick="leaveRoom()">🔄 العودة للقائمة</button>
+    </div>
+  </div>
+
+</div>
+
 <footer class="site-footer">
   © 2026 <strong>DALMOO Digital Products</strong> • جميع الحقوق محفوظة
 </footer>
+
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-database-compat.js"></script>
 
 <script>
 // ══ DATA ══
@@ -1219,8 +1356,11 @@ function setGameMode(mode) {
   gameMode = mode;
   document.getElementById('modeSoloCard').classList.toggle('active', mode === 'solo');
   document.getElementById('modeTeamsCard').classList.toggle('active', mode === 'teams');
+  document.getElementById('modeOnlineCard').classList.toggle('active', mode === 'online');
   document.getElementById('soloSetup').style.display = mode === 'solo' ? 'block' : 'none';
   document.getElementById('teamSetup').style.display = mode === 'teams' ? 'block' : 'none';
+  document.getElementById('onlineSetup').style.display = mode === 'online' ? 'block' : 'none';
+  document.getElementById('localExtras').style.display = mode === 'online' ? 'none' : 'block';
 }
 
 function toggleRandom() {
@@ -2366,6 +2506,301 @@ function shareWhatsApp() {
 function copyResult() {
   const txt = document.getElementById('shareText').innerText;
   navigator.clipboard.writeText(txt).then(()=>showToast('✅ تم النسخ!','var(--correct)')).catch(()=>showToast('⚠️ لم يتم النسخ','var(--wrong)'));
+}
+
+// ════════════════════════════════════════════════════════
+// ══ ONLINE MODE — Kahoot-style realtime (Firebase RTDB) ══
+// ════════════════════════════════════════════════════════
+
+// >>> ضع إعدادات Firebase هنا (من إعدادات مشروعك على Firebase) <<<
+const FIREBASE_CONFIG = {
+  apiKey: "",
+  authDomain: "",
+  databaseURL: "",
+  projectId: "",
+  appId: ""
+};
+
+let fb = { app:null, db:null };
+let online = {
+  code:null, isHost:false, playerId:null, name:null, timer:15,
+  questions:[], qIndex:0, count:0,
+  playersRef:null, stateRef:null, listeners:[],
+  qStartAt:0, answered:false, localTimerInt:null, hostTickTimeout:null
+};
+const ONLINE_BASE_PTS = 1000;
+const ONLINE_REVEAL_MS = 4500;
+
+function ensureFirebase() {
+  if (!FIREBASE_CONFIG.databaseURL) {
+    showToast('⚠️ لم يتم ضبط إعدادات Firebase بعد', 'var(--wrong)');
+    return false;
+  }
+  if (!fb.app) {
+    try { fb.app = firebase.initializeApp(FIREBASE_CONFIG); fb.db = firebase.database(); }
+    catch(e) { showToast('⚠️ فشل الاتصال بـ Firebase', 'var(--wrong)'); return false; }
+  }
+  return true;
+}
+
+function setOnlineTimer(secs, el) {
+  online.timer = secs;
+  document.querySelectorAll('#onlineTimerOpts .timer-opt').forEach(o=>o.classList.remove('active'));
+  if (el) el.classList.add('active');
+}
+function genCode() { return String(Math.floor(100000 + Math.random()*900000)); }
+function uid() { return 'p' + Math.random().toString(36).slice(2,9); }
+
+function showOnlineStage(which) {
+  ['onlineLobby','onlineQuestion','onlineReveal','onlineFinal'].forEach(id=>{
+    document.getElementById(id).style.display = (id===which) ? 'block' : 'none';
+  });
+}
+function enterOnlineScreen() {
+  document.getElementById('setupScreen').style.display='none';
+  document.getElementById('gameScreen').style.display='none';
+  document.getElementById('finalScreen').classList.remove('show');
+  document.getElementById('onlineScreen').style.display='block';
+}
+
+async function createRoom() {
+  if (!ensureFirebase()) return;
+  const name = (document.getElementById('hostName').value.trim()) || 'المضيف';
+  let pool = selectedCat==='all' ? allQuestions : allQuestions.filter(q=>q.cat===selectedCat);
+  if (selectedDiff && selectedDiff!=='all') pool = pool.filter(q=>q.diff===selectedDiff);
+  pool = shuffle(pool).slice(0, selectedCount);
+  if (!pool.length) { showToast('⚠️ لا توجد أسئلة كافية', 'var(--wrong)'); return; }
+
+  const code = genCode();
+  Object.assign(online, { code, isHost:true, playerId:uid(), name, questions:pool, count:pool.length, qIndex:0 });
+  const roomRef = fb.db.ref('rooms/'+code);
+  await roomRef.set({
+    meta:{ status:'lobby', timer:online.timer, count:pool.length, createdAt:firebase.database.ServerValue.TIMESTAMP },
+    state:{ phase:'lobby', qIndex:0 }
+  });
+  await roomRef.child('players/'+online.playerId).set({ name, score:0, joinedAt:firebase.database.ServerValue.TIMESTAMP });
+  attachRoomListeners(code);
+  enterOnlineScreen(); showOnlineStage('onlineLobby');
+  document.getElementById('roomCodeDisplay').textContent = code;
+  document.getElementById('lobbyHostControls').style.display = 'block';
+  document.getElementById('lobbyWaitNote').style.display = 'none';
+}
+
+async function joinRoom() {
+  if (!ensureFirebase()) return;
+  const name = document.getElementById('joinName').value.trim();
+  const code = document.getElementById('joinCode').value.trim();
+  if (!name) { showToast('⚠️ اكتب اسمك', 'var(--wrong)'); return; }
+  if (!/^\d{6}$/.test(code)) { showToast('⚠️ الرمز 6 أرقام', 'var(--wrong)'); return; }
+  const roomRef = fb.db.ref('rooms/'+code);
+  const snap = await roomRef.child('meta').once('value');
+  if (!snap.exists()) { showToast('⚠️ غرفة غير موجودة', 'var(--wrong)'); return; }
+  const meta = snap.val();
+  if (meta.status!=='lobby') { showToast('⚠️ اللعبة بدأت بالفعل', 'var(--wrong)'); return; }
+  Object.assign(online, { code, isHost:false, playerId:uid(), name, timer:meta.timer||15, count:meta.count||0 });
+  const pRef = roomRef.child('players/'+online.playerId);
+  await pRef.set({ name, score:0, joinedAt:firebase.database.ServerValue.TIMESTAMP });
+  pRef.onDisconnect().remove();
+  attachRoomListeners(code);
+  enterOnlineScreen(); showOnlineStage('onlineLobby');
+  document.getElementById('roomCodeDisplay').textContent = code;
+  document.getElementById('lobbyHostControls').style.display = 'none';
+  document.getElementById('lobbyWaitNote').style.display = 'block';
+}
+
+function attachRoomListeners(code) {
+  const roomRef = fb.db.ref('rooms/'+code);
+  online.playersRef = roomRef.child('players');
+  online.stateRef = roomRef.child('state');
+  const pl = online.playersRef.on('value', snap=>{
+    const players = snap.val() || {};
+    renderLobbyPlayers(players);
+    renderLeaderboard(players);
+  });
+  const st = online.stateRef.on('value', snap=>{
+    const s = snap.val(); if (s) onStateChange(s);
+  });
+  online.listeners.push(()=>online.playersRef.off('value', pl));
+  online.listeners.push(()=>online.stateRef.off('value', st));
+}
+
+function renderLobbyPlayers(players) {
+  const ids = Object.keys(players);
+  document.getElementById('lobbyCount').textContent = ids.length;
+  const box = document.getElementById('lobbyPlayers'); box.innerHTML='';
+  ids.forEach(id=>{
+    const chip = document.createElement('div');
+    chip.className = 'lobby-player-chip';
+    chip.textContent = (id===online.playerId?'⭐ ':'🙂 ') + players[id].name;
+    box.appendChild(chip);
+  });
+}
+
+function onStateChange(s) {
+  if (s.phase==='lobby') showOnlineStage('onlineLobby');
+  else if (s.phase==='question') { online.qIndex = s.qIndex; showQuestion(s); }
+  else if (s.phase==='reveal') showReveal(s);
+  else if (s.phase==='final') showOnlineFinalStage();
+}
+
+async function hostStartGame() {
+  if (!online.isHost) return;
+  await fb.db.ref('rooms/'+online.code+'/meta/status').set('active');
+  hostBroadcastQuestion(0);
+}
+
+async function hostBroadcastQuestion(i) {
+  if (!online.isHost) return;
+  online.qIndex = i;
+  const q = online.questions[i];
+  await fb.db.ref('rooms/'+online.code+'/answers/'+i).remove();
+  await fb.db.ref('rooms/'+online.code+'/state').set({
+    phase:'question', qIndex:i,
+    current:{ q:q.q, opts:q.opts, cat:q.cat },
+    startAt: firebase.database.ServerValue.TIMESTAMP
+  });
+  clearTimeout(online.hostTickTimeout);
+  online.hostTickTimeout = setTimeout(()=>hostReveal(i), online.timer*1000 + 700);
+}
+
+async function hostReveal(i) {
+  if (!online.isHost) return;
+  const q = online.questions[i];
+  const ansSnap = await fb.db.ref('rooms/'+online.code+'/answers/'+i).once('value');
+  const ans = ansSnap.val() || {};
+  const plSnap = await fb.db.ref('rooms/'+online.code+'/players').once('value');
+  const players = plSnap.val() || {};
+  const updates = {};
+  Object.keys(players).forEach(pid=>{
+    const a = ans[pid];
+    let pts = 0;
+    if (a && a.choice===q.ans) {
+      const frac = Math.max(0, Math.min(1, 1 - (a.timeMs/(online.timer*1000))));
+      pts = Math.round(ONLINE_BASE_PTS*0.5 + ONLINE_BASE_PTS*0.5*frac);
+    }
+    updates['players/'+pid+'/score'] = (players[pid].score||0) + pts;
+    updates['answers/'+i+'/'+pid+'/correct'] = a ? (a.choice===q.ans) : false;
+    updates['answers/'+i+'/'+pid+'/pts'] = pts;
+  });
+  await fb.db.ref('rooms/'+online.code).update(updates);
+  await fb.db.ref('rooms/'+online.code+'/state').update({ phase:'reveal', ans:q.ans });
+  clearTimeout(online.hostTickTimeout);
+  online.hostTickTimeout = setTimeout(()=>{
+    if (i+1 < online.count) hostBroadcastQuestion(i+1);
+    else fb.db.ref('rooms/'+online.code+'/state').update({ phase:'final' });
+  }, ONLINE_REVEAL_MS);
+}
+
+function showQuestion(s) {
+  showOnlineStage('onlineQuestion');
+  online.answered = false;
+  online.qStartAt = Date.now();
+  const cur = s.current || {};
+  document.getElementById('onlineQNum').textContent = `السؤال ${s.qIndex+1} من ${online.count}`;
+  document.getElementById('onlineCat').textContent = catLabels[cur.cat] ? catLabels[cur.cat].label : '';
+  document.getElementById('onlineQText').textContent = cur.q || '';
+  const box = document.getElementById('onlineOptions'); box.innerHTML='';
+  (cur.opts||[]).forEach((opt,idx)=>{
+    const d = document.createElement('div');
+    d.className = 'online-opt oc'+idx;
+    d.textContent = opt;
+    d.onclick = ()=>submitOnlineAnswer(idx, d);
+    box.appendChild(d);
+  });
+  document.getElementById('onlineStatus').textContent = '';
+  startOnlineCountdown();
+}
+
+function startOnlineCountdown() {
+  clearInterval(online.localTimerInt);
+  const tEl = document.getElementById('onlineTimer');
+  let left = online.timer;
+  tEl.textContent = left; tEl.classList.remove('low');
+  online.localTimerInt = setInterval(()=>{
+    left--; tEl.textContent = Math.max(0,left);
+    if (left<=5) tEl.classList.add('low');
+    if (left<=0) { clearInterval(online.localTimerInt); lockOnlineOptions(); }
+  }, 1000);
+}
+function lockOnlineOptions() {
+  document.querySelectorAll('#onlineOptions .online-opt').forEach(o=>o.classList.add('disabled'));
+}
+function submitOnlineAnswer(idx, el) {
+  if (online.answered) return;
+  online.answered = true;
+  const timeMs = Date.now() - online.qStartAt;
+  el.classList.add('picked');
+  lockOnlineOptions();
+  document.getElementById('onlineStatus').textContent = '✅ تم تسجيل إجابتك… في انتظار البقية';
+  fb.db.ref('rooms/'+online.code+'/answers/'+online.qIndex+'/'+online.playerId).set({ choice:idx, timeMs });
+}
+
+function showReveal(s) {
+  clearInterval(online.localTimerInt);
+  showOnlineStage('onlineReveal');
+  fb.db.ref('rooms/'+online.code+'/answers/'+online.qIndex+'/'+online.playerId).once('value').then(snap=>{
+    const a = snap.val();
+    const head = document.getElementById('onlineRevealHead');
+    if (a && a.correct) { head.className='online-reveal-head good'; head.textContent=`✅ إجابة صحيحة! +${a.pts||0}`; }
+    else { head.className='online-reveal-head bad'; head.textContent = a ? '❌ إجابة خاطئة' : '⌛ لم تجب في الوقت'; }
+  });
+}
+
+function renderLeaderboard(players) {
+  const box = document.getElementById('onlineLeaderboard'); if (!box) return;
+  const arr = Object.keys(players).map(id=>({id, ...players[id]})).sort((a,b)=>(b.score||0)-(a.score||0));
+  box.innerHTML='';
+  arr.forEach((p,i)=>{
+    const row = document.createElement('div');
+    row.className = 'olb-row' + (p.id===online.playerId?' me':'');
+    row.innerHTML = `<div class="olb-rank">${i+1}</div><div class="olb-name">${p.name}</div><div class="olb-score">${p.score||0}</div>`;
+    box.appendChild(row);
+  });
+}
+
+async function showOnlineFinalStage() {
+  clearInterval(online.localTimerInt);
+  showOnlineStage('onlineFinal');
+  const snap = await fb.db.ref('rooms/'+online.code+'/players').once('value');
+  const players = snap.val() || {};
+  const arr = Object.keys(players).map(id=>({id, ...players[id]})).sort((a,b)=>(b.score||0)-(a.score||0));
+  const medals=['🥇','🥈','🥉']; const heights=[160,120,90];
+  const top = arr.slice(0,3);
+  const disp = top.length===1?[top[0]] : top.length===2?[top[1],top[0]] : [top[1],top[0],top[2]];
+  const rmap = top.length===1?[0] : top.length===2?[1,0] : [1,0,2];
+  const podium = document.getElementById('onlinePodium'); podium.innerHTML='';
+  disp.forEach((p,pos)=>{
+    if(!p) return; const rank=rmap[pos];
+    const item=document.createElement('div'); item.className='podium-item';
+    item.innerHTML=`<div class="podium-block" style="height:${heights[pos]||90}px;background:rgba(201,168,76,0.08);border:1px solid rgba(201,168,76,0.25)"><div class="podium-emoji">${medals[rank]||'🏅'}</div></div><div class="podium-name">${p.name}</div><div class="podium-score">${p.score||0}</div><div class="podium-score-lbl">نقطة</div>`;
+    podium.appendChild(item);
+  });
+  const rows=document.getElementById('onlineFinalRows'); rows.innerHTML='';
+  arr.forEach((p,i)=>{
+    const row=document.createElement('div'); row.className='final-row';
+    row.innerHTML=`<div class="final-rank-badge">${medals[i]||'🏅'}</div><div class="fr-name" style="flex:1;font-weight:700">${p.name}</div><div class="fr-score" style="font-family:'Tajawal',sans-serif;font-size:1.2rem;font-weight:900;color:var(--gold)">${p.score||0}</div>`;
+    rows.appendChild(row);
+  });
+  try { if (typeof launchConfetti==='function') launchConfetti(); } catch(e){}
+}
+
+function copyRoomCode() {
+  const code = online.code || '';
+  if (navigator.clipboard) navigator.clipboard.writeText(code);
+  showToast('📋 تم نسخ الرمز: '+code, 'var(--gold)');
+}
+function leaveRoom() {
+  clearInterval(online.localTimerInt);
+  clearTimeout(online.hostTickTimeout);
+  online.listeners.forEach(off=>{ try{off();}catch(e){} });
+  online.listeners = [];
+  try {
+    if (online.code && online.isHost) fb.db.ref('rooms/'+online.code).remove();
+    else if (online.code && online.playerId) fb.db.ref('rooms/'+online.code+'/players/'+online.playerId).remove();
+  } catch(e){}
+  online.code=null; online.isHost=false; online.playerId=null;
+  document.getElementById('onlineScreen').style.display='none';
+  document.getElementById('setupScreen').style.display='block';
 }
 </script>
 <!-- Custom Question Modal -->
