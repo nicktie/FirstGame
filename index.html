@@ -678,6 +678,12 @@ body.theme-purple { --dark:#f4f0fb; --card-bg:#ffffff; --border:#e4d8f5; --text:
     <button class="lb-tab" style="margin-top:10px;max-width:260px" onclick="openGlobalLb()">🏅 لوحة الشرف العالمية</button>
   </div>
 
+  <div id="resumeBanner" style="display:none;max-width:600px;margin:0 auto 18px;background:rgba(201,168,76,0.12);border:1.5px solid var(--gold);border-radius:14px;padding:14px;text-align:center">
+    <div style="font-family:'Tajawal',sans-serif;font-weight:700;color:var(--gold);margin-bottom:10px">🔄 لديك لعبة لم تكتمل</div>
+    <button class="lb-tab" style="max-width:170px" onclick="resumeGame()">▶️ استئناف اللعبة</button>
+    <button class="lb-tab" style="max-width:110px" onclick="dismissResume()">تجاهل</button>
+  </div>
+
   <!-- Theme Picker -->
   <div class="section-title">🎨 المظهر</div>
   <div class="theme-row">
@@ -2392,6 +2398,7 @@ function loadQuestion() {
   // Guard: pool exhausted
   if (qIndex >= questions.length) { showFinal(); return; }
 
+  snapshotGame();
   const q = questions[qIndex];
 
   // Progress = answeredCount (skips excluded)
@@ -2692,6 +2699,7 @@ function nextQuestion() {
 
 // ── FINAL ──
 function showFinal() {
+  clearActiveGame();
   document.getElementById('gameScreen').style.display = 'none';
   document.getElementById('finalScreen').classList.add('show');
 
@@ -2744,6 +2752,7 @@ function showFinal() {
   showFinalAdv();  // confetti, share, leaderboard, stats
 }
 function backToSetup() {
+  clearActiveGame();
   document.getElementById('finalScreen').classList.remove('show');
   document.getElementById('setupScreen').style.display = 'block';
   document.getElementById('teamScoreboard').style.display = 'none';
@@ -4063,7 +4072,78 @@ window.addEventListener('load', ()=>{
   }
   loadRemoteQuestions();
   cleanupOldLeaderboards();
+  if (hasResumableGame()) { const b=document.getElementById('resumeBanner'); if(b) b.style.display='block'; }
   if (location.hash === '#admin') openAdmin();
+});
+
+// ════════════════════════════════════════════════════════
+// ══ RESUME ON REFRESH (save/restore local game state) ══
+// ════════════════════════════════════════════════════════
+const ACTIVE_GAME_KEY = 'quizActiveGame';
+
+function snapshotGame() {
+  if (gameMode === 'online') return;
+  try {
+    localStorage.setItem(ACTIVE_GAME_KEY, JSON.stringify({
+      v:1, ts:Date.now(),
+      gameMode, playerCount, PLAYERS, scores,
+      selectedCat, selectedCount, selectedDiff, useRandomOrder, allowSkip,
+      questions, qIndex, answeredCount, soloQueue, turnOrder,
+      advTimer, advSpeed, advJoker, advStats, advElim, advMusic,
+      timerSecs, totalRounds, currentRound,
+      jokerUsed, playerStats, elimActive, elimRound,
+      avatars: AVATARS.slice()
+    }));
+  } catch(e){}
+}
+
+function clearActiveGame() {
+  try { localStorage.removeItem(ACTIVE_GAME_KEY); } catch(e){}
+}
+
+function hasResumableGame() {
+  try {
+    const s = JSON.parse(localStorage.getItem(ACTIVE_GAME_KEY)||'null');
+    if (!s || s.gameMode==='online' || !Array.isArray(s.PLAYERS) || !s.PLAYERS.length) return null;
+    if (Date.now() - (s.ts||0) > 12*3600*1000) return null;
+    if ((s.answeredCount||0) >= (s.selectedCount||0) * (s.totalRounds||1)) return null;
+    return s;
+  } catch(e){ return null; }
+}
+
+function dismissResume() {
+  clearActiveGame();
+  const b = document.getElementById('resumeBanner'); if (b) b.style.display='none';
+}
+
+function resumeGame() {
+  const s = hasResumableGame(); if (!s) { dismissResume(); return; }
+  gameMode=s.gameMode; playerCount=s.playerCount; PLAYERS=s.PLAYERS; scores=s.scores;
+  selectedCat=s.selectedCat; selectedCount=s.selectedCount; selectedDiff=s.selectedDiff;
+  useRandomOrder=s.useRandomOrder; allowSkip=s.allowSkip;
+  questions=s.questions; qIndex=s.qIndex; answeredCount=s.answeredCount;
+  soloQueue=s.soloQueue||[]; turnOrder=s.turnOrder||[]; turnIndex=0; answers=[null,null,null];
+  advTimer=s.advTimer; advSpeed=s.advSpeed; advJoker=s.advJoker; advStats=s.advStats; advElim=s.advElim; advMusic=s.advMusic;
+  timerSecs=s.timerSecs||20; totalRounds=s.totalRounds||1; currentRound=s.currentRound||1;
+  jokerUsed=s.jokerUsed||new Array(PLAYERS.length).fill(false);
+  playerStats=s.playerStats||PLAYERS.map(()=>({correct:0,wrong:0,skipped:0,streak:0,maxStreak:0,speedPts:0}));
+  elimActive=s.elimActive||PLAYERS.map(p=>p.id); elimRound=s.elimRound||0;
+  if (Array.isArray(s.avatars)) s.avatars.forEach((a,i)=>{ AVATARS[i]=a; });
+  const b=document.getElementById('resumeBanner'); if(b) b.style.display='none';
+  document.getElementById('setupScreen').style.display='none';
+  document.getElementById('finalScreen').classList.remove('show');
+  document.getElementById('gameScreen').style.display='block';
+  buildScoreboard();
+  updateScoreboard();
+  if (advMusic) { try { startMusic(); } catch(e){} }
+  loadQuestion();
+}
+
+// Warn before accidental refresh / close while a game is in progress
+window.addEventListener('beforeunload', (e)=>{
+  const playing = document.getElementById('gameScreen').style.display==='block'
+    || document.getElementById('onlineScreen').style.display==='block';
+  if (playing) { e.preventDefault(); e.returnValue=''; return ''; }
 });
 </script>
 <!-- Custom Question Modal -->
