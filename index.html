@@ -1061,10 +1061,12 @@ body.theme-purple { --dark:#f4f0fb; --card-bg:#ffffff; --border:#e4d8f5; --text:
 
 <footer class="site-footer">
   © 2026 <strong>DALMOO Digital Products</strong> • جميع الحقوق محفوظة
+  <span style="opacity:0.5;cursor:pointer" onclick="openAdmin()"> • إدارة</span>
 </footer>
 
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-database-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
 
 <script>
 // ══ DATA ══
@@ -3493,6 +3495,7 @@ function fbReady() {
     try { fb.app = firebase.initializeApp(FIREBASE_CONFIG); fb.db = firebase.database(); }
     catch(e) { return false; }
   }
+  if (!fb.auth) { try { fb.auth = firebase.auth(); } catch(e){} }
   return !!fb.db;
 }
 
@@ -3797,6 +3800,123 @@ function leaveRoom() {
   document.getElementById('onlineScreen').style.display='none';
   document.getElementById('setupScreen').style.display='block';
 }
+
+// ════════════════════════════════════════════════════════
+// ══ QUESTION BANK + ADMIN (Firebase, admin via Auth) ══
+// ════════════════════════════════════════════════════════
+let aqAns = 0;
+
+function loadRemoteQuestions() {
+  if (!fbReady()) return;
+  fb.db.ref('questions').once('value').then(snap=>{
+    const v = snap.val() || {}; let added = 0;
+    Object.keys(v).forEach(id=>{
+      const q = v[id];
+      if (q && q.q && Array.isArray(q.opts) && q.opts.length===3 && typeof q.ans==='number' && q.ans>=0 && q.ans<3 && catLabels[q.cat]) {
+        allQuestions.push({ cat:q.cat, q:q.q, opts:q.opts.slice(0,3), ans:q.ans, exp:q.exp||'سؤال مُضاف.', diff:q.diff||'medium' });
+        added++;
+      }
+    });
+    if (added) { try { updateAvailNote(); } catch(e){} }
+  }).catch(()=>{});
+}
+
+function openAdmin() {
+  document.getElementById('setupScreen').style.display='none';
+  document.getElementById('gameScreen').style.display='none';
+  document.getElementById('onlineScreen').style.display='none';
+  document.getElementById('finalScreen').classList.remove('show');
+  document.getElementById('lbScreen').classList.remove('show');
+  document.getElementById('adminScreen').classList.add('show');
+  const sel = document.getElementById('aqCat');
+  if (sel && !sel.options.length) {
+    Object.keys(catLabels).forEach(k=>{ const o=document.createElement('option'); o.value=k; o.textContent=catLabels[k].label; sel.appendChild(o); });
+  }
+  if (!fbReady()) showToast('⚠️ يتطلب إعداد Firebase', 'var(--wrong)');
+  showAdminState(!!(fb.auth && fb.auth.currentUser));
+}
+function closeAdmin() {
+  document.getElementById('adminScreen').classList.remove('show');
+  document.getElementById('setupScreen').style.display='block';
+  if (location.hash === '#admin') history.replaceState(null, '', location.pathname + location.search);
+}
+function showAdminState(loggedIn) {
+  document.getElementById('adminLogin').style.display = loggedIn ? 'none' : 'block';
+  document.getElementById('adminPanel').style.display = loggedIn ? 'block' : 'none';
+  if (loggedIn) adminLoadList();
+}
+function adminLogin() {
+  if (!fbReady() || !fb.auth) { showToast('⚠️ يتطلب اتصال Firebase', 'var(--wrong)'); return; }
+  const email = document.getElementById('adminEmail').value.trim();
+  const pass = document.getElementById('adminPass').value;
+  if (!email || !pass) { showToast('⚠️ أدخل البريد وكلمة المرور', 'var(--wrong)'); return; }
+  fb.auth.signInWithEmailAndPassword(email, pass)
+    .then(()=>{ showToast('✅ تم تسجيل الدخول', 'var(--correct)'); document.getElementById('adminPass').value=''; showAdminState(true); })
+    .catch(()=>showToast('⚠️ بيانات الدخول غير صحيحة', 'var(--wrong)'));
+}
+function adminLogout() {
+  if (fb.auth) { try { fb.auth.signOut(); } catch(e){} }
+  showAdminState(false);
+}
+function setAqAns(i, el) {
+  aqAns = i;
+  document.querySelectorAll('#aqAnsRow .timer-opt').forEach(o=>o.classList.remove('active'));
+  if (el) el.classList.add('active');
+}
+function adminAddQuestion() {
+  if (!fb.auth || !fb.auth.currentUser) { showToast('⚠️ سجّل الدخول أولاً', 'var(--wrong)'); return; }
+  const cat = document.getElementById('aqCat').value;
+  const q = document.getElementById('aqText').value.trim();
+  const a = document.getElementById('aqA').value.trim();
+  const b = document.getElementById('aqB').value.trim();
+  const c = document.getElementById('aqC').value.trim();
+  const exp = document.getElementById('aqExp').value.trim();
+  if (!cat || !q || !a || !b || !c) { showToast('⚠️ أكمل السؤال والخيارات الثلاثة', 'var(--wrong)'); return; }
+  fb.db.ref('questions').push({ cat, q, opts:[a,b,c], ans:aqAns, exp:exp||'سؤال مُضاف.', diff:'medium', ts:firebase.database.ServerValue.TIMESTAMP })
+    .then(()=>{
+      showToast('✅ تمت إضافة السؤال', 'var(--correct)');
+      ['aqText','aqA','aqB','aqC','aqExp'].forEach(id=>document.getElementById(id).value='');
+      setAqAns(0, document.querySelector('#aqAnsRow .timer-opt'));
+      allQuestions.push({ cat, q, opts:[a,b,c], ans:aqAns, exp:exp||'سؤال مُضاف.', diff:'medium' });
+      adminLoadList();
+    })
+    .catch(()=>showToast('⚠️ تعذّرت الإضافة (تحقق من القواعد)', 'var(--wrong)'));
+}
+function adminLoadList() {
+  const box = document.getElementById('adminList'); if (!box) return;
+  if (!fbReady()) { box.innerHTML=''; return; }
+  box.innerHTML = '<p style="color:var(--muted);text-align:center;padding:10px">جارٍ التحميل…</p>';
+  fb.db.ref('questions').once('value').then(snap=>{
+    const v = snap.val() || {}; const ids = Object.keys(v);
+    document.getElementById('aqCount').textContent = ids.length;
+    if (!ids.length) { box.innerHTML='<p style="color:var(--muted);text-align:center;padding:10px">لا توجد أسئلة مُضافة بعد</p>'; return; }
+    box.innerHTML = '';
+    ids.reverse().forEach(id=>{
+      const q = v[id];
+      const row = document.createElement('div'); row.className='olb-row';
+      const lbl = catLabels[q.cat] ? catLabels[q.cat].label : q.cat;
+      const info = document.createElement('div'); info.className='olb-name'; info.style.flex='1';
+      info.innerHTML = `<div style="font-size:0.72rem;color:var(--gold)">${lbl}</div>${q.q}`;
+      const del = document.createElement('button'); del.textContent='🗑️'; del.className='lb-tab'; del.style.cssText='max-width:46px;padding:6px;flex:none';
+      del.onclick = ()=>adminDeleteQuestion(id);
+      row.appendChild(info); row.appendChild(del); box.appendChild(row);
+    });
+  }).catch(()=>{ box.innerHTML='<p style="color:var(--wrong);text-align:center;padding:10px">تعذّر التحميل</p>'; });
+}
+function adminDeleteQuestion(id) {
+  if (!fb.auth || !fb.auth.currentUser) { showToast('⚠️ سجّل الدخول أولاً', 'var(--wrong)'); return; }
+  fb.db.ref('questions/'+id).remove()
+    .then(()=>{ showToast('🗑️ تم الحذف', 'var(--gold)'); adminLoadList(); })
+    .catch(()=>showToast('⚠️ تعذّر الحذف', 'var(--wrong)'));
+}
+
+window.addEventListener('load', ()=>{
+  if (fbReady() && fb.auth) {
+    fb.auth.onAuthStateChanged(u=>{ if (document.getElementById('adminScreen').classList.contains('show')) showAdminState(!!u); });
+  }
+  loadRemoteQuestions();
+  if (location.hash === '#admin') openAdmin();
+});
 </script>
 <!-- Custom Question Modal -->
 <div class="modal-overlay" id="customQModal">
@@ -3829,6 +3949,50 @@ function leaveRoom() {
   <div id="lbRows" style="max-width:560px;margin:0 auto 20px"></div>
   <div style="text-align:center;max-width:560px;margin:0 auto">
     <button class="play-again-btn" onclick="closeLb()">← رجوع</button>
+  </div>
+</div>
+
+<!-- ══ ADMIN SCREEN (question bank) ══ -->
+<div class="lb-screen" id="adminScreen">
+  <div class="logo" style="margin-bottom:16px">
+    <h1 style="font-family:Tajawal;font-size:1.8rem;font-weight:900;color:var(--gold)">🛠️ إدارة الأسئلة</h1>
+  </div>
+
+  <div id="adminLogin" class="online-panel" style="max-width:420px">
+    <div class="online-panel-title">🔐 دخول المشرف</div>
+    <div class="online-panel-sub">سجّل دخولك بحساب المشرف لإضافة وتعديل الأسئلة.</div>
+    <input class="online-input" id="adminEmail" type="email" placeholder="البريد الإلكتروني">
+    <input class="online-input" id="adminPass" type="password" placeholder="كلمة المرور">
+    <button class="start-btn" style="margin-top:12px" onclick="adminLogin()">دخول</button>
+    <button class="play-again-btn" style="width:100%;margin-top:10px;background:var(--option-bg);border:1.5px solid var(--border)" onclick="closeAdmin()">← رجوع</button>
+  </div>
+
+  <div id="adminPanel" style="display:none;max-width:560px;margin:0 auto">
+    <div class="online-panel" style="margin-bottom:14px">
+      <div class="online-panel-title">➕ إضافة سؤال</div>
+      <div class="online-panel-sub">سيظهر السؤال في اللعبة فوراً لكل المستخدمين.</div>
+      <select class="online-input" id="aqCat"></select>
+      <input class="online-input" id="aqText" type="text" maxlength="160" placeholder="نص السؤال">
+      <input class="online-input" id="aqA" type="text" maxlength="60" placeholder="الخيار أ">
+      <input class="online-input" id="aqB" type="text" maxlength="60" placeholder="الخيار ب">
+      <input class="online-input" id="aqC" type="text" maxlength="60" placeholder="الخيار ج">
+      <div class="section-title" style="margin:10px 0 6px">✅ الإجابة الصحيحة</div>
+      <div class="timer-options" id="aqAnsRow">
+        <div class="timer-opt active" onclick="setAqAns(0,this)">أ</div>
+        <div class="timer-opt" onclick="setAqAns(1,this)">ب</div>
+        <div class="timer-opt" onclick="setAqAns(2,this)">ج</div>
+      </div>
+      <input class="online-input" id="aqExp" type="text" maxlength="200" placeholder="شرح/فائدة (اختياري)" style="margin-top:10px">
+      <button class="start-btn" style="margin-top:12px" onclick="adminAddQuestion()">➕ إضافة السؤال</button>
+    </div>
+
+    <div class="lobby-players-title">📚 الأسئلة المضافة عبر الإدارة: <span id="aqCount">0</span></div>
+    <div id="adminList" class="online-leaderboard"></div>
+
+    <div style="text-align:center;margin-top:16px">
+      <button class="play-again-btn" style="background:var(--option-bg);border:1.5px solid var(--border)" onclick="adminLogout()">🚪 تسجيل الخروج</button>
+      <button class="play-again-btn" onclick="closeAdmin()">← رجوع</button>
+    </div>
   </div>
 </div>
 
