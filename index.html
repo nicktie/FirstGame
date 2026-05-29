@@ -684,6 +684,12 @@ body.theme-purple { --dark:#f4f0fb; --card-bg:#ffffff; --border:#e4d8f5; --text:
     <button class="lb-tab" style="max-width:110px" onclick="dismissResume()">تجاهل</button>
   </div>
 
+  <div id="onlineRejoinBanner" style="display:none;max-width:600px;margin:0 auto 18px;background:rgba(100,149,237,0.12);border:1.5px solid #6495ed;border-radius:14px;padding:14px;text-align:center">
+    <div style="font-family:'Tajawal',sans-serif;font-weight:700;color:#6495ed;margin-bottom:10px">🌐 لديك غرفة أونلاين</div>
+    <button class="lb-tab" style="max-width:170px;border-color:#6495ed;color:#6495ed" onclick="rejoinRoom()">🔁 العودة للغرفة</button>
+    <button class="lb-tab" style="max-width:110px" onclick="dismissOnlineRejoin()">تجاهل</button>
+  </div>
+
   <!-- Theme Picker -->
   <div class="section-title">🎨 المظهر</div>
   <div class="theme-row">
@@ -3585,6 +3591,7 @@ async function createRoom() {
   });
   await roomRef.child('players/'+online.playerId).set({ name, avatar:online.avatar, score:0, joinedAt:firebase.database.ServerValue.TIMESTAMP });
   attachRoomListeners(code);
+  saveOnlineSession();
   enterOnlineScreen(); showOnlineStage('onlineLobby');
   document.getElementById('roomCodeDisplay').textContent = code;
   document.getElementById('lobbyHostControls').style.display = 'block';
@@ -3605,8 +3612,8 @@ async function joinRoom() {
   Object.assign(online, { code, isHost:false, playerId:uid(), name, timer:meta.timer||15, count:meta.count||0 });
   const pRef = roomRef.child('players/'+online.playerId);
   await pRef.set({ name, avatar:online.avatar, score:0, joinedAt:firebase.database.ServerValue.TIMESTAMP });
-  pRef.onDisconnect().remove();
   attachRoomListeners(code);
+  saveOnlineSession();
   enterOnlineScreen(); showOnlineStage('onlineLobby');
   document.getElementById('roomCodeDisplay').textContent = code;
   document.getElementById('lobbyHostControls').style.display = 'none';
@@ -3658,6 +3665,7 @@ async function hostStartGame() {
 async function hostBroadcastQuestion(i) {
   if (!online.isHost) return;
   online.qIndex = i;
+  saveOnlineSession();
   const q = online.questions[i];
   await fb.db.ref('rooms/'+online.code+'/answers/'+i).remove();
   await fb.db.ref('rooms/'+online.code+'/state').set({
@@ -3795,6 +3803,7 @@ function renderLeaderboard(players) {
 
 async function showOnlineFinalStage() {
   clearInterval(online.localTimerInt);
+  clearOnlineSession();
   showOnlineStage('onlineFinal');
   const snap = await fb.db.ref('rooms/'+online.code+'/players').once('value');
   const players = snap.val() || {};
@@ -3838,9 +3847,57 @@ function leaveRoom() {
     if (online.code && online.isHost) fb.db.ref('rooms/'+online.code).remove();
     else if (online.code && online.playerId) fb.db.ref('rooms/'+online.code+'/players/'+online.playerId).remove();
   } catch(e){}
+  clearOnlineSession();
   online.code=null; online.isHost=false; online.playerId=null;
   document.getElementById('onlineScreen').style.display='none';
   document.getElementById('setupScreen').style.display='block';
+}
+
+// ── ONLINE REJOIN (reconnect to a room after refresh/disconnect) ──
+const ONLINE_SESSION_KEY = 'quizOnlineSession';
+
+function saveOnlineSession() {
+  try {
+    const s = { code:online.code, playerId:online.playerId, name:online.name, avatar:online.avatar, isHost:online.isHost, count:online.count, timer:online.timer, ts:Date.now() };
+    if (online.isHost) { s.questions = online.questions; s.qIndex = online.qIndex; }
+    localStorage.setItem(ONLINE_SESSION_KEY, JSON.stringify(s));
+  } catch(e){}
+}
+function clearOnlineSession() { try { localStorage.removeItem(ONLINE_SESSION_KEY); } catch(e){} }
+function getOnlineSession() {
+  try {
+    const s = JSON.parse(localStorage.getItem(ONLINE_SESSION_KEY)||'null');
+    if (!s || !s.code || !s.playerId) return null;
+    if (Date.now() - (s.ts||0) > 3*3600*1000) return null;
+    return s;
+  } catch(e){ return null; }
+}
+function dismissOnlineRejoin() {
+  clearOnlineSession();
+  const b = document.getElementById('onlineRejoinBanner'); if (b) b.style.display='none';
+}
+
+async function rejoinRoom() {
+  const s = getOnlineSession(); if (!s) { dismissOnlineRejoin(); return; }
+  if (!ensureFirebase()) return;
+  let metaSnap;
+  try { metaSnap = await fb.db.ref('rooms/'+s.code+'/meta').once('value'); } catch(e){ showToast('⚠️ تعذّر الاتصال', 'var(--wrong)'); return; }
+  if (!metaSnap.exists()) { showToast('⚠️ الغرفة لم تعد موجودة', 'var(--wrong)'); dismissOnlineRejoin(); return; }
+  const meta = metaSnap.val();
+  Object.assign(online, { code:s.code, playerId:s.playerId, name:s.name, avatar:s.avatar||'🦁', isHost:!!s.isHost, count:s.count||meta.count||0, timer:s.timer||meta.timer||15 });
+  if (s.isHost) { online.questions = s.questions||[]; online.qIndex = s.qIndex||0; }
+  const pRef = fb.db.ref('rooms/'+s.code+'/players/'+s.playerId);
+  const pSnap = await pRef.once('value');
+  if (!pSnap.exists()) await pRef.set({ name:online.name, avatar:online.avatar, score:0, joinedAt:firebase.database.ServerValue.TIMESTAMP });
+  attachRoomListeners(s.code);
+  enterOnlineScreen();
+  document.getElementById('roomCodeDisplay').textContent = s.code;
+  document.getElementById('lobbyHostControls').style.display = s.isHost ? 'block' : 'none';
+  document.getElementById('lobbyWaitNote').style.display = s.isHost ? 'none' : 'block';
+  const b = document.getElementById('onlineRejoinBanner'); if (b) b.style.display='none';
+  showToast('🔁 عُدت إلى غرفتك', 'var(--correct)');
+  // Host resumes the engine from the current question (fresh timer for everyone)
+  if (s.isHost && meta.status==='active' && online.questions.length) hostBroadcastQuestion(online.qIndex||0);
 }
 
 // ════════════════════════════════════════════════════════
@@ -4072,7 +4129,8 @@ window.addEventListener('load', ()=>{
   }
   loadRemoteQuestions();
   cleanupOldLeaderboards();
-  if (hasResumableGame()) { const b=document.getElementById('resumeBanner'); if(b) b.style.display='block'; }
+  if (getOnlineSession()) { const b=document.getElementById('onlineRejoinBanner'); if(b) b.style.display='block'; }
+  else if (hasResumableGame()) { const b=document.getElementById('resumeBanner'); if(b) b.style.display='block'; }
   if (location.hash === '#admin') openAdmin();
 });
 
