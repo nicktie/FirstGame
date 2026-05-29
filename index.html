@@ -3349,16 +3349,40 @@ function saveToLeaderboard() {
   lb.unshift(entry);
   lb = lb.slice(0,20);
   localStorage.setItem('quizLeaderboard', JSON.stringify(lb));
-  // global (Firebase) — best effort
+  // global (Firebase) — best effort, bucketed by week
   if (score > 0 && fbReady()) {
     try {
-      fb.db.ref('leaderboard').push({
+      fb.db.ref('leaderboard/'+isoWeekId()).push({
         name: String(winner.name).slice(0,16), avatar: winner.avatar || '🦁',
         score, cat: selectedCat, count: selectedCount, players: PLAYERS.length,
         ts: firebase.database.ServerValue.TIMESTAMP
       });
     } catch(e){}
   }
+}
+
+// ISO week id like "2026-W22" — the global leaderboard resets each week
+function isoWeekId(dt) {
+  const d = dt ? new Date(dt) : new Date();
+  const date = new Date(Date.UTC(d.getFullYear(), d.getMonth(), d.getDate()));
+  const day = date.getUTCDay() || 7;
+  date.setUTCDate(date.getUTCDate() + 4 - day);
+  const yearStart = new Date(Date.UTC(date.getUTCFullYear(), 0, 1));
+  const week = Math.ceil((((date - yearStart) / 86400000) + 1) / 7);
+  return date.getUTCFullYear() + '-W' + String(week).padStart(2, '0');
+}
+
+// Delete leaderboard buckets from previous weeks (frees storage). Safe & idempotent.
+function cleanupOldLeaderboards() {
+  if (!fbReady()) return;
+  const wk = isoWeekId();
+  try {
+    fb.db.ref('leaderboard').orderByKey().endBefore(wk).once('value').then(snap=>{
+      const updates = {}; let any = false;
+      snap.forEach(c => { updates[c.key] = null; any = true; });
+      if (any) fb.db.ref('leaderboard').update(updates).catch(()=>{});
+    }).catch(()=>{});
+  } catch(e){}
 }
 
 let lbReturnTo = 'finalScreen';
@@ -3405,11 +3429,12 @@ function renderGlobalLb() {
   const rows = document.getElementById('lbRows');
   if (!fbReady()) { rows.innerHTML='<p style="text-align:center;color:var(--muted);padding:20px">⚠️ يتطلب اتصال Firebase</p>'; return; }
   rows.innerHTML='<p style="text-align:center;color:var(--muted);padding:20px">جارٍ التحميل…</p>';
-  fb.db.ref('leaderboard').orderByChild('score').limitToLast(50).once('value').then(snap=>{
+  const note = '<div style="text-align:center;color:var(--muted);font-size:0.78rem;margin-bottom:10px">🗓️ ترتيب هذا الأسبوع — يتجدّد كل أسبوع</div>';
+  fb.db.ref('leaderboard/'+isoWeekId()).orderByChild('score').limitToLast(50).once('value').then(snap=>{
     const arr=[]; snap.forEach(c=>{ arr.push(c.val()); });
     arr.sort((a,b)=>(b.score||0)-(a.score||0));
-    if (!arr.length) { rows.innerHTML='<p style="text-align:center;color:var(--muted);padding:20px">لا توجد نتائج عالمية بعد — كن أول من يسجّل!</p>'; return; }
-    rows.innerHTML = arr.map((e,i)=>lbRowHtml(e,i)).join('');
+    if (!arr.length) { rows.innerHTML=note+'<p style="text-align:center;color:var(--muted);padding:20px">لا توجد نتائج هذا الأسبوع بعد — كن أول من يسجّل!</p>'; return; }
+    rows.innerHTML = note + arr.map((e,i)=>lbRowHtml(e,i)).join('');
   }).catch(()=>{ rows.innerHTML='<p style="text-align:center;color:var(--wrong);padding:20px">تعذّر تحميل اللوحة العالمية</p>'; });
 }
 
@@ -4014,6 +4039,17 @@ function renderAdminList() {
     row.appendChild(info); row.appendChild(editBtn); row.appendChild(del); box.appendChild(row);
   });
 }
+function adminCleanOldLb() {
+  if (!fb.auth || !fb.auth.currentUser) { showToast('⚠️ سجّل الدخول أولاً', 'var(--wrong)'); return; }
+  cleanupOldLeaderboards();
+  showToast('🧹 تم تنظيف لوحات الأسابيع السابقة', 'var(--gold)');
+}
+function adminResetLb() {
+  if (!fb.auth || !fb.auth.currentUser) { showToast('⚠️ سجّل الدخول أولاً', 'var(--wrong)'); return; }
+  fb.db.ref('leaderboard').remove()
+    .then(()=>showToast('🗑️ تم تصفير لوحة الشرف بالكامل', 'var(--gold)'))
+    .catch(()=>showToast('⚠️ تعذّر التصفير', 'var(--wrong)'));
+}
 function adminDeleteQuestion(id) {
   if (!fb.auth || !fb.auth.currentUser) { showToast('⚠️ سجّل الدخول أولاً', 'var(--wrong)'); return; }
   fb.db.ref('questions/'+id).remove()
@@ -4026,6 +4062,7 @@ window.addEventListener('load', ()=>{
     fb.auth.onAuthStateChanged(u=>{ if (document.getElementById('adminScreen').classList.contains('show')) showAdminState(!!u); });
   }
   loadRemoteQuestions();
+  cleanupOldLeaderboards();
   if (location.hash === '#admin') openAdmin();
 });
 </script>
@@ -4110,6 +4147,13 @@ window.addEventListener('load', ()=>{
       <div class="online-panel-sub">الصق مصفوفة JSON: [{"cat":"general","q":"...","opts":["أ","ب","ج"],"ans":0,"exp":"..."}]</div>
       <textarea class="online-input" id="aqBulk" rows="4" style="text-align:right;resize:vertical" placeholder='[{"cat":"general","q":"سؤال","opts":["أ","ب","ج"],"ans":0,"exp":"شرح"}]'></textarea>
       <button class="play-again-btn" style="width:100%;margin-top:8px" onclick="adminBulkImport()">📥 استيراد</button>
+    </div>
+
+    <div class="online-panel" style="margin-bottom:14px">
+      <div class="online-panel-title">🏅 صيانة لوحة الشرف</div>
+      <div class="online-panel-sub">اللوحة تتصفّر تلقائياً كل أسبوع وتُحذف الأسابيع السابقة. تقدر تنظّفها يدوياً أيضاً.</div>
+      <button class="play-again-btn" style="width:100%;margin-bottom:8px" onclick="adminCleanOldLb()">🧹 حذف الأسابيع السابقة الآن</button>
+      <button class="play-again-btn" style="width:100%;background:rgba(224,92,92,0.12);border:1.5px solid var(--wrong);color:var(--wrong)" onclick="adminResetLb()">🗑️ تصفير كل اللوحة</button>
     </div>
 
     <div class="lobby-players-title">📚 الأسئلة المضافة عبر الإدارة: <span id="aqCount">0</span></div>
