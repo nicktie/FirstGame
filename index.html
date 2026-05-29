@@ -2264,8 +2264,29 @@ const allQuestions = [
 })();
 
 // ══ STATE ══
-let selectedCat = 'all';
+let selectedCats = new Set(['all']);   // 'all' is exclusive; otherwise one or more category keys
 let selectedCount = 5;
+
+function getCatPool() {
+  return selectedCats.has('all') ? allQuestions : allQuestions.filter(q => selectedCats.has(q.cat));
+}
+function selectedCatLabel() {
+  if (selectedCats.has('all')) return 'الكل';
+  if (selectedCats.size === 1) { const [c] = selectedCats; return (catLabels[c] && catLabels[c].label) || c; }
+  return selectedCats.size + ' فئات مختارة';
+}
+function selectedCatKey() {
+  if (selectedCats.has('all')) return 'all';
+  if (selectedCats.size === 1) { const [c] = selectedCats; return c; }
+  return 'mixed';
+}
+function refreshCatTabs() {
+  document.querySelectorAll('.cat-tab').forEach(t => {
+    const m = (t.getAttribute('onclick')||'').match(/setCat\('(\w+)'/);
+    const key = m ? m[1] : '';
+    t.classList.toggle('active', selectedCats.has(key));
+  });
+}
 let gameMode = 'solo';   // 'solo' = individual players, 'teams' = two teams
 let useRandomOrder = false;
 let allowSkip = false;
@@ -2430,14 +2451,23 @@ function nextSoloPlayer() {
 }
 
 function setCat(cat, btn) {
-  selectedCat = cat;
-  document.querySelectorAll('.cat-tab').forEach(t => t.classList.remove('active'));
-  btn.classList.add('active');
+  if (cat === 'all') {
+    selectedCats.clear(); selectedCats.add('all');
+  } else {
+    if (selectedCats.has('all')) selectedCats.delete('all');
+    if (selectedCats.has(cat)) {
+      selectedCats.delete(cat);
+      if (selectedCats.size === 0) selectedCats.add('all');
+    } else {
+      selectedCats.add(cat);
+    }
+  }
+  refreshCatTabs();
   updateAvailNote();
 }
 
 function updateAvailNote() {
-  const pool = selectedCat === 'all' ? allQuestions : allQuestions.filter(q => q.cat === selectedCat);
+  const pool = getCatPool();
   const avail = pool.length;
   document.getElementById('availNum').textContent = avail;
   // Dim/disable count buttons that exceed available
@@ -2492,7 +2522,7 @@ function startGame() {
   // Build dynamic scoreboard
   buildScoreboard();
 
-  let pool = selectedCat === 'all' ? allQuestions : allQuestions.filter(q => q.cat === selectedCat);
+  let pool = getCatPool();
   questions = shuffle(pool);
   qIndex = 0;
   answeredCount = 0;
@@ -2504,7 +2534,7 @@ function startGame() {
   document.getElementById('gameScreen').style.display = 'block';
 
   // Re-build pool with difficulty filter and custom questions
-  let _pool = selectedCat === 'all' ? allQuestions : allQuestions.filter(q => q.cat === selectedCat);
+  let _pool = getCatPool();
   if (selectedDiff !== 'all') _pool = _pool.filter(q => q.diff === selectedDiff);
   if (customQuestions.length > 0) _pool = [...customQuestions, ...shuffle(_pool)];
   questions = shuffle(_pool);
@@ -3183,7 +3213,7 @@ function handleRoundEnd() {
     soundRoundEnd();
     showToast(`🏁 انتهت الجولة ${currentRound}! استعدوا للجولة ${currentRound+1}`, 'var(--gold)');
     setTimeout(()=>{
-      let pool = selectedCat==='all' ? allQuestions : allQuestions.filter(q=>q.cat===selectedCat);
+      let pool = getCatPool();
       questions = shuffle(pool);
       qIndex = 0; answeredCount = 0; soloQueue = [];
       jokerUsed = new Array(PLAYERS.length).fill(false);
@@ -3319,7 +3349,7 @@ function setDiff(d, el) {
 
 // Override question pool building — patch inside startGame
 const __origBuildPool = function() {
-  let pool = selectedCat === 'all' ? allQuestions : allQuestions.filter(q => q.cat === selectedCat);
+  let pool = getCatPool();
   if (selectedDiff !== 'all') pool = pool.filter(q => q.diff === selectedDiff);
   // Add custom questions
   if (customQuestions.length > 0) pool = [...customQuestions, ...pool];
@@ -3498,7 +3528,7 @@ function saveToLeaderboard() {
   const score = parseFloat(scores[winner.id].toFixed(1));
   const entry = {
     name: winner.name, avatar: winner.avatar, score,
-    players: PLAYERS.length, cat: selectedCat, count: selectedCount,
+    players: PLAYERS.length, cat: selectedCatKey(), count: selectedCount,
     date: new Date().toLocaleDateString('ar-SA')
   };
   // local (this device)
@@ -3511,7 +3541,7 @@ function saveToLeaderboard() {
     try {
       fb.db.ref('leaderboard/'+isoWeekId()).push({
         name: String(winner.name).slice(0,16), avatar: winner.avatar || '🦁',
-        score, cat: selectedCat, count: selectedCount, players: PLAYERS.length,
+        score, cat: selectedCatKey(), count: selectedCount, players: PLAYERS.length,
         ts: firebase.database.ServerValue.TIMESTAMP
       });
     } catch(e){}
@@ -3607,7 +3637,7 @@ let shareVisible = false;
 function buildShareText() {
   const sorted = [...PLAYERS].sort((a,b)=>scores[b.id]-scores[a.id]);
   const winner = sorted[0];
-  const catName = selectedCat==='all'?'الكل':({general:'معلومات عامة',religion:'دينية',geography:'جغرافيا',science:'علوم',history:'تاريخ',sports:'رياضة',arts:'فنون'})[selectedCat]||selectedCat;
+  const catName = selectedCatLabel();
   let txt = `🏆 تحدي الثلاثة — نتيجة اللعبة
 
 `;
@@ -3720,7 +3750,7 @@ function enterOnlineScreen() {
 async function createRoom() {
   if (!ensureFirebase()) return;
   const name = (document.getElementById('hostName').value.trim()) || 'المضيف';
-  let pool = selectedCat==='all' ? allQuestions : allQuestions.filter(q=>q.cat===selectedCat);
+  let pool = getCatPool();
   if (selectedDiff && selectedDiff!=='all') pool = pool.filter(q=>q.diff===selectedDiff);
   pool = shuffle(pool).slice(0, selectedCount);
   if (!pool.length) { showToast('⚠️ لا توجد أسئلة كافية', 'var(--wrong)'); return; }
@@ -4289,7 +4319,7 @@ function snapshotGame() {
     localStorage.setItem(ACTIVE_GAME_KEY, JSON.stringify({
       v:1, ts:Date.now(),
       gameMode, playerCount, PLAYERS, scores,
-      selectedCat, selectedCount, selectedDiff, useRandomOrder, allowSkip,
+      selectedCats: Array.from(selectedCats), selectedCount, selectedDiff, useRandomOrder, allowSkip,
       questions, qIndex, answeredCount, soloQueue, turnOrder,
       advTimer, advSpeed, advJoker, advStats, advElim, advMusic,
       timerSecs, totalRounds, currentRound,
@@ -4321,7 +4351,9 @@ function dismissResume() {
 function resumeGame() {
   const s = hasResumableGame(); if (!s) { dismissResume(); return; }
   gameMode=s.gameMode; playerCount=s.playerCount; PLAYERS=s.PLAYERS; scores=s.scores;
-  selectedCat=s.selectedCat; selectedCount=s.selectedCount; selectedDiff=s.selectedDiff;
+  if (Array.isArray(s.selectedCats)) selectedCats = new Set(s.selectedCats);
+  else if (s.selectedCat) selectedCats = new Set([s.selectedCat]);
+  selectedCount=s.selectedCount; selectedDiff=s.selectedDiff;
   useRandomOrder=s.useRandomOrder; allowSkip=s.allowSkip;
   questions=s.questions; qIndex=s.qIndex; answeredCount=s.answeredCount;
   soloQueue=s.soloQueue||[]; turnOrder=s.turnOrder||[]; turnIndex=0; answers=[null,null,null];
