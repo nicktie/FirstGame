@@ -935,6 +935,7 @@ body.theme-purple { --dark:#f4f0fb; --card-bg:#ffffff; --border:#e4d8f5; --text:
         <span class="q-num" id="qNum">السؤال 1 من 10</span>
         <span class="round-badge" id="roundBadge">جولة 1</span>
       </div>
+      <img id="qImage" style="display:none;max-width:100%;max-height:200px;object-fit:contain;border-radius:12px;margin:0 auto 14px">
       <div class="question" id="questionText">...</div>
       <div class="turn-indicator" id="turnIndicator">
         <span class="turn-avatar" id="turnAvatar">🦁</span>
@@ -1031,6 +1032,7 @@ body.theme-purple { --dark:#f4f0fb; --card-bg:#ffffff; --border:#e4d8f5; --text:
     </div>
     <div class="online-qcard">
       <div class="online-cat" id="onlineCat"></div>
+      <img id="onlineQImage" style="display:none;max-width:100%;max-height:180px;object-fit:contain;border-radius:10px;margin:0 auto 10px">
       <div class="online-qtext" id="onlineQText">...</div>
     </div>
     <div class="online-options" id="onlineOptions"></div>
@@ -1067,6 +1069,7 @@ body.theme-purple { --dark:#f4f0fb; --card-bg:#ffffff; --border:#e4d8f5; --text:
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-database-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-storage-compat.js"></script>
 
 <script>
 // ══ DATA ══
@@ -2400,6 +2403,8 @@ function loadQuestion() {
   badge.className = 'cat-badge ' + catLabels[q.cat].cls;
 
   document.getElementById('questionText').textContent = q.q;
+  const qImg = document.getElementById('qImage');
+  if (q.img) { qImg.src = q.img; qImg.style.display = 'block'; } else { qImg.style.display = 'none'; qImg.src=''; }
   document.getElementById('feedback').className = 'feedback';
   document.getElementById('feedback').innerHTML = '';
   const nextBtn = document.getElementById('nextBtn');
@@ -3496,6 +3501,7 @@ function fbReady() {
     catch(e) { return false; }
   }
   if (!fb.auth) { try { fb.auth = firebase.auth(); } catch(e){} }
+  if (!fb.storage) { try { fb.storage = firebase.storage(); } catch(e){} }
   return !!fb.db;
 }
 
@@ -3622,7 +3628,7 @@ async function hostBroadcastQuestion(i) {
   await fb.db.ref('rooms/'+online.code+'/answers/'+i).remove();
   await fb.db.ref('rooms/'+online.code+'/state').set({
     phase:'question', qIndex:i,
-    current:{ q:q.q, opts:q.opts, cat:q.cat },
+    current:{ q:q.q, opts:q.opts, cat:q.cat, img:q.img||null },
     startAt: firebase.database.ServerValue.TIMESTAMP
   });
   clearTimeout(online.hostTickTimeout);
@@ -3667,6 +3673,8 @@ function showQuestion(s) {
   document.getElementById('onlineQNum').textContent = `السؤال ${s.qIndex+1} من ${online.count}`;
   document.getElementById('onlineCat').textContent = catLabels[cur.cat] ? catLabels[cur.cat].label : '';
   document.getElementById('onlineQText').textContent = cur.q || '';
+  const oImg = document.getElementById('onlineQImage');
+  if (cur.img) { oImg.src = cur.img; oImg.style.display='block'; } else { oImg.style.display='none'; oImg.src=''; }
   const box = document.getElementById('onlineOptions'); box.innerHTML='';
   (cur.opts||[]).forEach((opt,idx)=>{
     const d = document.createElement('div');
@@ -3813,7 +3821,7 @@ function loadRemoteQuestions() {
     Object.keys(v).forEach(id=>{
       const q = v[id];
       if (q && q.q && Array.isArray(q.opts) && q.opts.length===3 && typeof q.ans==='number' && q.ans>=0 && q.ans<3 && catLabels[q.cat]) {
-        allQuestions.push({ cat:q.cat, q:q.q, opts:q.opts.slice(0,3), ans:q.ans, exp:q.exp||'سؤال مُضاف.', diff:q.diff||'medium' });
+        allQuestions.push({ cat:q.cat, q:q.q, opts:q.opts.slice(0,3), ans:q.ans, exp:q.exp||'سؤال مُضاف.', diff:q.diff||'medium', img:q.img||'' });
         added++;
       }
     });
@@ -3867,8 +3875,30 @@ let editingId = null;
 let adminQuestions = {};
 
 function adminClearForm() {
-  ['aqText','aqA','aqB','aqC','aqExp'].forEach(id=>document.getElementById(id).value='');
+  ['aqText','aqA','aqB','aqC','aqExp','aqImg'].forEach(id=>{ const e=document.getElementById(id); if(e) e.value=''; });
+  const f=document.getElementById('aqImgFile'); if(f) f.value='';
+  const p=document.getElementById('aqImgPreview'); if(p){ p.style.display='none'; p.src=''; }
   setAqAns(0, document.querySelector('#aqAnsRow .timer-opt'));
+}
+
+function adminShowImgPreview(url) {
+  const p = document.getElementById('aqImgPreview');
+  if (!p) return;
+  if (url) { p.src = url; p.style.display = 'block'; } else { p.style.display='none'; p.src=''; }
+}
+
+function adminUploadImage() {
+  if (!fb.auth || !fb.auth.currentUser) { showToast('⚠️ سجّل الدخول أولاً', 'var(--wrong)'); return; }
+  const f = document.getElementById('aqImgFile');
+  const file = f && f.files && f.files[0];
+  if (!file) { showToast('⚠️ اختر ملف صورة أو الصق رابطاً', 'var(--wrong)'); return; }
+  if (!fb.storage) { showToast('⚠️ خدمة التخزين غير مفعّلة — الصق رابط صورة بدلاً من الرفع', 'var(--wrong)'); return; }
+  showToast('⏳ جارٍ رفع الصورة…', 'var(--gold)');
+  const ref = fb.storage.ref('questionImages/' + Date.now() + '_' + file.name.replace(/[^\w.\-]/g,'_'));
+  ref.put(file)
+    .then(snap => snap.ref.getDownloadURL())
+    .then(url => { document.getElementById('aqImg').value = url; adminShowImgPreview(url); showToast('✅ تم رفع الصورة', 'var(--correct)'); })
+    .catch(() => showToast('⚠️ تعذّر الرفع (فعّل Storage أو الصق رابطاً)', 'var(--wrong)'));
 }
 
 function adminAddQuestion() {
@@ -3880,7 +3910,8 @@ function adminAddQuestion() {
   const c = document.getElementById('aqC').value.trim();
   const exp = document.getElementById('aqExp').value.trim();
   if (!cat || !q || !a || !b || !c) { showToast('⚠️ أكمل السؤال والخيارات الثلاثة', 'var(--wrong)'); return; }
-  const data = { cat, q, opts:[a,b,c], ans:aqAns, exp:exp||'سؤال مُضاف.', diff:'medium' };
+  const img = (document.getElementById('aqImg').value||'').trim();
+  const data = { cat, q, opts:[a,b,c], ans:aqAns, exp:exp||'سؤال مُضاف.', diff:'medium', img: img||null };
   if (editingId) {
     fb.db.ref('questions/'+editingId).update(data)
       .then(()=>{ showToast('✅ تم حفظ التعديل', 'var(--correct)'); adminCancelEdit(); adminLoadList(); })
@@ -3891,7 +3922,7 @@ function adminAddQuestion() {
       .then(()=>{
         showToast('✅ تمت إضافة السؤال', 'var(--correct)');
         adminClearForm();
-        allQuestions.push({ cat, q, opts:[a,b,c], ans:aqAns, exp:data.exp, diff:'medium' });
+        allQuestions.push({ cat, q, opts:[a,b,c], ans:aqAns, exp:data.exp, diff:'medium', img: img||'' });
         adminLoadList();
       })
       .catch(()=>showToast('⚠️ تعذّرت الإضافة (تحقق من القواعد)', 'var(--wrong)'));
@@ -3907,6 +3938,8 @@ function adminEditQuestion(id) {
   document.getElementById('aqB').value = (q.opts&&q.opts[1]) || '';
   document.getElementById('aqC').value = (q.opts&&q.opts[2]) || '';
   document.getElementById('aqExp').value = q.exp || '';
+  document.getElementById('aqImg').value = q.img || '';
+  adminShowImgPreview(q.img || '');
   const ai = q.ans || 0;
   setAqAns(ai, document.querySelectorAll('#aqAnsRow .timer-opt')[ai]);
   document.getElementById('aqSubmitBtn').textContent = '💾 حفظ التعديل';
@@ -3932,12 +3965,12 @@ function adminBulkImport() {
   const updates = {};
   valid.forEach(q=>{
     const key = fb.db.ref('questions').push().key;
-    updates[key] = { cat:q.cat, q:q.q, opts:q.opts.slice(0,3), ans:q.ans, exp:q.exp||'سؤال مُضاف.', diff:q.diff||'medium', ts:firebase.database.ServerValue.TIMESTAMP };
+    updates[key] = { cat:q.cat, q:q.q, opts:q.opts.slice(0,3), ans:q.ans, exp:q.exp||'سؤال مُضاف.', diff:q.diff||'medium', img:q.img||null, ts:firebase.database.ServerValue.TIMESTAMP };
   });
   fb.db.ref('questions').update(updates)
     .then(()=>{
       showToast('✅ تم استيراد '+valid.length+' سؤال', 'var(--correct)');
-      valid.forEach(q=> allQuestions.push({ cat:q.cat, q:q.q, opts:q.opts.slice(0,3), ans:q.ans, exp:q.exp||'سؤال مُضاف.', diff:q.diff||'medium' }));
+      valid.forEach(q=> allQuestions.push({ cat:q.cat, q:q.q, opts:q.opts.slice(0,3), ans:q.ans, exp:q.exp||'سؤال مُضاف.', diff:q.diff||'medium', img:q.img||'' }));
       document.getElementById('aqBulk').value='';
       adminLoadList();
     })
@@ -4061,6 +4094,13 @@ window.addEventListener('load', ()=>{
         <div class="timer-opt" onclick="setAqAns(2,this)">ج</div>
       </div>
       <input class="online-input" id="aqExp" type="text" maxlength="200" placeholder="شرح/فائدة (اختياري)" style="margin-top:10px">
+      <div class="section-title" style="margin:10px 0 6px">🖼️ صورة (اختياري)</div>
+      <input class="online-input" id="aqImg" type="text" placeholder="الصق رابط صورة، أو ارفع ملفاً" style="margin-bottom:8px">
+      <div style="display:flex;gap:8px;align-items:center">
+        <input type="file" id="aqImgFile" accept="image/*" style="flex:1;font-size:0.8rem;color:var(--muted)">
+        <button class="lb-tab" style="max-width:110px" onclick="adminUploadImage()">⬆️ رفع</button>
+      </div>
+      <img id="aqImgPreview" style="display:none;max-width:100%;border-radius:10px;margin-top:8px">
       <button class="start-btn" id="aqSubmitBtn" style="margin-top:12px" onclick="adminAddQuestion()">➕ إضافة السؤال</button>
       <button class="play-again-btn" id="aqCancelBtn" style="width:100%;margin-top:8px;display:none;background:var(--option-bg);border:1.5px solid var(--border)" onclick="adminCancelEdit()">✖️ إلغاء التعديل</button>
     </div>
