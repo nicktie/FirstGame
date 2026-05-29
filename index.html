@@ -597,6 +597,17 @@ body.theme-purple { --dark:#f4f0fb; --card-bg:#ffffff; --border:#e4d8f5; --text:
 .olb-name { flex:1; font-weight:700; }
 .olb-score { font-family:'Tajawal',sans-serif; font-weight:900; color:var(--gold); }
 .lb-tabs { display:flex; gap:8px; justify-content:center; max-width:560px; margin:0 auto 16px; }
+/* Network indicator (top-left pill) */
+.net-indicator { position:fixed; top:8px; left:8px; z-index:9998; display:flex; align-items:center; gap:6px; padding:5px 10px; border-radius:50px; background:rgba(19,19,26,0.78); border:1px solid var(--border); color:var(--text); font-family:'Cairo',sans-serif; font-size:0.7rem; cursor:pointer; backdrop-filter:blur(6px); transition:all 0.25s; }
+.net-bars { display:flex; align-items:flex-end; gap:2px; height:12px; }
+.net-bars span { width:3px; background:rgba(232,224,208,0.25); border-radius:1px; transition:background 0.25s, height 0.25s; }
+.net-bars span:nth-child(1) { height:30%; } .net-bars span:nth-child(2) { height:55%; } .net-bars span:nth-child(3) { height:80%; } .net-bars span:nth-child(4) { height:100%; }
+.net-indicator.lvl1 .net-bars span:nth-child(1) { background:#e07050; }
+.net-indicator.lvl2 .net-bars span:nth-child(-n+2) { background:#d4b800; }
+.net-indicator.lvl3 .net-bars span:nth-child(-n+3) { background:#a8c850; }
+.net-indicator.lvl4 .net-bars span { background:var(--correct); }
+.net-indicator.lvl0 { border-color:var(--wrong); color:var(--wrong); }
+.net-indicator.lvl0 .net-bars span { background:rgba(224,92,92,0.4); }
 .lb-tab { flex:1; max-width:200px; padding:10px; border-radius:12px; border:1.5px solid var(--border); background:var(--card-bg); color:var(--muted); font-family:'Cairo',sans-serif; font-weight:700; cursor:pointer; transition:all 0.2s; }
 .lb-tab.active { border-color:var(--gold); color:var(--gold); background:rgba(201,168,76,0.1); }
 
@@ -670,6 +681,11 @@ body.theme-purple { --dark:#f4f0fb; --card-bg:#ffffff; --border:#e4d8f5; --text:
 <body>
 
 <!-- ══ SETUP SCREEN ══ -->
+<div id="netIndicator" class="net-indicator lvl4" onclick="showNetDetails()" title="حالة الاتصال">
+  <div class="net-bars"><span></span><span></span><span></span><span></span></div>
+  <span id="netLabel">…</span>
+</div>
+
 <div id="setupScreen" class="setup-screen">
   <div class="logo">
     <h1>🏆 تحدي الثلاثة</h1>
@@ -4203,6 +4219,86 @@ window.addEventListener('beforeunload', (e)=>{
     || document.getElementById('onlineScreen').style.display==='block';
   if (playing) { e.preventDefault(); e.returnValue=''; return ''; }
 });
+
+// ════════════════════════════════════════════════════════
+// ══ NETWORK QUALITY INDICATOR ══
+// ════════════════════════════════════════════════════════
+let netLastInfo = '';
+let serverConnected = true;
+
+function netLevelLabel(l) {
+  return l >= 4 ? 'ممتاز' : l === 3 ? 'جيد' : l === 2 ? 'متوسط' : l === 1 ? 'ضعيف' : 'منقطع';
+}
+
+function updateNetUI(level, label, info) {
+  const el = document.getElementById('netIndicator');
+  const lbl = document.getElementById('netLabel');
+  if (!el || !lbl) return;
+  el.classList.remove('lvl0','lvl1','lvl2','lvl3','lvl4');
+  el.classList.add('lvl' + level);
+  lbl.textContent = label;
+  if (info) netLastInfo = info;
+}
+
+async function measureNet() {
+  if (!navigator.onLine) { updateNetUI(0, 'منقطع', 'navigator.onLine=false'); return; }
+  const c = navigator.connection || navigator.mozConnection || navigator.webkitConnection;
+  if (c && (c.effectiveType || typeof c.rtt === 'number')) {
+    const et = c.effectiveType || '';
+    const rtt = (typeof c.rtt === 'number') ? c.rtt : null;
+    let level;
+    if (et === '4g' || (rtt !== null && rtt < 150)) level = 4;
+    else if (et === '3g' || (rtt !== null && rtt < 350)) level = 3;
+    else if (rtt !== null && rtt < 700) level = 2;
+    else level = 1;
+    const info = 'النوع: ' + (et || 'غير معروف') + (rtt !== null ? ' • RTT: ' + rtt + 'ms' : '') + (c.downlink ? ' • السرعة: ' + c.downlink + ' Mbps' : '');
+    updateNetUI(level, netLevelLabel(level), info);
+    return;
+  }
+  // Fallback: ping a small static asset and measure RTT
+  try {
+    const t0 = performance.now();
+    await fetch('manifest.json?cb=' + Date.now(), { cache: 'no-store' });
+    const ms = Math.round(performance.now() - t0);
+    let level;
+    if (ms < 300) level = 4; else if (ms < 600) level = 3; else if (ms < 1000) level = 2; else level = 1;
+    updateNetUI(level, netLevelLabel(level), 'زمن الاستجابة: ' + ms + 'ms');
+  } catch(e) {
+    updateNetUI(0, 'منقطع', 'تعذّر الوصول للشبكة');
+  }
+}
+
+function showNetDetails() {
+  showToast('📶 ' + (document.getElementById('netLabel').textContent || '') + (netLastInfo ? ' — ' + netLastInfo : ''), 'var(--gold)');
+}
+
+let everServerConnected = false, wasServerDisconnected = false;
+function watchServerConnection() {
+  if (!fbReady()) return;
+  try {
+    fb.db.ref('.info/connected').on('value', snap => {
+      const connected = !!snap.val();
+      if (connected) {
+        if (wasServerDisconnected) { showToast('✅ عاد الاتصال بالخادم', 'var(--correct)'); wasServerDisconnected = false; }
+        everServerConnected = true;
+      } else if (everServerConnected) {
+        showToast('⚠️ انقطع الاتصال بالخادم — جارٍ إعادة المحاولة', 'var(--wrong)');
+        wasServerDisconnected = true;
+      }
+    });
+  } catch(e){}
+}
+
+// Initial + periodic + reactive measurement
+measureNet();
+setInterval(measureNet, 7000);
+window.addEventListener('online',  ()=>measureNet());
+window.addEventListener('offline', ()=>updateNetUI(0,'منقطع','تم فقدان الاتصال'));
+try {
+  const c = navigator.connection || navigator.mozConnection || navigator.webkitConnection;
+  if (c && c.addEventListener) c.addEventListener('change', measureNet);
+} catch(e){}
+window.addEventListener('load', ()=>{ measureNet(); watchServerConnection(); });
 </script>
 <!-- Custom Question Modal -->
 <div class="modal-overlay" id="customQModal">
