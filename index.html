@@ -3863,6 +3863,14 @@ function setAqAns(i, el) {
   document.querySelectorAll('#aqAnsRow .timer-opt').forEach(o=>o.classList.remove('active'));
   if (el) el.classList.add('active');
 }
+let editingId = null;
+let adminQuestions = {};
+
+function adminClearForm() {
+  ['aqText','aqA','aqB','aqC','aqExp'].forEach(id=>document.getElementById(id).value='');
+  setAqAns(0, document.querySelector('#aqAnsRow .timer-opt'));
+}
+
 function adminAddQuestion() {
   if (!fb.auth || !fb.auth.currentUser) { showToast('⚠️ سجّل الدخول أولاً', 'var(--wrong)'); return; }
   const cat = document.getElementById('aqCat').value;
@@ -3872,36 +3880,106 @@ function adminAddQuestion() {
   const c = document.getElementById('aqC').value.trim();
   const exp = document.getElementById('aqExp').value.trim();
   if (!cat || !q || !a || !b || !c) { showToast('⚠️ أكمل السؤال والخيارات الثلاثة', 'var(--wrong)'); return; }
-  fb.db.ref('questions').push({ cat, q, opts:[a,b,c], ans:aqAns, exp:exp||'سؤال مُضاف.', diff:'medium', ts:firebase.database.ServerValue.TIMESTAMP })
+  const data = { cat, q, opts:[a,b,c], ans:aqAns, exp:exp||'سؤال مُضاف.', diff:'medium' };
+  if (editingId) {
+    fb.db.ref('questions/'+editingId).update(data)
+      .then(()=>{ showToast('✅ تم حفظ التعديل', 'var(--correct)'); adminCancelEdit(); adminLoadList(); })
+      .catch(()=>showToast('⚠️ تعذّر الحفظ', 'var(--wrong)'));
+  } else {
+    data.ts = firebase.database.ServerValue.TIMESTAMP;
+    fb.db.ref('questions').push(data)
+      .then(()=>{
+        showToast('✅ تمت إضافة السؤال', 'var(--correct)');
+        adminClearForm();
+        allQuestions.push({ cat, q, opts:[a,b,c], ans:aqAns, exp:data.exp, diff:'medium' });
+        adminLoadList();
+      })
+      .catch(()=>showToast('⚠️ تعذّرت الإضافة (تحقق من القواعد)', 'var(--wrong)'));
+  }
+}
+
+function adminEditQuestion(id) {
+  const q = adminQuestions[id]; if (!q) return;
+  editingId = id;
+  document.getElementById('aqCat').value = q.cat;
+  document.getElementById('aqText').value = q.q || '';
+  document.getElementById('aqA').value = (q.opts&&q.opts[0]) || '';
+  document.getElementById('aqB').value = (q.opts&&q.opts[1]) || '';
+  document.getElementById('aqC').value = (q.opts&&q.opts[2]) || '';
+  document.getElementById('aqExp').value = q.exp || '';
+  const ai = q.ans || 0;
+  setAqAns(ai, document.querySelectorAll('#aqAnsRow .timer-opt')[ai]);
+  document.getElementById('aqSubmitBtn').textContent = '💾 حفظ التعديل';
+  document.getElementById('aqCancelBtn').style.display = 'block';
+  window.scrollTo(0,0);
+}
+
+function adminCancelEdit() {
+  editingId = null;
+  adminClearForm();
+  document.getElementById('aqSubmitBtn').textContent = '➕ إضافة السؤال';
+  document.getElementById('aqCancelBtn').style.display = 'none';
+}
+
+function adminBulkImport() {
+  if (!fb.auth || !fb.auth.currentUser) { showToast('⚠️ سجّل الدخول أولاً', 'var(--wrong)'); return; }
+  const raw = document.getElementById('aqBulk').value.trim();
+  if (!raw) { showToast('⚠️ الصق مصفوفة JSON', 'var(--wrong)'); return; }
+  let arr; try { arr = JSON.parse(raw); } catch(e){ showToast('⚠️ JSON غير صالح', 'var(--wrong)'); return; }
+  if (!Array.isArray(arr)) { showToast('⚠️ يجب أن تكون مصفوفة []', 'var(--wrong)'); return; }
+  const valid = arr.filter(q=> q && q.q && Array.isArray(q.opts) && q.opts.length===3 && typeof q.ans==='number' && q.ans>=0 && q.ans<3 && catLabels[q.cat]);
+  if (!valid.length) { showToast('⚠️ لا توجد أسئلة صالحة (تحقق من cat/opts/ans)', 'var(--wrong)'); return; }
+  const updates = {};
+  valid.forEach(q=>{
+    const key = fb.db.ref('questions').push().key;
+    updates[key] = { cat:q.cat, q:q.q, opts:q.opts.slice(0,3), ans:q.ans, exp:q.exp||'سؤال مُضاف.', diff:q.diff||'medium', ts:firebase.database.ServerValue.TIMESTAMP };
+  });
+  fb.db.ref('questions').update(updates)
     .then(()=>{
-      showToast('✅ تمت إضافة السؤال', 'var(--correct)');
-      ['aqText','aqA','aqB','aqC','aqExp'].forEach(id=>document.getElementById(id).value='');
-      setAqAns(0, document.querySelector('#aqAnsRow .timer-opt'));
-      allQuestions.push({ cat, q, opts:[a,b,c], ans:aqAns, exp:exp||'سؤال مُضاف.', diff:'medium' });
+      showToast('✅ تم استيراد '+valid.length+' سؤال', 'var(--correct)');
+      valid.forEach(q=> allQuestions.push({ cat:q.cat, q:q.q, opts:q.opts.slice(0,3), ans:q.ans, exp:q.exp||'سؤال مُضاف.', diff:q.diff||'medium' }));
+      document.getElementById('aqBulk').value='';
       adminLoadList();
     })
-    .catch(()=>showToast('⚠️ تعذّرت الإضافة (تحقق من القواعد)', 'var(--wrong)'));
+    .catch(()=>showToast('⚠️ تعذّر الاستيراد', 'var(--wrong)'));
 }
+
 function adminLoadList() {
   const box = document.getElementById('adminList'); if (!box) return;
   if (!fbReady()) { box.innerHTML=''; return; }
   box.innerHTML = '<p style="color:var(--muted);text-align:center;padding:10px">جارٍ التحميل…</p>';
   fb.db.ref('questions').once('value').then(snap=>{
-    const v = snap.val() || {}; const ids = Object.keys(v);
-    document.getElementById('aqCount').textContent = ids.length;
-    if (!ids.length) { box.innerHTML='<p style="color:var(--muted);text-align:center;padding:10px">لا توجد أسئلة مُضافة بعد</p>'; return; }
-    box.innerHTML = '';
-    ids.reverse().forEach(id=>{
-      const q = v[id];
-      const row = document.createElement('div'); row.className='olb-row';
-      const lbl = catLabels[q.cat] ? catLabels[q.cat].label : q.cat;
-      const info = document.createElement('div'); info.className='olb-name'; info.style.flex='1';
-      info.innerHTML = `<div style="font-size:0.72rem;color:var(--gold)">${lbl}</div>${q.q}`;
-      const del = document.createElement('button'); del.textContent='🗑️'; del.className='lb-tab'; del.style.cssText='max-width:46px;padding:6px;flex:none';
-      del.onclick = ()=>adminDeleteQuestion(id);
-      row.appendChild(info); row.appendChild(del); box.appendChild(row);
-    });
+    adminQuestions = snap.val() || {};
+    const fsel = document.getElementById('aqFilterCat');
+    if (fsel && !fsel.options.length) {
+      const all=document.createElement('option'); all.value=''; all.textContent='كل الفئات'; fsel.appendChild(all);
+      Object.keys(catLabels).forEach(k=>{ const o=document.createElement('option'); o.value=k; o.textContent=catLabels[k].label; fsel.appendChild(o); });
+    }
+    renderAdminList();
   }).catch(()=>{ box.innerHTML='<p style="color:var(--wrong);text-align:center;padding:10px">تعذّر التحميل</p>'; });
+}
+
+function renderAdminList() {
+  const box = document.getElementById('adminList'); if (!box) return;
+  const ids = Object.keys(adminQuestions);
+  const cEl = document.getElementById('aqCount'); if (cEl) cEl.textContent = ids.length;
+  const fcat = (document.getElementById('aqFilterCat')||{}).value || '';
+  const term = ((document.getElementById('aqSearch')||{}).value||'').trim();
+  let list = ids.map(id=>Object.assign({id}, adminQuestions[id]));
+  if (fcat) list = list.filter(q=>q.cat===fcat);
+  if (term) list = list.filter(q=>(q.q||'').includes(term));
+  list.reverse();
+  if (!list.length) { box.innerHTML='<p style="color:var(--muted);text-align:center;padding:10px">لا توجد أسئلة مطابقة</p>'; return; }
+  box.innerHTML = '';
+  list.forEach(q=>{
+    const row = document.createElement('div'); row.className='olb-row';
+    const lbl = catLabels[q.cat] ? catLabels[q.cat].label : q.cat;
+    const info = document.createElement('div'); info.className='olb-name'; info.style.flex='1';
+    info.innerHTML = `<div style="font-size:0.72rem;color:var(--gold)">${lbl}</div>${q.q}`;
+    const editBtn = document.createElement('button'); editBtn.textContent='✏️'; editBtn.className='lb-tab'; editBtn.style.cssText='max-width:42px;padding:6px;flex:none'; editBtn.onclick=()=>adminEditQuestion(q.id);
+    const del = document.createElement('button'); del.textContent='🗑️'; del.className='lb-tab'; del.style.cssText='max-width:42px;padding:6px;flex:none'; del.onclick=()=>adminDeleteQuestion(q.id);
+    row.appendChild(info); row.appendChild(editBtn); row.appendChild(del); box.appendChild(row);
+  });
 }
 function adminDeleteQuestion(id) {
   if (!fb.auth || !fb.auth.currentUser) { showToast('⚠️ سجّل الدخول أولاً', 'var(--wrong)'); return; }
@@ -3983,10 +4061,22 @@ window.addEventListener('load', ()=>{
         <div class="timer-opt" onclick="setAqAns(2,this)">ج</div>
       </div>
       <input class="online-input" id="aqExp" type="text" maxlength="200" placeholder="شرح/فائدة (اختياري)" style="margin-top:10px">
-      <button class="start-btn" style="margin-top:12px" onclick="adminAddQuestion()">➕ إضافة السؤال</button>
+      <button class="start-btn" id="aqSubmitBtn" style="margin-top:12px" onclick="adminAddQuestion()">➕ إضافة السؤال</button>
+      <button class="play-again-btn" id="aqCancelBtn" style="width:100%;margin-top:8px;display:none;background:var(--option-bg);border:1.5px solid var(--border)" onclick="adminCancelEdit()">✖️ إلغاء التعديل</button>
+    </div>
+
+    <div class="online-panel" style="margin-bottom:14px">
+      <div class="online-panel-title">📥 استيراد دفعة أسئلة</div>
+      <div class="online-panel-sub">الصق مصفوفة JSON: [{"cat":"general","q":"...","opts":["أ","ب","ج"],"ans":0,"exp":"..."}]</div>
+      <textarea class="online-input" id="aqBulk" rows="4" style="text-align:right;resize:vertical" placeholder='[{"cat":"general","q":"سؤال","opts":["أ","ب","ج"],"ans":0,"exp":"شرح"}]'></textarea>
+      <button class="play-again-btn" style="width:100%;margin-top:8px" onclick="adminBulkImport()">📥 استيراد</button>
     </div>
 
     <div class="lobby-players-title">📚 الأسئلة المضافة عبر الإدارة: <span id="aqCount">0</span></div>
+    <div style="display:flex;gap:8px;max-width:560px;margin:0 auto 10px">
+      <select class="online-input" id="aqFilterCat" style="margin:0;flex:1" onchange="renderAdminList()"></select>
+      <input class="online-input" id="aqSearch" style="margin:0;flex:1.4" placeholder="🔍 بحث في الأسئلة" oninput="renderAdminList()">
+    </div>
     <div id="adminList" class="online-leaderboard"></div>
 
     <div style="text-align:center;margin-top:16px">
