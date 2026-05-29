@@ -149,6 +149,7 @@ body {
 .cat-arts     { background:rgba(200,100,200,0.12); color:#c864c8; border:1px solid rgba(200,100,200,0.3); }
 .cat-saudi    { background:rgba(46,160,67,0.14);   color:#3cb95a; border:1px solid rgba(46,160,67,0.32); }
 .cat-movies   { background:rgba(224,86,122,0.13);  color:#e0567a; border:1px solid rgba(224,86,122,0.3); }
+.cat-health   { background:rgba(31,182,176,0.14);   color:#2cc4be; border:1px solid rgba(31,182,176,0.32); }
 .q-num { font-size:0.76rem; color:var(--muted); }
 .question { font-family:'Tajawal',sans-serif; font-size:clamp(1rem,3vw,1.25rem); font-weight:700; line-height:1.65; margin-bottom:20px; color:var(--text); }
 .turn-indicator { display:flex; align-items:center; gap:10px; background:var(--option-bg); border-radius:12px; padding:10px 15px; margin-bottom:16px; border:1px solid var(--border); font-size:0.85rem; transition:all 0.3s; }
@@ -670,7 +671,7 @@ body.theme-purple { --dark:#f4f0fb; --card-bg:#ffffff; --border:#e4d8f5; --text:
   <div class="logo">
     <h1>🏆 تحدي الثلاثة</h1>
     <div class="ornament"><div class="orn-line"></div><div class="orn-dot"></div><div class="orn-line r"></div></div>
-    <p>٩ فئات • ٢٠٠+ سؤال</p>
+    <p>١٠ فئات • ٢١٠+ سؤال</p>
   </div>
 
   <!-- Theme Picker -->
@@ -773,6 +774,7 @@ body.theme-purple { --dark:#f4f0fb; --card-bg:#ffffff; --border:#e4d8f5; --text:
     <button class="cat-tab" onclick="setCat('arts',this)">🎨 ثقافة وفنون</button>
     <button class="cat-tab" onclick="setCat('saudi',this)">🇸🇦 السعودية</button>
     <button class="cat-tab" onclick="setCat('movies',this)">🎬 أفلام ومسلسلات</button>
+    <button class="cat-tab" onclick="setCat('health',this)">🩺 صحة وطب</button>
   </div>
 
   <div class="section-title">🔢 عدد الأسئلة</div>
@@ -1086,6 +1088,7 @@ const catLabels = {
   arts:     {label:'🎨 ثقافة وفنون', cls:'cat-arts'},
   saudi:    {label:'🇸🇦 السعودية',    cls:'cat-saudi'},
   movies:   {label:'🎬 أفلام ومسلسلات', cls:'cat-movies'},
+  health:   {label:'🩺 صحة وطب',       cls:'cat-health'},
 };
 
 const allQuestions = [
@@ -1306,6 +1309,22 @@ const allQuestions = [
   {cat:'movies',q:'ما اسم الدمية الخشبية التي يكبر أنفها عند الكذب؟',opts:['بينوكيو','بامبي','دامبو'],ans:0,exp:'بينوكيو شخصية كرتونية شهيرة لدمية خشبية يطول أنفها عند الكذب.'},
   {cat:'movies',q:'في أي شركة عُرضت مسلسلات وأفلام مثل "Stranger Things"؟',opts:['Netflix','HBO','Disney'],ans:0,exp:'مسلسل Stranger Things من إنتاج وعرض منصة نتفليكس.'},
   {cat:'movies',q:'ما اسم البطل الخارق الذي يرتدي بدلة العنكبوت؟',opts:['سوبرمان','سبايدر مان','باتمان'],ans:1,exp:'سبايدر مان (الرجل العنكبوت) من أشهر أبطال مارفل الخارقين.'},
+
+  // ── صحة وطب ──
+  {cat:'health',q:'ما العضو المسؤول عن ضخ الدم في الجسم؟',opts:['الكبد','القلب','الرئتان'],ans:1,exp:'القلب عضو عضلي يضخ الدم إلى جميع أنحاء الجسم.'},
+  {cat:'health',q:'كم عدد أسنان الإنسان البالغ الطبيعية؟',opts:['28','32','36'],ans:1,exp:'للإنسان البالغ 32 سنًّا بما فيها أضراس العقل.'},
+  {cat:'health',q:'ما أكبر عضو في جسم الإنسان؟',opts:['الكبد','الجلد','الدماغ'],ans:1,exp:'الجلد هو أكبر أعضاء الجسم ويشكّل خط الدفاع الأول.'},
+  {cat:'health',q:'كم عدد العظام في جسم الإنسان البالغ؟',opts:['186','206','226'],ans:1,exp:'جسم الإنسان البالغ يحتوي على 206 عظمة.'},
+  {cat:'health',q:'ما الفيتامين الذي ينتجه الجسم عند التعرّض لأشعة الشمس؟',opts:['فيتامين C','فيتامين د','فيتامين A'],ans:1,exp:'يصنع الجلد فيتامين (د) عند تعرّضه لأشعة الشمس، وهو مهم لصحة العظام.'},
+  {cat:'health',q:'ما العضو الذي يفرز هرمون الأنسولين؟',opts:['الكبد','البنكرياس','الطحال'],ans:1,exp:'البنكرياس يفرز الأنسولين الذي ينظّم مستوى السكر في الدم.'},
+  {cat:'health',q:'ما اسم خلايا الدم التي تحارب العدوى والأمراض؟',opts:['الحمراء','البيضاء','الصفائح'],ans:1,exp:'خلايا الدم البيضاء جزء من جهاز المناعة وتدافع عن الجسم ضد العدوى.'},
+  {cat:'health',q:'نقص أي عنصر يسبب فقر الدم (الأنيميا) غالبًا؟',opts:['الكالسيوم','الحديد','الزنك'],ans:1,exp:'نقص الحديد من أكثر أسباب فقر الدم شيوعًا لأنه ضروري لصنع الهيموغلوبين.'},
+  {cat:'health',q:'ما المعدن الأهم لصحة العظام والأسنان؟',opts:['الحديد','الكالسيوم','البوتاسيوم'],ans:1,exp:'الكالسيوم عنصر أساسي لبناء العظام والأسنان والحفاظ على قوتها.'},
+  {cat:'health',q:'ما درجة حرارة جسم الإنسان الطبيعية تقريبًا؟',opts:['35°م','37°م','39°م'],ans:1,exp:'متوسط درجة حرارة جسم الإنسان الطبيعية حوالي 37 درجة مئوية.'},
+  {cat:'health',q:'كم عدد حجرات القلب؟',opts:['اثنتان','ثلاث','أربع'],ans:2,exp:'القلب يتكوّن من 4 حجرات: أذينان وبطينان.'},
+  {cat:'health',q:'ما المرض المزمن الناتج عن ارتفاع نسبة السكر في الدم؟',opts:['الربو','السكري','فقر الدم'],ans:1,exp:'داء السكري حالة مزمنة يرتفع فيها سكر الدم بسبب نقص الأنسولين أو مقاومته.'},
+  {cat:'health',q:'ما الفيتامين الموجود بكثرة في الحمضيات مثل البرتقال؟',opts:['فيتامين C','فيتامين د','فيتامين K'],ans:0,exp:'فيتامين C موجود بوفرة في الحمضيات ويدعم المناعة والتئام الجروح.'},
+  {cat:'health',q:'ما العضو الذي يعالج المعلومات ويتحكم في الجسم؟',opts:['القلب','الدماغ','الكبد'],ans:1,exp:'الدماغ مركز التحكم في الجسم ويعالج الحواس والتفكير والحركة.'},
 ];
 
 // Auto-assign difficulty levels to questions
