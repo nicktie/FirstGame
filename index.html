@@ -552,6 +552,19 @@ body.theme-purple { --dark:#f4f0fb; --card-bg:#ffffff; --border:#e4d8f5; --text:
 .room-code { font-family:'Tajawal',sans-serif; font-size:2.6rem; font-weight:900; color:var(--gold); letter-spacing:10px; }
 .online-copy-btn { margin-top:10px; padding:8px 18px; background:rgba(201,168,76,0.15); border:1px solid var(--gold); color:var(--gold); border-radius:10px; cursor:pointer; font-family:'Cairo',sans-serif; font-size:0.85rem; }
 .lobby-players-title { font-family:'Tajawal',sans-serif; font-weight:700; font-size:0.95rem; color:var(--text); margin-bottom:10px; }
+.lifelines-row { display:flex; gap:6px; flex-wrap:wrap; justify-content:center; margin:0 0 12px; }
+.lifeline-btn { background:var(--option-bg); border:1.5px solid var(--border); border-radius:12px; padding:7px 8px; cursor:pointer; font-family:'Cairo',sans-serif; font-size:0.7rem; color:var(--text); display:flex; flex-direction:column; align-items:center; gap:2px; min-width:62px; transition:all 0.15s; }
+.lifeline-btn:hover:not(.used) { border-color:var(--gold); transform:translateY(-1px); }
+.lifeline-btn .ll-emoji { font-size:1.2rem; }
+.lifeline-btn.used { opacity:0.4; cursor:not-allowed; }
+.option.lifeline-hidden { opacity:0.28; text-decoration:line-through; pointer-events:none; }
+.reactions-bar { display:flex; justify-content:center; gap:8px; margin-top:16px; }
+.reaction-btn { width:44px; height:44px; border-radius:50%; border:1.5px solid var(--border); background:var(--card-bg); font-size:1.3rem; cursor:pointer; transition:transform 0.12s; }
+.reaction-btn:active { transform:scale(0.85); }
+.reaction-btn:hover { border-color:var(--gold); }
+.reactions-layer { position:fixed; left:0; right:0; bottom:0; height:60vh; pointer-events:none; z-index:9000; overflow:hidden; }
+.float-reaction { position:absolute; bottom:0; font-size:1.8rem; animation:float-up 2.6s ease-out forwards; opacity:0; }
+@keyframes float-up { 0%{ transform:translateY(0) scale(0.6); opacity:0 } 15%{ opacity:1; transform:translateY(-40px) scale(1) } 100%{ transform:translateY(-60vh) scale(1.15); opacity:0 } }
 .lobby-players { display:flex; flex-wrap:wrap; gap:8px; min-height:40px; }
 .lobby-player-chip { background:var(--option-bg); border:1px solid var(--border); border-radius:30px; padding:8px 14px; font-size:0.9rem; display:flex; align-items:center; gap:6px; animation:fadeUp 0.3s ease; }
 .online-wait-note { text-align:center; color:var(--muted); font-size:0.85rem; margin-top:18px; animation:pulse 1.6s ease infinite; }
@@ -721,7 +734,8 @@ body.theme-gold .net-indicator { color:var(--gold); }
   </div>
 
   <div class="home-intro">
-    <p>لعبة أسئلة عربية شاملة مع أصحابك على نفس الجهاز، أو أونلاين بكل واحد من جواله. اختر طريقة اللعب وابدأ:</p>
+    <p style="font-family:'Tajawal',sans-serif;font-size:1.15rem;font-weight:700;color:var(--gold);margin-bottom:8px">🎯 جاهز للتحدي؟ ١٠٠٠ سؤال يستنّاك</p>
+    <p>العب مع أصحابك على نفس الجهاز، أو من جوالك مع أي شخص حول العالم. اختر طريقة اللعب وابدأ:</p>
   </div>
 
   <div class="home-grid">
@@ -994,6 +1008,12 @@ body.theme-gold .net-indicator { color:var(--gold); }
           <div class="ac-label">أسئلة مخصصة</div>
           <div class="ac-sub" id="customQCount">أضف أسئلتك الخاصة</div>
         </div>
+        <div class="adv-card" id="lifelinesCard" onclick="toggleAdv('lifelines')">
+          <div class="ac-toggle"></div>
+          <div class="ac-icon">🎯</div>
+          <div class="ac-label">وسائل المساعدة</div>
+          <div class="ac-sub">٤ وسائل لكل لاعب (وضع التناوب)</div>
+        </div>
       </div>
 
       <!-- Difficulty filter -->
@@ -1054,6 +1074,7 @@ body.theme-gold .net-indicator { color:var(--gold); }
       </div>
       <!-- Joker buttons (shown per active player when joker mode on) -->
       <div class="joker-row" id="jokerRow"></div>
+      <div class="lifelines-row" id="lifelinesRow" style="display:none"></div>
       <div class="options" id="optionsContainer"></div>
       <div class="feedback" id="feedback"></div>
       <div class="action-row">
@@ -1147,7 +1168,16 @@ body.theme-gold .net-indicator { color:var(--gold); }
     </div>
     <div class="online-options" id="onlineOptions"></div>
     <div class="online-status" id="onlineStatus"></div>
+    <div class="reactions-bar">
+      <button class="reaction-btn" onclick="sendReaction('👏')">👏</button>
+      <button class="reaction-btn" onclick="sendReaction('❤️')">❤️</button>
+      <button class="reaction-btn" onclick="sendReaction('😂')">😂</button>
+      <button class="reaction-btn" onclick="sendReaction('🔥')">🔥</button>
+      <button class="reaction-btn" onclick="sendReaction('🤯')">🤯</button>
+    </div>
   </div>
+
+  <div id="reactionsLayer" class="reactions-layer"></div>
 
   <!-- Reveal / between-questions leaderboard -->
   <div id="onlineReveal" class="online-stage" style="display:none">
@@ -3231,6 +3261,7 @@ const _origStartGame = startGame;
 function startGameAdv() {
   jokerUsed = new Array(PLAYERS.length).fill(false);
   pendingJoker = -1;
+  lifelinesUsed = PLAYERS.map(()=>({l50:false, lswap:false, llucky:false, lfriend:false}));
   initStats();
   startRound(1);
   // Update round labels
@@ -3247,6 +3278,7 @@ const _origLoadQuestion = loadQuestion;
 function loadQuestionAdv() {
   pendingJoker = -1;
   renderJokerRow();
+  renderLifelines();
   startTimer(() => {
     // Time's up: auto-skip for current player(s) who haven't answered
     turnOrder.forEach(pid => { if(answers[pid]===null) answers[pid]=-1; });
@@ -3363,6 +3395,8 @@ const __origBuildPool = function() {
 
 // ── TEAM MODE ──
 let advTeam = false, advElim = false, advMusic = false;
+let advLifelines = false;
+let lifelinesUsed = []; // per-player: {l50, lswap, llucky, lfriend}
 let teams = [[],[]];   // array of player IDs per team
 let teamScores = [0,0];
 
@@ -3429,7 +3463,7 @@ function checkElimination() {
 let musicInterval = null, musicNodes = [];
 function toggleAdv(key) {
   const map = {timer:'timerCard', speed:'speedCard', joker:'jokerCard', stats:'statsCard',
-               team:'teamCard', elim:'elimCard', music:'musicCard'};
+               team:'teamCard', elim:'elimCard', music:'musicCard', lifelines:'lifelinesCard'};
   const card = document.getElementById(map[key]);
   if (!card) return;
   const isOn = card.classList.toggle('on');
@@ -3439,6 +3473,7 @@ function toggleAdv(key) {
   if (key==='stats') advStats=isOn;
   if (key==='team')  { advTeam=isOn; }
   if (key==='elim')  { advElim=isOn; }
+  if (key==='lifelines') { advLifelines=isOn; }
   if (key==='music') { advMusic=isOn; document.getElementById('musicBtn').classList.toggle('show',isOn); }
 }
 
@@ -3807,6 +3842,34 @@ function attachRoomListeners(code) {
   });
   online.listeners.push(()=>online.playersRef.off('value', pl));
   online.listeners.push(()=>online.stateRef.off('value', st));
+  // Live reactions (only emit "new since I joined")
+  const reactionsRef = roomRef.child('reactions');
+  const joinedAt = Date.now();
+  const rxHandler = reactionsRef.limitToLast(20).on('child_added', snap=>{
+    const r = snap.val(); if (!r || !r.emoji) return;
+    if (r.from === online.playerId) return; // skip my own (I see it locally on tap)
+    if (r.ts && r.ts < joinedAt - 1500) return; // skip old ones from before join
+    spawnReaction(r.emoji);
+  });
+  online.listeners.push(()=>reactionsRef.off('child_added', rxHandler));
+}
+
+function sendReaction(emoji) {
+  spawnReaction(emoji); // immediate local feedback
+  if (!fbReady() || !online.code) return;
+  try {
+    fb.db.ref('rooms/'+online.code+'/reactions').push({ emoji, from: online.playerId||'?', ts: firebase.database.ServerValue.TIMESTAMP });
+  } catch(e){}
+}
+
+function spawnReaction(emoji) {
+  const layer = document.getElementById('reactionsLayer'); if (!layer) return;
+  const el = document.createElement('div');
+  el.className = 'float-reaction';
+  el.textContent = emoji;
+  el.style.left = (10 + Math.random()*80) + '%';
+  layer.appendChild(el);
+  setTimeout(()=>{ try{ el.remove(); }catch(e){} }, 2800);
 }
 
 function renderLobbyPlayers(players) {
@@ -3977,6 +4040,7 @@ function renderLeaderboard(players) {
 async function showOnlineFinalStage() {
   clearInterval(online.localTimerInt);
   clearOnlineSession();
+  if (online.isHost && online.code) { try { fb.db.ref('rooms/'+online.code+'/reactions').remove(); } catch(e){} }
   showOnlineStage('onlineFinal');
   const snap = await fb.db.ref('rooms/'+online.code+'/players').once('value');
   const players = snap.val() || {};
@@ -4372,6 +4436,74 @@ function resumeGame() {
   updateScoreboard();
   if (advMusic) { try { startMusic(); } catch(e){} }
   loadQuestion();
+}
+
+// ── Lifelines (وسائل المساعدة) ──
+function activeSoloPid() { return (turnOrder && turnOrder.length) ? turnOrder[0] : null; }
+function renderLifelines() {
+  const row = document.getElementById('lifelinesRow'); if (!row) return;
+  if (!advLifelines || !useRandomOrder) { row.style.display='none'; row.innerHTML=''; return; }
+  const pid = activeSoloPid(); if (pid==null || !lifelinesUsed[pid]) { row.style.display='none'; return; }
+  const u = lifelinesUsed[pid];
+  const items = [
+    {k:'l50',     emoji:'🪓', label:'٥٠:٥٠', fn:'useLifeline50()'},
+    {k:'lswap',   emoji:'🔄', label:'تبديل',   fn:'useLifelineSwap()'},
+    {k:'llucky',  emoji:'🎲', label:'حظ',     fn:'useLifelineLucky()'},
+    {k:'lfriend', emoji:'📞', label:'صديق',   fn:'useLifelineFriend()'}
+  ];
+  row.innerHTML = items.map(it =>
+    `<button class="lifeline-btn${u[it.k]?' used':''}" ${u[it.k]?'disabled':''} onclick="${it.fn}">
+      <span class="ll-emoji">${it.emoji}</span><span class="ll-label">${it.label}</span>
+     </button>`
+  ).join('');
+  row.style.display='flex';
+}
+function markLifeline(key) {
+  const pid = activeSoloPid(); if (pid==null) return false;
+  if (!lifelinesUsed[pid]) lifelinesUsed[pid] = {l50:false,lswap:false,llucky:false,lfriend:false};
+  if (lifelinesUsed[pid][key]) return false;
+  lifelinesUsed[pid][key] = true;
+  return true;
+}
+function useLifeline50() {
+  if (!markLifeline('l50')) return;
+  const q = questions[qIndex];
+  const wrongs = [0,1,2].filter(i => i !== q.ans);
+  const toHide = wrongs[Math.floor(Math.random()*wrongs.length)];
+  const el = document.getElementById('optionsContainer').children[toHide];
+  if (el) { el.classList.add('lifeline-hidden'); el.onclick = null; }
+  renderLifelines();
+}
+function useLifelineSwap() {
+  if (qIndex+1 >= questions.length) { showToast('⚠️ لا يوجد سؤال بديل', 'var(--wrong)'); return; }
+  if (!markLifeline('lswap')) return;
+  qIndex++;
+  loadQuestion();
+}
+function useLifelineLucky() {
+  if (!markLifeline('llucky')) return;
+  const kids = [...document.getElementById('optionsContainer').children];
+  const visible = kids.map((el,i)=>el.classList.contains('lifeline-hidden')?-1:i).filter(i=>i>=0);
+  if (!visible.length) return;
+  const pick = visible[Math.floor(Math.random()*visible.length)];
+  selectOption(pick);
+}
+function useLifelineFriend() {
+  if (!markLifeline('lfriend')) return;
+  const q = questions[qIndex];
+  const kids = [...document.getElementById('optionsContainer').children];
+  const visible = kids.map((el,i)=>el.classList.contains('lifeline-hidden')?-1:i).filter(i=>i>=0);
+  const correctVisible = visible.includes(q.ans);
+  const goodChance = Math.random() < 0.8;
+  let hintIdx;
+  if (goodChance && correctVisible) hintIdx = q.ans;
+  else {
+    const wrong = visible.filter(i=>i!==q.ans);
+    hintIdx = wrong.length ? wrong[Math.floor(Math.random()*wrong.length)] : q.ans;
+  }
+  const letters = ['أ','ب','ج'];
+  showToast('📞 صديقك يهمس: الجواب على الأرجح "' + letters[hintIdx] + '"', 'var(--gold)');
+  renderLifelines();
 }
 
 // Warn before accidental refresh / close while a game is in progress
