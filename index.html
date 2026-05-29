@@ -751,8 +751,8 @@ body.theme-gold .net-indicator { color:var(--gold); }
 
   <div class="section-title" style="margin-top:8px">🎨 المظهر</div>
   <div class="theme-row" id="landingThemeRow">
-    <div class="theme-chip active" onclick="setTheme('dark',this)">🌑 داكن</div>
-    <div class="theme-chip" onclick="setTheme('light',this)">☀️ فاتح</div>
+    <div class="theme-chip" onclick="setTheme('dark',this)">🌑 داكن</div>
+    <div class="theme-chip active" onclick="setTheme('light',this)">☀️ فاتح</div>
     <div class="theme-chip" onclick="setTheme('blue',this)">🌊 أزرق</div>
     <div class="theme-chip" onclick="setTheme('gold',this)">✨ ذهبي</div>
     <div class="theme-chip" onclick="setTheme('purple',this)">💜 بنفسجي</div>
@@ -3295,12 +3295,16 @@ let currentTheme = 'dark';
 function setTheme(t, el) {
   currentTheme = t;
   document.body.className = t === 'dark' ? '' : 'theme-' + t;
-  document.querySelectorAll('.theme-chip').forEach(c => c.classList.remove('active'));
-  if(el) el.classList.add('active');
+  document.querySelectorAll('.theme-chip').forEach(c => {
+    c.classList.remove('active');
+    const a = c.getAttribute('onclick') || '';
+    if (!el && a.includes("setTheme('" + t + "'")) c.classList.add('active');
+  });
+  if (el) el.classList.add('active');
   localStorage.setItem('quizTheme', t);
 }
-// Restore saved theme
-(function(){ const saved = localStorage.getItem('quizTheme'); if(saved) setTheme(saved, null); })();
+// Default to light theme on first visit; honor saved preference otherwise
+(function(){ const saved = localStorage.getItem('quizTheme'); setTheme(saved || 'light', null); })();
 
 // ── DIFFICULTY FILTER ──
 let selectedDiff = 'all';
