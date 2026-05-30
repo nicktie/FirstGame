@@ -730,11 +730,11 @@ body.theme-gold .net-indicator { color:var(--gold); }
   <div class="logo">
     <h1>🏆 تحدي الثلاثة</h1>
     <div class="ornament"><div class="orn-line"></div><div class="orn-dot"></div><div class="orn-line r"></div></div>
-    <p>١٠ فئات • ١٠٠٠ سؤال</p>
+    <p>١٠ فئات • ١٠٥٠ سؤال • مستويات صعوبة متعددة</p>
   </div>
 
   <div class="home-intro">
-    <p style="font-family:'Tajawal',sans-serif;font-size:1.15rem;font-weight:700;color:var(--gold);margin-bottom:8px">🎯 جاهز للتحدي؟ ١٠٠٠ سؤال يستنّاك</p>
+    <p style="font-family:'Tajawal',sans-serif;font-size:1.15rem;font-weight:700;color:var(--gold);margin-bottom:8px">🎯 جاهز للتحدي؟ ١٠٥٠ سؤال يستنّاك</p>
     <p>العب مع أصحابك على نفس الجهاز، أو من جوالك مع أي شخص حول العالم. اختر طريقة اللعب وابدأ:</p>
   </div>
 
@@ -846,6 +846,14 @@ body.theme-gold .net-indicator { color:var(--gold); }
         <div class="timer-opt active" onclick="setOnlineTimer(15,this)">15 ث</div>
         <div class="timer-opt" onclick="setOnlineTimer(20,this)">20 ث</div>
         <div class="timer-opt" onclick="setOnlineTimer(30,this)">30 ث</div>
+      </div>
+      <div class="section-title" style="margin:14px 0 6px">🎯 مستوى الصعوبة</div>
+      <div class="diff-filter-row">
+        <div class="diff-filter active" onclick="setDiff('all',this)">🌐 الكل</div>
+        <div class="diff-filter" onclick="setDiff('easy',this)">🟢 سهل</div>
+        <div class="diff-filter" onclick="setDiff('medium',this)">🟡 متوسط</div>
+        <div class="diff-filter" onclick="setDiff('hard',this)">🔴 صعب</div>
+        <div class="diff-filter" onclick="setDiff('veryhard',this)">💎 صعب جداً</div>
       </div>
       <button class="start-btn" style="margin-top:16px" onclick="createRoom()">🚀 إنشاء غرفة</button>
     </div>
@@ -1024,6 +1032,7 @@ body.theme-gold .net-indicator { color:var(--gold); }
           <div class="diff-filter" onclick="setDiff('easy',this)">🟢 سهل</div>
           <div class="diff-filter" onclick="setDiff('medium',this)">🟡 متوسط</div>
           <div class="diff-filter" onclick="setDiff('hard',this)">🔴 صعب</div>
+          <div class="diff-filter" onclick="setDiff('veryhard',this)">💎 صعب جداً</div>
         </div>
       </div>
 
@@ -2280,6 +2289,58 @@ const allQuestions = [
   {cat:'health',q:'أي فئة عمرية تحتاج كمية أكبر من الكالسيوم لنمو العظام؟',opts:['الأطفال والمراهقون','لا أحد','من لا يتحرك'],ans:0,exp:'الأطفال والمراهقون يحتاجون كالسيوم أكثر لنمو العظام.'},
   {cat:'health',q:'ما العضو الذي يصفّي السموم ويعالج الأدوية في الجسم؟',opts:['الكبد','الرئة','المثانة'],ans:0,exp:'الكبد يصفّي السموم ويعالج كثيراً من المواد.'},
   {cat:'health',q:'ما العضو الذي يخزّن البول قبل إخراجه من الجسم؟',opts:['الكلية','المثانة','المعدة'],ans:1,exp:'المثانة تخزّن البول قبل التخلّص منه.'},
+
+  // ── صحة وطب (٥٠ سؤال صعب جداً) ──
+  {cat:'health',diff:'veryhard',q:'ما الهرمون الذي تفرزه الغدة الكظرية ويرفع ضغط الدم وضربات القلب عند الخطر؟',opts:['الأنسولين','الأدرينالين','التيروكسين'],ans:1,exp:'الأدرينالين (الإبينفرين) هرمون استجابة الكر والفر.'},
+  {cat:'health',diff:'veryhard',q:'ما خلايا البنكرياس التي تفرز الأنسولين؟',opts:['ألفا','بيتا','دلتا'],ans:1,exp:'خلايا بيتا (β) في جزر لانغرهانس تفرز الأنسولين.'},
+  {cat:'health',diff:'veryhard',q:'ما خلايا البنكرياس التي تفرز الجلوكاجون الذي يرفع سكر الدم؟',opts:['ألفا','بيتا','دلتا'],ans:0,exp:'خلايا ألفا (α) تفرز الجلوكاجون المعاكس لعمل الأنسولين.'},
+  {cat:'health',diff:'veryhard',q:'ما الإنزيم الموجود في اللعاب ويبدأ هضم النشويات؟',opts:['البيبسين','الأميليز','الليباز'],ans:1,exp:'الأميليز اللعابي يبدأ تكسير النشويات في الفم.'},
+  {cat:'health',diff:'veryhard',q:'ما الإنزيم الذي تفرزه المعدة ويهضم البروتين؟',opts:['الأميليز','البيبسين','التريبسين'],ans:1,exp:'البيبسين إنزيم معدي يهضم البروتين في الوسط الحمضي.'},
+  {cat:'health',diff:'veryhard',q:'ما العصب القحفي المسؤول عن الإبصار؟',opts:['الأول الشمي','الثاني البصري','الخامس الثلاثي'],ans:1,exp:'العصب البصري (II) ينقل الإشارات من الشبكية إلى الدماغ.'},
+  {cat:'health',diff:'veryhard',q:'ما العصب القحفي المسؤول عن السمع والتوازن؟',opts:['الخامس','السابع','الثامن الدهليزي القوقعي'],ans:2,exp:'العصب الثامن (الدهليزي القوقعي) ينقل السمع والتوازن.'},
+  {cat:'health',diff:'veryhard',q:'كم زوجاً من الأعصاب القحفية عند الإنسان؟',opts:['10','12','14'],ans:1,exp:'هناك 12 زوجاً من الأعصاب القحفية.'},
+  {cat:'health',diff:'veryhard',q:'كم عدد الفقرات العنقية في العمود الفقري للإنسان؟',opts:['5','7','12'],ans:1,exp:'الفقرات العنقية 7 فقرات.'},
+  {cat:'health',diff:'veryhard',q:'كم عدد الفقرات الصدرية؟',opts:['10','12','14'],ans:1,exp:'الفقرات الصدرية 12 فقرة، يتصل بها القفص الصدري.'},
+  {cat:'health',diff:'veryhard',q:'كم عدد الفقرات القطنية؟',opts:['4','5','7'],ans:1,exp:'الفقرات القطنية 5 فقرات في أسفل الظهر.'},
+  {cat:'health',diff:'veryhard',q:'ما الجزء من الدماغ المسؤول عن التوازن وتنسيق الحركة؟',opts:['المخ','المخيخ','المهاد'],ans:1,exp:'المخيخ يضبط التوازن والحركات الدقيقة.'},
+  {cat:'health',diff:'veryhard',q:'ما الجزء من الدماغ المسؤول عن التنفس وضربات القلب؟',opts:['الفص الجبهي','جذع الدماغ (النخاع المستطيل)','المهاد'],ans:1,exp:'جذع الدماغ يتحكم في الوظائف الحيوية الأساسية.'},
+  {cat:'health',diff:'veryhard',q:'ما الفص الدماغي المعالج لإشارات الإبصار؟',opts:['الجبهي','الجداري','القذالي'],ans:2,exp:'الفص القذالي خلف الدماغ يعالج الرؤية.'},
+  {cat:'health',diff:'veryhard',q:'ما الفص الدماغي المسؤول عن السمع واللغة؟',opts:['الصدغي','الجبهي','الجداري'],ans:0,exp:'الفص الصدغي يعالج السمع وفهم اللغة.'},
+  {cat:'health',diff:'veryhard',q:'ما الصمام الذي يفصل الأذين الأيسر عن البطين الأيسر؟',opts:['التاجي (الميترالي)','ثلاثي الشُّرف','الأبهري'],ans:0,exp:'الصمام التاجي بين الأذين والبطين الأيسرين.'},
+  {cat:'health',diff:'veryhard',q:'ما الصمام الذي يفصل الأذين الأيمن عن البطين الأيمن؟',opts:['التاجي','ثلاثي الشُّرف','الرئوي'],ans:1,exp:'الصمام ثلاثي الشُّرف بين الأذين والبطين الأيمنين.'},
+  {cat:'health',diff:'veryhard',q:'ما المرض الذي يسببه فيروس HIV؟',opts:['الإيدز','الإيبولا','الكورونا'],ans:0,exp:'فيروس HIV يسبّب متلازمة نقص المناعة المكتسب (الإيدز).'},
+  {cat:'health',diff:'veryhard',q:'ما البكتيريا المسبّبة لمرض السل الرئوي؟',opts:['المكورة العقدية','المتفطّرة السلية','الإيكولاي'],ans:1,exp:'بكتيريا Mycobacterium tuberculosis تسبّب السل.'},
+  {cat:'health',diff:'veryhard',q:'ما المرض الناتج عن نقص فيتامين B1 (الثيامين)؟',opts:['البري بري','البلاجرا','الإسقربوط'],ans:0,exp:'مرض البري بري ينتج عن نقص الثيامين.'},
+  {cat:'health',diff:'veryhard',q:'ما المرض الناتج عن نقص النياسين (B3)؟',opts:['البري بري','البلاجرا','الكساح'],ans:1,exp:'البلاجرا (التهاب الجلد والإسهال والخرف) من نقص النياسين.'},
+  {cat:'health',diff:'veryhard',q:'ما الفيتامين الذي يُلقّب بـ"فيتامين الخصوبة" ومضاد أكسدة قوي؟',opts:['A','D','E'],ans:2,exp:'فيتامين E مضاد أكسدة قوي مرتبط بصحة الخصوبة.'},
+  {cat:'health',diff:'veryhard',q:'ما المرض الذي يسببه نقص فيتامين B12؟',opts:['فقر الدم الخبيث','المنجلي','الحديدي'],ans:0,exp:'فقر الدم الخبيث من نقص B12.'},
+  {cat:'health',diff:'veryhard',q:'ما العنصر الأساسي في تركيب الهيموغلوبين؟',opts:['المغنيسيوم','الحديد','اليود'],ans:1,exp:'الحديد جزء أساسي من الهيموغلوبين لنقل الأكسجين.'},
+  {cat:'health',diff:'veryhard',q:'أي خلايا الدم تقوم بالمناعة المتخصّصة (T و B)؟',opts:['اللمفاوية','الحمضات','الصفائح'],ans:0,exp:'الخلايا اللمفاوية (T و B) هي خلايا المناعة المتخصصة.'},
+  {cat:'health',diff:'veryhard',q:'ما الخلايا المناعية التي تنتج الأجسام المضادة؟',opts:['البائية (B)','التائية (T)','الحمراء'],ans:0,exp:'الخلايا البائية (B cells) تنتج الأجسام المضادة.'},
+  {cat:'health',diff:'veryhard',q:'في أي عضو تنضج الخلايا اللمفاوية التائية (T)؟',opts:['الطحال','الغدة الزعترية (التيموس)','الكبد'],ans:1,exp:'الغدة الزعترية تنضج فيها خلايا T.'},
+  {cat:'health',diff:'veryhard',q:'ما اسم الغمد الدهني العازل حول محاور الأعصاب؟',opts:['الميالين','الكولاجين','الكيراتين'],ans:0,exp:'غمد الميالين يعزل الألياف العصبية ويسرّع التوصيل.'},
+  {cat:'health',diff:'veryhard',q:'ما المرض المناعي الذي يهاجم غمد الميالين في الجهاز العصبي؟',opts:['الذئبة','التصلب اللويحي (MS)','الباركنسون'],ans:1,exp:'التصلب اللويحي مرض مناعي يهاجم الميالين.'},
+  {cat:'health',diff:'veryhard',q:'ما المرض العصبي المرتبط بنقص الدوبامين في الدماغ؟',opts:['الزهايمر','الباركنسون','الصرع'],ans:1,exp:'الباركنسون ينشأ عن نقص الدوبامين ويسبب الرعشة.'},
+  {cat:'health',diff:'veryhard',q:'ما المرض المرتبط بترسبات الأميلويد في الدماغ وفقدان الذاكرة؟',opts:['الزهايمر','الباركنسون','الصرع'],ans:0,exp:'مرض الزهايمر يرتبط بلويحات الأميلويد.'},
+  {cat:'health',diff:'veryhard',q:'ما فئة الأدوية المستخدمة لخفض الكوليسترول؟',opts:['الستاتينات','المضادات الحيوية','المسكنات'],ans:0,exp:'الستاتينات تثبط إنزيم HMG-CoA المسؤول عن تصنيع الكوليسترول.'},
+  {cat:'health',diff:'veryhard',q:'ما الفئة الدوائية التي تخفض ضغط الدم بمنع تحويل الأنجيوتنسين؟',opts:['مثبطات ACE','الستاتينات','المسكنات'],ans:0,exp:'مثبطات ACE تخفض ضغط الدم بمنع تكوّن الأنجيوتنسين II.'},
+  {cat:'health',diff:'veryhard',q:'ما المسكّن الموصى به للأطفال (يُفضّل على الأسبرين)؟',opts:['الأسبرين','الباراسيتامول','الإيبوبروفين فقط'],ans:1,exp:'الباراسيتامول مفضّل للأطفال؛ الأسبرين يُتجنّب لخطر متلازمة راي.'},
+  {cat:'health',diff:'veryhard',q:'نقص أي فيتامين يرتبط باعتلال الأعصاب الطرفية؟',opts:['A','B12','D'],ans:1,exp:'نقص B12 يمكن أن يسبب اعتلالاً عصبياً طرفياً.'},
+  {cat:'health',diff:'veryhard',q:'ما المعدن الأساسي لعمل العضلات والأعصاب وتوازن السوائل؟',opts:['البوتاسيوم','الفسفور','الكبريت'],ans:0,exp:'البوتاسيوم ضروري لعمل العضلات والأعصاب وتوازن الكهارل.'},
+  {cat:'health',diff:'veryhard',q:'ما العضو الذي يفرز هرمون الأريثروبويتين المحفّز لإنتاج خلايا الدم الحمراء؟',opts:['الكبد','الكلية','الطحال'],ans:1,exp:'الكلية تفرز الأريثروبويتين الذي يحفّز نخاع العظم.'},
+  {cat:'health',diff:'veryhard',q:'ما مرض المفاصل المزمن ذو الأصل المناعي ويسبّب التهاباً متماثلاً؟',opts:['التهاب المفاصل الروماتويدي','الفصال العظمي','النقرس'],ans:0,exp:'التهاب المفاصل الروماتويدي مرض مناعي يصيب المفاصل.'},
+  {cat:'health',diff:'veryhard',q:'ما الحالة الناتجة عن تراكم حمض اليوريك في المفاصل؟',opts:['النقرس','الروماتويدي','الفصال'],ans:0,exp:'النقرس ينشأ من ترسّب بلورات اليورات.'},
+  {cat:'health',diff:'veryhard',q:'ما الهرمون الذي يرفع الكالسيوم في الدم عند نقصه؟',opts:['هرمون الجار درقية (PTH)','الكالسيتونين','الأنسولين'],ans:0,exp:'الباراثرمون (PTH) يرفع الكالسيوم في الدم.'},
+  {cat:'health',diff:'veryhard',q:'ما الهرمون الذي يخفض مستوى الكالسيوم في الدم؟',opts:['الباراثرمون','الكالسيتونين','الأدرينالين'],ans:1,exp:'الكالسيتونين تفرزه الغدة الدرقية ويخفض الكالسيوم.'},
+  {cat:'health',diff:'veryhard',q:'ما وحدة الترشيح الأساسية في الكلية؟',opts:['الكبيبة (Glomerulus)','الحالب','المثانة'],ans:0,exp:'الكبيبة جزء من النيفرون وتقوم بالترشيح.'},
+  {cat:'health',diff:'veryhard',q:'ما الأنبوب الذي ينقل البول من الكلية إلى المثانة؟',opts:['الإحليل','الحالب','المريء'],ans:1,exp:'الحالب أنبوب يحمل البول من الكلية إلى المثانة.'},
+  {cat:'health',diff:'veryhard',q:'ما الأنبوب الذي ينقل البول من المثانة إلى خارج الجسم؟',opts:['الإحليل','الحالب','المريء'],ans:0,exp:'الإحليل ينقل البول من المثانة إلى الخارج.'},
+  {cat:'health',diff:'veryhard',q:'ما البكتيريا المرتبطة بقرحة المعدة؟',opts:['الإيكولاي','الهيليكوباكتر بايلوري','السلمونيلا'],ans:1,exp:'Helicobacter pylori السبب الرئيسي لقرحة المعدة.'},
+  {cat:'health',diff:'veryhard',q:'ما الفيروس المسبّب للالتهاب الكبدي B؟',opts:['HAV','HBV','HCV'],ans:1,exp:'فيروس HBV يسبّب التهاب الكبد من النوع B.'},
+  {cat:'health',diff:'veryhard',q:'ما المرض الوراثي الذي يجعل خلايا الدم الحمراء على شكل منجل؟',opts:['فقر الدم المنجلي','الثلاسيميا','الخبيث'],ans:0,exp:'فقر الدم المنجلي مرض وراثي بسبب طفرة في الهيموغلوبين.'},
+  {cat:'health',diff:'veryhard',q:'ما المرض الوراثي الذي يسبّب إفرازات مخاطية لزجة في الرئتين والبنكرياس؟',opts:['التليّف الكيسي','الثلاسيميا','الباركنسون'],ans:0,exp:'التليّف الكيسي مرض وراثي يصيب القنوات الإفرازية.'},
+  {cat:'health',diff:'veryhard',q:'ما العملية التي تنتقل فيها المواد عبر غشاء الخلية من تركيز عالٍ إلى منخفض دون طاقة؟',opts:['الانتشار البسيط','النقل النشط','البلعمة'],ans:0,exp:'الانتشار البسيط عملية سلبية تتبع تدرج التركيز.'},
+  {cat:'health',diff:'veryhard',q:'ما الغدة المسؤولة عن إفراز هرمون النمو؟',opts:['النخامية الأمامية','الدرقية','الكظرية'],ans:0,exp:'الغدة النخامية الأمامية تفرز هرمون النمو (GH).'},
 ];
 
 // Auto-assign difficulty levels to questions
@@ -2287,6 +2348,7 @@ const allQuestions = [
   const easy=['كم عدد ألوان','كم عدد أركان','ما هو أطول نهر','ما هي عاصمة المملكة','ما هو أكبر كوكب','ما هو العنصر الكيميائي الذي رمزه "O"','كم عدد لاعبي كرة القدم','كم عدد سور القرآن','في أي شهر نزل','كم عدد الصلوات','ما هي عاصمة فرنسا','ما هي عاصمة اليابان','كم عدد أيام السنة','من رسم لوحة الموناليزا','ما هو الجهاز الذي يضخ','كم عدد ساعات اليوم','ما هي أكبر قارات','ما هو أعلى جبل','ما هي أصغر دولة','كم عدد اللاعبين في فريق كرة السلة','ما هو أكبر محيطات','من هو مخترع الهاتف','ما هو أسرع حيوان','كم عدد أضلاع'];
   const hard=['ما هو اسم أول هاتف','في أي سنة هجرية','ما هي الشبكة التي ربطت','كم مرة وردت كلمة','ما هو اسم والد النبي إبراهيم','كم طول ملعب التنس','أي مدينة كانت عاصمة الخلافة','ما هو اسم أول دستور','في أي سنة أُسّست دار الأوبرا','من ألّف سيمفونية','ما هي أطول حدود','ما هو أعمق بحيرة','ما هي الدولة التي تضم أكبر عدد','ما هو اسم أشهر مسرح أوبرا','كم استغرق نزول القرآن الكريم','ما هو اسم قبلة المسلمين الأولى','في أي عام سقطت الخلافة'];
   allQuestions.forEach(q=>{
+    if (q.diff) return; // respect explicit difficulty already set on the question
     if(easy.some(e=>q.q.startsWith(e))) q.diff='easy';
     else if(hard.some(h=>q.q.startsWith(h))) q.diff='hard';
     else q.diff='medium';
@@ -2595,7 +2657,7 @@ function startGame() {
 
   // Re-build pool with difficulty filter and custom questions
   let _pool = getCatPool();
-  if (selectedDiff !== 'all') _pool = _pool.filter(q => q.diff === selectedDiff);
+  _pool = applyDiffFilter(_pool);
   if (customQuestions.length > 0) _pool = [...customQuestions, ...shuffle(_pool)];
   questions = deprioritizeRecent(shuffle(_pool));
 
@@ -3400,11 +3462,36 @@ function setTheme(t, el) {
 (function(){ const saved = localStorage.getItem('quizTheme'); setTheme(saved || 'light', null); })();
 
 // ── DIFFICULTY FILTER ──
-let selectedDiff = 'all';
+let selectedDiffs = new Set(['all']);  // 'all' exclusive; otherwise any subset of easy/medium/hard/veryhard
+function applyDiffFilter(pool) {
+  if (selectedDiffs.has('all')) return pool;
+  return pool.filter(q => selectedDiffs.has(q.diff));
+}
+function selectedDiffKey() {
+  if (selectedDiffs.has('all')) return 'all';
+  if (selectedDiffs.size === 1) { const [d] = selectedDiffs; return d; }
+  return 'mixed';
+}
+function refreshDiffTabs() {
+  document.querySelectorAll('.diff-filter').forEach(f => {
+    const m = (f.getAttribute('onclick')||'').match(/setDiff\('(\w+)'/);
+    const key = m ? m[1] : '';
+    f.classList.toggle('active', selectedDiffs.has(key));
+  });
+}
 function setDiff(d, el) {
-  selectedDiff = d;
-  document.querySelectorAll('.diff-filter').forEach(f => f.classList.remove('active'));
-  if(el) el.classList.add('active');
+  if (d === 'all') {
+    selectedDiffs.clear(); selectedDiffs.add('all');
+  } else {
+    if (selectedDiffs.has('all')) selectedDiffs.delete('all');
+    if (selectedDiffs.has(d)) {
+      selectedDiffs.delete(d);
+      if (selectedDiffs.size === 0) selectedDiffs.add('all');
+    } else {
+      selectedDiffs.add(d);
+    }
+  }
+  refreshDiffTabs();
 }
 
 // Patch startGame to apply difficulty filter and custom questions
@@ -3413,7 +3500,7 @@ function setDiff(d, el) {
 // Override question pool building — patch inside startGame
 const __origBuildPool = function() {
   let pool = getCatPool();
-  if (selectedDiff !== 'all') pool = pool.filter(q => q.diff === selectedDiff);
+  pool = applyDiffFilter(pool);
   // Add custom questions
   if (customQuestions.length > 0) pool = [...customQuestions, ...pool];
   questions = shuffle(pool);
@@ -3817,7 +3904,7 @@ async function createRoom() {
   if (!ensureFirebase()) return;
   const name = (document.getElementById('hostName').value.trim()) || 'المضيف';
   let pool = getCatPool();
-  if (selectedDiff && selectedDiff!=='all') pool = pool.filter(q=>q.diff===selectedDiff);
+  pool = applyDiffFilter(pool);
   pool = deprioritizeRecent(shuffle(pool)).slice(0, selectedCount);
   if (!pool.length) { showToast('⚠️ لا توجد أسئلة كافية', 'var(--wrong)'); return; }
 
@@ -4415,7 +4502,7 @@ function snapshotGame() {
     localStorage.setItem(ACTIVE_GAME_KEY, JSON.stringify({
       v:1, ts:Date.now(),
       gameMode, playerCount, PLAYERS, scores,
-      selectedCats: Array.from(selectedCats), selectedCount, selectedDiff, useRandomOrder, allowSkip,
+      selectedCats: Array.from(selectedCats), selectedDiffs: Array.from(selectedDiffs), selectedCount, useRandomOrder, allowSkip,
       questions, qIndex, answeredCount, soloQueue, turnOrder,
       advTimer, advSpeed, advJoker, advStats, advElim, advMusic,
       timerSecs, totalRounds, currentRound,
@@ -4449,7 +4536,9 @@ function resumeGame() {
   gameMode=s.gameMode; playerCount=s.playerCount; PLAYERS=s.PLAYERS; scores=s.scores;
   if (Array.isArray(s.selectedCats)) selectedCats = new Set(s.selectedCats);
   else if (s.selectedCat) selectedCats = new Set([s.selectedCat]);
-  selectedCount=s.selectedCount; selectedDiff=s.selectedDiff;
+  selectedCount=s.selectedCount;
+  if (Array.isArray(s.selectedDiffs)) selectedDiffs = new Set(s.selectedDiffs);
+  else if (s.selectedDiff) selectedDiffs = new Set([s.selectedDiff]);
   useRandomOrder=s.useRandomOrder; allowSkip=s.allowSkip;
   questions=s.questions; qIndex=s.qIndex; answeredCount=s.answeredCount;
   soloQueue=s.soloQueue||[]; turnOrder=s.turnOrder||[]; turnIndex=0; answers=[null,null,null];
