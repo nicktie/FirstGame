@@ -180,6 +180,54 @@ body {
 .online-opt.spectating { opacity:0.55; pointer-events:none; }
 .online-team-roster { display:flex; gap:10px; margin-bottom:12px; }
 .online-team-col { flex:1; background:var(--card-bg); border:1.5px solid var(--border); border-radius:14px; padding:10px; min-height:120px; }
+/* Online game-type picker */
+.online-gametype-row { display:flex; gap:10px; margin-top:8px; }
+.gametype-card { flex:1; background:var(--option-bg); border:1.5px solid var(--border); border-radius:16px; padding:18px 10px; text-align:center; cursor:pointer; transition:all 0.2s; }
+.gametype-card:hover { border-color:var(--gold); transform:translateY(-1px); }
+.gametype-card.active { border-color:var(--gold); background:rgba(201,168,76,0.12); box-shadow:0 0 0 3px rgba(201,168,76,0.06); }
+.gt-icon { font-size:2.2rem; line-height:1; }
+.gt-label { font-family:'Tajawal',sans-serif; font-weight:900; color:var(--gold); margin-top:8px; font-size:1.05rem; }
+.gt-sub { font-size:0.75rem; color:var(--muted); margin-top:3px; }
+/* Trap game */
+#trapScreen { max-width:760px; margin:0 auto; padding:20px 16px 40px; }
+.trap-rules { background:var(--option-bg); border:1px dashed var(--border); border-radius:12px; padding:14px; margin:10px 0 14px; }
+.trap-rule { display:flex; align-items:center; gap:10px; font-size:0.88rem; color:var(--text); padding:5px 0; }
+.trap-rule-num { display:inline-flex; align-items:center; justify-content:center; width:24px; height:24px; border-radius:50%; background:var(--gold); color:var(--dark); font-weight:900; font-family:'Tajawal',sans-serif; font-size:0.85rem; flex-shrink:0; }
+.trap-vs-row { display:flex; align-items:center; justify-content:center; gap:14px; margin:18px 0; }
+.trap-player-card { flex:1; max-width:200px; background:var(--card-bg); border:2px solid var(--border); border-radius:16px; padding:18px 10px; text-align:center; transition:border-color 0.25s; }
+.trap-player-card.p0 { border-color:#6495ed55; }
+.trap-player-card.p1 { border-color:#e07050; }
+.trap-player-card.ready { box-shadow:0 0 0 3px rgba(201,168,76,0.15); }
+.tpc-avatar { font-size:2.4rem; line-height:1; margin-bottom:6px; }
+.tpc-name { font-family:'Tajawal',sans-serif; font-weight:900; color:var(--text); font-size:0.95rem; }
+.trap-vs-emoji { font-size:1.8rem; }
+.trap-phase-banner { background:rgba(201,168,76,0.12); border:1.5px solid var(--gold); border-radius:12px; padding:12px 16px; text-align:center; color:var(--gold); font-family:'Tajawal',sans-serif; font-weight:700; margin-bottom:14px; font-size:0.92rem; }
+.trap-name-row { display:flex; align-items:center; justify-content:space-between; padding:0 4px 8px; }
+.trap-board-name { font-family:'Tajawal',sans-serif; font-weight:900; color:var(--text); font-size:0.95rem; }
+.trap-plant-progress { font-family:'Tajawal',sans-serif; font-weight:900; color:var(--gold); font-size:1rem; }
+.trap-hearts { display:inline-flex; gap:3px; font-size:1.1rem; }
+.trap-hearts .heart-lost { filter:grayscale(1) brightness(0.5); }
+.trap-board-wrap { background:var(--card-bg); border:1.5px solid var(--border); border-radius:14px; padding:12px; margin-bottom:10px; }
+.trap-board { display:grid; grid-template-columns:repeat(4,1fr); gap:8px; }
+.trap-cell { aspect-ratio:1; background:var(--option-bg); border:1.5px solid var(--border); border-radius:10px; cursor:pointer; transition:all 0.18s; display:flex; align-items:center; justify-content:center; font-size:1.4rem; user-select:none; }
+.trap-cell:hover { border-color:var(--gold); transform:scale(1.04); }
+.trap-cell.disabled { pointer-events:none; opacity:0.7; }
+.trap-cell.planted { background:rgba(201,168,76,0.15); border-color:var(--gold); }
+.trap-cell.planted::after { content:'💣'; font-size:1.1rem; }
+.trap-cell.revealed-safe { background:rgba(61,186,122,0.18); border-color:#3dba7a; cursor:default; pointer-events:none; }
+.trap-cell.revealed-safe::after { content:'✅'; font-size:1rem; }
+.trap-cell.revealed-bomb { background:rgba(224,92,92,0.22); border-color:#e05c5c; animation:trapBoom 0.5s ease; cursor:default; pointer-events:none; }
+.trap-cell.revealed-bomb::after { content:'💥'; font-size:1.3rem; }
+.trap-board-label { text-align:center; font-size:0.75rem; color:var(--muted); margin-top:8px; }
+.trap-battle-boards { display:flex; gap:10px; flex-direction:column; }
+@media (min-width:600px) { .trap-battle-boards { flex-direction:row; } .trap-battle-boards > * { flex:1; } }
+.trap-turn-banner { background:rgba(100,149,237,0.12); border:1.5px solid #6495ed; color:#6495ed; border-radius:12px; padding:10px 14px; text-align:center; font-family:'Tajawal',sans-serif; font-weight:900; margin-bottom:14px; font-size:0.95rem; }
+.trap-turn-banner.my-turn { background:rgba(61,186,122,0.15); border-color:#3dba7a; color:#3dba7a; }
+.trap-turn-banner.opp-turn { background:rgba(224,112,80,0.12); border-color:#e07050; color:#e07050; }
+.trap-end-card { background:var(--card-bg); border:2px solid var(--gold); border-radius:18px; padding:30px 20px; text-align:center; margin-top:40px; }
+.trap-end-emoji { font-size:4rem; line-height:1; }
+.trap-end-text { font-family:'Tajawal',sans-serif; font-weight:900; color:var(--gold); font-size:1.4rem; margin-top:14px; }
+@keyframes trapBoom { 0% { transform:scale(1);} 30% { transform:scale(1.18);} 100% { transform:scale(1);} }
 .online-team-col.t0 { border-color:#6495ed55; }
 .online-team-col.t1 { border-color:#e0705055; }
 .online-team-col-title { text-align:center; font-family:'Tajawal',sans-serif; font-weight:900; font-size:0.95rem; margin-bottom:8px; }
@@ -878,6 +926,22 @@ body.theme-gold .net-indicator { color:var(--gold); }
       <div class="online-panel-title">😀 اختر رمزك</div>
       <div class="online-emoji-row" id="onlineEmojiRow"></div>
     </div>
+    <div id="onlineGameTypePicker" class="online-panel" style="margin-bottom:14px">
+      <div class="online-panel-title">🎮 اختر نوع اللعبة</div>
+      <div class="online-gametype-row">
+        <div class="gametype-card active" id="gtQuizCard" onclick="pickOnlineGameType('quiz')">
+          <div class="gt-icon">🧠</div>
+          <div class="gt-label">لعبة الأسئلة</div>
+          <div class="gt-sub">١١٥٠ سؤال • ٣ أوضاع</div>
+        </div>
+        <div class="gametype-card" id="gtTrapCard" onclick="pickOnlineGameType('trap')">
+          <div class="gt-icon">💣</div>
+          <div class="gt-label">لعبة الفخ</div>
+          <div class="gt-sub">احذر القنابل الخفية!</div>
+        </div>
+      </div>
+    </div>
+    <div id="onlineQuizPanels">
     <div class="online-panel">
       <div class="online-panel-title">🆕 إنشاء غرفة</div>
       <div class="online-panel-sub">اختر الفئة وعدد الأسئلة من فوق، ثم أنشئ غرفة وشارك الرمز مع أصحابك.</div>
@@ -980,6 +1044,29 @@ body.theme-gold .net-indicator { color:var(--gold); }
       <input class="online-input" id="joinName" type="text" maxlength="16" placeholder="اسمك">
       <input class="online-input online-code-input" id="joinCode" type="text" inputmode="numeric" maxlength="6" placeholder="رمز الغرفة">
       <button class="start-btn" style="margin-top:14px;background:linear-gradient(135deg,#6495ed,#3a6bc4)" onclick="joinRoom()">🎮 دخول</button>
+    </div>
+    </div> <!-- /onlineQuizPanels -->
+
+    <div id="onlineTrapPanels" style="display:none">
+      <div class="online-panel">
+        <div class="online-panel-title">💣 لعبة الفخ</div>
+        <div class="trap-rules">
+          <div class="trap-rule"><span class="trap-rule-num">١</span>كل لاعب يخفي <strong>٣ قنابل</strong> في لوحة خصمه</div>
+          <div class="trap-rule"><span class="trap-rule-num">٢</span>بالتناوب تختار مربعاً من لوحتك</div>
+          <div class="trap-rule"><span class="trap-rule-num">٣</span>لو وقعت على قنبلة، تفقد <span style="color:#e05c5c">❤️</span></div>
+          <div class="trap-rule"><span class="trap-rule-num">٤</span>أول من يفقد ٣ قلوب يخسر</div>
+        </div>
+        <input class="online-input" id="trapHostName" type="text" maxlength="16" placeholder="اسمك">
+        <button class="start-btn" style="margin-top:16px" onclick="createTrapRoom()">💣 إنشاء غرفة فخ</button>
+      </div>
+      <div class="online-or">— أو —</div>
+      <div class="online-panel">
+        <div class="online-panel-title">🔗 انضمام لغرفة فخ</div>
+        <div class="online-panel-sub">أدخل الرمز اللي وصلك من الخصم.</div>
+        <input class="online-input" id="trapJoinName" type="text" maxlength="16" placeholder="اسمك">
+        <input class="online-input online-code-input" id="trapJoinCode" type="text" inputmode="numeric" maxlength="6" placeholder="رمز الغرفة">
+        <button class="start-btn" style="margin-top:14px;background:linear-gradient(135deg,#e05c5c,#9a3030)" onclick="joinTrapRoom()">⚔️ دخول للمعركة</button>
+      </div>
     </div>
   </div>
 
@@ -1334,6 +1421,78 @@ body.theme-gold .net-indicator { color:var(--gold); }
     </div>
   </div>
 
+</div>
+
+<div id="trapScreen" style="display:none">
+  <div id="trapLobby">
+    <div class="logo" style="margin-bottom:14px"><h1>💣 لعبة الفخ</h1></div>
+    <div class="room-code-box">
+      <div class="room-code-lbl">رمز الغرفة</div>
+      <div class="room-code" id="trapCodeDisplay">------</div>
+      <button class="online-copy-btn" onclick="copyTrapCode()">📋 نسخ الرمز</button>
+    </div>
+    <div class="trap-vs-row">
+      <div class="trap-player-card p0" id="trapP0Card">
+        <div class="tpc-avatar" id="trapP0Avatar">⏳</div>
+        <div class="tpc-name" id="trapP0Name">بانتظار...</div>
+      </div>
+      <div class="trap-vs-emoji">⚔️</div>
+      <div class="trap-player-card p1" id="trapP1Card">
+        <div class="tpc-avatar" id="trapP1Avatar">⏳</div>
+        <div class="tpc-name" id="trapP1Name">بانتظار...</div>
+      </div>
+    </div>
+    <div id="trapLobbyHost" style="display:none">
+      <button class="start-btn" style="margin-top:16px" onclick="trapStart()">🚀 ابدأ زرع القنابل</button>
+    </div>
+    <div id="trapLobbyWait" class="online-wait-note">في انتظار الخصم…</div>
+    <button class="online-leave-btn" onclick="leaveTrap()">↩️ خروج</button>
+  </div>
+
+  <div id="trapPlant" style="display:none">
+    <div class="trap-phase-banner">💣 اختر <strong>٣ مربعات</strong> لزرع قنابلك في لوحة الخصم</div>
+    <div class="trap-board-wrap">
+      <div class="trap-name-row">
+        <span class="trap-board-name" id="trapPlantOppName">الخصم</span>
+        <span class="trap-plant-progress" id="trapPlantCount">٠ / ٣</span>
+      </div>
+      <div class="trap-board" id="trapPlantBoard"></div>
+    </div>
+    <button class="start-btn" id="trapPlantConfirm" style="margin-top:16px;display:none" onclick="trapConfirmPlants()">✅ تأكيد الزرع</button>
+    <div id="trapPlantWait" class="online-wait-note" style="display:none">⏳ بانتظار الخصم لينهي الزرع…</div>
+    <button class="online-leave-btn" onclick="leaveTrap()">↩️ خروج</button>
+  </div>
+
+  <div id="trapBattle" style="display:none">
+    <div class="trap-turn-banner" id="trapTurnBanner">🎯 دورك!</div>
+    <div class="trap-battle-boards">
+      <div class="trap-board-wrap">
+        <div class="trap-name-row">
+          <span class="trap-board-name" id="trapMyName">أنت</span>
+          <span class="trap-hearts" id="trapMyHearts"></span>
+        </div>
+        <div class="trap-board" id="trapMyBoard"></div>
+        <div class="trap-board-label">🎯 اختر مربع من لوحتك</div>
+      </div>
+      <div class="trap-board-wrap">
+        <div class="trap-name-row">
+          <span class="trap-board-name" id="trapOppName">الخصم</span>
+          <span class="trap-hearts" id="trapOppHearts"></span>
+        </div>
+        <div class="trap-board" id="trapOppBoard"></div>
+        <div class="trap-board-label">👁️ لوحة الخصم</div>
+      </div>
+    </div>
+    <button class="online-leave-btn" onclick="leaveTrap()">↩️ خروج</button>
+  </div>
+
+  <div id="trapEnd" style="display:none">
+    <div class="trap-end-card">
+      <div class="trap-end-emoji" id="trapEndEmoji">🏆</div>
+      <div class="trap-end-text" id="trapEndText"></div>
+      <button class="start-btn" style="margin-top:18px" onclick="leaveTrap()">↩️ عودة</button>
+    </div>
+  </div>
 </div>
 
 <footer class="site-footer">
@@ -4829,6 +4988,325 @@ function leaveRoom() {
   clearOnlineSession();
   online.code=null; online.isHost=false; online.playerId=null;
   document.getElementById('onlineScreen').style.display='none';
+  goToLanding();
+}
+
+// ════════════════════════════════════════════════════════════
+// ONLINE GAME TYPE PICKER (Quiz vs Trap)
+// ════════════════════════════════════════════════════════════
+function pickOnlineGameType(t) {
+  document.getElementById('gtQuizCard').classList.toggle('active', t==='quiz');
+  document.getElementById('gtTrapCard').classList.toggle('active', t==='trap');
+  document.getElementById('onlineQuizPanels').style.display = t==='quiz' ? 'block' : 'none';
+  document.getElementById('onlineTrapPanels').style.display = t==='trap' ? 'block' : 'none';
+}
+
+// ════════════════════════════════════════════════════════════
+// TRAP (BOMBS) GAME
+// 4×3 grid (12 cells), 3 bombs each, 3 hearts each
+// Firebase path: traps/{code}
+// ════════════════════════════════════════════════════════════
+const TRAP_GRID = 12;
+const TRAP_BOMBS = 3;
+const TRAP_HEARTS = 3;
+
+let trap = {
+  code:null, role:null, opponentRole:null,
+  name:null, oppName:'الخصم', avatar:'💣',
+  myPlants:[], confirmed:false,
+  listeners:[]
+};
+
+function trapShowStage(stage) {
+  ['trapLobby','trapPlant','trapBattle','trapEnd'].forEach(id => {
+    document.getElementById(id).style.display = (id===stage) ? 'block' : 'none';
+  });
+}
+
+function trapOpenScreen() {
+  ['landingScreen','setupScreen','gameScreen','onlineScreen','adminScreen'].forEach(id=>{
+    const e = document.getElementById(id); if (e) e.style.display='none';
+  });
+  document.getElementById('trapScreen').style.display = 'block';
+}
+
+function copyTrapCode() {
+  const code = trap.code || '';
+  if (navigator.clipboard) navigator.clipboard.writeText(code);
+  showToast('📋 تم نسخ الرمز: '+code, 'var(--gold)');
+}
+
+async function createTrapRoom() {
+  if (!ensureFirebase()) return;
+  const name = (document.getElementById('trapHostName').value.trim()) || 'المضيف';
+  const code = genCode();
+  trap.code = code; trap.role = 'p0'; trap.opponentRole = 'p1';
+  trap.name = name; trap.myPlants = []; trap.confirmed = false;
+  await fb.db.ref('traps/'+code).set({
+    meta:{ hostName:name, status:'lobby', createdAt: firebase.database.ServerValue.TIMESTAMP },
+    players:{ p0:{ name, hearts: TRAP_HEARTS, confirmed:false, joined:true } },
+    state:{ phase:'lobby' }
+  });
+  trapAttachListeners();
+  trapOpenScreen();
+  trapShowStage('trapLobby');
+  document.getElementById('trapCodeDisplay').textContent = code;
+  document.getElementById('trapLobbyHost').style.display = 'block';
+}
+
+async function joinTrapRoom() {
+  if (!ensureFirebase()) return;
+  const name = (document.getElementById('trapJoinName').value.trim()) || 'الخصم';
+  const code = (document.getElementById('trapJoinCode').value.trim());
+  if (!/^\d{6}$/.test(code)) { showToast('⚠️ الرمز يجب أن يكون ٦ أرقام', 'var(--wrong)'); return; }
+  const snap = await fb.db.ref('traps/'+code).once('value');
+  const data = snap.val();
+  if (!data) { showToast('⚠️ الغرفة غير موجودة', 'var(--wrong)'); return; }
+  if (data.players && data.players.p1 && data.players.p1.joined) { showToast('⚠️ الغرفة ممتلئة', 'var(--wrong)'); return; }
+  trap.code = code; trap.role = 'p1'; trap.opponentRole = 'p0';
+  trap.name = name; trap.myPlants = []; trap.confirmed = false;
+  await fb.db.ref('traps/'+code+'/players/p1').set({ name, hearts: TRAP_HEARTS, confirmed:false, joined:true });
+  trapAttachListeners();
+  trapOpenScreen();
+  trapShowStage('trapLobby');
+  document.getElementById('trapCodeDisplay').textContent = code;
+  document.getElementById('trapLobbyHost').style.display = 'none';
+}
+
+function trapAttachListeners() {
+  trapDetachListeners();
+  const playersRef = fb.db.ref('traps/'+trap.code+'/players');
+  const stateRef = fb.db.ref('traps/'+trap.code+'/state');
+  const onPlayers = playersRef.on('value', s => trapRenderPlayers(s.val()||{}));
+  const onState = stateRef.on('value', s => trapOnState(s.val()||{}));
+  trap.listeners = [
+    () => playersRef.off('value', onPlayers),
+    () => stateRef.off('value', onState)
+  ];
+}
+
+function trapDetachListeners() {
+  trap.listeners.forEach(off=>{ try{off();}catch(e){} });
+  trap.listeners = [];
+}
+
+function trapRenderPlayers(players) {
+  const p0 = players.p0 || {};
+  const p1 = players.p1 || {};
+  document.getElementById('trapP0Name').textContent = p0.name || 'بانتظار...';
+  document.getElementById('trapP1Name').textContent = p1.name || 'بانتظار...';
+  document.getElementById('trapP0Avatar').textContent = p0.joined ? '🛡️' : '⏳';
+  document.getElementById('trapP1Avatar').textContent = p1.joined ? '⚔️' : '⏳';
+  trap.oppName = (trap.role==='p0' ? p1.name : p0.name) || 'الخصم';
+  // Hearts in battle screen
+  trapRenderHearts(p0, p1);
+  // Show start button if I'm host AND both players joined
+  if (trap.role==='p0') {
+    const ready = p0.joined && p1.joined;
+    document.getElementById('trapLobbyHost').style.display = ready ? 'block' : 'none';
+    document.getElementById('trapLobbyWait').style.display = ready ? 'none' : 'block';
+    document.getElementById('trapLobbyWait').textContent = ready ? '' : 'في انتظار الخصم…';
+  } else {
+    document.getElementById('trapLobbyWait').style.display = 'block';
+    document.getElementById('trapLobbyWait').textContent = 'في انتظار المضيف ليبدأ اللعبة…';
+  }
+}
+
+function trapRenderHearts(p0, p1) {
+  const mine = (trap.role==='p0') ? p0 : p1;
+  const opp  = (trap.role==='p0') ? p1 : p0;
+  const html = (n) => {
+    let s = '';
+    for (let i=0;i<TRAP_HEARTS;i++) s += '<span class="' + (i<(n||0) ? '' : 'heart-lost') + '">❤️</span>';
+    return s;
+  };
+  const myHel = document.getElementById('trapMyHearts');
+  const opHel = document.getElementById('trapOppHearts');
+  if (myHel) myHel.innerHTML = html(mine.hearts);
+  if (opHel) opHel.innerHTML = html(opp.hearts);
+  const myNel = document.getElementById('trapMyName'); if (myNel) myNel.textContent = mine.name || 'أنت';
+  const opNel = document.getElementById('trapOppName'); if (opNel) opNel.textContent = opp.name || 'الخصم';
+}
+
+async function trapStart() {
+  if (trap.role !== 'p0') return;
+  await fb.db.ref('traps/'+trap.code+'/state').update({ phase:'plant' });
+  await fb.db.ref('traps/'+trap.code+'/meta/status').set('planting');
+}
+
+function trapOnState(state) {
+  const phase = state.phase;
+  if (phase === 'lobby') trapShowStage('trapLobby');
+  else if (phase === 'plant') trapEnterPlant();
+  else if (phase === 'battle') trapEnterBattle(state);
+  else if (phase === 'end') trapEnterEnd(state);
+}
+
+function trapEnterPlant() {
+  trapShowStage('trapPlant');
+  trap.myPlants = []; trap.confirmed = false;
+  document.getElementById('trapPlantOppName').textContent = 'لوحة ' + (trap.oppName || 'الخصم');
+  document.getElementById('trapPlantConfirm').style.display = 'none';
+  document.getElementById('trapPlantWait').style.display = 'none';
+  trapUpdatePlantCount();
+  const board = document.getElementById('trapPlantBoard'); board.innerHTML = '';
+  for (let i=0; i<TRAP_GRID; i++) {
+    const c = document.createElement('div'); c.className = 'trap-cell'; c.dataset.idx = i;
+    c.onclick = () => trapTogglePlant(i, c);
+    board.appendChild(c);
+  }
+}
+
+function trapTogglePlant(i, el) {
+  if (trap.confirmed) return;
+  const had = trap.myPlants.includes(i);
+  if (had) { trap.myPlants = trap.myPlants.filter(x => x!==i); el.classList.remove('planted'); }
+  else {
+    if (trap.myPlants.length >= TRAP_BOMBS) { showToast('💣 وصلت الحد الأقصى (٣ قنابل)', 'var(--wrong)'); return; }
+    trap.myPlants.push(i); el.classList.add('planted');
+  }
+  trapUpdatePlantCount();
+}
+
+function trapUpdatePlantCount() {
+  const arDigits = ['٠','١','٢','٣'];
+  document.getElementById('trapPlantCount').textContent = arDigits[trap.myPlants.length] + ' / ' + arDigits[TRAP_BOMBS];
+  document.getElementById('trapPlantConfirm').style.display = (trap.myPlants.length===TRAP_BOMBS && !trap.confirmed) ? 'block' : 'none';
+}
+
+async function trapConfirmPlants() {
+  if (trap.myPlants.length !== TRAP_BOMBS) return;
+  trap.confirmed = true;
+  // I plant bombs in OPPONENT's board
+  await fb.db.ref('traps/'+trap.code+'/bombs/'+trap.opponentRole).set(trap.myPlants);
+  await fb.db.ref('traps/'+trap.code+'/players/'+trap.role+'/confirmed').set(true);
+  document.getElementById('trapPlantConfirm').style.display = 'none';
+  document.getElementById('trapPlantWait').style.display = 'block';
+  // Lock plant board
+  document.querySelectorAll('#trapPlantBoard .trap-cell').forEach(c => c.classList.add('disabled'));
+  // Host transitions to battle when both confirmed
+  if (trap.role === 'p0') {
+    const psnap = await fb.db.ref('traps/'+trap.code+'/players').once('value');
+    const ps = psnap.val() || {};
+    if (ps.p0 && ps.p0.confirmed && ps.p1 && ps.p1.confirmed) {
+      const startTurn = Math.random() < 0.5 ? 'p0' : 'p1';
+      await fb.db.ref('traps/'+trap.code+'/state').set({ phase:'battle', turn:startTurn, revealed_p0:{}, revealed_p1:{} });
+      await fb.db.ref('traps/'+trap.code+'/meta/status').set('active');
+    }
+  } else {
+    // Guest: poll once for host confirm + trigger transition idempotently
+    setTimeout(async () => {
+      const ssnap = await fb.db.ref('traps/'+trap.code+'/state').once('value');
+      const st = ssnap.val() || {};
+      if (st.phase === 'plant') {
+        const psnap = await fb.db.ref('traps/'+trap.code+'/players').once('value');
+        const ps = psnap.val() || {};
+        if (ps.p0 && ps.p0.confirmed && ps.p1 && ps.p1.confirmed) {
+          const startTurn = Math.random() < 0.5 ? 'p0' : 'p1';
+          await fb.db.ref('traps/'+trap.code+'/state').set({ phase:'battle', turn:startTurn, revealed_p0:{}, revealed_p1:{} });
+        }
+      }
+    }, 600);
+  }
+}
+
+async function trapEnterBattle(state) {
+  trapShowStage('trapBattle');
+  // Fetch bombs (only mine — opponent bombs hidden)
+  const bsnap = await fb.db.ref('traps/'+trap.code+'/bombs').once('value');
+  const bombs = bsnap.val() || {};
+  trap._myBombsInMyBoard = bombs[trap.role] || [];                 // what opponent planted in MY board
+  trap._myBombsInOppBoard = bombs[trap.opponentRole] || [];        // what I planted in OPPONENT's board
+  // Render boards
+  trapRenderBoard('trapMyBoard', state, /*isMine=*/true);
+  trapRenderBoard('trapOppBoard', state, /*isMine=*/false);
+  // Turn banner
+  const banner = document.getElementById('trapTurnBanner');
+  const myTurn = (state.turn === trap.role);
+  banner.className = 'trap-turn-banner ' + (myTurn ? 'my-turn' : 'opp-turn');
+  banner.textContent = myTurn ? '🎯 دورك! اختر مربعاً من لوحتك' : '⏳ دور ' + (trap.oppName || 'الخصم');
+  // Refresh hearts from latest players
+  const psnap = await fb.db.ref('traps/'+trap.code+'/players').once('value');
+  trapRenderHearts((psnap.val()||{}).p0||{}, (psnap.val()||{}).p1||{});
+}
+
+function trapRenderBoard(boardId, state, isMine) {
+  const el = document.getElementById(boardId); if (!el) return;
+  el.innerHTML = '';
+  const revealedMy = state.revealed_p0 || {}, revealedOp = state.revealed_p1 || {};
+  // Which revealed map applies to this board?
+  let revealed;
+  if (isMine) revealed = (trap.role==='p0') ? revealedMy : revealedOp;
+  else        revealed = (trap.role==='p0') ? revealedOp : revealedMy;
+  const myTurn = (state.turn === trap.role);
+  for (let i=0; i<TRAP_GRID; i++) {
+    const c = document.createElement('div'); c.className = 'trap-cell'; c.dataset.idx = i;
+    const r = revealed[i];
+    if (r === 'safe') c.classList.add('revealed-safe');
+    else if (r === 'bomb') c.classList.add('revealed-bomb');
+    else {
+      // Mark MY planted bombs (visible on opponent board to me only)
+      if (!isMine && trap._myBombsInOppBoard && trap._myBombsInOppBoard.includes(i)) {
+        c.classList.add('planted');
+      }
+      if (isMine && myTurn) c.onclick = () => trapPickCell(i);
+      else c.classList.add('disabled');
+    }
+    el.appendChild(c);
+  }
+}
+
+async function trapPickCell(i) {
+  const code = trap.code; if (!code) return;
+  const ssnap = await fb.db.ref('traps/'+code+'/state').once('value');
+  const st = ssnap.val() || {};
+  if (st.turn !== trap.role || st.phase !== 'battle') return;
+  const myRevealedKey = 'revealed_' + trap.role;
+  const myRevealed = st[myRevealedKey] || {};
+  if (myRevealed[i] != null) return;
+  // Is it a bomb? Check bombs/myRole
+  const isBomb = (trap._myBombsInMyBoard || []).includes(i);
+  const updates = {};
+  updates['state/' + myRevealedKey + '/' + i] = isBomb ? 'bomb' : 'safe';
+  let newHearts = null;
+  if (isBomb) {
+    const psnap = await fb.db.ref('traps/'+code+'/players/'+trap.role).once('value');
+    const me = psnap.val() || {};
+    newHearts = Math.max(0, (me.hearts||0) - 1);
+    updates['players/' + trap.role + '/hearts'] = newHearts;
+  }
+  // Determine next turn / end state
+  const nextTurn = (trap.role === 'p0') ? 'p1' : 'p0';
+  updates['state/turn'] = nextTurn;
+  await fb.db.ref('traps/'+code).update(updates);
+  if (isBomb && newHearts === 0) {
+    // Opponent wins
+    await fb.db.ref('traps/'+code+'/state').update({ phase:'end', winner: trap.opponentRole });
+  }
+}
+
+async function trapEnterEnd(state) {
+  trapDetachListeners();
+  trapShowStage('trapEnd');
+  const won = (state.winner === trap.role);
+  document.getElementById('trapEndEmoji').textContent = won ? '🏆' : '💥';
+  document.getElementById('trapEndText').textContent = won ? '🎉 فزت! تجنبت القنابل بمهارة' : '😵 خسرت! وقعت في الفخاخ';
+  if (won) { try { if (typeof launchConfetti==='function') launchConfetti(); } catch(e){} }
+  // Cleanup if I'm host after a delay
+  if (trap.role === 'p0') {
+    setTimeout(()=>{ try { fb.db.ref('traps/'+trap.code).remove(); } catch(e){} }, 8000);
+  }
+}
+
+function leaveTrap() {
+  trapDetachListeners();
+  try {
+    if (trap.code && trap.role === 'p0') fb.db.ref('traps/'+trap.code).remove();
+    else if (trap.code && trap.role === 'p1') fb.db.ref('traps/'+trap.code+'/players/p1').remove();
+  } catch(e){}
+  trap.code = null; trap.role = null; trap.opponentRole = null;
+  trap.myPlants = []; trap.confirmed = false;
+  document.getElementById('trapScreen').style.display = 'none';
   goToLanding();
 }
 
