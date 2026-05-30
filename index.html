@@ -228,6 +228,10 @@ body {
 .trap-end-emoji { font-size:4rem; line-height:1; }
 .trap-end-text { font-family:'Tajawal',sans-serif; font-weight:900; color:var(--gold); font-size:1.4rem; margin-top:14px; }
 @keyframes trapBoom { 0% { transform:scale(1);} 30% { transform:scale(1.18);} 100% { transform:scale(1);} }
+.trap-bot-toggle { display:flex; align-items:center; gap:10px; margin-top:12px; padding:12px 14px; background:var(--option-bg); border:1.5px dashed var(--border); border-radius:12px; cursor:pointer; user-select:none; font-family:'Tajawal',sans-serif; font-weight:700; color:var(--text); font-size:0.92rem; transition:all 0.2s; }
+.trap-bot-toggle:hover { border-color:var(--gold); }
+.trap-bot-toggle input[type="checkbox"] { width:18px; height:18px; accent-color:var(--gold); cursor:pointer; flex-shrink:0; }
+.trap-bot-hint { font-size:0.75rem; color:var(--muted); font-weight:400; }
 .online-team-col.t0 { border-color:#6495ed55; }
 .online-team-col.t1 { border-color:#e0705055; }
 .online-team-col-title { text-align:center; font-family:'Tajawal',sans-serif; font-weight:900; font-size:0.95rem; margin-bottom:8px; }
@@ -1057,6 +1061,10 @@ body.theme-gold .net-indicator { color:var(--gold); }
           <div class="trap-rule"><span class="trap-rule-num">٤</span>أول من يفقد ٣ قلوب يخسر</div>
         </div>
         <input class="online-input" id="trapHostName" type="text" maxlength="16" placeholder="اسمك">
+        <label class="trap-bot-toggle" for="trapBotMode">
+          <input type="checkbox" id="trapBotMode">
+          <span>🤖 لعب مع الكمبيوتر <span class="trap-bot-hint">(بدون انتظار خصم)</span></span>
+        </label>
         <button class="start-btn" style="margin-top:16px" onclick="createTrapRoom()">💣 إنشاء غرفة فخ</button>
       </div>
       <div class="online-or">— أو —</div>
@@ -5014,7 +5022,9 @@ let trap = {
   code:null, role:null, opponentRole:null,
   name:null, oppName:'الخصم', avatar:'💣',
   myPlants:[], confirmed:false,
-  listeners:[]
+  listeners:[],
+  // Bot (single-player vs computer) mode
+  bot:false, localState:null, localPlayers:null, localBombs:null
 };
 
 function trapShowStage(stage) {
@@ -5037,11 +5047,14 @@ function copyTrapCode() {
 }
 
 async function createTrapRoom() {
+  const botEl = document.getElementById('trapBotMode');
+  if (botEl && botEl.checked) { return startTrapBotGame(); }
   if (!ensureFirebase()) return;
   const name = (document.getElementById('trapHostName').value.trim()) || 'المضيف';
   const code = genCode();
   trap.code = code; trap.role = 'p0'; trap.opponentRole = 'p1';
   trap.name = name; trap.myPlants = []; trap.confirmed = false;
+  trap.bot = false;
   try {
     await fb.db.ref('rooms/t'+code).set({
       meta:{ hostName:name, status:'lobby', createdAt: firebase.database.ServerValue.TIMESTAMP },
@@ -5195,6 +5208,7 @@ function trapUpdatePlantCount() {
 async function trapConfirmPlants() {
   if (trap.myPlants.length !== TRAP_BOMBS) return;
   trap.confirmed = true;
+  if (trap.bot) { return trapBotConfirmPlants(); }
   // I plant bombs in OPPONENT's board
   await fb.db.ref('rooms/t'+trap.code+'/bombs/'+trap.opponentRole).set(trap.myPlants);
   await fb.db.ref('rooms/t'+trap.code+'/players/'+trap.role+'/confirmed').set(true);
@@ -5231,8 +5245,13 @@ async function trapConfirmPlants() {
 async function trapEnterBattle(state) {
   trapShowStage('trapBattle');
   // Fetch bombs (only mine — opponent bombs hidden)
-  const bsnap = await fb.db.ref('rooms/t'+trap.code+'/bombs').once('value');
-  const bombs = bsnap.val() || {};
+  let bombs;
+  if (trap.bot) {
+    bombs = trap.localBombs || {};
+  } else {
+    const bsnap = await fb.db.ref('rooms/t'+trap.code+'/bombs').once('value');
+    bombs = bsnap.val() || {};
+  }
   trap._myBombsInMyBoard = bombs[trap.role] || [];                 // what opponent planted in MY board
   trap._myBombsInOppBoard = bombs[trap.opponentRole] || [];        // what I planted in OPPONENT's board
   // Render boards
@@ -5244,8 +5263,12 @@ async function trapEnterBattle(state) {
   banner.className = 'trap-turn-banner ' + (myTurn ? 'my-turn' : 'opp-turn');
   banner.textContent = myTurn ? '🎯 دورك! اختر مربعاً من لوحتك' : '⏳ دور ' + (trap.oppName || 'الخصم');
   // Refresh hearts from latest players
-  const psnap = await fb.db.ref('rooms/t'+trap.code+'/players').once('value');
-  trapRenderHearts((psnap.val()||{}).p0||{}, (psnap.val()||{}).p1||{});
+  if (trap.bot) {
+    trapRenderHearts(trap.localPlayers.p0, trap.localPlayers.p1);
+  } else {
+    const psnap = await fb.db.ref('rooms/t'+trap.code+'/players').once('value');
+    trapRenderHearts((psnap.val()||{}).p0||{}, (psnap.val()||{}).p1||{});
+  }
 }
 
 function trapRenderBoard(boardId, state, isMine) {
@@ -5275,6 +5298,7 @@ function trapRenderBoard(boardId, state, isMine) {
 }
 
 async function trapPickCell(i) {
+  if (trap.bot) { return trapBotPlayerPick(i); }
   const code = trap.code; if (!code) return;
   const ssnap = await fb.db.ref('rooms/t'+code+'/state').once('value');
   const st = ssnap.val() || {};
@@ -5304,28 +5328,114 @@ async function trapPickCell(i) {
 }
 
 async function trapEnterEnd(state) {
-  trapDetachListeners();
+  if (!trap.bot) trapDetachListeners();
   trapShowStage('trapEnd');
   const won = (state.winner === trap.role);
   document.getElementById('trapEndEmoji').textContent = won ? '🏆' : '💥';
-  document.getElementById('trapEndText').textContent = won ? '🎉 فزت! تجنبت القنابل بمهارة' : '😵 خسرت! وقعت في الفخاخ';
+  document.getElementById('trapEndText').textContent = won
+    ? (trap.bot ? '🎉 فزت على الكمبيوتر!' : '🎉 فزت! تجنبت القنابل بمهارة')
+    : (trap.bot ? '🤖 فاز الكمبيوتر هذه المرة!' : '😵 خسرت! وقعت في الفخاخ');
   if (won) { try { if (typeof launchConfetti==='function') launchConfetti(); } catch(e){} }
-  // Cleanup if I'm host after a delay
-  if (trap.role === 'p0') {
+  // Cleanup if I'm host after a delay (online only)
+  if (!trap.bot && trap.role === 'p0') {
     setTimeout(()=>{ try { fb.db.ref('rooms/t'+trap.code).remove(); } catch(e){} }, 8000);
   }
 }
 
 function leaveTrap() {
   trapDetachListeners();
-  try {
-    if (trap.code && trap.role === 'p0') fb.db.ref('rooms/t'+trap.code).remove();
-    else if (trap.code && trap.role === 'p1') fb.db.ref('rooms/t'+trap.code+'/players/p1').remove();
-  } catch(e){}
+  if (!trap.bot) {
+    try {
+      if (trap.code && trap.role === 'p0') fb.db.ref('rooms/t'+trap.code).remove();
+      else if (trap.code && trap.role === 'p1') fb.db.ref('rooms/t'+trap.code+'/players/p1').remove();
+    } catch(e){}
+  }
   trap.code = null; trap.role = null; trap.opponentRole = null;
   trap.myPlants = []; trap.confirmed = false;
+  trap.bot = false; trap.localState = null; trap.localPlayers = null; trap.localBombs = null;
   document.getElementById('trapScreen').style.display = 'none';
   goToLanding();
+}
+
+// ════════════════════════════════════════════════════════════
+// TRAP BOT (single-player vs computer) — local-only, no Firebase
+// ════════════════════════════════════════════════════════════
+function startTrapBotGame() {
+  const name = (document.getElementById('trapHostName').value.trim()) || 'أنت';
+  trap.bot = true;
+  trap.code = null;
+  trap.role = 'p0'; trap.opponentRole = 'p1';
+  trap.name = name; trap.oppName = '🤖 الكمبيوتر';
+  trap.myPlants = []; trap.confirmed = false;
+  trap.localPlayers = {
+    p0: { name, hearts: TRAP_HEARTS, confirmed:false, joined:true },
+    p1: { name: '🤖 الكمبيوتر', hearts: TRAP_HEARTS, confirmed:false, joined:true }
+  };
+  trap.localState = { phase:'plant' };
+  trap.localBombs = {};
+  trapOpenScreen();
+  trapEnterPlant();
+  document.getElementById('trapPlantOppName').textContent = '🤖 لوحة الكمبيوتر';
+}
+
+function trapBotConfirmPlants() {
+  // I plant in bot's board
+  trap.localBombs.p1 = [...trap.myPlants];
+  // Bot plants random 3 cells in my board
+  const cells = Array.from({length: TRAP_GRID}, (_,i) => i);
+  for (let i = cells.length-1; i>0; i--) { const j = Math.floor(Math.random()*(i+1)); [cells[i],cells[j]] = [cells[j],cells[i]]; }
+  trap.localBombs.p0 = cells.slice(0, TRAP_BOMBS);
+  trap.localPlayers.p0.confirmed = true;
+  trap.localPlayers.p1.confirmed = true;
+  document.querySelectorAll('#trapPlantBoard .trap-cell').forEach(c => c.classList.add('disabled'));
+  document.getElementById('trapPlantConfirm').style.display = 'none';
+  const waitEl = document.getElementById('trapPlantWait');
+  waitEl.style.display = 'block';
+  waitEl.textContent = '🤖 الكمبيوتر يزرع قنابله…';
+  setTimeout(() => {
+    trap.localState = { phase:'battle', turn: Math.random()<0.5?'p0':'p1', revealed_p0:{}, revealed_p1:{} };
+    trapEnterBattle(trap.localState);
+    if (trap.localState.turn === 'p1') setTimeout(()=>trapBotTakeTurn(), 1200);
+  }, 1300);
+}
+
+function trapBotPlayerPick(i) {
+  const st = trap.localState; if (!st || st.phase !== 'battle') return;
+  if (st.turn !== 'p0') return;
+  const myRev = st.revealed_p0;
+  if (myRev[i] != null) return;
+  const isBomb = (trap._myBombsInMyBoard || []).includes(i);
+  myRev[i] = isBomb ? 'bomb' : 'safe';
+  if (isBomb) {
+    trap.localPlayers.p0.hearts = Math.max(0, trap.localPlayers.p0.hearts - 1);
+    if (trap.localPlayers.p0.hearts === 0) {
+      st.phase = 'end'; st.winner = 'p1';
+      trapEnterEnd(st); return;
+    }
+  }
+  st.turn = 'p1';
+  trapEnterBattle(st);
+  setTimeout(()=>trapBotTakeTurn(), 1100);
+}
+
+function trapBotTakeTurn() {
+  const st = trap.localState; if (!st || st.phase !== 'battle' || st.turn !== 'p1') return;
+  const rev = st.revealed_p1;
+  const choices = [];
+  for (let i=0; i<TRAP_GRID; i++) if (rev[i] == null) choices.push(i);
+  if (!choices.length) return;
+  const pick = choices[Math.floor(Math.random()*choices.length)];
+  const isBomb = (trap.localBombs.p1 || []).includes(pick);
+  rev[pick] = isBomb ? 'bomb' : 'safe';
+  if (isBomb) {
+    trap.localPlayers.p1.hearts = Math.max(0, trap.localPlayers.p1.hearts - 1);
+    if (trap.localPlayers.p1.hearts === 0) {
+      st.phase = 'end'; st.winner = 'p0';
+      trapEnterEnd(st); return;
+    }
+  }
+  st.turn = 'p0';
+  trapEnterBattle(st);
 }
 
 // ── ONLINE REJOIN (reconnect to a room after refresh/disconnect) ──
