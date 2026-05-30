@@ -156,6 +156,17 @@ body {
 .section-pill { display:inline-block; background:rgba(201,168,76,0.12); color:var(--gold); border:1.5px solid var(--gold); border-radius:50px; padding:6px 16px; font-family:'Tajawal',sans-serif; font-size:0.88rem; font-weight:700; box-shadow:0 0 0 3px rgba(201,168,76,0.05); white-space:nowrap; }
 .section-divider { display:flex; align-items:center; gap:12px; margin:22px 0 12px; }
 .section-divider::before, .section-divider::after { content:''; flex:1; height:1px; background:linear-gradient(to right, transparent, var(--gold), transparent); opacity:0.45; }
+.acc { background:var(--option-bg); border:1.5px solid var(--border); border-radius:14px; margin-top:10px; overflow:hidden; transition:border-color 0.2s; }
+.acc.open { border-color:var(--gold); }
+.acc-head { display:flex; align-items:center; gap:10px; padding:12px 14px; cursor:pointer; user-select:none; }
+.acc-head:hover { background:rgba(201,168,76,0.05); }
+.acc-icon { font-size:1.15rem; line-height:1; }
+.acc-title { font-family:'Tajawal',sans-serif; font-weight:800; color:var(--text); font-size:0.95rem; flex-shrink:0; }
+.acc-summary { margin-right:auto; font-family:'Tajawal',sans-serif; font-size:0.82rem; color:var(--gold); font-weight:700; text-align:left; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+.acc-chev { color:var(--gold); font-size:0.9rem; transition:transform 0.22s; flex-shrink:0; }
+.acc.open .acc-chev { transform:rotate(180deg); }
+.acc-body { display:none; padding:6px 14px 14px; border-top:1px dashed var(--border); }
+.acc.open .acc-body { display:block; }
 .online-submode-row { display:flex; gap:10px; margin-bottom:12px; }
 .submode-card { flex:1; background:var(--option-bg); border:1.5px solid var(--border); border-radius:14px; padding:14px 8px; text-align:center; cursor:pointer; transition:all 0.18s; }
 .submode-card:hover { border-color:var(--gold); }
@@ -886,46 +897,74 @@ body.theme-gold .net-indicator { color:var(--gold); }
         <input class="online-input" id="onlineTeam0Name" type="text" maxlength="16" value="الفريق الأزرق" style="border-color:#6495ed55">
         <input class="online-input" id="onlineTeam1Name" type="text" maxlength="16" value="الفريق الأحمر" style="border-color:#e0705055">
       </div>
-      <div class="section-divider"><span class="section-pill">⏱️ الوقت لكل سؤال</span></div>
-      <div class="timer-options" id="onlineTimerOpts">
-        <div class="timer-opt" onclick="setOnlineTimer(10,this)">10 ث</div>
-        <div class="timer-opt active" onclick="setOnlineTimer(15,this)">15 ث</div>
-        <div class="timer-opt" onclick="setOnlineTimer(20,this)">20 ث</div>
-        <div class="timer-opt" onclick="setOnlineTimer(30,this)">30 ث</div>
+      <div class="acc" id="accTimer">
+        <div class="acc-head" onclick="toggleOnlineAcc('timer')">
+          <span class="acc-icon">⏱️</span><span class="acc-title">الوقت لكل سؤال</span>
+          <span class="acc-summary" id="accSumTimer">15 ث</span><span class="acc-chev">▾</span>
+        </div>
+        <div class="acc-body">
+          <div class="timer-options" id="onlineTimerOpts">
+            <div class="timer-opt" onclick="setOnlineTimer(10,this)">10 ث</div>
+            <div class="timer-opt active" onclick="setOnlineTimer(15,this)">15 ث</div>
+            <div class="timer-opt" onclick="setOnlineTimer(20,this)">20 ث</div>
+            <div class="timer-opt" onclick="setOnlineTimer(30,this)">30 ث</div>
+          </div>
+        </div>
       </div>
-      <div class="section-divider"><span class="section-pill">📂 الفئات</span></div>
-      <div class="cat-tabs" style="margin-bottom:6px">
-        <button class="cat-tab active" onclick="setCat('all',this)">🌐 الكل</button>
-        <button class="cat-tab" onclick="setCat('general',this)">💡 معلومات عامة</button>
-        <button class="cat-tab" onclick="setCat('religion',this)">☪️ دينية</button>
-        <button class="cat-tab" onclick="setCat('geography',this)">🗺️ جغرافيا</button>
-        <button class="cat-tab" onclick="setCat('science',this)">🔬 علوم وتقنية</button>
-        <button class="cat-tab" onclick="setCat('history',this)">📜 تاريخ</button>
-        <button class="cat-tab" onclick="setCat('sports',this)">⚽ رياضة</button>
-        <button class="cat-tab" onclick="setCat('arts',this)">🎨 ثقافة وفنون</button>
-        <button class="cat-tab" onclick="setCat('saudi',this)">🇸🇦 السعودية</button>
-        <button class="cat-tab" onclick="setCat('movies',this)">🎬 أفلام ومسلسلات</button>
-        <button class="cat-tab" onclick="setCat('health',this)">🩺 صحة وطب</button>
-        <div class="cat-section-label">🎓 تخصص مهني</div>
-        <button class="cat-tab" onclick="setCat('physio',this)">🦴 العلاج الطبيعي</button>
-        <button class="cat-tab" onclick="setCat('nutrition',this)">🥗 التغذية الصحية</button>
+      <div class="acc" id="accCats">
+        <div class="acc-head" onclick="toggleOnlineAcc('cats')">
+          <span class="acc-icon">📂</span><span class="acc-title">الفئات</span>
+          <span class="acc-summary" id="accSumCats">الكل</span><span class="acc-chev">▾</span>
+        </div>
+        <div class="acc-body">
+          <div class="cat-tabs" style="margin-bottom:6px">
+            <button class="cat-tab active" onclick="setCat('all',this)">🌐 الكل</button>
+            <button class="cat-tab" onclick="setCat('general',this)">💡 معلومات عامة</button>
+            <button class="cat-tab" onclick="setCat('religion',this)">☪️ دينية</button>
+            <button class="cat-tab" onclick="setCat('geography',this)">🗺️ جغرافيا</button>
+            <button class="cat-tab" onclick="setCat('science',this)">🔬 علوم وتقنية</button>
+            <button class="cat-tab" onclick="setCat('history',this)">📜 تاريخ</button>
+            <button class="cat-tab" onclick="setCat('sports',this)">⚽ رياضة</button>
+            <button class="cat-tab" onclick="setCat('arts',this)">🎨 ثقافة وفنون</button>
+            <button class="cat-tab" onclick="setCat('saudi',this)">🇸🇦 السعودية</button>
+            <button class="cat-tab" onclick="setCat('movies',this)">🎬 أفلام ومسلسلات</button>
+            <button class="cat-tab" onclick="setCat('health',this)">🩺 صحة وطب</button>
+            <div class="cat-section-label">🎓 تخصص مهني</div>
+            <button class="cat-tab" onclick="setCat('physio',this)">🦴 العلاج الطبيعي</button>
+            <button class="cat-tab" onclick="setCat('nutrition',this)">🥗 التغذية الصحية</button>
+          </div>
+        </div>
       </div>
-      <div class="section-divider"><span class="section-pill">🎯 مستوى الصعوبة</span></div>
-      <div class="diff-filter-row">
-        <div class="diff-filter active" onclick="setDiff('all',this)">🌐 الكل</div>
-        <div class="diff-filter" onclick="setDiff('easy',this)">🟢 سهل</div>
-        <div class="diff-filter" onclick="setDiff('medium',this)">🟡 متوسط</div>
-        <div class="diff-filter" onclick="setDiff('hard',this)">🔴 صعب</div>
-        <div class="diff-filter" onclick="setDiff('veryhard',this)">💎 صعب جداً</div>
+      <div class="acc" id="accDiff">
+        <div class="acc-head" onclick="toggleOnlineAcc('diff')">
+          <span class="acc-icon">🎯</span><span class="acc-title">مستوى الصعوبة</span>
+          <span class="acc-summary" id="accSumDiff">الكل</span><span class="acc-chev">▾</span>
+        </div>
+        <div class="acc-body">
+          <div class="diff-filter-row">
+            <div class="diff-filter active" onclick="setDiff('all',this)">🌐 الكل</div>
+            <div class="diff-filter" onclick="setDiff('easy',this)">🟢 سهل</div>
+            <div class="diff-filter" onclick="setDiff('medium',this)">🟡 متوسط</div>
+            <div class="diff-filter" onclick="setDiff('hard',this)">🔴 صعب</div>
+            <div class="diff-filter" onclick="setDiff('veryhard',this)">💎 صعب جداً</div>
+          </div>
+        </div>
       </div>
-      <div class="section-divider"><span class="section-pill">🔢 عدد الأسئلة</span></div>
-      <div class="qcount-wrap">
-        <div class="qcount-grid">
-          <div class="qcount-btn active" onclick="setCount(5,this)"><span class="qn">5</span><span class="ql">⚡ سريع</span></div>
-          <div class="qcount-btn" onclick="setCount(10,this)"><span class="qn">10</span><span class="ql">🎯 متوسط</span></div>
-          <div class="qcount-btn" onclick="setCount(15,this)"><span class="qn">15</span><span class="ql">🔥 جيد</span></div>
-          <div class="qcount-btn" onclick="setCount(20,this)"><span class="qn">20</span><span class="ql">💪 طويل</span></div>
-          <div class="qcount-btn" onclick="setCount(25,this)"><span class="qn">25</span><span class="ql">👑 كامل</span></div>
+      <div class="acc" id="accCount">
+        <div class="acc-head" onclick="toggleOnlineAcc('count')">
+          <span class="acc-icon">🔢</span><span class="acc-title">عدد الأسئلة</span>
+          <span class="acc-summary" id="accSumCount">5 أسئلة</span><span class="acc-chev">▾</span>
+        </div>
+        <div class="acc-body">
+          <div class="qcount-wrap">
+            <div class="qcount-grid">
+              <div class="qcount-btn active" onclick="setCount(5,this)"><span class="qn">5</span><span class="ql">⚡ سريع</span></div>
+              <div class="qcount-btn" onclick="setCount(10,this)"><span class="qn">10</span><span class="ql">🎯 متوسط</span></div>
+              <div class="qcount-btn" onclick="setCount(15,this)"><span class="qn">15</span><span class="ql">🔥 جيد</span></div>
+              <div class="qcount-btn" onclick="setCount(20,this)"><span class="qn">20</span><span class="ql">💪 طويل</span></div>
+              <div class="qcount-btn" onclick="setCount(25,this)"><span class="qn">25</span><span class="ql">👑 كامل</span></div>
+            </div>
+          </div>
         </div>
       </div>
       <button class="start-btn" style="margin-top:16px" onclick="createRoom()">🚀 إنشاء غرفة</button>
@@ -2710,6 +2749,8 @@ function goToOnline() {
   document.getElementById('guideOffline').style.display='none';
   document.getElementById('guideOnline').style.display='block';
   setGameMode('online');
+  if (typeof restoreOnlineAccState === 'function') restoreOnlineAccState();
+  if (typeof updateOnlineAccSummaries === 'function') updateOnlineAccSummaries();
 }
 function toggleGuide() {
   const body = document.getElementById('guideBody');
@@ -2748,6 +2789,7 @@ function setCat(cat, btn) {
   }
   refreshCatTabs();
   updateAvailNote();
+  if (typeof updateOnlineAccSummaries === 'function') updateOnlineAccSummaries();
 }
 
 function updateAvailNote() {
@@ -2784,6 +2826,7 @@ function setCount(n, el) {
   const _tLabel = document.getElementById('totalQLabel');
   if (_qLabel) _qLabel.textContent = n;
   if (_tLabel) _tLabel.textContent = n * (typeof totalRounds !== 'undefined' ? totalRounds : 1);
+  if (typeof updateOnlineAccSummaries === 'function') updateOnlineAccSummaries();
 }
 
 function shuffle(arr) {
@@ -3687,6 +3730,7 @@ function setDiff(d, el) {
     }
   }
   refreshDiffTabs();
+  if (typeof updateOnlineAccSummaries === 'function') updateOnlineAccSummaries();
 }
 
 // Patch startGame to apply difficulty filter and custom questions
@@ -4169,6 +4213,70 @@ function setOnlineTimer(secs, el) {
   online.timer = secs;
   document.querySelectorAll('#onlineTimerOpts .timer-opt').forEach(o=>o.classList.remove('active'));
   if (el) el.classList.add('active');
+  updateOnlineAccSummaries();
+}
+
+function toggleOnlineAcc(key) {
+  const map = { timer:'accTimer', cats:'accCats', diff:'accDiff', count:'accCount' };
+  const el = document.getElementById(map[key]); if (!el) return;
+  el.classList.toggle('open');
+  try {
+    const open = {};
+    Object.entries(map).forEach(([k,id])=>{ open[k] = document.getElementById(id).classList.contains('open'); });
+    localStorage.setItem('tahadi_acc_open', JSON.stringify(open));
+  } catch(e){}
+}
+
+function restoreOnlineAccState() {
+  try {
+    const raw = localStorage.getItem('tahadi_acc_open');
+    if (!raw) return;
+    const open = JSON.parse(raw);
+    const map = { timer:'accTimer', cats:'accCats', diff:'accDiff', count:'accCount' };
+    Object.entries(map).forEach(([k,id])=>{
+      const el = document.getElementById(id);
+      if (el) el.classList.toggle('open', !!open[k]);
+    });
+  } catch(e){}
+}
+
+function updateOnlineAccSummaries() {
+  // Timer
+  const tEl = document.getElementById('accSumTimer');
+  if (tEl) tEl.textContent = (online.timer || 15) + ' ث';
+  // Categories
+  const cEl = document.getElementById('accSumCats');
+  if (cEl && typeof selectedCats !== 'undefined') {
+    let txt;
+    if (selectedCats.has('all')) {
+      const all = (typeof allQuestions !== 'undefined') ? allQuestions.filter(q=>q.cat!=='custom').length : 0;
+      txt = 'الكل' + (all ? ' (' + all + ')' : '');
+    } else {
+      const keys = [...selectedCats];
+      const total = (typeof getCatPool === 'function') ? getCatPool().length : 0;
+      if (keys.length === 1) {
+        const k = keys[0];
+        const lbl = (catLabels && catLabels[k]) ? catLabels[k].label : k;
+        txt = lbl + (total ? ' (' + total + ')' : '');
+      } else {
+        txt = keys.length + ' فئات' + (total ? ' (' + total + ')' : '');
+      }
+    }
+    cEl.textContent = txt;
+  }
+  // Difficulty
+  const dEl = document.getElementById('accSumDiff');
+  if (dEl && typeof selectedDiffs !== 'undefined') {
+    const lbls = { easy:'🟢 سهل', medium:'🟡 متوسط', hard:'🔴 صعب', veryhard:'💎 صعب جداً' };
+    if (selectedDiffs.has('all')) dEl.textContent = 'الكل';
+    else {
+      const keys = [...selectedDiffs];
+      dEl.textContent = keys.length===1 ? (lbls[keys[0]]||keys[0]) : (keys.length + ' مستويات');
+    }
+  }
+  // Count
+  const nEl = document.getElementById('accSumCount');
+  if (nEl) nEl.textContent = (selectedCount || 5) + ' أسئلة';
 }
 function genCode() { return String(Math.floor(100000 + Math.random()*900000)); }
 function uid() { return 'p' + Math.random().toString(36).slice(2,9); }
