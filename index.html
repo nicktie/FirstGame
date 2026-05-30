@@ -1472,7 +1472,11 @@ body.theme-gold .net-indicator { color:var(--gold); }
     <div class="final-card">
       <div class="final-title">ترتيب اللاعبين</div>
       <div class="final-rows" id="onlineFinalRows"></div>
-      <button class="play-again-btn" style="width:100%;margin-top:6px" onclick="leaveRoom()">🔄 العودة للقائمة</button>
+      <div id="onlineRematchControls" style="display:flex;gap:10px;margin-top:8px">
+        <button class="play-again-btn" id="onlineRematchBtn" style="flex:1;display:none" onclick="hostRematch()">🔄 جولة جديدة</button>
+        <button class="play-again-btn" id="onlineRematchWait" style="flex:1;display:none;background:rgba(100,149,237,0.15);color:#6495ed;border-color:#6495ed">⏳ في انتظار المضيف…</button>
+        <button class="play-again-btn" style="flex:1;background:rgba(120,120,120,0.18);color:var(--muted)" onclick="leaveRoom()">↩️ خروج</button>
+      </div>
     </div>
   </div>
 
@@ -1545,7 +1549,11 @@ body.theme-gold .net-indicator { color:var(--gold); }
     <div class="trap-end-card">
       <div class="trap-end-emoji" id="trapEndEmoji">🏆</div>
       <div class="trap-end-text" id="trapEndText"></div>
-      <button class="start-btn" style="margin-top:18px" onclick="leaveTrap()">↩️ عودة</button>
+      <div style="display:flex;gap:10px;justify-content:center;margin-top:18px">
+        <button class="start-btn" id="trapRematchBtn" style="max-width:170px;display:none" onclick="trapRematch()">🔄 جولة جديدة</button>
+        <button class="start-btn" id="trapRematchWait" style="max-width:170px;display:none;background:rgba(100,149,237,0.15);color:#6495ed;border-color:#6495ed">⏳ في انتظار المضيف…</button>
+        <button class="start-btn" style="max-width:130px;background:linear-gradient(135deg,#888,#555)" onclick="leaveTrap()">↩️ خروج</button>
+      </div>
     </div>
   </div>
 </div>
@@ -5118,6 +5126,39 @@ async function showOnlineFinalStage() {
     });
   }
   try { if (typeof launchConfetti==='function') launchConfetti(); } catch(e){}
+  // Wire rematch controls: host sees the active button, guests see waiting state
+  const btn = document.getElementById('onlineRematchBtn');
+  const wait = document.getElementById('onlineRematchWait');
+  if (btn && wait) {
+    btn.style.display = online.isHost ? 'block' : 'none';
+    wait.style.display = online.isHost ? 'none' : 'block';
+  }
+}
+
+async function hostRematch() {
+  if (!online.isHost || !online.code) return;
+  // Build a fresh question pool with the same settings
+  let pool = getCatPool();
+  pool = applyDiffFilter(pool);
+  pool = deprioritizeRecent(shuffle(pool)).slice(0, online.count);
+  if (!pool.length) { showToast('⚠️ لا توجد أسئلة كافية', 'var(--wrong)'); return; }
+  online.questions = pool;
+  online.qIndex = 0;
+  // Reset all player scores in Firebase
+  const psnap = await fb.db.ref('rooms/'+online.code+'/players').once('value');
+  const players = psnap.val() || {};
+  const updates = {};
+  Object.keys(players).forEach(pid => { updates['players/'+pid+'/score'] = 0; });
+  updates['answers'] = null;
+  updates['state'] = { phase:'lobby', qIndex:0 };
+  updates['meta/status'] = 'lobby';
+  await fb.db.ref('rooms/'+online.code).update(updates);
+  saveOnlineSession();
+  // Show lobby briefly; host will press start again (so guests have a chance to see they're back)
+  showOnlineStage('onlineLobby');
+  document.getElementById('lobbyHostControls').style.display = 'block';
+  document.getElementById('lobbyWaitNote').style.display = 'none';
+  showToast('🔄 تم تجهيز جولة جديدة — اضغط ابدأ', 'var(--gold)');
 }
 
 function copyRoomCode() {
@@ -5476,7 +5517,6 @@ async function trapPickCell(i) {
 }
 
 async function trapEnterEnd(state) {
-  if (!trap.bot) trapDetachListeners();
   trapShowStage('trapEnd');
   const won = (state.winner === trap.role);
   document.getElementById('trapEndEmoji').textContent = won ? '🏆' : '💥';
@@ -5484,10 +5524,43 @@ async function trapEnterEnd(state) {
     ? (trap.bot ? '🎉 فزت على الكمبيوتر!' : '🎉 فزت! تجنبت القنابل بمهارة')
     : (trap.bot ? '🤖 فاز الكمبيوتر هذه المرة!' : '😵 خسرت! وقعت في الفخاخ');
   if (won) { try { if (typeof launchConfetti==='function') launchConfetti(); } catch(e){} }
-  // Cleanup if I'm host after a delay (online only)
-  if (!trap.bot && trap.role === 'p0') {
-    setTimeout(()=>{ try { fb.db.ref('rooms/t'+trap.code).remove(); } catch(e){} }, 8000);
+  // Rematch button: host (or bot) shows action; guest shows waiting
+  const btn = document.getElementById('trapRematchBtn');
+  const wait = document.getElementById('trapRematchWait');
+  if (btn && wait) {
+    const canTrigger = trap.bot || trap.role === 'p0';
+    btn.style.display = canTrigger ? 'inline-block' : 'none';
+    wait.style.display = canTrigger ? 'none' : 'inline-block';
   }
+}
+
+async function trapRematch() {
+  if (trap.bot) {
+    // Reset local state and re-enter plant phase
+    trap.myPlants = []; trap.confirmed = false;
+    trap.localPlayers.p0.hearts = TRAP_HEARTS; trap.localPlayers.p0.confirmed = false;
+    trap.localPlayers.p1.hearts = TRAP_HEARTS; trap.localPlayers.p1.confirmed = false;
+    trap.localState = { phase:'plant' };
+    trap.localBombs = {};
+    trapEnterPlant();
+    document.getElementById('trapPlantOppName').textContent = '🤖 لوحة الكمبيوتر';
+    return;
+  }
+  if (trap.role !== 'p0') return;
+  // Reset hearts, clear bombs and answers, back to plant phase
+  const psnap = await fb.db.ref('rooms/t'+trap.code+'/players').once('value');
+  const players = psnap.val() || {};
+  const updates = {};
+  Object.keys(players).forEach(pid => {
+    updates['players/'+pid+'/hearts'] = TRAP_HEARTS;
+    updates['players/'+pid+'/confirmed'] = false;
+  });
+  updates['bombs'] = null;
+  updates['state'] = { phase:'plant' };
+  updates['meta/status'] = 'planting';
+  trap.myPlants = []; trap.confirmed = false;
+  await fb.db.ref('rooms/t'+trap.code).update(updates);
+  showToast('🔄 جولة جديدة! ازرع قنابلك من جديد', 'var(--gold)');
 }
 
 function leaveTrap() {
