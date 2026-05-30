@@ -2529,7 +2529,37 @@ function setCount(n, el) {
   if (_tLabel) _tLabel.textContent = n * (typeof totalRounds !== 'undefined' ? totalRounds : 1);
 }
 
-function shuffle(arr) { return [...arr].sort(() => Math.random() - 0.5); }
+function shuffle(arr) {
+  // Fisher-Yates: produces a truly uniform random permutation
+  const a = arr.slice();
+  for (let i = a.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    const t = a[i]; a[i] = a[j]; a[j] = t;
+  }
+  return a;
+}
+
+// Remember the last ~150 question texts the player saw, so the next game
+// pushes those to the end of the shuffled pool (less likely to repeat).
+const RECENT_KEY = 'quizRecentQuestions';
+const RECENT_MAX = 150;
+function _recentList() { try { return JSON.parse(localStorage.getItem(RECENT_KEY)||'[]'); } catch(e){ return []; } }
+function pushRecentQuestion(qText) {
+  if (!qText) return;
+  try {
+    const arr = _recentList();
+    arr.push(qText);
+    while (arr.length > RECENT_MAX) arr.shift();
+    localStorage.setItem(RECENT_KEY, JSON.stringify(arr));
+  } catch(e){}
+}
+function deprioritizeRecent(arr) {
+  const recent = new Set(_recentList());
+  if (!recent.size) return arr;
+  const fresh = [], seen = [];
+  arr.forEach(q => (recent.has(q.q) ? seen : fresh).push(q));
+  return fresh.concat(seen);
+}
 
 function startGame() {
   // Build active PLAYERS array — either individual players or two teams
@@ -2567,7 +2597,7 @@ function startGame() {
   let _pool = getCatPool();
   if (selectedDiff !== 'all') _pool = _pool.filter(q => q.diff === selectedDiff);
   if (customQuestions.length > 0) _pool = [...customQuestions, ...shuffle(_pool)];
-  questions = shuffle(_pool);
+  questions = deprioritizeRecent(shuffle(_pool));
 
   updateScoreboard();
   startGameAdv();   // init joker, stats, rounds, special modes
@@ -2605,6 +2635,7 @@ function loadQuestion() {
 
   snapshotGame();
   const q = questions[qIndex];
+  pushRecentQuestion(q && q.q);
 
   // Progress = answeredCount (skips excluded)
   document.getElementById('progressBar').style.width = ((answeredCount / selectedCount) * 100) + '%';
@@ -3787,7 +3818,7 @@ async function createRoom() {
   const name = (document.getElementById('hostName').value.trim()) || 'المضيف';
   let pool = getCatPool();
   if (selectedDiff && selectedDiff!=='all') pool = pool.filter(q=>q.diff===selectedDiff);
-  pool = shuffle(pool).slice(0, selectedCount);
+  pool = deprioritizeRecent(shuffle(pool)).slice(0, selectedCount);
   if (!pool.length) { showToast('⚠️ لا توجد أسئلة كافية', 'var(--wrong)'); return; }
 
   const code = genCode();
@@ -3951,6 +3982,7 @@ function showQuestion(s) {
   document.getElementById('onlineQNum').textContent = `السؤال ${s.qIndex+1} من ${online.count}`;
   document.getElementById('onlineCat').textContent = catLabels[cur.cat] ? catLabels[cur.cat].label : '';
   document.getElementById('onlineQText').textContent = cur.q || '';
+  pushRecentQuestion(cur.q);
   const oImg = document.getElementById('onlineQImage');
   if (cur.img) { oImg.src = cur.img; oImg.style.display='block'; } else { oImg.style.display='none'; oImg.src=''; }
   const box = document.getElementById('onlineOptions'); box.innerHTML='';
