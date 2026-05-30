@@ -5042,11 +5042,17 @@ async function createTrapRoom() {
   const code = genCode();
   trap.code = code; trap.role = 'p0'; trap.opponentRole = 'p1';
   trap.name = name; trap.myPlants = []; trap.confirmed = false;
-  await fb.db.ref('traps/'+code).set({
-    meta:{ hostName:name, status:'lobby', createdAt: firebase.database.ServerValue.TIMESTAMP },
-    players:{ p0:{ name, hearts: TRAP_HEARTS, confirmed:false, joined:true } },
-    state:{ phase:'lobby' }
-  });
+  try {
+    await fb.db.ref('rooms/t'+code).set({
+      meta:{ hostName:name, status:'lobby', createdAt: firebase.database.ServerValue.TIMESTAMP },
+      players:{ p0:{ name, hearts: TRAP_HEARTS, confirmed:false, joined:true } },
+      state:{ phase:'lobby' }
+    });
+  } catch(e) {
+    showToast('⚠️ تعذّر إنشاء الغرفة: ' + (e && e.message ? e.message : 'خطأ غير معروف'), 'var(--wrong)');
+    trap.code = null; trap.role = null;
+    return;
+  }
   trapAttachListeners();
   trapOpenScreen();
   trapShowStage('trapLobby');
@@ -5059,13 +5065,25 @@ async function joinTrapRoom() {
   const name = (document.getElementById('trapJoinName').value.trim()) || 'الخصم';
   const code = (document.getElementById('trapJoinCode').value.trim());
   if (!/^\d{6}$/.test(code)) { showToast('⚠️ الرمز يجب أن يكون ٦ أرقام', 'var(--wrong)'); return; }
-  const snap = await fb.db.ref('traps/'+code).once('value');
-  const data = snap.val();
+  let data;
+  try {
+    const snap = await fb.db.ref('rooms/t'+code).once('value');
+    data = snap.val();
+  } catch(e) {
+    showToast('⚠️ تعذّر الوصول للغرفة: ' + (e && e.message ? e.message : ''), 'var(--wrong)');
+    return;
+  }
   if (!data) { showToast('⚠️ الغرفة غير موجودة', 'var(--wrong)'); return; }
   if (data.players && data.players.p1 && data.players.p1.joined) { showToast('⚠️ الغرفة ممتلئة', 'var(--wrong)'); return; }
   trap.code = code; trap.role = 'p1'; trap.opponentRole = 'p0';
   trap.name = name; trap.myPlants = []; trap.confirmed = false;
-  await fb.db.ref('traps/'+code+'/players/p1').set({ name, hearts: TRAP_HEARTS, confirmed:false, joined:true });
+  try {
+    await fb.db.ref('rooms/t'+code+'/players/p1').set({ name, hearts: TRAP_HEARTS, confirmed:false, joined:true });
+  } catch(e) {
+    showToast('⚠️ تعذّر الانضمام: ' + (e && e.message ? e.message : ''), 'var(--wrong)');
+    trap.code = null; trap.role = null;
+    return;
+  }
   trapAttachListeners();
   trapOpenScreen();
   trapShowStage('trapLobby');
@@ -5075,8 +5093,8 @@ async function joinTrapRoom() {
 
 function trapAttachListeners() {
   trapDetachListeners();
-  const playersRef = fb.db.ref('traps/'+trap.code+'/players');
-  const stateRef = fb.db.ref('traps/'+trap.code+'/state');
+  const playersRef = fb.db.ref('rooms/t'+trap.code+'/players');
+  const stateRef = fb.db.ref('rooms/t'+trap.code+'/state');
   const onPlayers = playersRef.on('value', s => trapRenderPlayers(s.val()||{}));
   const onState = stateRef.on('value', s => trapOnState(s.val()||{}));
   trap.listeners = [
@@ -5130,8 +5148,8 @@ function trapRenderHearts(p0, p1) {
 
 async function trapStart() {
   if (trap.role !== 'p0') return;
-  await fb.db.ref('traps/'+trap.code+'/state').update({ phase:'plant' });
-  await fb.db.ref('traps/'+trap.code+'/meta/status').set('planting');
+  await fb.db.ref('rooms/t'+trap.code+'/state').update({ phase:'plant' });
+  await fb.db.ref('rooms/t'+trap.code+'/meta/status').set('planting');
 }
 
 function trapOnState(state) {
@@ -5178,32 +5196,32 @@ async function trapConfirmPlants() {
   if (trap.myPlants.length !== TRAP_BOMBS) return;
   trap.confirmed = true;
   // I plant bombs in OPPONENT's board
-  await fb.db.ref('traps/'+trap.code+'/bombs/'+trap.opponentRole).set(trap.myPlants);
-  await fb.db.ref('traps/'+trap.code+'/players/'+trap.role+'/confirmed').set(true);
+  await fb.db.ref('rooms/t'+trap.code+'/bombs/'+trap.opponentRole).set(trap.myPlants);
+  await fb.db.ref('rooms/t'+trap.code+'/players/'+trap.role+'/confirmed').set(true);
   document.getElementById('trapPlantConfirm').style.display = 'none';
   document.getElementById('trapPlantWait').style.display = 'block';
   // Lock plant board
   document.querySelectorAll('#trapPlantBoard .trap-cell').forEach(c => c.classList.add('disabled'));
   // Host transitions to battle when both confirmed
   if (trap.role === 'p0') {
-    const psnap = await fb.db.ref('traps/'+trap.code+'/players').once('value');
+    const psnap = await fb.db.ref('rooms/t'+trap.code+'/players').once('value');
     const ps = psnap.val() || {};
     if (ps.p0 && ps.p0.confirmed && ps.p1 && ps.p1.confirmed) {
       const startTurn = Math.random() < 0.5 ? 'p0' : 'p1';
-      await fb.db.ref('traps/'+trap.code+'/state').set({ phase:'battle', turn:startTurn, revealed_p0:{}, revealed_p1:{} });
-      await fb.db.ref('traps/'+trap.code+'/meta/status').set('active');
+      await fb.db.ref('rooms/t'+trap.code+'/state').set({ phase:'battle', turn:startTurn, revealed_p0:{}, revealed_p1:{} });
+      await fb.db.ref('rooms/t'+trap.code+'/meta/status').set('active');
     }
   } else {
     // Guest: poll once for host confirm + trigger transition idempotently
     setTimeout(async () => {
-      const ssnap = await fb.db.ref('traps/'+trap.code+'/state').once('value');
+      const ssnap = await fb.db.ref('rooms/t'+trap.code+'/state').once('value');
       const st = ssnap.val() || {};
       if (st.phase === 'plant') {
-        const psnap = await fb.db.ref('traps/'+trap.code+'/players').once('value');
+        const psnap = await fb.db.ref('rooms/t'+trap.code+'/players').once('value');
         const ps = psnap.val() || {};
         if (ps.p0 && ps.p0.confirmed && ps.p1 && ps.p1.confirmed) {
           const startTurn = Math.random() < 0.5 ? 'p0' : 'p1';
-          await fb.db.ref('traps/'+trap.code+'/state').set({ phase:'battle', turn:startTurn, revealed_p0:{}, revealed_p1:{} });
+          await fb.db.ref('rooms/t'+trap.code+'/state').set({ phase:'battle', turn:startTurn, revealed_p0:{}, revealed_p1:{} });
         }
       }
     }, 600);
@@ -5213,7 +5231,7 @@ async function trapConfirmPlants() {
 async function trapEnterBattle(state) {
   trapShowStage('trapBattle');
   // Fetch bombs (only mine — opponent bombs hidden)
-  const bsnap = await fb.db.ref('traps/'+trap.code+'/bombs').once('value');
+  const bsnap = await fb.db.ref('rooms/t'+trap.code+'/bombs').once('value');
   const bombs = bsnap.val() || {};
   trap._myBombsInMyBoard = bombs[trap.role] || [];                 // what opponent planted in MY board
   trap._myBombsInOppBoard = bombs[trap.opponentRole] || [];        // what I planted in OPPONENT's board
@@ -5226,7 +5244,7 @@ async function trapEnterBattle(state) {
   banner.className = 'trap-turn-banner ' + (myTurn ? 'my-turn' : 'opp-turn');
   banner.textContent = myTurn ? '🎯 دورك! اختر مربعاً من لوحتك' : '⏳ دور ' + (trap.oppName || 'الخصم');
   // Refresh hearts from latest players
-  const psnap = await fb.db.ref('traps/'+trap.code+'/players').once('value');
+  const psnap = await fb.db.ref('rooms/t'+trap.code+'/players').once('value');
   trapRenderHearts((psnap.val()||{}).p0||{}, (psnap.val()||{}).p1||{});
 }
 
@@ -5258,7 +5276,7 @@ function trapRenderBoard(boardId, state, isMine) {
 
 async function trapPickCell(i) {
   const code = trap.code; if (!code) return;
-  const ssnap = await fb.db.ref('traps/'+code+'/state').once('value');
+  const ssnap = await fb.db.ref('rooms/t'+code+'/state').once('value');
   const st = ssnap.val() || {};
   if (st.turn !== trap.role || st.phase !== 'battle') return;
   const myRevealedKey = 'revealed_' + trap.role;
@@ -5270,7 +5288,7 @@ async function trapPickCell(i) {
   updates['state/' + myRevealedKey + '/' + i] = isBomb ? 'bomb' : 'safe';
   let newHearts = null;
   if (isBomb) {
-    const psnap = await fb.db.ref('traps/'+code+'/players/'+trap.role).once('value');
+    const psnap = await fb.db.ref('rooms/t'+code+'/players/'+trap.role).once('value');
     const me = psnap.val() || {};
     newHearts = Math.max(0, (me.hearts||0) - 1);
     updates['players/' + trap.role + '/hearts'] = newHearts;
@@ -5278,10 +5296,10 @@ async function trapPickCell(i) {
   // Determine next turn / end state
   const nextTurn = (trap.role === 'p0') ? 'p1' : 'p0';
   updates['state/turn'] = nextTurn;
-  await fb.db.ref('traps/'+code).update(updates);
+  await fb.db.ref('rooms/t'+code).update(updates);
   if (isBomb && newHearts === 0) {
     // Opponent wins
-    await fb.db.ref('traps/'+code+'/state').update({ phase:'end', winner: trap.opponentRole });
+    await fb.db.ref('rooms/t'+code+'/state').update({ phase:'end', winner: trap.opponentRole });
   }
 }
 
@@ -5294,15 +5312,15 @@ async function trapEnterEnd(state) {
   if (won) { try { if (typeof launchConfetti==='function') launchConfetti(); } catch(e){} }
   // Cleanup if I'm host after a delay
   if (trap.role === 'p0') {
-    setTimeout(()=>{ try { fb.db.ref('traps/'+trap.code).remove(); } catch(e){} }, 8000);
+    setTimeout(()=>{ try { fb.db.ref('rooms/t'+trap.code).remove(); } catch(e){} }, 8000);
   }
 }
 
 function leaveTrap() {
   trapDetachListeners();
   try {
-    if (trap.code && trap.role === 'p0') fb.db.ref('traps/'+trap.code).remove();
-    else if (trap.code && trap.role === 'p1') fb.db.ref('traps/'+trap.code+'/players/p1').remove();
+    if (trap.code && trap.role === 'p0') fb.db.ref('rooms/t'+trap.code).remove();
+    else if (trap.code && trap.role === 'p1') fb.db.ref('rooms/t'+trap.code+'/players/p1').remove();
   } catch(e){}
   trap.code = null; trap.role = null; trap.opponentRole = null;
   trap.myPlants = []; trap.confirmed = false;
