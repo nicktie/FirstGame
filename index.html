@@ -153,7 +153,9 @@ body {
 .cat-physio   { background:rgba(124,92,214,0.13);   color:#9b80e8; border:1px solid rgba(124,92,214,0.32); }
 .cat-nutrition{ background:rgba(124,179,66,0.14);   color:#9bc55a; border:1px solid rgba(124,179,66,0.32); }
 .cat-section-label { flex-basis:100%; text-align:center; font-family:'Tajawal',sans-serif; font-size:0.78rem; font-weight:700; color:var(--gold); margin:6px 0 2px; padding-top:4px; border-top:1px dashed var(--border); opacity:0.85; }
-.section-pill { display:inline-block; background:rgba(201,168,76,0.12); color:var(--gold); border:1.5px solid var(--gold); border-radius:50px; padding:6px 16px; font-family:'Tajawal',sans-serif; font-size:0.88rem; font-weight:700; margin:14px 0 8px; box-shadow:0 0 0 3px rgba(201,168,76,0.05); }
+.section-pill { display:inline-block; background:rgba(201,168,76,0.12); color:var(--gold); border:1.5px solid var(--gold); border-radius:50px; padding:6px 16px; font-family:'Tajawal',sans-serif; font-size:0.88rem; font-weight:700; box-shadow:0 0 0 3px rgba(201,168,76,0.05); white-space:nowrap; }
+.section-divider { display:flex; align-items:center; gap:12px; margin:22px 0 12px; }
+.section-divider::before, .section-divider::after { content:''; flex:1; height:1px; background:linear-gradient(to right, transparent, var(--gold), transparent); opacity:0.45; }
 .q-num { font-size:0.76rem; color:var(--muted); }
 .question { font-family:'Tajawal',sans-serif; font-size:clamp(1rem,3vw,1.25rem); font-weight:700; line-height:1.65; margin-bottom:20px; color:var(--text); }
 .turn-indicator { display:flex; align-items:center; gap:10px; background:var(--option-bg); border-radius:12px; padding:10px 15px; margin-bottom:16px; border:1px solid var(--border); font-size:0.85rem; transition:all 0.3s; }
@@ -844,14 +846,14 @@ body.theme-gold .net-indicator { color:var(--gold); }
       <div class="online-panel-title">🆕 إنشاء غرفة</div>
       <div class="online-panel-sub">اختر الفئة وعدد الأسئلة من فوق، ثم أنشئ غرفة وشارك الرمز مع أصحابك.</div>
       <input class="online-input" id="hostName" type="text" maxlength="16" placeholder="اسمك (المضيف يلعب أيضاً)">
-      <div class="section-pill">⏱️ الوقت لكل سؤال</div>
+      <div class="section-divider"><span class="section-pill">⏱️ الوقت لكل سؤال</span></div>
       <div class="timer-options" id="onlineTimerOpts">
         <div class="timer-opt" onclick="setOnlineTimer(10,this)">10 ث</div>
         <div class="timer-opt active" onclick="setOnlineTimer(15,this)">15 ث</div>
         <div class="timer-opt" onclick="setOnlineTimer(20,this)">20 ث</div>
         <div class="timer-opt" onclick="setOnlineTimer(30,this)">30 ث</div>
       </div>
-      <div class="section-pill">📂 الفئات</div>
+      <div class="section-divider"><span class="section-pill">📂 الفئات</span></div>
       <div class="cat-tabs" style="margin-bottom:6px">
         <button class="cat-tab active" onclick="setCat('all',this)">🌐 الكل</button>
         <button class="cat-tab" onclick="setCat('general',this)">💡 معلومات عامة</button>
@@ -868,7 +870,7 @@ body.theme-gold .net-indicator { color:var(--gold); }
         <button class="cat-tab" onclick="setCat('physio',this)">🦴 العلاج الطبيعي</button>
         <button class="cat-tab" onclick="setCat('nutrition',this)">🥗 التغذية الصحية</button>
       </div>
-      <div class="section-pill">🎯 مستوى الصعوبة</div>
+      <div class="section-divider"><span class="section-pill">🎯 مستوى الصعوبة</span></div>
       <div class="diff-filter-row">
         <div class="diff-filter active" onclick="setDiff('all',this)">🌐 الكل</div>
         <div class="diff-filter" onclick="setDiff('easy',this)">🟢 سهل</div>
@@ -876,7 +878,7 @@ body.theme-gold .net-indicator { color:var(--gold); }
         <div class="diff-filter" onclick="setDiff('hard',this)">🔴 صعب</div>
         <div class="diff-filter" onclick="setDiff('veryhard',this)">💎 صعب جداً</div>
       </div>
-      <div class="section-pill">🔢 عدد الأسئلة</div>
+      <div class="section-divider"><span class="section-pill">🔢 عدد الأسئلة</span></div>
       <div class="qcount-wrap">
         <div class="qcount-grid">
           <div class="qcount-btn active" onclick="setCount(5,this)"><span class="qn">5</span><span class="ql">⚡ سريع</span></div>
