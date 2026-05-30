@@ -156,6 +156,24 @@ body {
 .section-pill { display:inline-block; background:rgba(201,168,76,0.12); color:var(--gold); border:1.5px solid var(--gold); border-radius:50px; padding:6px 16px; font-family:'Tajawal',sans-serif; font-size:0.88rem; font-weight:700; box-shadow:0 0 0 3px rgba(201,168,76,0.05); white-space:nowrap; }
 .section-divider { display:flex; align-items:center; gap:12px; margin:22px 0 12px; }
 .section-divider::before, .section-divider::after { content:''; flex:1; height:1px; background:linear-gradient(to right, transparent, var(--gold), transparent); opacity:0.45; }
+.online-submode-row { display:flex; gap:10px; margin-bottom:12px; }
+.submode-card { flex:1; background:var(--option-bg); border:1.5px solid var(--border); border-radius:14px; padding:14px 8px; text-align:center; cursor:pointer; transition:all 0.18s; }
+.submode-card:hover { border-color:var(--gold); }
+.submode-card.active { border-color:var(--gold); background:rgba(201,168,76,0.12); box-shadow:0 0 0 3px rgba(201,168,76,0.05); }
+.spin-team-overlay { position:fixed; inset:0; background:rgba(0,0,0,0.75); z-index:9500; display:flex; flex-direction:column; align-items:center; justify-content:center; backdrop-filter:blur(6px); }
+.spin-team-title { font-family:'Tajawal',sans-serif; font-weight:900; font-size:1.3rem; color:var(--gold); margin-bottom:18px; }
+.spin-team-pill { font-family:'Tajawal',sans-serif; font-weight:900; font-size:2.2rem; padding:18px 36px; border-radius:18px; border:2.5px solid; min-width:240px; text-align:center; transition:transform 0.18s, box-shadow 0.18s; }
+.team-turn-banner { display:flex; align-items:center; justify-content:center; gap:8px; padding:10px 14px; border-radius:12px; margin-bottom:12px; font-family:'Tajawal',sans-serif; font-weight:700; font-size:0.95rem; }
+.team-turn-banner.t0 { background:rgba(100,149,237,0.15); border:1px solid #6495ed; color:#6495ed; }
+.team-turn-banner.t1 { background:rgba(224,112,80,0.15); border:1px solid #e07050; color:#e07050; }
+.online-opt.spectating { opacity:0.55; pointer-events:none; }
+.online-team-roster { display:flex; gap:10px; margin-bottom:12px; }
+.online-team-col { flex:1; background:var(--card-bg); border:1.5px solid var(--border); border-radius:14px; padding:10px; min-height:120px; }
+.online-team-col.t0 { border-color:#6495ed55; }
+.online-team-col.t1 { border-color:#e0705055; }
+.online-team-col-title { text-align:center; font-family:'Tajawal',sans-serif; font-weight:900; font-size:0.95rem; margin-bottom:8px; }
+.online-team-col.t0 .online-team-col-title { color:#6495ed; }
+.online-team-col.t1 .online-team-col-title { color:#e07050; }
 .q-num { font-size:0.76rem; color:var(--muted); }
 .question { font-family:'Tajawal',sans-serif; font-size:clamp(1rem,3vw,1.25rem); font-weight:700; line-height:1.65; margin-bottom:20px; color:var(--text); }
 .turn-indicator { display:flex; align-items:center; gap:10px; background:var(--option-bg); border-radius:12px; padding:10px 15px; margin-bottom:16px; border:1px solid var(--border); font-size:0.85rem; transition:all 0.3s; }
@@ -851,6 +869,23 @@ body.theme-gold .net-indicator { color:var(--gold); }
       <div class="online-panel-title">🆕 إنشاء غرفة</div>
       <div class="online-panel-sub">اختر الفئة وعدد الأسئلة من فوق، ثم أنشئ غرفة وشارك الرمز مع أصحابك.</div>
       <input class="online-input" id="hostName" type="text" maxlength="16" placeholder="اسمك (المضيف يلعب أيضاً)">
+      <div class="section-divider"><span class="section-pill">🎮 نوع اللعبة</span></div>
+      <div class="online-submode-row">
+        <div class="submode-card active" id="submodeClassicCard" onclick="setOnlineSubMode('classic')">
+          <div style="font-size:1.7rem;line-height:1">🎯</div>
+          <div style="font-family:'Tajawal',sans-serif;font-weight:900;color:var(--gold);margin-top:4px">الكلاسيكي</div>
+          <div style="font-size:0.72rem;color:var(--muted);margin-top:2px">الأسرع جواباً يفوز</div>
+        </div>
+        <div class="submode-card" id="submodeTeamsCard" onclick="setOnlineSubMode('teams')">
+          <div style="font-size:1.7rem;line-height:1">🤝</div>
+          <div style="font-family:'Tajawal',sans-serif;font-weight:900;color:var(--gold);margin-top:4px">الفرق</div>
+          <div style="font-size:0.72rem;color:var(--muted);margin-top:2px">لاعب بدوره + نقاط للفريق</div>
+        </div>
+      </div>
+      <div id="onlineTeamNames" style="display:none">
+        <input class="online-input" id="onlineTeam0Name" type="text" maxlength="16" value="الفريق الأزرق" style="border-color:#6495ed55">
+        <input class="online-input" id="onlineTeam1Name" type="text" maxlength="16" value="الفريق الأحمر" style="border-color:#e0705055">
+      </div>
       <div class="section-divider"><span class="section-pill">⏱️ الوقت لكل سؤال</span></div>
       <div class="timer-options" id="onlineTimerOpts">
         <div class="timer-opt" onclick="setOnlineTimer(10,this)">10 ث</div>
@@ -1201,6 +1236,10 @@ body.theme-gold .net-indicator { color:var(--gold); }
     </div>
     <div class="lobby-players-title">👥 اللاعبون: <span id="lobbyCount">0</span></div>
     <div class="lobby-players" id="lobbyPlayers"></div>
+    <div id="lobbyTeams" class="online-team-roster" style="display:none">
+      <div class="online-team-col t0"><div class="online-team-col-title" id="lobbyT0Name">الفريق الأزرق</div><div id="lobbyT0Players" class="lobby-players"></div></div>
+      <div class="online-team-col t1"><div class="online-team-col-title" id="lobbyT1Name">الفريق الأحمر</div><div id="lobbyT1Players" class="lobby-players"></div></div>
+    </div>
     <div id="lobbyHostControls" style="display:none">
       <button class="start-btn" style="margin-top:16px" id="lobbyStartBtn" onclick="hostStartGame()">🚀 ابدأ اللعبة</button>
     </div>
@@ -1214,12 +1253,14 @@ body.theme-gold .net-indicator { color:var(--gold); }
       <div class="online-qnum" id="onlineQNum">السؤال 1</div>
       <div class="online-timer" id="onlineTimer">15</div>
     </div>
+    <div id="onlineTeamTurn" class="team-turn-banner" style="display:none"></div>
     <div class="online-qcard">
       <div class="online-cat" id="onlineCat"></div>
       <img id="onlineQImage" style="display:none;max-width:100%;max-height:180px;object-fit:contain;border-radius:10px;margin:0 auto 10px">
       <div class="online-qtext" id="onlineQText">...</div>
     </div>
     <div class="online-options" id="onlineOptions"></div>
+    <div class="lifelines-row" id="onlineLifelinesRow" style="display:none"></div>
     <div class="online-status" id="onlineStatus"></div>
     <div class="reactions-bar">
       <button class="reaction-btn" onclick="sendReaction('👏')">👏</button>
@@ -4076,8 +4117,16 @@ let online = {
   code:null, isHost:false, playerId:null, name:null, timer:15, avatar:'🦁',
   questions:[], qIndex:0, count:0,
   playersRef:null, stateRef:null, listeners:[],
-  qStartAt:0, answered:false, localTimerInt:null, hostTickTimeout:null
+  qStartAt:0, answered:false, localTimerInt:null, hostTickTimeout:null,
+  // Teams mode
+  subMode:'classic',         // 'classic' | 'teams'
+  teamNames:['الفريق الأزرق','الفريق الأحمر'],
+  team:null,                 // my team idx (0|1) when teams mode
+  startingTeam:0,            // who starts (revealed by spin)
+  myLifelines:{l50:false,llucky:false,lfriend:false,jdouble:false},
+  jokerActive:false          // double-points active for this question
 };
+let onlineSubMode = 'classic'; // host's create-panel choice
 const ONLINE_BASE_PTS = 1000;
 const ONLINE_REVEAL_MS = 5000;
 const ONLINE_EMOJIS = ['🦁','🦊','🦅','🐯','🦄','🐼','🐸','🐵','🐲','🦖','😎','🤖','👻','🐱','🐶','🦉','🐺','🦝'];
@@ -4137,6 +4186,13 @@ function enterOnlineScreen() {
   document.getElementById('onlineScreen').style.display='block';
 }
 
+function setOnlineSubMode(m) {
+  onlineSubMode = m;
+  document.getElementById('submodeClassicCard').classList.toggle('active', m==='classic');
+  document.getElementById('submodeTeamsCard').classList.toggle('active', m==='teams');
+  document.getElementById('onlineTeamNames').style.display = m==='teams' ? 'block' : 'none';
+}
+
 async function createRoom() {
   if (!ensureFirebase()) return;
   const name = (document.getElementById('hostName').value.trim()) || 'المضيف';
@@ -4146,13 +4202,20 @@ async function createRoom() {
   if (!pool.length) { showToast('⚠️ لا توجد أسئلة كافية', 'var(--wrong)'); return; }
 
   const code = genCode();
-  Object.assign(online, { code, isHost:true, playerId:uid(), name, questions:pool, count:pool.length, qIndex:0 });
+  const isTeams = onlineSubMode === 'teams';
+  const teamNames = isTeams ? [
+    (document.getElementById('onlineTeam0Name').value.trim() || 'الفريق الأزرق'),
+    (document.getElementById('onlineTeam1Name').value.trim() || 'الفريق الأحمر')
+  ] : ['الفريق الأزرق','الفريق الأحمر'];
+  Object.assign(online, { code, isHost:true, playerId:uid(), name, questions:pool, count:pool.length, qIndex:0, subMode: isTeams?'teams':'classic', teamNames, team: isTeams?0:null, jokerActive:false, myLifelines:{l50:false,llucky:false,lfriend:false,jdouble:false} });
   const roomRef = fb.db.ref('rooms/'+code);
   await roomRef.set({
-    meta:{ status:'lobby', timer:online.timer, count:pool.length, createdAt:firebase.database.ServerValue.TIMESTAMP },
+    meta:{ status:'lobby', mode: isTeams?'teams':'classic', teamNames, timer:online.timer, count:pool.length, createdAt:firebase.database.ServerValue.TIMESTAMP },
     state:{ phase:'lobby', qIndex:0 }
   });
-  await roomRef.child('players/'+online.playerId).set({ name, avatar:online.avatar, score:0, joinedAt:firebase.database.ServerValue.TIMESTAMP });
+  const playerRec = { name, avatar:online.avatar, score:0, joinedAt:firebase.database.ServerValue.TIMESTAMP };
+  if (isTeams) playerRec.team = 0;
+  await roomRef.child('players/'+online.playerId).set(playerRec);
   attachRoomListeners(code);
   saveOnlineSession();
   enterOnlineScreen(); showOnlineStage('onlineLobby');
@@ -4172,9 +4235,21 @@ async function joinRoom() {
   if (!snap.exists()) { showToast('⚠️ غرفة غير موجودة', 'var(--wrong)'); return; }
   const meta = snap.val();
   if (meta.status!=='lobby') { showToast('⚠️ اللعبة بدأت بالفعل', 'var(--wrong)'); return; }
-  Object.assign(online, { code, isHost:false, playerId:uid(), name, timer:meta.timer||15, count:meta.count||0 });
+  const isTeams = meta.mode === 'teams';
+  // For teams mode, auto-balance the player onto the smaller team
+  let assignedTeam = null;
+  if (isTeams) {
+    const plSnap = await roomRef.child('players').once('value');
+    const players = plSnap.val() || {};
+    let c0 = 0, c1 = 0;
+    Object.values(players).forEach(p => { if (p.team===0) c0++; else if (p.team===1) c1++; });
+    assignedTeam = (c0 <= c1) ? 0 : 1;
+  }
+  Object.assign(online, { code, isHost:false, playerId:uid(), name, timer:meta.timer||15, count:meta.count||0, subMode: isTeams?'teams':'classic', teamNames: meta.teamNames || online.teamNames, team: assignedTeam, jokerActive:false, myLifelines:{l50:false,llucky:false,lfriend:false,jdouble:false} });
   const pRef = roomRef.child('players/'+online.playerId);
-  await pRef.set({ name, avatar:online.avatar, score:0, joinedAt:firebase.database.ServerValue.TIMESTAMP });
+  const rec = { name, avatar:online.avatar, score:0, joinedAt:firebase.database.ServerValue.TIMESTAMP };
+  if (isTeams) rec.team = assignedTeam;
+  await pRef.set(rec);
   attachRoomListeners(code);
   saveOnlineSession();
   enterOnlineScreen(); showOnlineStage('onlineLobby');
@@ -4230,18 +4305,41 @@ function spawnReaction(emoji) {
 function renderLobbyPlayers(players) {
   const ids = Object.keys(players);
   document.getElementById('lobbyCount').textContent = ids.length;
-  const box = document.getElementById('lobbyPlayers'); box.innerHTML='';
-  ids.forEach(id=>{
-    const chip = document.createElement('div');
-    chip.className = 'lobby-player-chip';
-    const av = players[id].name==='سهى' ? '💜' : (players[id].avatar || '🙂');
-    chip.textContent = av + ' ' + players[id].name + (id===online.playerId ? ' (أنت)' : '');
-    box.appendChild(chip);
-  });
+  const flat = document.getElementById('lobbyPlayers');
+  const teamsBox = document.getElementById('lobbyTeams');
+  if (online.subMode === 'teams') {
+    flat.style.display = 'none';
+    teamsBox.style.display = 'flex';
+    document.getElementById('lobbyT0Name').textContent = (online.teamNames && online.teamNames[0]) || 'الفريق الأزرق';
+    document.getElementById('lobbyT1Name').textContent = (online.teamNames && online.teamNames[1]) || 'الفريق الأحمر';
+    const c0 = document.getElementById('lobbyT0Players'); c0.innerHTML = '';
+    const c1 = document.getElementById('lobbyT1Players'); c1.innerHTML = '';
+    ids.forEach(id => {
+      const p = players[id];
+      const chip = document.createElement('div'); chip.className = 'lobby-player-chip';
+      const av = p.name==='سهى' ? '💜' : (p.avatar || '🙂');
+      chip.textContent = av + ' ' + p.name + (id===online.playerId ? ' (أنت)' : '');
+      (p.team === 1 ? c1 : c0).appendChild(chip);
+    });
+  } else {
+    teamsBox.style.display = 'none';
+    flat.style.display = 'flex';
+    flat.innerHTML = '';
+    ids.forEach(id => {
+      const chip = document.createElement('div');
+      chip.className = 'lobby-player-chip';
+      const av = players[id].name==='سهى' ? '💜' : (players[id].avatar || '🙂');
+      chip.textContent = av + ' ' + players[id].name + (id===online.playerId ? ' (أنت)' : '');
+      flat.appendChild(chip);
+    });
+  }
 }
 
 function onStateChange(s) {
+  // Cache mode-relevant fields locally
+  if (typeof s.startingTeam === 'number') online.startingTeam = s.startingTeam;
   if (s.phase==='lobby') showOnlineStage('onlineLobby');
+  else if (s.phase==='spin') showSpinTeams(s);
   else if (s.phase==='question') { online.qIndex = s.qIndex; showQuestion(s); }
   else if (s.phase==='reveal') showReveal(s);
   else if (s.phase==='final') showOnlineFinalStage();
@@ -4250,7 +4348,14 @@ function onStateChange(s) {
 async function hostStartGame() {
   if (!online.isHost) return;
   await fb.db.ref('rooms/'+online.code+'/meta/status').set('active');
-  hostBroadcastQuestion(0);
+  if (online.subMode === 'teams') {
+    online.startingTeam = Math.random() < 0.5 ? 0 : 1;
+    await fb.db.ref('rooms/'+online.code+'/state').set({ phase:'spin', startingTeam: online.startingTeam });
+    clearTimeout(online.hostTickTimeout);
+    online.hostTickTimeout = setTimeout(()=>hostBroadcastQuestion(0), 3200);
+  } else {
+    hostBroadcastQuestion(0);
+  }
 }
 
 async function hostBroadcastQuestion(i) {
@@ -4259,11 +4364,23 @@ async function hostBroadcastQuestion(i) {
   saveOnlineSession();
   const q = online.questions[i];
   await fb.db.ref('rooms/'+online.code+'/answers/'+i).remove();
-  await fb.db.ref('rooms/'+online.code+'/state').set({
+  const state = {
     phase:'question', qIndex:i,
     current:{ q:q.q, opts:q.opts, cat:q.cat, img:q.img||null },
     startAt: firebase.database.ServerValue.TIMESTAMP
-  });
+  };
+  if (online.subMode === 'teams') {
+    state.startingTeam = online.startingTeam;
+    state.activeTeam = (online.startingTeam + i) % 2;
+    // pick a random player belonging to that team
+    const plSnap = await fb.db.ref('rooms/'+online.code+'/players').once('value');
+    const players = plSnap.val() || {};
+    const teamPids = Object.keys(players).filter(pid => players[pid].team === state.activeTeam);
+    state.activePid = teamPids.length ? teamPids[Math.floor(Math.random()*teamPids.length)] : null;
+    state.activeName = state.activePid ? (players[state.activePid].name || '') : '';
+    state.current.ans = q.ans; // so the active player's lifelines can work
+  }
+  await fb.db.ref('rooms/'+online.code+'/state').set(state);
   clearTimeout(online.hostTickTimeout);
   online.hostTickTimeout = setTimeout(()=>hostReveal(i), online.timer*1000 + 700);
 }
@@ -4275,20 +4392,37 @@ async function hostReveal(i) {
   const ans = ansSnap.val() || {};
   const plSnap = await fb.db.ref('rooms/'+online.code+'/players').once('value');
   const players = plSnap.val() || {};
+  const stSnap = await fb.db.ref('rooms/'+online.code+'/state').once('value');
+  const st = stSnap.val() || {};
   const updates = {};
   const dist = [0,0,0];
-  Object.keys(players).forEach(pid=>{
-    const a = ans[pid];
-    let pts = 0;
+
+  if (online.subMode === 'teams') {
+    // Only the active player's answer counts; score goes into their team (via player.score)
+    const activePid = st.activePid;
+    const a = activePid ? ans[activePid] : null;
     if (a && typeof a.choice==='number' && a.choice>=0 && a.choice<dist.length) dist[a.choice]++;
-    if (a && a.choice===q.ans) {
-      const frac = Math.max(0, Math.min(1, 1 - (a.timeMs/(online.timer*1000))));
-      pts = Math.round(ONLINE_BASE_PTS*0.5 + ONLINE_BASE_PTS*0.5*frac);
+    let pts = 0;
+    if (a && a.choice===q.ans) pts = a.joker ? 20 : 10;
+    if (activePid) {
+      updates['players/'+activePid+'/score'] = (players[activePid].score||0) + pts;
+      updates['answers/'+i+'/'+activePid+'/correct'] = a ? (a.choice===q.ans) : false;
+      updates['answers/'+i+'/'+activePid+'/pts'] = pts;
     }
-    updates['players/'+pid+'/score'] = (players[pid].score||0) + pts;
-    updates['answers/'+i+'/'+pid+'/correct'] = a ? (a.choice===q.ans) : false;
-    updates['answers/'+i+'/'+pid+'/pts'] = pts;
-  });
+  } else {
+    Object.keys(players).forEach(pid=>{
+      const a = ans[pid];
+      let pts = 0;
+      if (a && typeof a.choice==='number' && a.choice>=0 && a.choice<dist.length) dist[a.choice]++;
+      if (a && a.choice===q.ans) {
+        const frac = Math.max(0, Math.min(1, 1 - (a.timeMs/(online.timer*1000))));
+        pts = Math.round(ONLINE_BASE_PTS*0.5 + ONLINE_BASE_PTS*0.5*frac);
+      }
+      updates['players/'+pid+'/score'] = (players[pid].score||0) + pts;
+      updates['answers/'+i+'/'+pid+'/correct'] = a ? (a.choice===q.ans) : false;
+      updates['answers/'+i+'/'+pid+'/pts'] = pts;
+    });
+  }
   await fb.db.ref('rooms/'+online.code).update(updates);
   await fb.db.ref('rooms/'+online.code+'/state').update({ phase:'reveal', ans:q.ans, dist });
   clearTimeout(online.hostTickTimeout);
@@ -4302,6 +4436,8 @@ function showQuestion(s) {
   showOnlineStage('onlineQuestion');
   online.answered = false;
   online.qStartAt = Date.now();
+  online.jokerActive = false;
+  online.myLifelines = { l50:false, llucky:false, lfriend:false, jdouble:false };
   const cur = s.current || {};
   document.getElementById('onlineQNum').textContent = `السؤال ${s.qIndex+1} من ${online.count}`;
   document.getElementById('onlineCat').textContent = catLabels[cur.cat] ? catLabels[cur.cat].label : '';
@@ -4309,16 +4445,129 @@ function showQuestion(s) {
   pushRecentQuestion(cur.q);
   const oImg = document.getElementById('onlineQImage');
   if (cur.img) { oImg.src = cur.img; oImg.style.display='block'; } else { oImg.style.display='none'; oImg.src=''; }
+  const isTeams = online.subMode === 'teams';
+  const amActive = isTeams ? (s.activePid === online.playerId) : true;
+  const banner = document.getElementById('onlineTeamTurn');
+  if (isTeams) {
+    const teamIdx = (typeof s.activeTeam === 'number') ? s.activeTeam : 0;
+    const teamName = (online.teamNames && online.teamNames[teamIdx]) || (teamIdx===0?'الفريق الأزرق':'الفريق الأحمر');
+    banner.className = 'team-turn-banner t' + teamIdx;
+    banner.style.display = 'flex';
+    const activeName = s.activeName || '';
+    const myTurnText = amActive ? '🎯 دورك! جاوب الآن'
+      : (activeName ? '⏳ دور ' + activeName + ' (' + teamName + ')' : '⏳ دور ' + teamName);
+    banner.innerHTML = '<span>' + (teamIdx===0?'🔵':'🔴') + '</span><span>' + myTurnText + '</span>';
+  } else {
+    banner.style.display = 'none';
+  }
   const box = document.getElementById('onlineOptions'); box.innerHTML='';
   (cur.opts||[]).forEach((opt,idx)=>{
     const d = document.createElement('div');
-    d.className = 'online-opt oc'+idx;
+    d.className = 'online-opt oc'+idx + (isTeams && !amActive ? ' spectating' : '');
     d.textContent = opt;
-    d.onclick = ()=>submitOnlineAnswer(idx, d);
+    if (amActive) d.onclick = ()=>submitOnlineAnswer(idx, d);
     box.appendChild(d);
   });
+  // Online lifelines + joker — only for the active player in teams mode
+  const llRow = document.getElementById('onlineLifelinesRow');
+  if (isTeams && amActive) {
+    online._onlineQAns = (typeof cur.ans === 'number') ? cur.ans : null;
+    renderOnlineLifelines();
+  } else {
+    llRow.style.display = 'none'; llRow.innerHTML = '';
+  }
   document.getElementById('onlineStatus').textContent = '';
   startOnlineCountdown();
+}
+
+function renderOnlineLifelines() {
+  const row = document.getElementById('onlineLifelinesRow'); if (!row) return;
+  const u = online.myLifelines || {};
+  const items = [
+    {k:'l50',     emoji:'🪓', label:'٥٠:٥٠', fn:'useOnlineLifeline50()'},
+    {k:'llucky',  emoji:'🎲', label:'حظ',     fn:'useOnlineLifelineLucky()'},
+    {k:'lfriend', emoji:'📞', label:'صديق',   fn:'useOnlineLifelineFriend()'},
+    {k:'jdouble', emoji:'🃏', label:'جوكر ×2', fn:'useOnlineLifelineJoker()'}
+  ];
+  row.innerHTML = items.map(it =>
+    `<button class="lifeline-btn${u[it.k]?' used':''}" ${u[it.k]?'disabled':''} onclick="${it.fn}">
+      <span class="ll-emoji">${it.emoji}</span><span class="ll-label">${it.label}</span>
+     </button>`
+  ).join('');
+  row.style.display = 'flex';
+}
+
+function _markOnlineLL(k) { if (!online.myLifelines) online.myLifelines = {}; if (online.myLifelines[k]) return false; online.myLifelines[k] = true; return true; }
+function useOnlineLifeline50() {
+  if (!_markOnlineLL('l50')) return;
+  const ans = online._onlineQAns;
+  if (typeof ans !== 'number') { renderOnlineLifelines(); return; }
+  const wrongs = [0,1,2].filter(i => i !== ans);
+  const toHide = wrongs[Math.floor(Math.random()*wrongs.length)];
+  const el = document.getElementById('onlineOptions').children[toHide];
+  if (el) { el.classList.add('lifeline-hidden'); el.onclick = null; }
+  renderOnlineLifelines();
+}
+function useOnlineLifelineLucky() {
+  if (!_markOnlineLL('llucky')) return;
+  const kids = [...document.getElementById('onlineOptions').children];
+  const visible = kids.map((el,i)=>el.classList.contains('lifeline-hidden')?-1:i).filter(i=>i>=0);
+  if (!visible.length) { renderOnlineLifelines(); return; }
+  const pick = visible[Math.floor(Math.random()*visible.length)];
+  const el = kids[pick];
+  if (el) submitOnlineAnswer(pick, el);
+  renderOnlineLifelines();
+}
+function useOnlineLifelineFriend() {
+  if (!_markOnlineLL('lfriend')) return;
+  const ans = online._onlineQAns;
+  const letters = ['أ','ب','ج'];
+  let hintIdx = ans;
+  if (typeof ans === 'number') {
+    const goodChance = Math.random() < 0.8;
+    if (!goodChance) {
+      const wrongs = [0,1,2].filter(i => i !== ans);
+      hintIdx = wrongs[Math.floor(Math.random()*wrongs.length)];
+    }
+  } else {
+    hintIdx = Math.floor(Math.random()*3);
+  }
+  showToast('📞 صديقك يهمس: الجواب على الأرجح "' + letters[hintIdx] + '"', 'var(--gold)');
+  renderOnlineLifelines();
+}
+function useOnlineLifelineJoker() {
+  if (!_markOnlineLL('jdouble')) return;
+  online.jokerActive = true;
+  showToast('🃏 جوكر مفعّل! النقاط ×٢ لهذا السؤال', 'var(--gold)');
+  renderOnlineLifelines();
+}
+
+function showSpinTeams(s) {
+  showOnlineStage('onlineLobby'); // stay on lobby visually
+  const winner = s.startingTeam || 0;
+  const overlay = document.createElement('div'); overlay.className = 'spin-team-overlay'; overlay.id = 'spinTeamOverlay';
+  const title = document.createElement('div'); title.className = 'spin-team-title'; title.textContent = '🎲 الحظ يقرّر من يبدأ…';
+  const pill = document.createElement('div'); pill.className = 'spin-team-pill';
+  overlay.appendChild(title); overlay.appendChild(pill);
+  document.body.appendChild(overlay);
+  const tn = online.teamNames || ['الفريق الأزرق','الفريق الأحمر'];
+  let n = 0;
+  const flicker = setInterval(()=>{
+    const t = n % 2;
+    pill.textContent = t===0 ? '🔵 ' + tn[0] : '🔴 ' + tn[1];
+    pill.style.borderColor = t===0 ? '#6495ed' : '#e07050';
+    pill.style.color = t===0 ? '#6495ed' : '#e07050';
+    pill.style.boxShadow = '0 0 32px ' + (t===0 ? 'rgba(100,149,237,0.5)' : 'rgba(224,112,80,0.5)');
+    n++;
+  }, 120);
+  setTimeout(()=>{
+    clearInterval(flicker);
+    pill.textContent = (winner===0 ? '🔵 ' : '🔴 ') + tn[winner] + ' يبدأ!';
+    pill.style.borderColor = winner===0 ? '#6495ed' : '#e07050';
+    pill.style.color = winner===0 ? '#6495ed' : '#e07050';
+    pill.style.transform = 'scale(1.1)';
+  }, 2400);
+  setTimeout(()=>{ try { overlay.remove(); } catch(e){} }, 3200);
 }
 
 function startOnlineCountdown() {
@@ -4342,7 +4591,10 @@ function submitOnlineAnswer(idx, el) {
   el.classList.add('picked');
   lockOnlineOptions();
   document.getElementById('onlineStatus').textContent = '✅ تم تسجيل إجابتك… في انتظار البقية';
-  fb.db.ref('rooms/'+online.code+'/answers/'+online.qIndex+'/'+online.playerId).set({ choice:idx, timeMs });
+  const rec = { choice:idx, timeMs };
+  if (online.subMode === 'teams' && online.jokerActive) rec.joker = true;
+  fb.db.ref('rooms/'+online.code+'/answers/'+online.qIndex+'/'+online.playerId).set(rec);
+  const llRow = document.getElementById('onlineLifelinesRow'); if (llRow) llRow.style.display = 'none';
 }
 
 function showReveal(s) {
@@ -4401,23 +4653,47 @@ async function showOnlineFinalStage() {
   const snap = await fb.db.ref('rooms/'+online.code+'/players').once('value');
   const players = snap.val() || {};
   const arr = Object.keys(players).map(id=>({id, ...players[id]})).sort((a,b)=>(b.score||0)-(a.score||0));
-  const medals=['🥇','🥈','🥉']; const heights=[120,160,90];
-  const top = arr.slice(0,3);
-  const disp = top.length===1?[top[0]] : top.length===2?[top[1],top[0]] : [top[1],top[0],top[2]];
-  const rmap = top.length===1?[0] : top.length===2?[1,0] : [1,0,2];
   const podium = document.getElementById('onlinePodium'); podium.innerHTML='';
-  disp.forEach((p,pos)=>{
-    if(!p) return; const rank=rmap[pos];
-    const item=document.createElement('div'); item.className='podium-item';
-    item.innerHTML=`<div class="podium-block" style="height:${heights[pos]||90}px;background:rgba(201,168,76,0.08);border:1px solid rgba(201,168,76,0.25)"><div class="podium-emoji">${medals[rank]||'🏅'}</div></div><div class="podium-name">${p.name}</div><div class="podium-score">${p.score||0}</div><div class="podium-score-lbl">نقطة</div>`;
-    podium.appendChild(item);
-  });
-  const rows=document.getElementById('onlineFinalRows'); rows.innerHTML='';
-  arr.forEach((p,i)=>{
-    const row=document.createElement('div'); row.className='final-row';
-    row.innerHTML=`<div class="final-rank-badge">${medals[i]||'🏅'}</div><div class="fr-name" style="flex:1;font-weight:700">${p.name}</div><div class="fr-score" style="font-family:'Tajawal',sans-serif;font-size:1.2rem;font-weight:900;color:var(--gold)">${p.score||0}</div>`;
-    rows.appendChild(row);
-  });
+  const rows = document.getElementById('onlineFinalRows'); rows.innerHTML='';
+  if (online.subMode === 'teams') {
+    // Team-based final
+    const t0Total = arr.filter(p=>p.team===0).reduce((s,p)=>s+(p.score||0),0);
+    const t1Total = arr.filter(p=>p.team===1).reduce((s,p)=>s+(p.score||0),0);
+    const tn = online.teamNames || ['الفريق الأزرق','الفريق الأحمر'];
+    const winnerIdx = t0Total>t1Total ? 0 : t1Total>t0Total ? 1 : -1;
+    // Two podium blocks
+    [{idx:0,total:t0Total,color:'#6495ed',emoji:'🔵'},{idx:1,total:t1Total,color:'#e07050',emoji:'🔴'}].forEach(t=>{
+      const winnerBadge = winnerIdx === t.idx ? '🏆' : '🥈';
+      const item=document.createElement('div'); item.className='podium-item';
+      item.innerHTML=`<div class="podium-block" style="height:160px;background:${t.color}14;border:1px solid ${t.color}55"><div class="podium-emoji">${winnerBadge}</div></div><div class="podium-name" style="color:${t.color}">${t.emoji} ${tn[t.idx]}</div><div class="podium-score" style="color:${t.color}">${t.total}</div><div class="podium-score-lbl">نقطة</div>`;
+      podium.appendChild(item);
+    });
+    // Individual rows underneath
+    arr.forEach(p=>{
+      const tColor = p.team===1 ? '#e07050' : '#6495ed';
+      const row=document.createElement('div'); row.className='final-row'; row.style.borderColor = tColor+'66';
+      row.innerHTML=`<div class="final-rank-badge" style="background:${tColor}22;color:${tColor}">${p.team===1?'🔴':'🔵'}</div><div class="fr-name" style="flex:1;font-weight:700;color:${tColor}">${p.avatar||'🙂'} ${p.name}</div><div class="fr-score" style="font-family:'Tajawal',sans-serif;font-size:1.2rem;font-weight:900;color:var(--gold)">${p.score||0}</div>`;
+      rows.appendChild(row);
+    });
+    if (winnerIdx >= 0) showToast('🏆 الفائز: ' + tn[winnerIdx], winnerIdx===0?'#6495ed':'#e07050');
+    else showToast('🤝 تعادل بين الفريقين!', 'var(--gold)');
+  } else {
+    const medals=['🥇','🥈','🥉']; const heights=[120,160,90];
+    const top = arr.slice(0,3);
+    const disp = top.length===1?[top[0]] : top.length===2?[top[1],top[0]] : [top[1],top[0],top[2]];
+    const rmap = top.length===1?[0] : top.length===2?[1,0] : [1,0,2];
+    disp.forEach((p,pos)=>{
+      if(!p) return; const rank=rmap[pos];
+      const item=document.createElement('div'); item.className='podium-item';
+      item.innerHTML=`<div class="podium-block" style="height:${heights[pos]||90}px;background:rgba(201,168,76,0.08);border:1px solid rgba(201,168,76,0.25)"><div class="podium-emoji">${medals[rank]||'🏅'}</div></div><div class="podium-name">${p.name}</div><div class="podium-score">${p.score||0}</div><div class="podium-score-lbl">نقطة</div>`;
+      podium.appendChild(item);
+    });
+    arr.forEach((p,i)=>{
+      const row=document.createElement('div'); row.className='final-row';
+      row.innerHTML=`<div class="final-rank-badge">${medals[i]||'🏅'}</div><div class="fr-name" style="flex:1;font-weight:700">${p.name}</div><div class="fr-score" style="font-family:'Tajawal',sans-serif;font-size:1.2rem;font-weight:900;color:var(--gold)">${p.score||0}</div>`;
+      rows.appendChild(row);
+    });
+  }
   try { if (typeof launchConfetti==='function') launchConfetti(); } catch(e){}
 }
 
@@ -4451,7 +4727,7 @@ const ONLINE_SESSION_KEY = 'quizOnlineSession';
 
 function saveOnlineSession() {
   try {
-    const s = { code:online.code, playerId:online.playerId, name:online.name, avatar:online.avatar, isHost:online.isHost, count:online.count, timer:online.timer, ts:Date.now() };
+    const s = { code:online.code, playerId:online.playerId, name:online.name, avatar:online.avatar, isHost:online.isHost, count:online.count, timer:online.timer, subMode:online.subMode, teamNames:online.teamNames, team:online.team, startingTeam:online.startingTeam, ts:Date.now() };
     if (online.isHost) { s.questions = online.questions; s.qIndex = online.qIndex; }
     localStorage.setItem(ONLINE_SESSION_KEY, JSON.stringify(s));
   } catch(e){}
@@ -4477,7 +4753,8 @@ async function rejoinRoom() {
   try { metaSnap = await fb.db.ref('rooms/'+s.code+'/meta').once('value'); } catch(e){ showToast('⚠️ تعذّر الاتصال', 'var(--wrong)'); return; }
   if (!metaSnap.exists()) { showToast('⚠️ الغرفة لم تعد موجودة', 'var(--wrong)'); dismissOnlineRejoin(); return; }
   const meta = metaSnap.val();
-  Object.assign(online, { code:s.code, playerId:s.playerId, name:s.name, avatar:s.avatar||'🦁', isHost:!!s.isHost, count:s.count||meta.count||0, timer:s.timer||meta.timer||15 });
+  const sub = s.subMode || meta.mode || 'classic';
+  Object.assign(online, { code:s.code, playerId:s.playerId, name:s.name, avatar:s.avatar||'🦁', isHost:!!s.isHost, count:s.count||meta.count||0, timer:s.timer||meta.timer||15, subMode:sub, teamNames: s.teamNames || meta.teamNames || online.teamNames, team: s.team!=null?s.team:null, startingTeam: s.startingTeam||0, myLifelines:{l50:false,llucky:false,lfriend:false,jdouble:false}, jokerActive:false });
   if (s.isHost) { online.questions = s.questions||[]; online.qIndex = s.qIndex||0; }
   const pRef = fb.db.ref('rooms/'+s.code+'/players/'+s.playerId);
   const pSnap = await pRef.once('value');
