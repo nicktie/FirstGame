@@ -757,6 +757,11 @@ body.theme-gold .net-indicator { color:var(--gold); }
     </div>
   </div>
 
+  <div style="text-align:center;margin:8px auto 20px;max-width:620px">
+    <button class="start-btn" style="max-width:340px;background:linear-gradient(135deg,var(--gold),#a8720c)" onclick="quickPlay()">⚡ العب الآن — ٥ أسئلة عشوائية</button>
+    <div style="font-size:0.74rem;color:var(--muted);margin-top:6px">بدون إعداد — جواب سريع للتسلية</div>
+  </div>
+
   <div id="resumeBanner" style="display:none;max-width:620px;margin:0 auto 16px;background:rgba(201,168,76,0.12);border:1.5px solid var(--gold);border-radius:14px;padding:14px;text-align:center">
     <div style="font-family:'Tajawal',sans-serif;font-weight:700;color:var(--gold);margin-bottom:10px">🔄 لديك لعبة لم تكتمل</div>
     <button class="lb-tab" style="max-width:170px" onclick="resumeGame()">▶️ استئناف اللعبة</button>
@@ -1172,6 +1177,7 @@ body.theme-gold .net-indicator { color:var(--gold); }
       <div class="share-btn-row">
         <button class="share-btn share-wa" onclick="shareWhatsApp()">📲 واتساب</button>
         <button class="share-btn share-cp" onclick="copyResult()">📋 نسخ</button>
+        <button class="share-btn" style="background:var(--gold);color:var(--dark)" onclick="shareResultCard()">📸 صورة</button>
       </div>
     </div>
     <div style="display:flex;gap:10px">
@@ -3965,6 +3971,89 @@ function shareWhatsApp() {
 function copyResult() {
   const txt = document.getElementById('shareText').innerText;
   navigator.clipboard.writeText(txt).then(()=>showToast('✅ تم النسخ!','var(--correct)')).catch(()=>showToast('⚠️ لم يتم النسخ','var(--wrong)'));
+}
+
+// One-click quick game from the landing page (5 random questions, single player)
+function quickPlay() {
+  selectedCats = new Set(['all']);
+  selectedDiffs = new Set(['all']);
+  selectedCount = 5;
+  playerCount = 1;
+  gameMode = 'solo';
+  // ensure the solo branch in startGame uses the default name
+  const nameInput = document.getElementById('name0');
+  if (nameInput && !nameInput.value.trim()) nameInput.value = 'أنت';
+  // open offline page briefly to ensure setup state, then start
+  goToOffline();
+  setGameMode('solo');
+  // start the game immediately
+  startGame();
+  showToast('⚡ لعبة سريعة!', 'var(--gold)');
+}
+
+// Generate a shareable result image (PNG) and share via Web Share or download
+async function shareResultCard() {
+  const sorted = [...PLAYERS].sort((a,b)=>scores[b.id]-scores[a.id]);
+  const w = 720, h = 720;
+  const cvs = document.createElement('canvas'); cvs.width = w; cvs.height = h;
+  const ctx = cvs.getContext('2d');
+  // gradient background
+  const g = ctx.createLinearGradient(0,0,0,h);
+  g.addColorStop(0,'#0f0f17'); g.addColorStop(1,'#1a1a26');
+  ctx.fillStyle = g; ctx.fillRect(0,0,w,h);
+  // gold frame
+  ctx.strokeStyle = '#c9a84c'; ctx.lineWidth = 6;
+  ctx.strokeRect(20,20,w-40,h-40);
+  // Header
+  ctx.fillStyle = '#c9a84c'; ctx.textAlign = 'center'; ctx.direction = 'rtl';
+  ctx.font = 'bold 56px "Tajawal","Cairo",sans-serif';
+  ctx.fillText('🏆 تحدي الثلاثة', w/2, 110);
+  ctx.font = '600 24px "Cairo",sans-serif'; ctx.fillStyle = '#777';
+  ctx.fillText('نتيجة اللعبة', w/2, 150);
+  // Winner block
+  const winner = sorted[0];
+  ctx.font = 'bold 80px "Cairo",sans-serif'; ctx.fillStyle = '#e8e0d0';
+  ctx.fillText(winner.avatar || '🏆', w/2, 250);
+  ctx.font = 'bold 44px "Tajawal","Cairo",sans-serif'; ctx.fillStyle = winner.color || '#c9a84c';
+  ctx.fillText(winner.name || 'الفائز', w/2, 320);
+  ctx.font = 'bold 110px "Tajawal","Cairo",sans-serif'; ctx.fillStyle = '#c9a84c';
+  ctx.fillText(String(parseFloat(scores[winner.id].toFixed(1))), w/2, 450);
+  ctx.font = '600 28px "Cairo",sans-serif'; ctx.fillStyle = '#888';
+  ctx.fillText('نقطة', w/2, 488);
+  // Cat + count line
+  ctx.font = '600 24px "Cairo",sans-serif'; ctx.fillStyle = '#bbb';
+  const catName = (typeof selectedCatLabel==='function'? selectedCatLabel() : 'الكل');
+  ctx.fillText(catName + ' • ' + selectedCount + ' سؤال • ' + PLAYERS.length + ' لاعبين', w/2, 540);
+  // Other players (up to 3)
+  ctx.font = '600 22px "Cairo",sans-serif';
+  const others = sorted.slice(1,4);
+  others.forEach((p,i)=>{
+    ctx.fillStyle = p.color || '#777';
+    const line = (i+2) + '. ' + (p.avatar||'') + ' ' + p.name + '  —  ' + parseFloat(scores[p.id].toFixed(1));
+    ctx.fillText(line, w/2, 590 + i*32);
+  });
+  // Footer
+  ctx.font = 'bold 22px "Cairo",sans-serif'; ctx.fillStyle = '#c9a84c';
+  ctx.fillText('nicktie.github.io/FirstGame', w/2, h-50);
+  ctx.font = '600 16px "Cairo",sans-serif'; ctx.fillStyle = '#666';
+  ctx.fillText('DALMOO3 DIGITAL PRODUCTS', w/2, h-26);
+
+  // Try Web Share API with a file; fall back to download
+  cvs.toBlob(async (blob)=>{
+    if (!blob) { showToast('⚠️ تعذّر توليد الصورة', 'var(--wrong)'); return; }
+    try {
+      const file = new File([blob], 'tahadi-result.png', { type:'image/png' });
+      if (navigator.canShare && navigator.canShare({ files:[file] })) {
+        await navigator.share({ files:[file], title:'نتيجتي في تحدي الثلاثة', text:'🏆 تحدي الثلاثة' });
+        return;
+      }
+    } catch(e){}
+    // fallback: download
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a'); a.href = url; a.download = 'tahadi-result.png'; document.body.appendChild(a); a.click(); a.remove();
+    setTimeout(()=>URL.revokeObjectURL(url), 2000);
+    showToast('📸 تم تحميل الصورة', 'var(--correct)');
+  }, 'image/png');
 }
 
 // ════════════════════════════════════════════════════════
