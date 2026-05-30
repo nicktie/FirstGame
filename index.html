@@ -2742,15 +2742,65 @@ const allQuestions = [
   {cat:'nutrition',diff:'hard',q:'ما الدهون المتحوّلة (Trans fats) وأين توجد غالباً؟',opts:['من هدرجة الزيوت — في الوجبات السريعة والمعجنات الصناعية','في الفواكه','في الخضار الطازجة'],ans:0,exp:'الدهون المتحوّلة ناتج هدرجة جزئية للزيوت وأخطر أنواع الدهون.'},
 ];
 
-// Auto-assign difficulty levels to questions
+// Auto-assign difficulty levels to hit target distribution per category:
+// 10% easy, 30% medium, 40% hard, 20% veryhard
+// Pass 1: apply content-based keyword hints (some questions clearly easy/hard by phrasing)
+// Pass 2: fill remaining unmarked questions to reach target counts
 (function(){
-  const easy=['كم عدد ألوان','كم عدد أركان','ما هو أطول نهر','ما هي عاصمة المملكة','ما هو أكبر كوكب','ما هو العنصر الكيميائي الذي رمزه "O"','كم عدد لاعبي كرة القدم','كم عدد سور القرآن','في أي شهر نزل','كم عدد الصلوات','ما هي عاصمة فرنسا','ما هي عاصمة اليابان','كم عدد أيام السنة','من رسم لوحة الموناليزا','ما هو الجهاز الذي يضخ','كم عدد ساعات اليوم','ما هي أكبر قارات','ما هو أعلى جبل','ما هي أصغر دولة','كم عدد اللاعبين في فريق كرة السلة','ما هو أكبر محيطات','من هو مخترع الهاتف','ما هو أسرع حيوان','كم عدد أضلاع'];
-  const hard=['ما هو اسم أول هاتف','في أي سنة هجرية','ما هي الشبكة التي ربطت','كم مرة وردت كلمة','ما هو اسم والد النبي إبراهيم','كم طول ملعب التنس','أي مدينة كانت عاصمة الخلافة','ما هو اسم أول دستور','في أي سنة أُسّست دار الأوبرا','من ألّف سيمفونية','ما هي أطول حدود','ما هو أعمق بحيرة','ما هي الدولة التي تضم أكبر عدد','ما هو اسم أشهر مسرح أوبرا','كم استغرق نزول القرآن الكريم','ما هو اسم قبلة المسلمين الأولى','في أي عام سقطت الخلافة'];
+  const TARGET = { easy: 0.10, medium: 0.30, hard: 0.40, veryhard: 0.20 };
+  const easyHints=['كم عدد ألوان','كم عدد أركان','ما هو أطول نهر','ما هي عاصمة المملكة','ما هو أكبر كوكب','ما هو العنصر الكيميائي الذي رمزه "O"','كم عدد لاعبي كرة القدم','كم عدد سور القرآن','في أي شهر نزل','كم عدد الصلوات','ما هي عاصمة فرنسا','ما هي عاصمة اليابان','كم عدد أيام السنة','من رسم لوحة الموناليزا','ما هو الجهاز الذي يضخ','كم عدد ساعات اليوم','ما هي أكبر قارات','ما هو أعلى جبل','ما هي أصغر دولة','كم عدد اللاعبين في فريق كرة السلة','ما هو أكبر محيطات','من هو مخترع الهاتف','ما هو أسرع حيوان','كم عدد أضلاع'];
+  const hardHints=['ما هو اسم أول هاتف','في أي سنة هجرية','ما هي الشبكة التي ربطت','كم مرة وردت كلمة','ما هو اسم والد النبي إبراهيم','كم طول ملعب التنس','أي مدينة كانت عاصمة الخلافة','ما هو اسم أول دستور','في أي سنة أُسّست دار الأوبرا','من ألّف سيمفونية','ما هي أطول حدود','ما هو أعمق بحيرة','ما هي الدولة التي تضم أكبر عدد','ما هو اسم أشهر مسرح أوبرا','كم استغرق نزول القرآن الكريم','ما هو اسم قبلة المسلمين الأولى','في أي عام سقطت الخلافة'];
+
+  // Pass 1: keyword hints (skip questions with explicit diff in source)
   allQuestions.forEach(q=>{
-    if (q.diff) return; // respect explicit difficulty already set on the question
-    if(easy.some(e=>q.q.startsWith(e))) q.diff='easy';
-    else if(hard.some(h=>q.q.startsWith(h))) q.diff='hard';
-    else q.diff='medium';
+    if (q.diff) return;
+    if (easyHints.some(e=>q.q.startsWith(e))) q.diff='easy';
+    else if (hardHints.some(h=>q.q.startsWith(h))) q.diff='hard';
+  });
+
+  // Pass 2: per-category distribution fill — push remaining unmarked toward harder mix
+  const byCat = {};
+  allQuestions.forEach(q => { if (q.cat !== 'custom') (byCat[q.cat] = byCat[q.cat]||[]).push(q); });
+  Object.keys(byCat).forEach(cat => {
+    const cqs = byCat[cat];
+    const total = cqs.length;
+    const tg = {
+      easy:     Math.round(total * TARGET.easy),
+      medium:   Math.round(total * TARGET.medium),
+      hard:     Math.round(total * TARGET.hard),
+      veryhard: Math.round(total * TARGET.veryhard)
+    };
+    const sumT = tg.easy + tg.medium + tg.hard + tg.veryhard;
+    if (sumT !== total) tg.medium += (total - sumT);
+    const have = { easy:0, medium:0, hard:0, veryhard:0 };
+    cqs.forEach(q => { if (q.diff) have[q.diff] = (have[q.diff]||0) + 1; });
+    const need = {
+      easy:     Math.max(0, tg.easy - have.easy),
+      medium:   Math.max(0, tg.medium - have.medium),
+      hard:     Math.max(0, tg.hard - have.hard),
+      veryhard: Math.max(0, tg.veryhard - have.veryhard)
+    };
+    const unmarked = cqs.filter(q => !q.diff);
+    // Build queue in order [easy, medium, hard, veryhard] then pad/trim
+    const queue = [];
+    ['easy','medium','hard','veryhard'].forEach(d => { for (let i=0;i<need[d];i++) queue.push(d); });
+    while (queue.length < unmarked.length) queue.push('medium');
+    while (queue.length > unmarked.length) queue.pop(); // trim from end (drops veryhard slots first if over-allocated)
+    // Interleave so adjacent source questions get varied difficulty instead of clumped easy→…→veryhard
+    const interleaved = [];
+    const buckets = { easy:[], medium:[], hard:[], veryhard:[] };
+    queue.forEach(d => buckets[d].push(d));
+    const order = ['hard','medium','veryhard','easy','medium','hard','medium','veryhard'];
+    let oi = 0;
+    while (interleaved.length < queue.length) {
+      const d = order[oi % order.length]; oi++;
+      if (buckets[d].length) interleaved.push(buckets[d].pop());
+      // if empty, try next
+      else for (const dd of ['hard','medium','veryhard','easy']) {
+        if (buckets[dd].length) { interleaved.push(buckets[dd].pop()); break; }
+      }
+    }
+    unmarked.forEach((q, i) => { q.diff = interleaved[i] || 'medium'; });
   });
 })();
 
