@@ -875,6 +875,16 @@ body.theme-gold .net-indicator { color:var(--gold); }
         <div class="diff-filter" onclick="setDiff('hard',this)">🔴 صعب</div>
         <div class="diff-filter" onclick="setDiff('veryhard',this)">💎 صعب جداً</div>
       </div>
+      <div class="section-title" style="margin:14px 0 6px">🔢 عدد الأسئلة</div>
+      <div class="qcount-wrap">
+        <div class="qcount-grid">
+          <div class="qcount-btn active" onclick="setCount(5,this)"><span class="qn">5</span><span class="ql">⚡ سريع</span></div>
+          <div class="qcount-btn" onclick="setCount(10,this)"><span class="qn">10</span><span class="ql">🎯 متوسط</span></div>
+          <div class="qcount-btn" onclick="setCount(15,this)"><span class="qn">15</span><span class="ql">🔥 جيد</span></div>
+          <div class="qcount-btn" onclick="setCount(20,this)"><span class="qn">20</span><span class="ql">💪 طويل</span></div>
+          <div class="qcount-btn" onclick="setCount(25,this)"><span class="qn">25</span><span class="ql">👑 كامل</span></div>
+        </div>
+      </div>
       <button class="start-btn" style="margin-top:16px" onclick="createRoom()">🚀 إنشاء غرفة</button>
     </div>
 
@@ -918,6 +928,7 @@ body.theme-gold .net-indicator { color:var(--gold); }
     </div>
   </div>
 
+  <div id="offlineCatCount">
   <div class="section-title">📂 نوع الأسئلة</div>
   <div class="cat-tabs" style="margin-bottom:22px;">
     <button class="cat-tab active" onclick="setCat('all',this)">🌐 الكل</button>
@@ -946,6 +957,7 @@ body.theme-gold .net-indicator { color:var(--gold); }
       <div class="qcount-btn" onclick="setCount(25,this)"><span class="qn">25</span><span class="ql">👑 كامل</span></div>
     </div>
     <div class="qcount-avail" id="availNote">المتاح: <span id="availNum">175</span> سؤال في هذا التصنيف</div>
+  </div>
   </div>
 
   <div id="localExtras">
@@ -2613,6 +2625,7 @@ function setGameMode(mode) {
   document.getElementById('teamSetup').style.display = mode === 'teams' ? 'block' : 'none';
   document.getElementById('onlineSetup').style.display = mode === 'online' ? 'block' : 'none';
   document.getElementById('localExtras').style.display = mode === 'online' ? 'none' : 'block';
+  const oc = document.getElementById('offlineCatCount'); if (oc) oc.style.display = mode === 'online' ? 'none' : 'block';
   if (mode === 'online') renderOnlineEmojiPicker();
 }
 
@@ -2711,8 +2724,11 @@ function updateAvailNote() {
 
 function setCount(n, el) {
   selectedCount = n;
-  document.querySelectorAll('.qcount-btn').forEach(b => b.classList.remove('active'));
-  el.classList.add('active');
+  // Sync active highlight across every qcount grid on the page (offline + online host panel)
+  document.querySelectorAll('.qcount-btn').forEach(b => {
+    const v = parseInt(b.querySelector('.qn') && b.querySelector('.qn').textContent);
+    b.classList.toggle('active', v === n);
+  });
   // Update round labels
   const _qLabel = document.getElementById('roundQLabel');
   const _tLabel = document.getElementById('totalQLabel');
