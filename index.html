@@ -965,7 +965,7 @@ body.theme-gold .net-indicator { color:var(--gold); }
           <div class="gt-sub">احذر القنابل الخفية!</div>
         </div>
         <div class="gametype-card" id="gtXoCard" onclick="pickOnlineGameType('xo')">
-          <div class="gt-icon">❌⭕</div>
+          <div class="gt-icon" style="font-family:'Tajawal',sans-serif;font-weight:900;letter-spacing:-4px"><span class="xo-score x">X</span><span class="xo-score o">O</span></div>
           <div class="gt-label">XO</div>
           <div class="gt-sub">الكلاسيكية — ثلاثة في سطر</div>
         </div>
@@ -1105,10 +1105,10 @@ body.theme-gold .net-indicator { color:var(--gold); }
 
     <div id="onlineXoPanels" style="display:none">
       <div class="online-panel">
-        <div class="online-panel-title">❌⭕ لعبة XO</div>
+        <div class="online-panel-title"><span class="xo-score x">X</span><span class="xo-score o">O</span> لعبة XO</div>
         <div class="trap-rules">
           <div class="trap-rule"><span class="trap-rule-num">١</span>اللعبة الكلاسيكية على لوحة <strong>٣×٣</strong></div>
-          <div class="trap-rule"><span class="trap-rule-num">٢</span>أنت <span style="color:#6495ed;font-weight:900">❌</span> والخصم <span style="color:#e07050;font-weight:900">⭕</span></div>
+          <div class="trap-rule"><span class="trap-rule-num">٢</span>أنت <span class="xo-score x" style="font-weight:900">X</span> والخصم <span class="xo-score o" style="font-weight:900">O</span></div>
           <div class="trap-rule"><span class="trap-rule-num">٣</span>أول من يصنع <strong>ثلاثة في سطر</strong> يفوز</div>
           <div class="trap-rule"><span class="trap-rule-num">٤</span>لو امتلأت اللوحة بدون فائز فهو تعادل</div>
         </div>
@@ -1117,7 +1117,7 @@ body.theme-gold .net-indicator { color:var(--gold); }
           <input type="checkbox" id="xoBotMode">
           <span>🤖 لعب مع الكمبيوتر <span class="trap-bot-hint">(بدون انتظار خصم)</span></span>
         </label>
-        <button class="start-btn" style="margin-top:16px" onclick="createXoRoom()">❌ إنشاء غرفة XO</button>
+        <button class="start-btn" style="margin-top:16px" onclick="createXoRoom()">🎮 إنشاء غرفة XO</button>
       </div>
       <div class="online-or">— أو —</div>
       <div class="online-panel">
@@ -1125,7 +1125,7 @@ body.theme-gold .net-indicator { color:var(--gold); }
         <div class="online-panel-sub">أدخل الرمز اللي وصلك من الخصم.</div>
         <input class="online-input" id="xoJoinName" type="text" maxlength="16" placeholder="اسمك">
         <input class="online-input online-code-input" id="xoJoinCode" type="text" inputmode="numeric" maxlength="6" placeholder="رمز الغرفة">
-        <button class="start-btn" style="margin-top:14px;background:linear-gradient(135deg,#6495ed,#3a6bc4)" onclick="joinXoRoom()">⭕ دخول للعبة</button>
+        <button class="start-btn" style="margin-top:14px;background:linear-gradient(135deg,#6495ed,#3a6bc4)" onclick="joinXoRoom()">🎮 دخول للعبة</button>
       </div>
     </div>
   </div>
@@ -1565,7 +1565,7 @@ body.theme-gold .net-indicator { color:var(--gold); }
 
 <div id="xoScreen" style="display:none">
   <div id="xoLobby">
-    <div class="logo" style="margin-bottom:14px"><h1>❌⭕ لعبة XO</h1></div>
+    <div class="logo" style="margin-bottom:14px"><h1><span class="xo-score x">X</span><span class="xo-score o">O</span> لعبة XO</h1></div>
     <div class="room-code-box">
       <div class="room-code-lbl">رمز الغرفة</div>
       <div class="room-code" id="xoCodeDisplay">------</div>
@@ -3715,6 +3715,35 @@ function soundJoker() {
 function soundRoundEnd() {
   [392,440,494,523,587,659,784].forEach((f,i)=>setTimeout(()=>playTone(f,0.12),i*60));
 }
+// XO-specific cues
+function soundXoPlaceX() {
+  // Crisp two-tone "tick" — higher pitch for X
+  playTone(880, 0.06, 'triangle', 0.25);
+  setTimeout(()=>playTone(1320, 0.07, 'triangle', 0.22), 50);
+}
+function soundXoPlaceO() {
+  // Soft warmer "thunk" — lower pitch for O
+  playTone(520, 0.07, 'sine', 0.28);
+  setTimeout(()=>playTone(390, 0.09, 'sine', 0.22), 55);
+}
+function soundXoOppMove() {
+  // Neutral notification when opponent plays a cell (online or bot)
+  playTone(660, 0.05, 'sine', 0.18);
+}
+function soundXoWin() {
+  // Victory fanfare — rising arpeggio
+  [523, 659, 784, 988, 1175].forEach((f,i)=>setTimeout(()=>playTone(f, 0.18, 'triangle', 0.28), i*90));
+  setTimeout(()=>playTone(1568, 0.35, 'triangle', 0.3), 5*90);
+}
+function soundXoLose() {
+  // Descending sad trio
+  [440, 370, 294].forEach((f,i)=>setTimeout(()=>playTone(f, 0.22, 'sawtooth', 0.18), i*150));
+}
+function soundXoDraw() {
+  // Neutral double tap
+  playTone(523, 0.15, 'sine', 0.2);
+  setTimeout(()=>playTone(523, 0.18, 'sine', 0.18), 180);
+}
 
 // ── Timer ──
 function startTimer(onExpire) {
@@ -5797,6 +5826,16 @@ function xoOnState(state) {
 function xoEnterBattle(state) {
   xoShowStage('xoBattle');
   const board = state.board || Array(9).fill('');
+  // Detect an opponent move arriving (any cell newly filled by opponent's mark since last render)
+  const prev = xo._lastBoard || Array(9).fill('');
+  const myMarkLetter = (xo.role==='p0') ? 'X' : 'O';
+  for (let k=0; k<9; k++) {
+    if (!prev[k] && board[k] && board[k] !== myMarkLetter) {
+      try { soundXoOppMove(); } catch(e){}
+      break;
+    }
+  }
+  xo._lastBoard = [...board];
   const myMark = (xo.role==='p0') ? 'X' : 'O';
   const oppMark = (xo.role==='p0') ? 'O' : 'X';
   const myCls  = (xo.role==='p0') ? 'x' : 'o';
@@ -5839,6 +5878,7 @@ async function xoPickCell(i) {
   if (board[i]) return;
   const mark = (xo.role==='p0') ? 'X' : 'O';
   board[i] = mark;
+  try { if (mark === 'X') soundXoPlaceX(); else soundXoPlaceO(); } catch(e){}
   const winLine = xoFindWin(board);
   const updates = { 'state/board': board };
   if (winLine) {
@@ -5866,9 +5906,9 @@ function xoEnterRoundEnd(state) {
     xoShowStage('xoEnd');
     const winner = state.winner;
     let emoji, text;
-    if (winner === 'draw') { emoji = '🤝'; text = 'تعادل!'; }
-    else if (winner === xo.role) { emoji = '🏆'; text = '🎉 فزت بهذه الجولة!'; try { if (typeof launchConfetti==='function') launchConfetti(); } catch(e){} }
-    else { emoji = '😔'; text = 'خسرت هذه الجولة. حظ أوفر!'; }
+    if (winner === 'draw') { emoji = '🤝'; text = 'تعادل!'; try { soundXoDraw(); } catch(e){} }
+    else if (winner === xo.role) { emoji = '🏆'; text = '🎉 فزت بهذه الجولة!'; try { soundXoWin(); if (typeof launchConfetti==='function') launchConfetti(); } catch(e){} }
+    else { emoji = '😔'; text = 'خسرت هذه الجولة. حظ أوفر!'; try { soundXoLose(); } catch(e){} }
     document.getElementById('xoEndEmoji').textContent = emoji;
     document.getElementById('xoEndText').textContent = text;
     // Loser starts the next round (or X if draw)
@@ -5884,6 +5924,7 @@ async function xoPlayAgain() {
     showToast('⏳ في انتظار المضيف ليبدأ جولة جديدة…', 'var(--gold)');
     return;
   }
+  xo._lastBoard = null;
   await fb.db.ref('rooms/x'+xo.code+'/state').set({ phase:'battle', turn:xo.startingTurn||'p0', board:Array(9).fill('') });
 }
 
@@ -5922,6 +5963,7 @@ function xoBotPlayerPick(i) {
   const st = xo.localState; if (!st || st.phase !== 'battle' || st.turn !== 'p0') return;
   if (st.board[i]) return;
   st.board[i] = 'X';
+  try { soundXoPlaceX(); } catch(e){}
   const winLine = xoFindWin(st.board);
   if (winLine) {
     st.phase = 'roundEnd'; st.winner = 'p0'; st.winLine = winLine;
@@ -5944,6 +5986,7 @@ function xoBotTakeTurn() {
   const pick = xoBotChooseMove(st.board);
   if (pick == null) return;
   st.board[pick] = 'O';
+  try { soundXoPlaceO(); } catch(e){}
   const winLine = xoFindWin(st.board);
   if (winLine) {
     st.phase = 'roundEnd'; st.winner = 'p1'; st.winLine = winLine;
@@ -5991,6 +6034,7 @@ function xoBotPlayAgain() {
   // Loser starts; on draw, X starts
   const next = (xo.localState && xo.localState.winner === 'p0') ? 'p1' : 'p0';
   xo.localState = { phase:'battle', turn:next, board:Array(9).fill('') };
+  xo._lastBoard = null;
   xoEnterBattle(xo.localState);
   if (next === 'p1') setTimeout(()=>xoBotTakeTurn(), 600);
 }
