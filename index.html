@@ -181,8 +181,8 @@ body {
 .online-team-roster { display:flex; gap:10px; margin-bottom:12px; }
 .online-team-col { flex:1; background:var(--card-bg); border:1.5px solid var(--border); border-radius:14px; padding:10px; min-height:120px; }
 /* Online game-type picker */
-.online-gametype-row { display:flex; gap:10px; margin-top:8px; }
-.gametype-card { flex:1; background:var(--option-bg); border:1.5px solid var(--border); border-radius:16px; padding:18px 10px; text-align:center; cursor:pointer; transition:all 0.2s; }
+.online-gametype-row { display:flex; gap:10px; margin-top:8px; flex-wrap:wrap; }
+.gametype-card { flex:1 1 calc(33% - 8px); min-width:120px; background:var(--option-bg); border:1.5px solid var(--border); border-radius:16px; padding:18px 10px; text-align:center; cursor:pointer; transition:all 0.2s; }
 .gametype-card:hover { border-color:var(--gold); transform:translateY(-1px); }
 .gametype-card.active { border-color:var(--gold); background:rgba(201,168,76,0.12); box-shadow:0 0 0 3px rgba(201,168,76,0.06); }
 .gt-icon { font-size:2.2rem; line-height:1; }
@@ -274,6 +274,35 @@ body.trap-shake { animation:trapShake 0.5s ease-in-out; }
 /* Theme overrides so X and O are distinct from theme accent (gold/purple) */
 body.theme-purple, body.theme-darkpurple { --xo-x:#3dba7a; --xo-o:#e0a040; }
 body.theme-gold { --xo-x:#6495ed; --xo-o:#3dba7a; }
+/* Connect 4 */
+#c4Screen { max-width:560px; margin:0 auto; padding:20px 16px 40px; }
+.xo-score.c4-r { color:#e05c5c; }
+.xo-score.c4-y { color:#f0c040; }
+.c4-board-wrap { background:#1f4ea0; border:2px solid #2c63c8; border-radius:18px; padding:12px; box-shadow:0 6px 24px rgba(31,78,160,0.25); position:relative; }
+.c4-cols { display:grid; grid-template-columns:repeat(7,1fr); gap:6px; margin-bottom:6px; }
+.c4-col-btn { background:rgba(255,255,255,0.05); border:1.5px solid rgba(255,255,255,0.15); border-radius:8px; cursor:pointer; padding:6px 0; color:rgba(255,255,255,0.5); font-weight:900; font-size:0.85rem; transition:all 0.18s; }
+.c4-col-btn:hover:not(.disabled):not(.full) { background:rgba(255,255,255,0.15); color:#fff; transform:translateY(-1px); }
+.c4-col-btn.disabled, .c4-col-btn.full { cursor:default; opacity:0.4; }
+.c4-board { display:grid; grid-template-columns:repeat(7,1fr); grid-template-rows:repeat(6,1fr); gap:6px; aspect-ratio:7/6; }
+.c4-cell { background:#0d2459; border-radius:50%; position:relative; box-shadow:inset 0 2px 6px rgba(0,0,0,0.4); display:flex; align-items:center; justify-content:center; }
+.c4-disc-piece { width:88%; height:88%; border-radius:50%; box-shadow:inset 0 4px 8px rgba(0,0,0,0.25), 0 2px 4px rgba(0,0,0,0.3); animation:c4Drop 0.4s cubic-bezier(0.5,0,0.5,1.5); }
+.c4-disc-piece.r { background:radial-gradient(circle at 30% 30%, #ff8080, #c03030); }
+.c4-disc-piece.y { background:radial-gradient(circle at 30% 30%, #ffe080, #c8a030); }
+.c4-disc-piece.win { animation:c4WinPulse 0.7s ease infinite alternate; }
+@keyframes c4Drop { 0% { transform:translateY(-300px); } 75% { transform:translateY(8px); } 100% { transform:translateY(0); } }
+@keyframes c4WinPulse { from { box-shadow:inset 0 4px 8px rgba(0,0,0,0.25), 0 0 0 0 rgba(255,255,255,0.4); } to { box-shadow:inset 0 4px 8px rgba(0,0,0,0.25), 0 0 0 6px rgba(255,255,255,0.7); } }
+/* Memory cards */
+#memScreen { max-width:520px; margin:0 auto; padding:20px 16px 40px; }
+.mem-board { display:grid; grid-template-columns:repeat(4,1fr); gap:10px; background:var(--card-bg); border:1.5px solid var(--border); border-radius:18px; padding:14px; }
+.mem-card { aspect-ratio:1; perspective:600px; cursor:pointer; }
+.mem-card-inner { position:relative; width:100%; height:100%; transition:transform 0.45s; transform-style:preserve-3d; }
+.mem-card.flipped .mem-card-inner, .mem-card.matched .mem-card-inner { transform:rotateY(180deg); }
+.mem-card-face, .mem-card-back { position:absolute; inset:0; backface-visibility:hidden; -webkit-backface-visibility:hidden; border-radius:12px; display:flex; align-items:center; justify-content:center; }
+.mem-card-back { background:linear-gradient(135deg, var(--gold), #a8720c); border:1.5px solid var(--gold); font-size:2rem; color:rgba(0,0,0,0.4); }
+.mem-card-face { background:var(--option-bg); border:1.5px solid var(--gold); transform:rotateY(180deg); font-size:2.4rem; }
+.mem-card.matched .mem-card-face { background:rgba(61,186,122,0.18); border-color:#3dba7a; animation:memMatchPulse 0.6s ease; }
+.mem-card.disabled { pointer-events:none; }
+@keyframes memMatchPulse { 0% { transform:rotateY(180deg) scale(1); } 50% { transform:rotateY(180deg) scale(1.12); } 100% { transform:rotateY(180deg) scale(1); } }
 @keyframes xoWinPulse { from { box-shadow:0 0 0 3px rgba(201,168,76,0.15); } to { box-shadow:0 0 0 6px rgba(201,168,76,0.35); } }
 .online-team-col.t0 { border-color:#6495ed55; }
 .online-team-col.t1 { border-color:#e0705055; }
@@ -991,6 +1020,16 @@ body.theme-gold .net-indicator { color:var(--gold); }
           <div class="gt-label">XO</div>
           <div class="gt-sub">الكلاسيكية — ثلاثة في سطر</div>
         </div>
+        <div class="gametype-card" id="gtC4Card" onclick="pickOnlineGameType('c4')">
+          <div class="gt-icon">🔴🟡</div>
+          <div class="gt-label">أربعة في صف</div>
+          <div class="gt-sub">Connect 4 — أسقط ٤ متتالية</div>
+        </div>
+        <div class="gametype-card" id="gtMemCard" onclick="pickOnlineGameType('mem')">
+          <div class="gt-icon">🃏</div>
+          <div class="gt-label">الذاكرة</div>
+          <div class="gt-sub">جد الأزواج المتطابقة</div>
+        </div>
       </div>
     </div>
     <div id="onlineQuizPanels">
@@ -1148,6 +1187,58 @@ body.theme-gold .net-indicator { color:var(--gold); }
         <input class="online-input" id="xoJoinName" type="text" maxlength="16" placeholder="اسمك">
         <input class="online-input online-code-input" id="xoJoinCode" type="text" inputmode="numeric" maxlength="6" placeholder="رمز الغرفة">
         <button class="start-btn" style="margin-top:14px;background:linear-gradient(135deg,#6495ed,#3a6bc4)" onclick="joinXoRoom()">🎮 دخول للعبة</button>
+      </div>
+    </div>
+
+    <div id="onlineC4Panels" style="display:none">
+      <div class="online-panel">
+        <div class="online-panel-title">🔴🟡 أربعة في صف</div>
+        <div class="trap-rules">
+          <div class="trap-rule"><span class="trap-rule-num">١</span>لوحة <strong>٧×٦</strong>، الأقراص تسقط للأسفل</div>
+          <div class="trap-rule"><span class="trap-rule-num">٢</span>أنت <span class="c4-disc r" style="display:inline-block;width:14px;height:14px;border-radius:50%;background:#e05c5c;vertical-align:middle"></span> والخصم <span class="c4-disc y" style="display:inline-block;width:14px;height:14px;border-radius:50%;background:#f0c040;vertical-align:middle"></span></div>
+          <div class="trap-rule"><span class="trap-rule-num">٣</span>أول من يصنع <strong>أربعة متتالية</strong> أفقياً أو رأسياً أو قطرياً يفوز</div>
+          <div class="trap-rule"><span class="trap-rule-num">٤</span>لو امتلأت اللوحة فهو تعادل</div>
+        </div>
+        <input class="online-input" id="c4HostName" type="text" maxlength="16" placeholder="اسمك">
+        <label class="trap-bot-toggle" for="c4BotMode">
+          <input type="checkbox" id="c4BotMode">
+          <span>🤖 لعب مع الكمبيوتر <span class="trap-bot-hint">(بدون انتظار خصم)</span></span>
+        </label>
+        <button class="start-btn" style="margin-top:16px" onclick="createC4Room()">🎯 إنشاء غرفة</button>
+      </div>
+      <div class="online-or">— أو —</div>
+      <div class="online-panel">
+        <div class="online-panel-title">🔗 انضمام لغرفة</div>
+        <div class="online-panel-sub">أدخل الرمز اللي وصلك من الخصم.</div>
+        <input class="online-input" id="c4JoinName" type="text" maxlength="16" placeholder="اسمك">
+        <input class="online-input online-code-input" id="c4JoinCode" type="text" inputmode="numeric" maxlength="6" placeholder="رمز الغرفة">
+        <button class="start-btn" style="margin-top:14px;background:linear-gradient(135deg,#6495ed,#3a6bc4)" onclick="joinC4Room()">🎮 دخول للعبة</button>
+      </div>
+    </div>
+
+    <div id="onlineMemPanels" style="display:none">
+      <div class="online-panel">
+        <div class="online-panel-title">🃏 لعبة الذاكرة</div>
+        <div class="trap-rules">
+          <div class="trap-rule"><span class="trap-rule-num">١</span><strong>١٦ بطاقة</strong> (٨ أزواج) مقلوبة على الطاولة</div>
+          <div class="trap-rule"><span class="trap-rule-num">٢</span>اقلب بطاقتين بدورك — لو تطابقتا تأخذهما وتستمر</div>
+          <div class="trap-rule"><span class="trap-rule-num">٣</span>لو لم تتطابقا، تنقلب لمكانها ودور الخصم</div>
+          <div class="trap-rule"><span class="trap-rule-num">٤</span>من يجمع أكثر أزواج يفوز</div>
+        </div>
+        <input class="online-input" id="memHostName" type="text" maxlength="16" placeholder="اسمك">
+        <label class="trap-bot-toggle" for="memBotMode">
+          <input type="checkbox" id="memBotMode">
+          <span>🤖 لعب مع الكمبيوتر <span class="trap-bot-hint">(بدون انتظار خصم)</span></span>
+        </label>
+        <button class="start-btn" style="margin-top:16px" onclick="createMemRoom()">🎴 إنشاء غرفة</button>
+      </div>
+      <div class="online-or">— أو —</div>
+      <div class="online-panel">
+        <div class="online-panel-title">🔗 انضمام لغرفة</div>
+        <div class="online-panel-sub">أدخل الرمز اللي وصلك من الخصم.</div>
+        <input class="online-input" id="memJoinName" type="text" maxlength="16" placeholder="اسمك">
+        <input class="online-input online-code-input" id="memJoinCode" type="text" inputmode="numeric" maxlength="6" placeholder="رمز الغرفة">
+        <button class="start-btn" style="margin-top:14px;background:linear-gradient(135deg,#6495ed,#3a6bc4)" onclick="joinMemRoom()">🎮 دخول للعبة</button>
       </div>
     </div>
   </div>
@@ -1629,6 +1720,103 @@ body.theme-gold .net-indicator { color:var(--gold); }
       <div style="display:flex;gap:10px;justify-content:center;margin-top:14px">
         <button class="start-btn" style="max-width:160px" onclick="xoPlayAgain()">🔄 جولة جديدة</button>
         <button class="start-btn" style="max-width:120px;background:linear-gradient(135deg,#888,#555)" onclick="leaveXo()">↩️ خروج</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div id="c4Screen" style="display:none">
+  <div id="c4Lobby">
+    <div class="logo" style="margin-bottom:14px"><h1>🔴🟡 أربعة في صف</h1></div>
+    <div class="room-code-box">
+      <div class="room-code-lbl">رمز الغرفة</div>
+      <div class="room-code" id="c4CodeDisplay">------</div>
+      <button class="online-copy-btn" onclick="copyC4Code()">📋 نسخ الرمز</button>
+    </div>
+    <div class="trap-vs-row">
+      <div class="trap-player-card p0" id="c4P0Card">
+        <div class="tpc-avatar" id="c4P0Avatar" style="color:#e05c5c">●</div>
+        <div class="tpc-name" id="c4P0Name">بانتظار...</div>
+      </div>
+      <div class="trap-vs-emoji">⚔️</div>
+      <div class="trap-player-card p1" id="c4P1Card">
+        <div class="tpc-avatar" id="c4P1Avatar" style="color:#f0c040">●</div>
+        <div class="tpc-name" id="c4P1Name">بانتظار...</div>
+      </div>
+    </div>
+    <div id="c4LobbyHost" style="display:none">
+      <button class="start-btn" style="margin-top:16px" onclick="c4Start()">🚀 ابدأ اللعبة</button>
+    </div>
+    <div id="c4LobbyWait" class="online-wait-note">في انتظار الخصم…</div>
+    <button class="online-leave-btn" onclick="leaveC4()">↩️ خروج</button>
+  </div>
+  <div id="c4Battle" style="display:none">
+    <div class="trap-turn-banner" id="c4TurnBanner">🎯 دورك!</div>
+    <div class="xo-score-row">
+      <div class="xo-score c4-r"><span id="c4P0NameBattle">أنت</span> <span class="xo-score-val" id="c4P0Score">0</span></div>
+      <div class="xo-score-sep">—</div>
+      <div class="xo-score c4-y"><span class="xo-score-val" id="c4P1Score">0</span> <span id="c4P1NameBattle">الخصم</span></div>
+    </div>
+    <div class="c4-board-wrap">
+      <div class="c4-cols" id="c4Cols"></div>
+      <div class="c4-board" id="c4Board"></div>
+    </div>
+    <button class="online-leave-btn" onclick="leaveC4()">↩️ خروج</button>
+  </div>
+  <div id="c4End" style="display:none">
+    <div class="trap-end-card">
+      <div class="trap-end-emoji" id="c4EndEmoji">🏆</div>
+      <div class="trap-end-text" id="c4EndText"></div>
+      <div style="display:flex;gap:10px;justify-content:center;margin-top:14px">
+        <button class="start-btn" style="max-width:160px" onclick="c4PlayAgain()">🔄 جولة جديدة</button>
+        <button class="start-btn" style="max-width:120px;background:linear-gradient(135deg,#888,#555)" onclick="leaveC4()">↩️ خروج</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div id="memScreen" style="display:none">
+  <div id="memLobby">
+    <div class="logo" style="margin-bottom:14px"><h1>🃏 لعبة الذاكرة</h1></div>
+    <div class="room-code-box">
+      <div class="room-code-lbl">رمز الغرفة</div>
+      <div class="room-code" id="memCodeDisplay">------</div>
+      <button class="online-copy-btn" onclick="copyMemCode()">📋 نسخ الرمز</button>
+    </div>
+    <div class="trap-vs-row">
+      <div class="trap-player-card p0" id="memP0Card">
+        <div class="tpc-avatar">🎴</div>
+        <div class="tpc-name" id="memP0Name">بانتظار...</div>
+      </div>
+      <div class="trap-vs-emoji">⚔️</div>
+      <div class="trap-player-card p1" id="memP1Card">
+        <div class="tpc-avatar">🎴</div>
+        <div class="tpc-name" id="memP1Name">بانتظار...</div>
+      </div>
+    </div>
+    <div id="memLobbyHost" style="display:none">
+      <button class="start-btn" style="margin-top:16px" onclick="memStart()">🚀 ابدأ اللعبة</button>
+    </div>
+    <div id="memLobbyWait" class="online-wait-note">في انتظار الخصم…</div>
+    <button class="online-leave-btn" onclick="leaveMem()">↩️ خروج</button>
+  </div>
+  <div id="memBattle" style="display:none">
+    <div class="trap-turn-banner" id="memTurnBanner">🎯 دورك!</div>
+    <div class="xo-score-row">
+      <div class="xo-score x"><span id="memP0NameBattle">أنت</span> <span class="xo-score-val" id="memP0Score">0</span></div>
+      <div class="xo-score-sep">—</div>
+      <div class="xo-score o"><span class="xo-score-val" id="memP1Score">0</span> <span id="memP1NameBattle">الخصم</span></div>
+    </div>
+    <div class="mem-board" id="memBoard"></div>
+    <button class="online-leave-btn" onclick="leaveMem()">↩️ خروج</button>
+  </div>
+  <div id="memEnd" style="display:none">
+    <div class="trap-end-card">
+      <div class="trap-end-emoji" id="memEndEmoji">🏆</div>
+      <div class="trap-end-text" id="memEndText"></div>
+      <div style="display:flex;gap:10px;justify-content:center;margin-top:14px">
+        <button class="start-btn" style="max-width:160px" onclick="memPlayAgain()">🔄 جولة جديدة</button>
+        <button class="start-btn" style="max-width:120px;background:linear-gradient(135deg,#888,#555)" onclick="leaveMem()">↩️ خروج</button>
       </div>
     </div>
   </div>
@@ -5305,9 +5493,13 @@ function pickOnlineGameType(t) {
   document.getElementById('gtQuizCard').classList.toggle('active', t==='quiz');
   document.getElementById('gtTrapCard').classList.toggle('active', t==='trap');
   document.getElementById('gtXoCard').classList.toggle('active', t==='xo');
+  document.getElementById('gtC4Card').classList.toggle('active', t==='c4');
+  document.getElementById('gtMemCard').classList.toggle('active', t==='mem');
   document.getElementById('onlineQuizPanels').style.display = t==='quiz' ? 'block' : 'none';
   document.getElementById('onlineTrapPanels').style.display = t==='trap' ? 'block' : 'none';
   document.getElementById('onlineXoPanels').style.display = t==='xo' ? 'block' : 'none';
+  document.getElementById('onlineC4Panels').style.display = t==='c4' ? 'block' : 'none';
+  document.getElementById('onlineMemPanels').style.display = t==='mem' ? 'block' : 'none';
 }
 
 // ════════════════════════════════════════════════════════════
@@ -6199,6 +6391,737 @@ function xoBotPlayAgain() {
   xo._lastBoard = null;
   xoEnterBattle(xo.localState);
   if (next === 'p1') setTimeout(()=>xoBotTakeTurn(), 600);
+}
+
+// ════════════════════════════════════════════════════════════
+// CONNECT 4 (أربعة في صف) — 7×6 grid, drop discs by column
+// Firebase path: rooms/c{code}
+// Roles: p0 = Red (host), p1 = Yellow (guest/bot)
+// ════════════════════════════════════════════════════════════
+const C4_COLS = 7, C4_ROWS = 6;
+let c4 = {
+  code:null, role:null, opponentRole:null, name:null, oppName:'الخصم',
+  listeners:[],
+  bot:false, localState:null, localPlayers:null,
+  startingTurn:'p0', _lastBoard:null
+};
+function c4ShowStage(stage) {
+  ['c4Lobby','c4Battle','c4End'].forEach(id => {
+    document.getElementById(id).style.display = (id===stage) ? 'block' : 'none';
+  });
+}
+function c4OpenScreen() {
+  ['landingScreen','setupScreen','gameScreen','onlineScreen','adminScreen','trapScreen','xoScreen','memScreen'].forEach(id=>{
+    const e = document.getElementById(id); if (e) e.style.display='none';
+  });
+  document.getElementById('c4Screen').style.display = 'block';
+}
+function copyC4Code() {
+  const code = c4.code || '';
+  if (navigator.clipboard) navigator.clipboard.writeText(code);
+  showToast('📋 تم نسخ الرمز: '+code, 'var(--gold)');
+}
+
+async function createC4Room() {
+  const botEl = document.getElementById('c4BotMode');
+  if (botEl && botEl.checked) { return startC4BotGame(); }
+  if (!ensureFirebase()) return;
+  const name = (document.getElementById('c4HostName').value.trim()) || 'المضيف';
+  const code = genCode();
+  c4.code = code; c4.role = 'p0'; c4.opponentRole = 'p1';
+  c4.name = name; c4.bot = false;
+  try {
+    await fb.db.ref('rooms/c'+code).set({
+      meta:{ hostName:name, status:'lobby', createdAt: firebase.database.ServerValue.TIMESTAMP },
+      players:{ p0:{ name, score:0, joined:true } },
+      state:{ phase:'lobby' }
+    });
+  } catch(e) {
+    showToast('⚠️ تعذّر إنشاء الغرفة: ' + (e && e.message ? e.message : ''), 'var(--wrong)');
+    c4.code = null; return;
+  }
+  c4AttachListeners();
+  c4OpenScreen(); c4ShowStage('c4Lobby');
+  document.getElementById('c4CodeDisplay').textContent = code;
+  document.getElementById('c4LobbyHost').style.display = 'block';
+}
+
+async function joinC4Room() {
+  if (!ensureFirebase()) return;
+  const name = (document.getElementById('c4JoinName').value.trim()) || 'الخصم';
+  const code = (document.getElementById('c4JoinCode').value.trim());
+  if (!/^\d{6}$/.test(code)) { showToast('⚠️ الرمز يجب أن يكون ٦ أرقام', 'var(--wrong)'); return; }
+  let data;
+  try { const snap = await fb.db.ref('rooms/c'+code).once('value'); data = snap.val(); }
+  catch(e) { showToast('⚠️ تعذّر الوصول للغرفة', 'var(--wrong)'); return; }
+  if (!data) { showToast('⚠️ الغرفة غير موجودة', 'var(--wrong)'); return; }
+  if (data.players && data.players.p1 && data.players.p1.joined) { showToast('⚠️ الغرفة ممتلئة', 'var(--wrong)'); return; }
+  c4.code = code; c4.role = 'p1'; c4.opponentRole = 'p0'; c4.name = name; c4.bot = false;
+  try { await fb.db.ref('rooms/c'+code+'/players/p1').set({ name, score:0, joined:true }); }
+  catch(e) { showToast('⚠️ تعذّر الانضمام', 'var(--wrong)'); c4.code=null; return; }
+  c4AttachListeners();
+  c4OpenScreen(); c4ShowStage('c4Lobby');
+  document.getElementById('c4CodeDisplay').textContent = code;
+  document.getElementById('c4LobbyHost').style.display = 'none';
+}
+
+function c4AttachListeners() {
+  c4DetachListeners();
+  const playersRef = fb.db.ref('rooms/c'+c4.code+'/players');
+  const stateRef = fb.db.ref('rooms/c'+c4.code+'/state');
+  const onPlayers = playersRef.on('value', s => c4RenderPlayers(s.val()||{}));
+  const onState = stateRef.on('value', s => c4OnState(s.val()||{}));
+  c4.listeners = [ () => playersRef.off('value', onPlayers), () => stateRef.off('value', onState) ];
+}
+function c4DetachListeners() {
+  c4.listeners.forEach(off=>{ try{off();}catch(e){} });
+  c4.listeners = [];
+}
+
+function c4RenderPlayers(players) {
+  const p0 = players.p0 || {}; const p1 = players.p1 || {};
+  document.getElementById('c4P0Name').textContent = p0.name || 'بانتظار...';
+  document.getElementById('c4P1Name').textContent = p1.name || 'بانتظار...';
+  c4.oppName = (c4.role==='p0' ? p1.name : p0.name) || 'الخصم';
+  const r0 = document.getElementById('c4P0NameBattle'); if (r0) r0.textContent = p0.name || 'أحمر';
+  const r1 = document.getElementById('c4P1NameBattle'); if (r1) r1.textContent = p1.name || 'أصفر';
+  const sr = document.getElementById('c4P0Score'); if (sr) sr.textContent = p0.score || 0;
+  const sy = document.getElementById('c4P1Score'); if (sy) sy.textContent = p1.score || 0;
+  if (c4.role==='p0') {
+    const ready = p0.joined && p1.joined;
+    document.getElementById('c4LobbyHost').style.display = ready ? 'block' : 'none';
+    document.getElementById('c4LobbyWait').style.display = ready ? 'none' : 'block';
+    document.getElementById('c4LobbyWait').textContent = ready ? '' : 'في انتظار الخصم…';
+  } else {
+    document.getElementById('c4LobbyWait').style.display = 'block';
+    document.getElementById('c4LobbyWait').textContent = 'في انتظار المضيف ليبدأ اللعبة…';
+  }
+}
+
+async function c4Start() {
+  if (c4.role !== 'p0') return;
+  c4._lastBoard = null;
+  await fb.db.ref('rooms/c'+c4.code+'/state').set({ phase:'battle', turn: c4.startingTurn||'p0', board: Array(C4_COLS*C4_ROWS).fill('') });
+  await fb.db.ref('rooms/c'+c4.code+'/meta/status').set('active');
+}
+
+function c4OnState(state) {
+  const phase = state.phase;
+  if (phase === 'lobby') c4ShowStage('c4Lobby');
+  else if (phase === 'battle') c4EnterBattle(state);
+  else if (phase === 'roundEnd') c4EnterRoundEnd(state);
+}
+
+function c4Idx(row, col) { return row * C4_COLS + col; }
+function c4LowestEmptyRow(board, col) {
+  for (let r = C4_ROWS - 1; r >= 0; r--) {
+    if (!board[c4Idx(r, col)]) return r;
+  }
+  return -1;
+}
+function c4FindWin(board) {
+  const dirs = [[0,1],[1,0],[1,1],[1,-1]];
+  for (let r=0; r<C4_ROWS; r++) {
+    for (let c=0; c<C4_COLS; c++) {
+      const v = board[c4Idx(r,c)]; if (!v) continue;
+      for (const [dr,dc] of dirs) {
+        const line = [c4Idx(r,c)];
+        for (let k=1; k<4; k++) {
+          const nr=r+dr*k, nc=c+dc*k;
+          if (nr<0||nr>=C4_ROWS||nc<0||nc>=C4_COLS) break;
+          if (board[c4Idx(nr,nc)] !== v) break;
+          line.push(c4Idx(nr,nc));
+        }
+        if (line.length === 4) return line;
+      }
+    }
+  }
+  return null;
+}
+function c4BoardFull(board) { return board.every(c => c); }
+
+function c4EnterBattle(state) {
+  c4ShowStage('c4Battle');
+  const board = state.board || Array(C4_COLS*C4_ROWS).fill('');
+  // Detect opponent move
+  const prev = c4._lastBoard || Array(C4_COLS*C4_ROWS).fill('');
+  const myLetter = (c4.role==='p0') ? 'R' : 'Y';
+  for (let k=0; k<board.length; k++) {
+    if (!prev[k] && board[k] && board[k] !== myLetter) {
+      try { soundXoOppMove(); } catch(e){} break;
+    }
+  }
+  c4._lastBoard = [...board];
+  const myTurn = (state.turn === c4.role);
+  const banner = document.getElementById('c4TurnBanner');
+  banner.className = 'trap-turn-banner ' + (myTurn ? 'my-turn' : 'opp-turn');
+  banner.innerHTML = myTurn
+    ? '🎯 دورك! أسقط <span style="color:#e05c5c;font-weight:900">●</span>'.replace('#e05c5c', c4.role==='p0'?'#e05c5c':'#f0c040')
+    : '⏳ دور ' + (c4.oppName || 'الخصم');
+  // Column buttons
+  const colsEl = document.getElementById('c4Cols'); colsEl.innerHTML = '';
+  for (let c=0; c<C4_COLS; c++) {
+    const btn = document.createElement('div'); btn.className = 'c4-col-btn';
+    btn.textContent = '↓';
+    const colFull = !!board[c4Idx(0, c)];
+    if (colFull) btn.classList.add('full');
+    else if (!myTurn) btn.classList.add('disabled');
+    else btn.onclick = () => c4DropPiece(c);
+    colsEl.appendChild(btn);
+  }
+  // Board
+  const winLine = c4FindWin(board);
+  const boardEl = document.getElementById('c4Board'); boardEl.innerHTML = '';
+  for (let r=0; r<C4_ROWS; r++) {
+    for (let c=0; c<C4_COLS; c++) {
+      const cell = document.createElement('div'); cell.className = 'c4-cell';
+      const v = board[c4Idx(r,c)];
+      if (v) {
+        const disc = document.createElement('div'); disc.className = 'c4-disc-piece ' + (v==='R'?'r':'y');
+        if (winLine && winLine.includes(c4Idx(r,c))) disc.classList.add('win');
+        cell.appendChild(disc);
+      }
+      boardEl.appendChild(cell);
+    }
+  }
+}
+
+async function c4DropPiece(col) {
+  if (c4.bot) { return c4BotPlayerDrop(col); }
+  const code = c4.code; if (!code) return;
+  const ssnap = await fb.db.ref('rooms/c'+code+'/state').once('value');
+  const st = ssnap.val() || {};
+  if (st.phase !== 'battle' || st.turn !== c4.role) return;
+  const board = st.board || Array(C4_COLS*C4_ROWS).fill('');
+  const row = c4LowestEmptyRow(board, col);
+  if (row < 0) return;
+  const mark = (c4.role==='p0') ? 'R' : 'Y';
+  board[c4Idx(row, col)] = mark;
+  try { if (mark === 'R') soundXoPlaceX(); else soundXoPlaceO(); } catch(e){}
+  const winLine = c4FindWin(board);
+  const updates = { 'state/board': board };
+  if (winLine) {
+    updates['state/phase'] = 'roundEnd';
+    updates['state/winner'] = c4.role;
+    const psnap = await fb.db.ref('rooms/c'+code+'/players/'+c4.role).once('value');
+    const me = psnap.val() || {};
+    updates['players/'+c4.role+'/score'] = (me.score||0) + 1;
+  } else if (c4BoardFull(board)) {
+    updates['state/phase'] = 'roundEnd';
+    updates['state/winner'] = 'draw';
+  } else {
+    updates['state/turn'] = (c4.role==='p0') ? 'p1' : 'p0';
+  }
+  await fb.db.ref('rooms/c'+code).update(updates);
+}
+
+function c4EnterRoundEnd(state) {
+  c4EnterBattle({ ...state, phase:'battle', turn:null });
+  setTimeout(() => {
+    c4ShowStage('c4End');
+    const winner = state.winner;
+    let emoji, text;
+    if (winner === 'draw') { emoji = '🤝'; text = 'تعادل! اللوحة امتلأت'; try { soundXoDraw(); } catch(e){} }
+    else if (winner === c4.role) { emoji = '🏆'; text = '🎉 فزت! ٤ متتالية'; try { soundXoWin(); if (typeof launchConfetti==='function') launchConfetti(); } catch(e){} }
+    else { emoji = '😔'; text = 'خسرت هذه الجولة'; try { soundXoLose(); } catch(e){} }
+    document.getElementById('c4EndEmoji').textContent = emoji;
+    document.getElementById('c4EndText').textContent = text;
+    if (c4.role === 'p0' || c4.bot) {
+      c4.startingTurn = (winner === 'draw') ? 'p0' : ((winner === 'p0') ? 'p1' : 'p0');
+    }
+  }, 1400);
+}
+
+async function c4PlayAgain() {
+  if (c4.bot) { return c4BotPlayAgain(); }
+  if (c4.role !== 'p0') { showToast('⏳ في انتظار المضيف ليبدأ جولة جديدة…', 'var(--gold)'); return; }
+  c4._lastBoard = null;
+  await fb.db.ref('rooms/c'+c4.code+'/state').set({ phase:'battle', turn: c4.startingTurn||'p0', board: Array(C4_COLS*C4_ROWS).fill('') });
+}
+
+function leaveC4() {
+  c4DetachListeners();
+  if (!c4.bot) {
+    try {
+      if (c4.code && c4.role === 'p0') fb.db.ref('rooms/c'+c4.code).remove();
+      else if (c4.code && c4.role === 'p1') fb.db.ref('rooms/c'+c4.code+'/players/p1').remove();
+    } catch(e){}
+  }
+  c4.code = null; c4.role = null; c4.opponentRole = null;
+  c4.bot = false; c4.localState = null; c4.localPlayers = null; c4.startingTurn = 'p0';
+  document.getElementById('c4Screen').style.display = 'none';
+  goToLanding();
+}
+
+// C4 Bot
+function startC4BotGame() {
+  const name = (document.getElementById('c4HostName').value.trim()) || 'أنت';
+  c4.bot = true; c4.code = null; c4.role = 'p0'; c4.opponentRole = 'p1';
+  c4.name = name; c4.oppName = '🤖 الكمبيوتر'; c4.startingTurn = 'p0';
+  c4.localPlayers = {
+    p0: { name, score:0, joined:true },
+    p1: { name:'🤖 الكمبيوتر', score:0, joined:true }
+  };
+  c4.localState = { phase:'battle', turn:'p0', board: Array(C4_COLS*C4_ROWS).fill('') };
+  c4OpenScreen();
+  c4RenderPlayers(c4.localPlayers);
+  c4EnterBattle(c4.localState);
+}
+function c4BotPlayerDrop(col) {
+  const st = c4.localState; if (!st || st.phase !== 'battle' || st.turn !== 'p0') return;
+  const row = c4LowestEmptyRow(st.board, col); if (row < 0) return;
+  st.board[c4Idx(row, col)] = 'R';
+  try { soundXoPlaceX(); } catch(e){}
+  const winLine = c4FindWin(st.board);
+  if (winLine) {
+    st.phase = 'roundEnd'; st.winner = 'p0';
+    c4.localPlayers.p0.score = (c4.localPlayers.p0.score||0) + 1;
+    c4RenderPlayers(c4.localPlayers);
+    c4EnterRoundEnd(st);
+    return;
+  }
+  if (c4BoardFull(st.board)) { st.phase='roundEnd'; st.winner='draw'; c4EnterRoundEnd(st); return; }
+  st.turn = 'p1';
+  c4EnterBattle(st);
+  setTimeout(()=>c4BotTakeTurn(), 700);
+}
+function c4BotTakeTurn() {
+  const st = c4.localState; if (!st || st.phase !== 'battle' || st.turn !== 'p1') return;
+  const pick = c4BotChooseColumn(st.board);
+  if (pick == null) return;
+  const row = c4LowestEmptyRow(st.board, pick); if (row < 0) return;
+  st.board[c4Idx(row, pick)] = 'Y';
+  try { soundXoPlaceO(); } catch(e){}
+  const winLine = c4FindWin(st.board);
+  if (winLine) {
+    st.phase = 'roundEnd'; st.winner = 'p1';
+    c4.localPlayers.p1.score = (c4.localPlayers.p1.score||0) + 1;
+    c4RenderPlayers(c4.localPlayers);
+    c4EnterRoundEnd(st);
+    return;
+  }
+  if (c4BoardFull(st.board)) { st.phase='roundEnd'; st.winner='draw'; c4EnterRoundEnd(st); return; }
+  st.turn = 'p0';
+  c4EnterBattle(st);
+}
+function c4BotChooseColumn(board) {
+  const cols = [];
+  for (let c=0; c<C4_COLS; c++) if (!board[c4Idx(0, c)]) cols.push(c);
+  if (!cols.length) return null;
+  // 1. Win if possible
+  for (const c of cols) {
+    const row = c4LowestEmptyRow(board, c);
+    const t = [...board]; t[c4Idx(row, c)] = 'Y';
+    if (c4FindWin(t)) return c;
+  }
+  // 2. Block opponent win
+  for (const c of cols) {
+    const row = c4LowestEmptyRow(board, c);
+    const t = [...board]; t[c4Idx(row, c)] = 'R';
+    if (c4FindWin(t)) return c;
+  }
+  // 3. Avoid giving the opponent a free win on top
+  const safe = cols.filter(c => {
+    const row = c4LowestEmptyRow(board, c);
+    if (row <= 0) return true;
+    const t = [...board]; t[c4Idx(row, c)] = 'Y'; t[c4Idx(row-1, c)] = 'R';
+    return !c4FindWin(t);
+  });
+  const pool = safe.length ? safe : cols;
+  // 4. Prefer center columns (3,2,4,1,5,0,6) heuristic
+  const order = [3,2,4,1,5,0,6];
+  for (const c of order) if (pool.includes(c)) return c;
+  return pool[Math.floor(Math.random()*pool.length)];
+}
+function c4BotPlayAgain() {
+  const next = (c4.localState && c4.localState.winner === 'p0') ? 'p1' : 'p0';
+  c4.localState = { phase:'battle', turn:next, board: Array(C4_COLS*C4_ROWS).fill('') };
+  c4._lastBoard = null;
+  c4EnterBattle(c4.localState);
+  if (next === 'p1') setTimeout(()=>c4BotTakeTurn(), 700);
+}
+
+// ════════════════════════════════════════════════════════════
+// MEMORY CARDS (لعبة الذاكرة) — 4×4, 8 pairs of emoji
+// Firebase path: rooms/m{code}
+// ════════════════════════════════════════════════════════════
+const MEM_EMOJIS = ['🍎','🍌','🍇','🍓','🍑','🍍','🥝','🥥'];
+let mem = {
+  code:null, role:null, opponentRole:null, name:null, oppName:'الخصم',
+  listeners:[],
+  bot:false, localState:null, localPlayers:null,
+  startingTurn:'p0',
+  _lastFlipped:null, _localFlip:null, _botSeen:{}
+};
+function memShowStage(stage) {
+  ['memLobby','memBattle','memEnd'].forEach(id => {
+    document.getElementById(id).style.display = (id===stage) ? 'block' : 'none';
+  });
+}
+function memOpenScreen() {
+  ['landingScreen','setupScreen','gameScreen','onlineScreen','adminScreen','trapScreen','xoScreen','c4Screen'].forEach(id=>{
+    const e = document.getElementById(id); if (e) e.style.display='none';
+  });
+  document.getElementById('memScreen').style.display = 'block';
+}
+function copyMemCode() {
+  const code = mem.code || '';
+  if (navigator.clipboard) navigator.clipboard.writeText(code);
+  showToast('📋 تم نسخ الرمز: '+code, 'var(--gold)');
+}
+
+function memBuildShuffledDeck() {
+  const deck = [];
+  MEM_EMOJIS.forEach(e => { deck.push(e); deck.push(e); });
+  // Fisher-Yates
+  for (let i=deck.length-1; i>0; i--) {
+    const j = Math.floor(Math.random()*(i+1));
+    [deck[i],deck[j]] = [deck[j],deck[i]];
+  }
+  return deck;
+}
+
+async function createMemRoom() {
+  const botEl = document.getElementById('memBotMode');
+  if (botEl && botEl.checked) { return startMemBotGame(); }
+  if (!ensureFirebase()) return;
+  const name = (document.getElementById('memHostName').value.trim()) || 'المضيف';
+  const code = genCode();
+  mem.code = code; mem.role = 'p0'; mem.opponentRole = 'p1';
+  mem.name = name; mem.bot = false;
+  try {
+    await fb.db.ref('rooms/m'+code).set({
+      meta:{ hostName:name, status:'lobby', createdAt: firebase.database.ServerValue.TIMESTAMP },
+      players:{ p0:{ name, score:0, joined:true } },
+      state:{ phase:'lobby' }
+    });
+  } catch(e) {
+    showToast('⚠️ تعذّر إنشاء الغرفة', 'var(--wrong)'); mem.code = null; return;
+  }
+  memAttachListeners();
+  memOpenScreen(); memShowStage('memLobby');
+  document.getElementById('memCodeDisplay').textContent = code;
+  document.getElementById('memLobbyHost').style.display = 'block';
+}
+
+async function joinMemRoom() {
+  if (!ensureFirebase()) return;
+  const name = (document.getElementById('memJoinName').value.trim()) || 'الخصم';
+  const code = (document.getElementById('memJoinCode').value.trim());
+  if (!/^\d{6}$/.test(code)) { showToast('⚠️ الرمز يجب أن يكون ٦ أرقام', 'var(--wrong)'); return; }
+  let data;
+  try { const snap = await fb.db.ref('rooms/m'+code).once('value'); data = snap.val(); }
+  catch(e) { showToast('⚠️ تعذّر الوصول للغرفة', 'var(--wrong)'); return; }
+  if (!data) { showToast('⚠️ الغرفة غير موجودة', 'var(--wrong)'); return; }
+  if (data.players && data.players.p1 && data.players.p1.joined) { showToast('⚠️ الغرفة ممتلئة', 'var(--wrong)'); return; }
+  mem.code = code; mem.role = 'p1'; mem.opponentRole = 'p0'; mem.name = name; mem.bot = false;
+  try { await fb.db.ref('rooms/m'+code+'/players/p1').set({ name, score:0, joined:true }); }
+  catch(e) { showToast('⚠️ تعذّر الانضمام', 'var(--wrong)'); mem.code=null; return; }
+  memAttachListeners();
+  memOpenScreen(); memShowStage('memLobby');
+  document.getElementById('memCodeDisplay').textContent = code;
+  document.getElementById('memLobbyHost').style.display = 'none';
+}
+
+function memAttachListeners() {
+  memDetachListeners();
+  const playersRef = fb.db.ref('rooms/m'+mem.code+'/players');
+  const stateRef = fb.db.ref('rooms/m'+mem.code+'/state');
+  const onPlayers = playersRef.on('value', s => memRenderPlayers(s.val()||{}));
+  const onState = stateRef.on('value', s => memOnState(s.val()||{}));
+  mem.listeners = [ () => playersRef.off('value', onPlayers), () => stateRef.off('value', onState) ];
+}
+function memDetachListeners() {
+  mem.listeners.forEach(off=>{ try{off();}catch(e){} });
+  mem.listeners = [];
+}
+
+function memRenderPlayers(players) {
+  const p0 = players.p0 || {}; const p1 = players.p1 || {};
+  document.getElementById('memP0Name').textContent = p0.name || 'بانتظار...';
+  document.getElementById('memP1Name').textContent = p1.name || 'بانتظار...';
+  mem.oppName = (mem.role==='p0' ? p1.name : p0.name) || 'الخصم';
+  const r0 = document.getElementById('memP0NameBattle'); if (r0) r0.textContent = p0.name || 'أنت';
+  const r1 = document.getElementById('memP1NameBattle'); if (r1) r1.textContent = p1.name || 'الخصم';
+  const s0 = document.getElementById('memP0Score'); if (s0) s0.textContent = p0.score || 0;
+  const s1 = document.getElementById('memP1Score'); if (s1) s1.textContent = p1.score || 0;
+  if (mem.role==='p0') {
+    const ready = p0.joined && p1.joined;
+    document.getElementById('memLobbyHost').style.display = ready ? 'block' : 'none';
+    document.getElementById('memLobbyWait').style.display = ready ? 'none' : 'block';
+    document.getElementById('memLobbyWait').textContent = ready ? '' : 'في انتظار الخصم…';
+  } else {
+    document.getElementById('memLobbyWait').style.display = 'block';
+    document.getElementById('memLobbyWait').textContent = 'في انتظار المضيف ليبدأ اللعبة…';
+  }
+}
+
+async function memStart() {
+  if (mem.role !== 'p0') return;
+  const deck = memBuildShuffledDeck();
+  mem._lastFlipped = null; mem._localFlip = null;
+  await fb.db.ref('rooms/m'+mem.code+'/state').set({ phase:'battle', turn: mem.startingTurn||'p0', deck, flipped:{}, matched:{} });
+  await fb.db.ref('rooms/m'+mem.code+'/meta/status').set('active');
+}
+
+function memOnState(state) {
+  const phase = state.phase;
+  if (phase === 'lobby') memShowStage('memLobby');
+  else if (phase === 'battle') memEnterBattle(state);
+  else if (phase === 'roundEnd') memEnterRoundEnd(state);
+}
+
+function memEnterBattle(state) {
+  memShowStage('memBattle');
+  const deck = state.deck || [];
+  const flipped = state.flipped || {};
+  const matched = state.matched || {};
+  const myTurn = (state.turn === mem.role);
+  const banner = document.getElementById('memTurnBanner');
+  banner.className = 'trap-turn-banner ' + (myTurn ? 'my-turn' : 'opp-turn');
+  banner.textContent = myTurn ? '🎯 دورك! اقلب بطاقتين' : '⏳ دور ' + (mem.oppName || 'الخصم');
+  const board = document.getElementById('memBoard'); board.innerHTML = '';
+  for (let i=0; i<deck.length; i++) {
+    const card = document.createElement('div'); card.className = 'mem-card'; card.dataset.idx = i;
+    const inner = document.createElement('div'); inner.className = 'mem-card-inner';
+    const back = document.createElement('div'); back.className = 'mem-card-back'; back.textContent = '🎴';
+    const face = document.createElement('div'); face.className = 'mem-card-face'; face.textContent = deck[i];
+    inner.appendChild(back); inner.appendChild(face);
+    card.appendChild(inner);
+    if (matched[i]) card.classList.add('matched','flipped','disabled');
+    else if (flipped[i]) card.classList.add('flipped','disabled');
+    else if (myTurn) card.onclick = () => memPickCard(i);
+    else card.classList.add('disabled');
+    board.appendChild(card);
+  }
+}
+
+async function memPickCard(i) {
+  if (mem.bot) { return memBotPlayerPick(i); }
+  const code = mem.code; if (!code) return;
+  const ssnap = await fb.db.ref('rooms/m'+code+'/state').once('value');
+  const st = ssnap.val() || {};
+  if (st.phase !== 'battle' || st.turn !== mem.role) return;
+  const flipped = st.flipped || {}, matched = st.matched || {};
+  if (flipped[i] || matched[i]) return;
+  const flipKeys = Object.keys(flipped);
+  if (flipKeys.length >= 2) return;
+  try { soundXoPlaceX(); } catch(e){}
+  // Flip this card
+  await fb.db.ref('rooms/m'+code+'/state/flipped/'+i).set(true);
+  if (flipKeys.length === 1) {
+    // This is the second card — resolve match after a brief reveal
+    const firstIdx = parseInt(flipKeys[0]);
+    const isMatch = (st.deck[firstIdx] === st.deck[i]);
+    setTimeout(async () => {
+      const updates = {};
+      if (isMatch) {
+        try { soundXoWin(); } catch(e){}
+        updates['state/matched/'+firstIdx] = true;
+        updates['state/matched/'+i] = true;
+        updates['state/flipped'] = null;
+        // Increment my score
+        const psnap = await fb.db.ref('rooms/m'+code+'/players/'+mem.role).once('value');
+        const me = psnap.val() || {};
+        updates['players/'+mem.role+'/score'] = (me.score||0) + 1;
+        await fb.db.ref('rooms/m'+code).update(updates);
+        // Check end
+        const matchedAfter = (Object.keys(matched).length / 2) + 1;
+        if (matchedAfter >= MEM_EMOJIS.length) {
+          // All pairs found
+          const pss = await fb.db.ref('rooms/m'+code+'/players').once('value');
+          const ps = pss.val() || {};
+          const s0 = (ps.p0||{}).score||0, s1 = (ps.p1||{}).score||0;
+          const winner = s0>s1 ? 'p0' : s1>s0 ? 'p1' : 'draw';
+          await fb.db.ref('rooms/m'+code+'/state').update({ phase:'roundEnd', winner });
+        }
+      } else {
+        try { soundXoLose(); } catch(e){}
+        // Swap turn, clear flipped
+        updates['state/flipped'] = null;
+        updates['state/turn'] = (mem.role==='p0') ? 'p1' : 'p0';
+        await fb.db.ref('rooms/m'+code).update(updates);
+      }
+    }, 850);
+  }
+}
+
+function memEnterRoundEnd(state) {
+  memShowStage('memEnd');
+  const winner = state.winner;
+  let emoji, text;
+  if (winner === 'draw') { emoji = '🤝'; text = 'تعادل!'; try { soundXoDraw(); } catch(e){} }
+  else if (winner === mem.role) { emoji = '🏆'; text = '🎉 فزت! ذاكرتك ممتازة'; try { soundXoWin(); if (typeof launchConfetti==='function') launchConfetti(); } catch(e){} }
+  else { emoji = '😔'; text = 'خسرت هذه الجولة. حظ أوفر!'; try { soundXoLose(); } catch(e){} }
+  document.getElementById('memEndEmoji').textContent = emoji;
+  document.getElementById('memEndText').textContent = text;
+  if (mem.role === 'p0' || mem.bot) {
+    mem.startingTurn = (winner === 'draw') ? 'p0' : ((winner === 'p0') ? 'p1' : 'p0');
+  }
+}
+
+async function memPlayAgain() {
+  if (mem.bot) { return memBotPlayAgain(); }
+  if (mem.role !== 'p0') { showToast('⏳ في انتظار المضيف ليبدأ جولة جديدة…', 'var(--gold)'); return; }
+  // Reset scores + deck
+  const psnap = await fb.db.ref('rooms/m'+mem.code+'/players').once('value');
+  const players = psnap.val() || {};
+  const updates = {};
+  Object.keys(players).forEach(pid => { updates['players/'+pid+'/score'] = 0; });
+  const deck = memBuildShuffledDeck();
+  mem._lastFlipped = null;
+  updates['state'] = { phase:'battle', turn: mem.startingTurn||'p0', deck, flipped:{}, matched:{} };
+  await fb.db.ref('rooms/m'+mem.code).update(updates);
+}
+
+function leaveMem() {
+  memDetachListeners();
+  if (!mem.bot) {
+    try {
+      if (mem.code && mem.role === 'p0') fb.db.ref('rooms/m'+mem.code).remove();
+      else if (mem.code && mem.role === 'p1') fb.db.ref('rooms/m'+mem.code+'/players/p1').remove();
+    } catch(e){}
+  }
+  mem.code = null; mem.role = null; mem.opponentRole = null;
+  mem.bot = false; mem.localState = null; mem.localPlayers = null;
+  mem._botSeen = {}; mem.startingTurn = 'p0';
+  document.getElementById('memScreen').style.display = 'none';
+  goToLanding();
+}
+
+// Memory Bot
+function startMemBotGame() {
+  const name = (document.getElementById('memHostName').value.trim()) || 'أنت';
+  mem.bot = true; mem.code = null; mem.role = 'p0'; mem.opponentRole = 'p1';
+  mem.name = name; mem.oppName = '🤖 الكمبيوتر'; mem.startingTurn = 'p0';
+  mem._botSeen = {};
+  mem.localPlayers = {
+    p0: { name, score:0, joined:true },
+    p1: { name:'🤖 الكمبيوتر', score:0, joined:true }
+  };
+  mem.localState = { phase:'battle', turn:'p0', deck: memBuildShuffledDeck(), flipped:{}, matched:{} };
+  memOpenScreen();
+  memRenderPlayers(mem.localPlayers);
+  memEnterBattle(mem.localState);
+}
+
+function memBotPlayerPick(i) {
+  const st = mem.localState; if (!st || st.phase !== 'battle' || st.turn !== 'p0') return;
+  if (st.flipped[i] || st.matched[i]) return;
+  const flipKeys = Object.keys(st.flipped);
+  if (flipKeys.length >= 2) return;
+  st.flipped[i] = true;
+  try { soundXoPlaceX(); } catch(e){}
+  // Record for bot memory
+  mem._botSeen[i] = st.deck[i];
+  memEnterBattle(st);
+  if (flipKeys.length === 0) return; // wait for second card
+  // Second card flipped - check match
+  const firstIdx = parseInt(flipKeys[0]);
+  const isMatch = (st.deck[firstIdx] === st.deck[i]);
+  setTimeout(() => {
+    if (isMatch) {
+      try { soundXoWin(); } catch(e){}
+      st.matched[firstIdx] = true; st.matched[i] = true;
+      st.flipped = {};
+      mem.localPlayers.p0.score++;
+      memRenderPlayers(mem.localPlayers);
+      memEnterBattle(st);
+      // Check end
+      if (Object.keys(st.matched).length >= st.deck.length) {
+        const s0 = mem.localPlayers.p0.score, s1 = mem.localPlayers.p1.score;
+        st.phase='roundEnd'; st.winner = s0>s1?'p0':s1>s0?'p1':'draw';
+        memEnterRoundEnd(st);
+      }
+      // Same turn - player picks again
+    } else {
+      try { soundXoLose(); } catch(e){}
+      st.flipped = {};
+      st.turn = 'p1';
+      memEnterBattle(st);
+      setTimeout(()=>memBotTakeTurn(), 800);
+    }
+  }, 850);
+}
+
+function memBotTakeTurn() {
+  const st = mem.localState; if (!st || st.phase !== 'battle' || st.turn !== 'p1') return;
+  // Bot strategy: look for known pair in memory; otherwise pick unseen randomly
+  const available = [];
+  for (let i=0; i<st.deck.length; i++) if (!st.matched[i] && !st.flipped[i]) available.push(i);
+  if (!available.length) return;
+  // Find a known pair
+  const seen = mem._botSeen;
+  let first = null, second = null;
+  for (const i of available) {
+    if (seen[i] != null) {
+      for (const j of available) {
+        if (j !== i && seen[j] === seen[i]) { first = i; second = j; break; }
+      }
+      if (first != null) break;
+    }
+  }
+  if (first == null) {
+    // Pick unseen with 30% chance of forgetting (random pick), else first available
+    const unseen = available.filter(i => seen[i] == null);
+    first = unseen.length ? unseen[Math.floor(Math.random()*unseen.length)] : available[Math.floor(Math.random()*available.length)];
+  }
+  // Flip first
+  st.flipped[first] = true;
+  mem._botSeen[first] = st.deck[first];
+  try { soundXoPlaceO(); } catch(e){}
+  memEnterBattle(st);
+  setTimeout(() => {
+    // Choose second card
+    if (second == null) {
+      const avail2 = available.filter(i => i !== first);
+      // Prefer seen match for what bot just flipped
+      const matchKnown = avail2.find(i => mem._botSeen[i] === st.deck[first]);
+      if (matchKnown != null) second = matchKnown;
+      else {
+        const unseen2 = avail2.filter(i => mem._botSeen[i] == null);
+        second = unseen2.length ? unseen2[Math.floor(Math.random()*unseen2.length)] : avail2[Math.floor(Math.random()*avail2.length)];
+      }
+    }
+    st.flipped[second] = true;
+    mem._botSeen[second] = st.deck[second];
+    try { soundXoPlaceO(); } catch(e){}
+    memEnterBattle(st);
+    const isMatch = st.deck[first] === st.deck[second];
+    setTimeout(() => {
+      if (isMatch) {
+        try { soundXoWin(); } catch(e){}
+        st.matched[first] = true; st.matched[second] = true;
+        st.flipped = {};
+        mem.localPlayers.p1.score++;
+        memRenderPlayers(mem.localPlayers);
+        memEnterBattle(st);
+        if (Object.keys(st.matched).length >= st.deck.length) {
+          const s0 = mem.localPlayers.p0.score, s1 = mem.localPlayers.p1.score;
+          st.phase='roundEnd'; st.winner = s0>s1?'p0':s1>s0?'p1':'draw';
+          memEnterRoundEnd(st);
+          return;
+        }
+        // Same turn — bot keeps playing
+        setTimeout(()=>memBotTakeTurn(), 800);
+      } else {
+        try { soundXoLose(); } catch(e){}
+        st.flipped = {};
+        st.turn = 'p0';
+        memEnterBattle(st);
+      }
+    }, 900);
+  }, 700);
+}
+
+function memBotPlayAgain() {
+  const next = (mem.localState && mem.localState.winner === 'p0') ? 'p1' : 'p0';
+  mem.localPlayers.p0.score = 0; mem.localPlayers.p1.score = 0;
+  mem._botSeen = {};
+  mem.localState = { phase:'battle', turn:next, deck: memBuildShuffledDeck(), flipped:{}, matched:{} };
+  memRenderPlayers(mem.localPlayers);
+  memEnterBattle(mem.localState);
+  if (next === 'p1') setTimeout(()=>memBotTakeTurn(), 700);
 }
 
 // ── ONLINE REJOIN (reconnect to a room after refresh/disconnect) ──
