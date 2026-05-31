@@ -228,6 +228,28 @@ body {
 .trap-end-emoji { font-size:4rem; line-height:1; }
 .trap-end-text { font-family:'Tajawal',sans-serif; font-weight:900; color:var(--gold); font-size:1.4rem; margin-top:14px; }
 @keyframes trapBoom { 0% { transform:scale(1);} 30% { transform:scale(1.18);} 100% { transform:scale(1);} }
+/* Falling bomb + boom overlay */
+.trap-boom-overlay { position:fixed; inset:0; pointer-events:none; z-index:9999; display:flex; align-items:center; justify-content:center; }
+.trap-boom-flash { position:absolute; inset:0; background:radial-gradient(circle at center, rgba(255,80,80,0.55) 0%, rgba(255,80,80,0.25) 30%, transparent 70%); animation:trapBoomFlash 0.7s ease-out forwards; opacity:0; }
+.trap-boom-bomb { position:relative; font-size:7rem; line-height:1; animation:trapBombFall 0.55s cubic-bezier(0.4,0,0.7,1) forwards; filter:drop-shadow(0 10px 24px rgba(0,0,0,0.5)); }
+.trap-boom-explode { position:relative; font-size:9rem; line-height:1; animation:trapBombExplode 0.55s ease-out forwards; }
+@keyframes trapBombFall { 0% { transform:translateY(-110vh) rotate(-20deg); opacity:0; } 15% { opacity:1; } 100% { transform:translateY(0) rotate(380deg); opacity:1; } }
+@keyframes trapBombExplode { 0% { transform:scale(0.4) rotate(0deg); opacity:0; } 20% { opacity:1; transform:scale(1.4) rotate(15deg); } 60% { transform:scale(1.8) rotate(-10deg); } 100% { transform:scale(2.2) rotate(20deg); opacity:0; } }
+@keyframes trapBoomFlash { 0% { opacity:0; } 15% { opacity:1; } 100% { opacity:0; } }
+@keyframes trapShake { 0%, 100% { transform:translateX(0); } 10%, 30%, 50%, 70%, 90% { transform:translateX(-7px); } 20%, 40%, 60%, 80% { transform:translateX(7px); } }
+body.trap-shake { animation:trapShake 0.5s ease-in-out; }
+/* Heart loss animation */
+@keyframes trapHeartBreak { 0% { transform:scale(1); } 30% { transform:scale(1.5) rotate(-12deg); filter:hue-rotate(0deg); } 60% { transform:scale(0.9) rotate(15deg); } 100% { transform:scale(1) rotate(0); filter:grayscale(1) brightness(0.5); } }
+.trap-hearts .heart-just-lost { animation:trapHeartBreak 0.8s ease-out forwards; }
+/* Floating "-1 ❤️" indicator */
+.trap-heart-float { position:absolute; font-family:'Tajawal',sans-serif; font-weight:900; color:#e05c5c; font-size:1.4rem; text-shadow:0 2px 6px rgba(0,0,0,0.5); pointer-events:none; animation:trapHeartFloat 1.2s ease-out forwards; z-index:8500; }
+@keyframes trapHeartFloat { 0% { opacity:0; transform:translateY(0) scale(0.7); } 20% { opacity:1; transform:translateY(-10px) scale(1.1); } 100% { opacity:0; transform:translateY(-60px) scale(0.9); } }
+/* Plant cell pulse when adding bomb */
+@keyframes trapPlantPulse { 0% { transform:scale(1); box-shadow:0 0 0 0 rgba(201,168,76,0.6);} 50% { transform:scale(1.08); box-shadow:0 0 0 8px rgba(201,168,76,0); } 100% { transform:scale(1); box-shadow:none; } }
+.trap-cell.just-planted { animation:trapPlantPulse 0.5s ease-out; }
+/* Safe reveal small bounce */
+@keyframes trapSafeBounce { 0% { transform:scale(0.4); opacity:0; } 60% { transform:scale(1.15); opacity:1; } 100% { transform:scale(1); opacity:1; } }
+.trap-cell.revealed-safe.just-revealed { animation:trapSafeBounce 0.4s ease-out; }
 .trap-bot-toggle { display:flex; align-items:center; gap:10px; margin-top:12px; padding:12px 14px; background:var(--option-bg); border:1.5px dashed var(--border); border-radius:12px; cursor:pointer; user-select:none; font-family:'Tajawal',sans-serif; font-weight:700; color:var(--text); font-size:0.92rem; transition:all 0.2s; }
 .trap-bot-toggle:hover { border-color:var(--gold); }
 .trap-bot-toggle input[type="checkbox"] { width:18px; height:18px; accent-color:var(--gold); cursor:pointer; flex-shrink:0; }
@@ -3744,6 +3766,62 @@ function soundXoDraw() {
   playTone(523, 0.15, 'sine', 0.2);
   setTimeout(()=>playTone(523, 0.18, 'sine', 0.18), 180);
 }
+// Trap (Bombs) game sound cues
+function soundTrapPlant() {
+  // Soft "click" — bomb being placed
+  playTone(440, 0.04, 'square', 0.18);
+  setTimeout(()=>playTone(330, 0.05, 'square', 0.14), 35);
+}
+function soundTrapConfirm() {
+  // Two-tone confirmation chime
+  playTone(523, 0.08, 'triangle', 0.22);
+  setTimeout(()=>playTone(784, 0.12, 'triangle', 0.22), 70);
+}
+function soundTrapSafe() {
+  // Relief: soft phew tone
+  playTone(660, 0.07, 'sine', 0.18);
+  setTimeout(()=>playTone(880, 0.09, 'sine', 0.15), 60);
+}
+function soundTrapBoom() {
+  // Dramatic explosion: low whoosh + noise burst (simulated with detuned sawtooth)
+  try {
+    const ctx = getAudio();
+    // Whoosh down
+    const osc1 = ctx.createOscillator(); const g1 = ctx.createGain();
+    osc1.type = 'sawtooth'; osc1.frequency.setValueAtTime(220, ctx.currentTime);
+    osc1.frequency.exponentialRampToValueAtTime(40, ctx.currentTime + 0.4);
+    g1.gain.setValueAtTime(0.45, ctx.currentTime);
+    g1.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.5);
+    osc1.connect(g1); g1.connect(ctx.destination);
+    osc1.start(); osc1.stop(ctx.currentTime + 0.5);
+    // Noise crack via square at low freq
+    const osc2 = ctx.createOscillator(); const g2 = ctx.createGain();
+    osc2.type = 'square'; osc2.frequency.setValueAtTime(80, ctx.currentTime);
+    osc2.frequency.exponentialRampToValueAtTime(30, ctx.currentTime + 0.3);
+    g2.gain.setValueAtTime(0.35, ctx.currentTime);
+    g2.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.35);
+    osc2.connect(g2); g2.connect(ctx.destination);
+    osc2.start(); osc2.stop(ctx.currentTime + 0.35);
+  } catch(e){}
+}
+function soundTrapHeartLost() {
+  // Slow descending "heartbreak"
+  playTone(330, 0.18, 'triangle', 0.22);
+  setTimeout(()=>playTone(247, 0.25, 'triangle', 0.18), 160);
+}
+function soundTrapTick() {
+  // Opponent's pick notification (subtle)
+  playTone(700, 0.05, 'sine', 0.16);
+}
+function soundTrapWin() {
+  // Victory: rising arpeggio with finale
+  [523, 659, 784, 988, 1175].forEach((f,i)=>setTimeout(()=>playTone(f, 0.18, 'triangle', 0.28), i*90));
+  setTimeout(()=>playTone(1568, 0.4, 'triangle', 0.3), 5*90);
+}
+function soundTrapLose() {
+  // Defeat: heavy descending sawtooth
+  [392, 330, 277, 220].forEach((f,i)=>setTimeout(()=>playTone(f, 0.25, 'sawtooth', 0.22), i*180));
+}
 
 // ── Timer ──
 function startTimer(onExpire) {
@@ -5250,6 +5328,45 @@ let trap = {
   bot:false, localState:null, localPlayers:null, localBombs:null
 };
 
+// Visual cue: big bomb falls from above, lands, explodes, screen flashes + shakes
+function trapPlayBoomEffect() {
+  // Screen shake on body
+  document.body.classList.add('trap-shake');
+  setTimeout(() => document.body.classList.remove('trap-shake'), 500);
+  // Falling bomb + flash overlay
+  const overlay = document.createElement('div');
+  overlay.className = 'trap-boom-overlay';
+  const flash = document.createElement('div'); flash.className = 'trap-boom-flash';
+  const bomb = document.createElement('div'); bomb.className = 'trap-boom-bomb'; bomb.textContent = '💣';
+  overlay.appendChild(flash); overlay.appendChild(bomb);
+  document.body.appendChild(overlay);
+  // Swap bomb → explosion at end of fall
+  setTimeout(() => {
+    bomb.className = 'trap-boom-explode'; bomb.textContent = '💥';
+  }, 450);
+  setTimeout(() => { try { overlay.remove(); } catch(e){} }, 1100);
+}
+
+// Float "-1 ❤️" above a hearts row
+function trapPlayHeartLossEffect(heartsElId) {
+  const row = document.getElementById(heartsElId); if (!row) return;
+  // Animate the just-lost (rightmost remaining) heart
+  const liveHearts = [...row.querySelectorAll('span:not(.heart-lost)')];
+  const losingHeart = liveHearts[liveHearts.length - 1];
+  if (losingHeart) {
+    losingHeart.classList.add('heart-just-lost');
+    setTimeout(() => losingHeart.classList.remove('heart-just-lost'), 800);
+  }
+  // Floating -1 indicator
+  const rect = row.getBoundingClientRect();
+  const float = document.createElement('div'); float.className = 'trap-heart-float';
+  float.innerHTML = '−1 ❤️';
+  float.style.left = (rect.left + rect.width/2 - 30) + 'px';
+  float.style.top = (rect.top - 8) + 'px';
+  document.body.appendChild(float);
+  setTimeout(() => { try { float.remove(); } catch(e){} }, 1300);
+}
+
 function trapShowStage(stage) {
   ['trapLobby','trapPlant','trapBattle','trapEnd'].forEach(id => {
     document.getElementById(id).style.display = (id===stage) ? 'block' : 'none';
@@ -5399,6 +5516,7 @@ function trapOnState(state) {
 function trapEnterPlant() {
   trapShowStage('trapPlant');
   trap.myPlants = []; trap.confirmed = false;
+  trap._lastOppRevealed = null;
   document.getElementById('trapPlantOppName').textContent = 'لوحة ' + (trap.oppName || 'الخصم');
   document.getElementById('trapPlantConfirm').style.display = 'none';
   document.getElementById('trapPlantWait').style.display = 'none';
@@ -5417,7 +5535,9 @@ function trapTogglePlant(i, el) {
   if (had) { trap.myPlants = trap.myPlants.filter(x => x!==i); el.classList.remove('planted'); }
   else {
     if (trap.myPlants.length >= TRAP_BOMBS) { showToast('💣 وصلت الحد الأقصى (٣ قنابل)', 'var(--wrong)'); return; }
-    trap.myPlants.push(i); el.classList.add('planted');
+    trap.myPlants.push(i); el.classList.add('planted', 'just-planted');
+    try { soundTrapPlant(); } catch(e){}
+    setTimeout(()=>el.classList.remove('just-planted'), 500);
   }
   trapUpdatePlantCount();
 }
@@ -5431,6 +5551,7 @@ function trapUpdatePlantCount() {
 async function trapConfirmPlants() {
   if (trap.myPlants.length !== TRAP_BOMBS) return;
   trap.confirmed = true;
+  try { soundTrapConfirm(); } catch(e){}
   if (trap.bot) { return trapBotConfirmPlants(); }
   // I plant bombs in OPPONENT's board
   await fb.db.ref('rooms/t'+trap.code+'/bombs/'+trap.opponentRole).set(trap.myPlants);
@@ -5477,6 +5598,26 @@ async function trapEnterBattle(state) {
   }
   trap._myBombsInMyBoard = bombs[trap.role] || [];                 // what opponent planted in MY board
   trap._myBombsInOppBoard = bombs[trap.opponentRole] || [];        // what I planted in OPPONENT's board
+  // Detect opponent's move (online only): compare opponent-board reveals against last snapshot
+  if (!trap.bot) {
+    const oppRevKey = 'revealed_' + trap.opponentRole;
+    const cur = state[oppRevKey] || {};
+    const prev = trap._lastOppRevealed || {};
+    let newReveal = null;
+    for (const k of Object.keys(cur)) {
+      if (prev[k] == null) { newReveal = { idx:k, val:cur[k] }; break; }
+    }
+    if (newReveal) {
+      if (newReveal.val === 'bomb') {
+        try { soundTrapBoom(); } catch(e){}
+        trapPlayBoomEffect();
+        setTimeout(()=>{ try { soundTrapHeartLost(); } catch(e){} trapPlayHeartLossEffect('trapOppHearts'); }, 350);
+      } else {
+        try { soundTrapTick(); } catch(e){}
+      }
+    }
+    trap._lastOppRevealed = { ...cur };
+  }
   // Render boards
   trapRenderBoard('trapMyBoard', state, /*isMine=*/true);
   trapRenderBoard('trapOppBoard', state, /*isMine=*/false);
@@ -5531,6 +5672,14 @@ async function trapPickCell(i) {
   if (myRevealed[i] != null) return;
   // Is it a bomb? Check bombs/myRole
   const isBomb = (trap._myBombsInMyBoard || []).includes(i);
+  // Immediate local feedback: sound + visual effect (don't wait for Firebase roundtrip)
+  if (isBomb) {
+    try { soundTrapBoom(); } catch(e){}
+    trapPlayBoomEffect();
+    setTimeout(()=>{ try { soundTrapHeartLost(); } catch(e){} trapPlayHeartLossEffect('trapMyHearts'); }, 350);
+  } else {
+    try { soundTrapSafe(); } catch(e){}
+  }
   const updates = {};
   updates['state/' + myRevealedKey + '/' + i] = isBomb ? 'bomb' : 'safe';
   let newHearts = null;
@@ -5557,6 +5706,7 @@ async function trapEnterEnd(state) {
   document.getElementById('trapEndText').textContent = won
     ? (trap.bot ? '🎉 فزت على الكمبيوتر!' : '🎉 فزت! تجنبت القنابل بمهارة')
     : (trap.bot ? '🤖 فاز الكمبيوتر هذه المرة!' : '😵 خسرت! وقعت في الفخاخ');
+  try { if (won) soundTrapWin(); else soundTrapLose(); } catch(e){}
   if (won) { try { if (typeof launchConfetti==='function') launchConfetti(); } catch(e){} }
   // Rematch button: host (or bot) shows action; guest shows waiting
   const btn = document.getElementById('trapRematchBtn');
@@ -5662,15 +5812,21 @@ function trapBotPlayerPick(i) {
   const isBomb = (trap._myBombsInMyBoard || []).includes(i);
   myRev[i] = isBomb ? 'bomb' : 'safe';
   if (isBomb) {
+    try { soundTrapBoom(); } catch(e){}
+    trapPlayBoomEffect();
+    setTimeout(()=>{ try { soundTrapHeartLost(); } catch(e){} trapPlayHeartLossEffect('trapMyHearts'); }, 350);
     trap.localPlayers.p0.hearts = Math.max(0, trap.localPlayers.p0.hearts - 1);
     if (trap.localPlayers.p0.hearts === 0) {
       st.phase = 'end'; st.winner = 'p1';
-      trapEnterEnd(st); return;
+      setTimeout(()=>trapEnterEnd(st), 900);
+      return;
     }
+  } else {
+    try { soundTrapSafe(); } catch(e){}
   }
   st.turn = 'p1';
   trapEnterBattle(st);
-  setTimeout(()=>trapBotTakeTurn(), 1100);
+  setTimeout(()=>trapBotTakeTurn(), isBomb ? 1500 : 1100);
 }
 
 function trapBotTakeTurn() {
@@ -5683,11 +5839,17 @@ function trapBotTakeTurn() {
   const isBomb = (trap.localBombs.p1 || []).includes(pick);
   rev[pick] = isBomb ? 'bomb' : 'safe';
   if (isBomb) {
+    try { soundTrapBoom(); } catch(e){}
+    trapPlayBoomEffect();
+    setTimeout(()=>{ try { soundTrapHeartLost(); } catch(e){} trapPlayHeartLossEffect('trapOppHearts'); }, 350);
     trap.localPlayers.p1.hearts = Math.max(0, trap.localPlayers.p1.hearts - 1);
     if (trap.localPlayers.p1.hearts === 0) {
       st.phase = 'end'; st.winner = 'p0';
-      trapEnterEnd(st); return;
+      setTimeout(()=>trapEnterEnd(st), 900);
+      return;
     }
+  } else {
+    try { soundTrapTick(); } catch(e){}
   }
   st.turn = 'p0';
   trapEnterBattle(st);
