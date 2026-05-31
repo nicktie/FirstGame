@@ -240,13 +240,18 @@ body {
 .xo-score.o { color:#e07050; }
 .xo-score-val { display:inline-block; min-width:30px; text-align:center; padding:4px 10px; background:var(--option-bg); border-radius:10px; font-size:1.15rem; }
 .xo-score-sep { color:var(--muted); font-size:1.1rem; }
-.xo-board { display:grid; grid-template-columns:repeat(3,1fr); gap:10px; background:var(--card-bg); border:1.5px solid var(--border); border-radius:18px; padding:14px; aspect-ratio:1; }
-.xo-cell { background:var(--option-bg); border:1.5px solid var(--border); border-radius:14px; display:flex; align-items:center; justify-content:center; font-family:'Tajawal',sans-serif; font-weight:900; font-size:3.6rem; cursor:pointer; transition:all 0.18s; user-select:none; line-height:1; }
+.xo-board { display:grid; grid-template-columns:repeat(3,1fr); grid-template-rows:repeat(3,1fr); gap:10px; background:var(--card-bg); border:1.5px solid var(--border); border-radius:18px; padding:14px; aspect-ratio:1; }
+.xo-cell { background:var(--option-bg); border:1.5px solid var(--border); border-radius:14px; display:flex; align-items:center; justify-content:center; font-family:'Tajawal',sans-serif; font-weight:900; font-size:3.4rem; cursor:pointer; transition:all 0.18s; user-select:none; line-height:1; min-height:0; min-width:0; }
 .xo-cell:hover:not(.filled):not(.disabled) { border-color:var(--gold); background:rgba(201,168,76,0.08); transform:scale(1.03); }
 .xo-cell.filled, .xo-cell.disabled { cursor:default; }
-.xo-cell.x { color:#6495ed; }
-.xo-cell.o { color:#e07050; }
+.xo-cell.x { color:var(--xo-x, #6495ed); text-shadow:0 0 12px rgba(100,149,237,0.35); }
+.xo-cell.o { color:var(--xo-o, #a070e0); text-shadow:0 0 12px rgba(160,112,224,0.35); }
 .xo-cell.win { background:rgba(201,168,76,0.18); border-color:var(--gold); box-shadow:0 0 0 3px rgba(201,168,76,0.15); animation:xoWinPulse 0.7s ease infinite alternate; }
+.xo-score.x { color:var(--xo-x, #6495ed); }
+.xo-score.o { color:var(--xo-o, #a070e0); }
+/* Theme overrides so X and O are distinct from theme accent (gold/purple) */
+body.theme-purple, body.theme-darkpurple { --xo-x:#3dba7a; --xo-o:#e0a040; }
+body.theme-gold { --xo-x:#6495ed; --xo-o:#3dba7a; }
 @keyframes xoWinPulse { from { box-shadow:0 0 0 3px rgba(201,168,76,0.15); } to { box-shadow:0 0 0 6px rgba(201,168,76,0.35); } }
 .online-team-col.t0 { border-color:#6495ed55; }
 .online-team-col.t1 { border-color:#e0705055; }
@@ -1568,12 +1573,12 @@ body.theme-gold .net-indicator { color:var(--gold); }
     </div>
     <div class="trap-vs-row">
       <div class="trap-player-card p0" id="xoP0Card">
-        <div class="tpc-avatar" id="xoP0Avatar">❌</div>
+        <div class="tpc-avatar xo-score x" id="xoP0Avatar" style="font-family:'Tajawal',sans-serif;font-weight:900">X</div>
         <div class="tpc-name" id="xoP0Name">بانتظار...</div>
       </div>
       <div class="trap-vs-emoji">⚔️</div>
       <div class="trap-player-card p1" id="xoP1Card">
-        <div class="tpc-avatar" id="xoP1Avatar">⭕</div>
+        <div class="tpc-avatar xo-score o" id="xoP1Avatar" style="font-family:'Tajawal',sans-serif;font-weight:900">O</div>
         <div class="tpc-name" id="xoP1Name">بانتظار...</div>
       </div>
     </div>
@@ -1587,9 +1592,9 @@ body.theme-gold .net-indicator { color:var(--gold); }
   <div id="xoBattle" style="display:none">
     <div class="trap-turn-banner" id="xoTurnBanner">🎯 دورك!</div>
     <div class="xo-score-row">
-      <div class="xo-score x"><span id="xoP0NameBattle">❌ أنت</span> <span class="xo-score-val" id="xoP0Score">0</span></div>
+      <div class="xo-score x"><span id="xoP0NameBattle">أنت</span> <span class="xo-score-val" id="xoP0Score">0</span></div>
       <div class="xo-score-sep">—</div>
-      <div class="xo-score o"><span class="xo-score-val" id="xoP1Score">0</span> <span id="xoP1NameBattle">الخصم ⭕</span></div>
+      <div class="xo-score o"><span class="xo-score-val" id="xoP1Score">0</span> <span id="xoP1NameBattle">الخصم</span></div>
     </div>
     <div class="xo-board" id="xoBoard"></div>
     <button class="online-leave-btn" onclick="leaveXo()">↩️ خروج</button>
@@ -5758,8 +5763,8 @@ function xoRenderPlayers(players) {
   // Battle screen score labels
   const xn = document.getElementById('xoP0NameBattle');
   const on = document.getElementById('xoP1NameBattle');
-  if (xn) xn.textContent = '❌ ' + (p0.name || 'X');
-  if (on) on.textContent = (p1.name || 'O') + ' ⭕';
+  if (xn) xn.textContent = p0.name || 'X';
+  if (on) on.textContent = p1.name || 'O';
   const sx = document.getElementById('xoP0Score'); if (sx) sx.textContent = xo.scoreX;
   const so = document.getElementById('xoP1Score'); if (so) so.textContent = xo.scoreO;
   // Show start button when both joined (host only)
@@ -5792,18 +5797,22 @@ function xoOnState(state) {
 function xoEnterBattle(state) {
   xoShowStage('xoBattle');
   const board = state.board || Array(9).fill('');
-  const myMark = (xo.role==='p0') ? '❌' : '⭕';
-  const oppMark = (xo.role==='p0') ? '⭕' : '❌';
+  const myMark = (xo.role==='p0') ? 'X' : 'O';
+  const oppMark = (xo.role==='p0') ? 'O' : 'X';
+  const myCls  = (xo.role==='p0') ? 'x' : 'o';
+  const oppCls = (xo.role==='p0') ? 'o' : 'x';
   const myTurn = (state.turn === xo.role);
   const banner = document.getElementById('xoTurnBanner');
   banner.className = 'trap-turn-banner ' + (myTurn ? 'my-turn' : 'opp-turn');
-  banner.textContent = myTurn ? ('🎯 دورك! ضع ' + myMark) : ('⏳ دور ' + (xo.oppName || 'الخصم') + ' ' + oppMark);
+  banner.innerHTML = myTurn
+    ? '🎯 دورك! ضع <span class="xo-score ' + myCls + '" style="font-weight:900;font-size:1.15em">' + myMark + '</span>'
+    : '⏳ دور ' + (xo.oppName || 'الخصم') + ' <span class="xo-score ' + oppCls + '" style="font-weight:900;font-size:1.15em">' + oppMark + '</span>';
   const boardEl = document.getElementById('xoBoard'); boardEl.innerHTML = '';
   const winLine = xoFindWin(board);
   for (let i=0; i<9; i++) {
     const c = document.createElement('div'); c.className = 'xo-cell'; c.dataset.idx = i;
-    if (board[i] === 'X') { c.classList.add('x','filled'); c.textContent = '❌'; }
-    else if (board[i] === 'O') { c.classList.add('o','filled'); c.textContent = '⭕'; }
+    if (board[i] === 'X') { c.classList.add('x','filled'); c.textContent = 'X'; }
+    else if (board[i] === 'O') { c.classList.add('o','filled'); c.textContent = 'O'; }
     else if (myTurn) { c.onclick = () => xoPickCell(i); }
     else { c.classList.add('disabled'); }
     if (winLine && winLine.includes(i)) c.classList.add('win');
