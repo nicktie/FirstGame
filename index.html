@@ -304,6 +304,43 @@ body.theme-gold { --xo-x:#6495ed; --xo-o:#3dba7a; }
 .mem-card.matched .mem-card-face { background:rgba(61,186,122,0.18); border-color:#3dba7a; animation:memMatchPulse 0.6s ease; }
 .mem-card.disabled { pointer-events:none; }
 @keyframes memMatchPulse { 0% { transform:rotateY(180deg) scale(1); } 50% { transform:rotateY(180deg) scale(1.12); } 100% { transform:rotateY(180deg) scale(1); } }
+/* Defuse the Bomb */
+#defuseScreen { max-width:580px; margin:0 auto; padding:20px 16px 40px; }
+.defuse-header { display:flex; align-items:center; justify-content:space-between; gap:10px; background:var(--card-bg); border:1.5px solid var(--border); border-radius:14px; padding:10px 14px; margin-bottom:12px; }
+.defuse-timer-box { font-family:'Tajawal',sans-serif; font-weight:900; font-size:1.25rem; color:var(--gold); }
+.defuse-timer-box.low { color:#e05c5c; animation:defuseTimerPulse 0.5s ease infinite alternate; }
+@keyframes defuseTimerPulse { from { transform:scale(1); } to { transform:scale(1.1); } }
+.defuse-score-box { font-family:'Tajawal',sans-serif; font-weight:700; font-size:0.9rem; display:flex; align-items:center; gap:8px; }
+.defuse-role-banner { background:rgba(201,168,76,0.12); border:1.5px solid var(--gold); border-radius:12px; padding:10px 14px; text-align:center; color:var(--gold); font-family:'Tajawal',sans-serif; font-weight:900; margin-bottom:14px; font-size:1rem; }
+.defuse-role-banner.expert { background:rgba(100,149,237,0.12); border-color:#6495ed; color:#6495ed; }
+.defuse-bomb-panel { background:linear-gradient(180deg, #2a2018, #1a1410); border:2px solid #5a4030; border-radius:18px; padding:18px 14px; box-shadow:0 8px 24px rgba(0,0,0,0.4), inset 0 1px 0 rgba(255,255,255,0.05); }
+.defuse-info-row { display:flex; justify-content:space-between; gap:14px; margin-bottom:14px; padding-bottom:14px; border-bottom:1px dashed rgba(255,255,255,0.12); }
+.defuse-info-item { display:flex; flex-direction:column; align-items:center; gap:4px; }
+.dii-lbl { font-size:0.72rem; color:#a0907c; font-weight:700; }
+.dii-val { font-family:'Tajawal',sans-serif; font-weight:900; font-size:1.15rem; color:#f0d080; letter-spacing:2px; background:rgba(0,0,0,0.3); padding:4px 12px; border-radius:8px; }
+.defuse-wires { display:flex; flex-direction:column; gap:10px; }
+.defuse-wire { display:flex; align-items:center; gap:10px; background:rgba(0,0,0,0.25); border:1px solid rgba(255,255,255,0.06); border-radius:10px; padding:8px 10px; }
+.defuse-wire-num { display:flex; align-items:center; justify-content:center; width:30px; height:30px; border-radius:50%; background:rgba(255,255,255,0.08); color:#f0d080; font-family:'Tajawal',sans-serif; font-weight:900; font-size:0.9rem; flex-shrink:0; }
+.defuse-wire-line { flex:1; height:6px; border-radius:3px; box-shadow:inset 0 1px 2px rgba(0,0,0,0.4), 0 0 6px currentColor; }
+.defuse-wire-line.dw-red { background:#e05c5c; color:#e05c5c66; }
+.defuse-wire-line.dw-blue { background:#6495ed; color:#6495ed66; }
+.defuse-wire-line.dw-yellow { background:#f0c040; color:#f0c04066; }
+.defuse-wire-line.dw-white { background:#f0f0f0; color:#f0f0f066; }
+.defuse-wire-line.dw-black { background:#3a3a3a; color:#88888866; box-shadow:inset 0 1px 2px rgba(0,0,0,0.4); }
+.defuse-cut-btn { background:linear-gradient(135deg, #e05c5c, #9a3030); border:none; border-radius:8px; color:#fff; padding:6px 14px; font-family:'Tajawal',sans-serif; font-weight:900; font-size:0.85rem; cursor:pointer; flex-shrink:0; transition:all 0.18s; }
+.defuse-cut-btn:hover { background:linear-gradient(135deg, #ff7070, #b04040); transform:scale(1.05); }
+.defuse-cut-btn:disabled { opacity:0.4; cursor:not-allowed; }
+.defuse-wire.cut .defuse-wire-line { opacity:0.25; }
+.defuse-wire.cut .defuse-wire-line::after { content:'✂️'; }
+.defuse-hint { background:rgba(100,149,237,0.1); border:1px dashed #6495ed55; border-radius:10px; padding:10px 14px; margin-top:14px; text-align:center; font-size:0.85rem; color:var(--text); }
+.defuse-manual { background:linear-gradient(180deg, #fdf6e3, #e8dcc0); border:2px solid #b8956c; border-radius:14px; padding:16px 18px; color:#3a2818; box-shadow:0 8px 20px rgba(0,0,0,0.25); }
+.defuse-manual-title { font-family:'Tajawal',sans-serif; font-weight:900; font-size:1.1rem; color:#5a3818; text-align:center; padding-bottom:10px; border-bottom:1.5px solid #b8956c66; margin-bottom:10px; }
+.defuse-manual-sub { text-align:center; font-size:0.78rem; color:#7a5828; margin-bottom:10px; opacity:0.85; }
+.defuse-rules { list-style:none; padding:0; margin:0; counter-reset:rule; }
+.defuse-rules li { counter-increment:rule; padding:8px 10px 8px 38px; position:relative; font-size:0.9rem; line-height:1.7; border-bottom:1px dashed #b8956c44; }
+.defuse-rules li:last-child { border-bottom:none; }
+.defuse-rules li::before { content:counter(rule); position:absolute; right:8px; top:8px; display:flex; align-items:center; justify-content:center; width:22px; height:22px; border-radius:50%; background:#5a3818; color:#fdf6e3; font-family:'Tajawal',sans-serif; font-weight:900; font-size:0.78rem; }
+.defuse-rules li b { color:#9a3030; }
 @keyframes xoWinPulse { from { box-shadow:0 0 0 3px rgba(201,168,76,0.15); } to { box-shadow:0 0 0 6px rgba(201,168,76,0.35); } }
 .online-team-col.t0 { border-color:#6495ed55; }
 .online-team-col.t1 { border-color:#e0705055; }
@@ -1033,6 +1070,11 @@ body.theme-gold .net-indicator { color:var(--gold); }
           <div class="gt-label">الذاكرة</div>
           <div class="gt-sub">جد الأزواج المتطابقة</div>
         </div>
+        <div class="gametype-card" id="gtDefuseCard" onclick="pickOnlineGameType('defuse')">
+          <div class="gt-icon">🧨</div>
+          <div class="gt-label">إبطال القنبلة</div>
+          <div class="gt-sub">لاعبان • تواصل ضروري!</div>
+        </div>
       </div>
     </div>
     <div id="onlineQuizPanels">
@@ -1242,6 +1284,32 @@ body.theme-gold .net-indicator { color:var(--gold); }
         <input class="online-input" id="memJoinName" type="text" maxlength="16" placeholder="اسمك">
         <input class="online-input online-code-input" id="memJoinCode" type="text" inputmode="numeric" maxlength="6" placeholder="رمز الغرفة">
         <button class="start-btn" style="margin-top:14px;background:linear-gradient(135deg,#6495ed,#3a6bc4)" onclick="joinMemRoom()">🎮 دخول للعبة</button>
+      </div>
+    </div>
+
+    <div id="onlineDefusePanels" style="display:none">
+      <div class="online-panel">
+        <div class="online-panel-title">🧨 إبطال القنبلة</div>
+        <div class="trap-rules">
+          <div class="trap-rule"><span class="trap-rule-num">١</span>لاعب يرى <strong>الأسلاك</strong>، لاعب يرى <strong>الدليل السري</strong></div>
+          <div class="trap-rule"><span class="trap-rule-num">٢</span><strong>تكلموا</strong> صوتياً أو كتابياً — وصف الأسلاك واتبع التعليمات</div>
+          <div class="trap-rule"><span class="trap-rule-num">٣</span>اقطعوا السلك الصحيح خلال <strong>٩٠ ثانية</strong></div>
+          <div class="trap-rule"><span class="trap-rule-num">٤</span>سلك خاطئ = 💥 — تتبادلون الأدوار كل جولة</div>
+        </div>
+        <input class="online-input" id="defuseHostName" type="text" maxlength="16" placeholder="اسمك">
+        <label class="trap-bot-toggle" for="defuseBotMode">
+          <input type="checkbox" id="defuseBotMode">
+          <span>🧠 حل وحدك <span class="trap-bot-hint">(تشوف الكل وتحل كلغز)</span></span>
+        </label>
+        <button class="start-btn" style="margin-top:16px" onclick="createDefuseRoom()">💣 إنشاء غرفة</button>
+      </div>
+      <div class="online-or">— أو —</div>
+      <div class="online-panel">
+        <div class="online-panel-title">🔗 انضمام لغرفة</div>
+        <div class="online-panel-sub">أدخل الرمز اللي وصلك من الخصم.</div>
+        <input class="online-input" id="defuseJoinName" type="text" maxlength="16" placeholder="اسمك">
+        <input class="online-input online-code-input" id="defuseJoinCode" type="text" inputmode="numeric" maxlength="6" placeholder="رمز الغرفة">
+        <button class="start-btn" style="margin-top:14px;background:linear-gradient(135deg,#e05c5c,#9a3030)" onclick="joinDefuseRoom()">⚔️ دخول للمعركة</button>
       </div>
     </div>
   </div>
@@ -1820,6 +1888,88 @@ body.theme-gold .net-indicator { color:var(--gold); }
       <div style="display:flex;gap:10px;justify-content:center;margin-top:14px">
         <button class="start-btn" style="max-width:160px" onclick="memPlayAgain()">🔄 جولة جديدة</button>
         <button class="start-btn" style="max-width:120px;background:linear-gradient(135deg,#888,#555)" onclick="leaveMem()">↩️ خروج</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div id="defuseScreen" style="display:none">
+  <div id="defuseLobby">
+    <div class="logo" style="margin-bottom:14px"><h1>🧨 إبطال القنبلة</h1></div>
+    <div class="room-code-box">
+      <div class="room-code-lbl">رمز الغرفة</div>
+      <div class="room-code" id="defuseCodeDisplay">------</div>
+      <button class="online-copy-btn" onclick="copyDefuseCode()">📋 نسخ الرمز</button>
+    </div>
+    <div class="trap-vs-row">
+      <div class="trap-player-card p0" id="defuseP0Card">
+        <div class="tpc-avatar">🧨</div>
+        <div class="tpc-name" id="defuseP0Name">بانتظار...</div>
+      </div>
+      <div class="trap-vs-emoji">📞</div>
+      <div class="trap-player-card p1" id="defuseP1Card">
+        <div class="tpc-avatar">📖</div>
+        <div class="tpc-name" id="defuseP1Name">بانتظار...</div>
+      </div>
+    </div>
+    <div style="text-align:center;font-size:0.85rem;color:var(--muted);margin-top:10px">الأدوار تتبدل تلقائياً كل جولة</div>
+    <div id="defuseLobbyHost" style="display:none">
+      <button class="start-btn" style="margin-top:16px" onclick="defuseStart()">🚀 ابدأ اللعبة</button>
+    </div>
+    <div id="defuseLobbyWait" class="online-wait-note">في انتظار الخصم…</div>
+    <button class="online-leave-btn" onclick="leaveDefuse()">↩️ خروج</button>
+  </div>
+
+  <div id="defuseBattle" style="display:none">
+    <div class="defuse-header">
+      <div class="defuse-timer-box">⏱️ <span id="defuseTime">90</span>ث</div>
+      <div class="defuse-score-box">
+        <span>تفكيك: <b style="color:#3dba7a" id="defuseScoreOK">0</b></span>
+        <span style="opacity:0.4">|</span>
+        <span>انفجار: <b style="color:#e05c5c" id="defuseScoreBoom">0</b></span>
+      </div>
+    </div>
+    <div class="defuse-role-banner" id="defuseRoleBanner">🧨 أنت المُفكِّك</div>
+    <div id="defuseDefuserView" style="display:none">
+      <div class="defuse-bomb-panel">
+        <div class="defuse-info-row">
+          <div class="defuse-info-item"><span class="dii-lbl">رقم تسلسلي</span><span class="dii-val" id="defuseSerial">----</span></div>
+          <div class="defuse-info-item"><span class="dii-lbl">بطاريات</span><span class="dii-val" id="defuseBatteries">⚡</span></div>
+        </div>
+        <div class="defuse-wires" id="defuseWires"></div>
+      </div>
+      <div class="defuse-hint">📞 صف الأسلاك للخبير ليرشدك للقطع الصحيح</div>
+    </div>
+    <div id="defuseExpertView" style="display:none">
+      <div class="defuse-manual">
+        <div class="defuse-manual-title">📖 دليل التفكيك السري</div>
+        <div class="defuse-manual-sub">طبّق <b>أول قاعدة</b> تنطبق على الأسلاك</div>
+        <ol class="defuse-rules">
+          <li>إذا <b>لم يوجد سلك أحمر</b> → اقطع السلك <b>الثاني</b></li>
+          <li>إذا كان <b>آخر سلك أبيض</b> ويوجد سلك أبيض → اقطع <b>آخر سلك أبيض</b></li>
+          <li>إذا كان عدد الأسلاك <b>الزرقاء أكثر من واحد</b> → اقطع <b>آخر سلك أزرق</b></li>
+          <li>إذا كان آخر <b>رقم تسلسلي زوجياً</b> (٠،٢،٤،٦،٨) ويوجد سلك أسود → اقطع <b>أول سلك أسود</b></li>
+          <li>إذا كان عدد <b>البطاريات أكبر من ٢</b> → اقطع السلك <b>الأول</b></li>
+          <li>خلاف ذلك → اقطع السلك <b>الأخير</b></li>
+        </ol>
+      </div>
+      <div class="defuse-hint">📞 اطلب من المُفكِّك يصف الأسلاك بالترتيب ولونها</div>
+    </div>
+    <div id="defuseSoloView" style="display:none">
+      <div style="background:rgba(201,168,76,0.1);border:1px dashed var(--gold);border-radius:12px;padding:10px;margin-bottom:12px;text-align:center;font-size:0.85rem;color:var(--gold)">🧠 وضع الحل: ترى القنبلة والدليل معاً</div>
+    </div>
+    <button class="online-leave-btn" onclick="leaveDefuse()">↩️ خروج</button>
+  </div>
+
+  <div id="defuseEnd" style="display:none">
+    <div class="trap-end-card">
+      <div class="trap-end-emoji" id="defuseEndEmoji">💥</div>
+      <div class="trap-end-text" id="defuseEndText"></div>
+      <div id="defuseEndReveal" style="font-size:0.85rem;color:var(--muted);margin-top:10px"></div>
+      <div style="display:flex;gap:10px;justify-content:center;margin-top:14px">
+        <button class="start-btn" id="defuseRematchBtn" style="max-width:170px;display:none" onclick="defusePlayAgain()">🔄 جولة جديدة</button>
+        <button class="start-btn" id="defuseRematchWait" style="max-width:170px;display:none;background:rgba(100,149,237,0.15);color:#6495ed;border-color:#6495ed">⏳ في انتظار المضيف…</button>
+        <button class="start-btn" style="max-width:130px;background:linear-gradient(135deg,#888,#555)" onclick="leaveDefuse()">↩️ خروج</button>
       </div>
     </div>
   </div>
@@ -5498,11 +5648,13 @@ function pickOnlineGameType(t) {
   document.getElementById('gtXoCard').classList.toggle('active', t==='xo');
   document.getElementById('gtC4Card').classList.toggle('active', t==='c4');
   document.getElementById('gtMemCard').classList.toggle('active', t==='mem');
+  document.getElementById('gtDefuseCard').classList.toggle('active', t==='defuse');
   document.getElementById('onlineQuizPanels').style.display = t==='quiz' ? 'block' : 'none';
   document.getElementById('onlineTrapPanels').style.display = t==='trap' ? 'block' : 'none';
   document.getElementById('onlineXoPanels').style.display = t==='xo' ? 'block' : 'none';
   document.getElementById('onlineC4Panels').style.display = t==='c4' ? 'block' : 'none';
   document.getElementById('onlineMemPanels').style.display = t==='mem' ? 'block' : 'none';
+  document.getElementById('onlineDefusePanels').style.display = t==='defuse' ? 'block' : 'none';
 }
 
 // ════════════════════════════════════════════════════════════
@@ -7129,6 +7281,386 @@ function memBotPlayAgain() {
   memRenderPlayers(mem.localPlayers);
   memEnterBattle(mem.localState);
   if (next === 'p1') setTimeout(()=>memBotTakeTurn(), 700);
+}
+
+// ════════════════════════════════════════════════════════════
+// DEFUSE THE BOMB — asymmetric info game (Defuser sees wires, Expert reads manual)
+// Firebase path: rooms/d{code}
+// ════════════════════════════════════════════════════════════
+const DEFUSE_TIMER_SECS = 90;
+const DEFUSE_WIRE_COLORS = ['red','blue','yellow','white','black'];
+const DEFUSE_WIRE_NAMES = { red:'أحمر', blue:'أزرق', yellow:'أصفر', white:'أبيض', black:'أسود' };
+const DEFUSE_SERIAL_LETTERS = 'ABCDEFGHJKLMNPQRSTUVWXYZ';
+let defuse = {
+  code:null, role:null, opponentRole:null, name:null, oppName:'الخصم',
+  listeners:[], localTimerInt:null,
+  bot:false, localState:null, localPlayers:null,
+  scoreOK:0, scoreBoom:0,
+  _lastRound:-1
+};
+
+function defuseShowStage(stage) {
+  ['defuseLobby','defuseBattle','defuseEnd'].forEach(id => {
+    document.getElementById(id).style.display = (id===stage) ? 'block' : 'none';
+  });
+}
+function defuseOpenScreen() {
+  ['landingScreen','setupScreen','gameScreen','onlineScreen','adminScreen','trapScreen','xoScreen','c4Screen','memScreen'].forEach(id=>{
+    const e = document.getElementById(id); if (e) e.style.display='none';
+  });
+  document.getElementById('defuseScreen').style.display = 'block';
+}
+function copyDefuseCode() {
+  const code = defuse.code || '';
+  if (navigator.clipboard) navigator.clipboard.writeText(code);
+  showToast('📋 تم نسخ الرمز: '+code, 'var(--gold)');
+}
+
+// Generate a bomb (wire colors, serial, batteries)
+function defuseGenerateBomb() {
+  const n = 4 + Math.floor(Math.random() * 3); // 4-6 wires
+  const wires = [];
+  for (let i = 0; i < n; i++) {
+    wires.push(DEFUSE_WIRE_COLORS[Math.floor(Math.random()*DEFUSE_WIRE_COLORS.length)]);
+  }
+  const L = DEFUSE_SERIAL_LETTERS;
+  const serial = L[Math.floor(Math.random()*L.length)]
+               + L[Math.floor(Math.random()*L.length)]
+               + Math.floor(Math.random()*10)
+               + Math.floor(Math.random()*10);
+  const batteries = 1 + Math.floor(Math.random() * 4); // 1-4
+  return { wires, serial, batteries };
+}
+
+// Apply manual rules in order; return index of correct wire to cut
+function defuseFindCorrectWire(bomb) {
+  const wires = bomb.wires;
+  const n = wires.length;
+  const reds = []; const blues = []; const yellows = []; const blacks = []; const whites = [];
+  wires.forEach((c, i) => {
+    if (c === 'red') reds.push(i);
+    else if (c === 'blue') blues.push(i);
+    else if (c === 'yellow') yellows.push(i);
+    else if (c === 'black') blacks.push(i);
+    else if (c === 'white') whites.push(i);
+  });
+  const lastDigit = parseInt(bomb.serial[bomb.serial.length-1]);
+  // Rule 1: No red wires → cut the second (index 1)
+  if (reds.length === 0) return 1;
+  // Rule 2: Last wire is white AND there are white wires → cut the last white
+  if (wires[n-1] === 'white' && whites.length > 0) return whites[whites.length-1];
+  // Rule 3: More than one blue → cut the last blue
+  if (blues.length > 1) return blues[blues.length-1];
+  // Rule 4: Last serial digit even AND black wires exist → cut the first black
+  if (lastDigit % 2 === 0 && blacks.length > 0) return blacks[0];
+  // Rule 5: More than 2 batteries → cut the first wire
+  if (bomb.batteries > 2) return 0;
+  // Otherwise → cut the last
+  return n - 1;
+}
+
+async function createDefuseRoom() {
+  const botEl = document.getElementById('defuseBotMode');
+  if (botEl && botEl.checked) { return startDefuseBotGame(); }
+  if (!ensureFirebase()) return;
+  const name = (document.getElementById('defuseHostName').value.trim()) || 'المضيف';
+  const code = genCode();
+  defuse.code = code; defuse.role = 'p0'; defuse.opponentRole = 'p1';
+  defuse.name = name; defuse.bot = false; defuse.scoreOK = 0; defuse.scoreBoom = 0; defuse._lastRound = -1;
+  try {
+    await fb.db.ref('rooms/d'+code).set({
+      meta:{ hostName:name, status:'lobby', createdAt: firebase.database.ServerValue.TIMESTAMP },
+      players:{ p0:{ name, joined:true } },
+      state:{ phase:'lobby', scoreOK:0, scoreBoom:0 }
+    });
+  } catch(e) {
+    showToast('⚠️ تعذّر إنشاء الغرفة: ' + (e && e.message ? e.message : ''), 'var(--wrong)');
+    defuse.code = null; return;
+  }
+  defuseAttachListeners();
+  defuseOpenScreen(); defuseShowStage('defuseLobby');
+  document.getElementById('defuseCodeDisplay').textContent = code;
+  document.getElementById('defuseLobbyHost').style.display = 'block';
+}
+
+async function joinDefuseRoom() {
+  if (!ensureFirebase()) return;
+  const name = (document.getElementById('defuseJoinName').value.trim()) || 'الخصم';
+  const code = (document.getElementById('defuseJoinCode').value.trim());
+  if (!/^\d{6}$/.test(code)) { showToast('⚠️ الرمز يجب أن يكون ٦ أرقام', 'var(--wrong)'); return; }
+  let data;
+  try { const snap = await fb.db.ref('rooms/d'+code).once('value'); data = snap.val(); }
+  catch(e) { showToast('⚠️ تعذّر الوصول للغرفة', 'var(--wrong)'); return; }
+  if (!data) { showToast('⚠️ الغرفة غير موجودة', 'var(--wrong)'); return; }
+  if (data.players && data.players.p1 && data.players.p1.joined) { showToast('⚠️ الغرفة ممتلئة', 'var(--wrong)'); return; }
+  defuse.code = code; defuse.role = 'p1'; defuse.opponentRole = 'p0'; defuse.name = name; defuse.bot = false;
+  defuse.scoreOK = 0; defuse.scoreBoom = 0; defuse._lastRound = -1;
+  try { await fb.db.ref('rooms/d'+code+'/players/p1').set({ name, joined:true }); }
+  catch(e) { showToast('⚠️ تعذّر الانضمام', 'var(--wrong)'); defuse.code=null; return; }
+  defuseAttachListeners();
+  defuseOpenScreen(); defuseShowStage('defuseLobby');
+  document.getElementById('defuseCodeDisplay').textContent = code;
+  document.getElementById('defuseLobbyHost').style.display = 'none';
+}
+
+function defuseAttachListeners() {
+  defuseDetachListeners();
+  const playersRef = fb.db.ref('rooms/d'+defuse.code+'/players');
+  const stateRef = fb.db.ref('rooms/d'+defuse.code+'/state');
+  const onPlayers = playersRef.on('value', s => defuseRenderPlayers(s.val()||{}));
+  const onState = stateRef.on('value', s => defuseOnState(s.val()||{}));
+  defuse.listeners = [ () => playersRef.off('value', onPlayers), () => stateRef.off('value', onState) ];
+}
+function defuseDetachListeners() {
+  defuse.listeners.forEach(off=>{ try{off();}catch(e){} });
+  defuse.listeners = [];
+  clearInterval(defuse.localTimerInt);
+}
+
+function defuseRenderPlayers(players) {
+  const p0 = players.p0 || {}; const p1 = players.p1 || {};
+  document.getElementById('defuseP0Name').textContent = p0.name || 'بانتظار...';
+  document.getElementById('defuseP1Name').textContent = p1.name || 'بانتظار...';
+  defuse.oppName = (defuse.role==='p0' ? p1.name : p0.name) || 'الخصم';
+  if (defuse.role==='p0') {
+    const ready = p0.joined && p1.joined;
+    document.getElementById('defuseLobbyHost').style.display = ready ? 'block' : 'none';
+    document.getElementById('defuseLobbyWait').style.display = ready ? 'none' : 'block';
+    document.getElementById('defuseLobbyWait').textContent = ready ? '' : 'في انتظار الخصم…';
+  } else {
+    document.getElementById('defuseLobbyWait').style.display = 'block';
+    document.getElementById('defuseLobbyWait').textContent = 'في انتظار المضيف ليبدأ اللعبة…';
+  }
+}
+
+async function defuseStart() {
+  if (defuse.role !== 'p0') return;
+  const bomb = defuseGenerateBomb();
+  const correct = defuseFindCorrectWire(bomb);
+  // Random defuser role for round 1
+  const defuserRole = Math.random() < 0.5 ? 'p0' : 'p1';
+  await fb.db.ref('rooms/d'+defuse.code+'/state').set({
+    phase:'battle', round:1,
+    bomb, correct,
+    defuserRole,
+    startedAt: firebase.database.ServerValue.TIMESTAMP,
+    scoreOK:0, scoreBoom:0
+  });
+  await fb.db.ref('rooms/d'+defuse.code+'/meta/status').set('active');
+}
+
+function defuseOnState(state) {
+  const phase = state.phase;
+  if (phase === 'lobby') { defuseShowStage('defuseLobby'); clearInterval(defuse.localTimerInt); }
+  else if (phase === 'battle') defuseEnterBattle(state);
+  else if (phase === 'roundEnd') defuseEnterRoundEnd(state);
+}
+
+function defuseRenderBomb(bomb, amDefuser) {
+  document.getElementById('defuseSerial').textContent = bomb.serial;
+  let batt = '';
+  for (let i=0; i<bomb.batteries; i++) batt += '⚡';
+  document.getElementById('defuseBatteries').textContent = batt;
+  const wiresEl = document.getElementById('defuseWires'); wiresEl.innerHTML = '';
+  bomb.wires.forEach((color, idx) => {
+    const w = document.createElement('div'); w.className = 'defuse-wire';
+    const num = document.createElement('span'); num.className = 'defuse-wire-num'; num.textContent = (idx+1);
+    const line = document.createElement('div'); line.className = 'defuse-wire-line dw-' + color;
+    const btn = document.createElement('button'); btn.className = 'defuse-cut-btn'; btn.textContent = '✂️ اقطع';
+    if (amDefuser) btn.onclick = () => defuseCutWire(idx);
+    else btn.disabled = true;
+    w.appendChild(num); w.appendChild(line); w.appendChild(btn);
+    wiresEl.appendChild(w);
+  });
+}
+
+function defuseStartCountdown(startedAt, durationSecs) {
+  clearInterval(defuse.localTimerInt);
+  const tEl = document.getElementById('defuseTime');
+  const box = tEl.parentElement;
+  const tick = () => {
+    const now = Date.now();
+    const elapsed = Math.floor((now - startedAt) / 1000);
+    const left = Math.max(0, durationSecs - elapsed);
+    tEl.textContent = left;
+    if (left <= 10) box.classList.add('low'); else box.classList.remove('low');
+    if (left <= 0) {
+      clearInterval(defuse.localTimerInt);
+      defuseTimeOut();
+    }
+  };
+  tick();
+  defuse.localTimerInt = setInterval(tick, 250);
+}
+
+function defuseEnterBattle(state) {
+  defuseShowStage('defuseBattle');
+  // Update score
+  defuse.scoreOK = state.scoreOK || 0; defuse.scoreBoom = state.scoreBoom || 0;
+  document.getElementById('defuseScoreOK').textContent = defuse.scoreOK;
+  document.getElementById('defuseScoreBoom').textContent = defuse.scoreBoom;
+  const amDefuser = (state.defuserRole === defuse.role);
+  const banner = document.getElementById('defuseRoleBanner');
+  banner.className = 'defuse-role-banner' + (amDefuser ? '' : ' expert');
+  banner.textContent = amDefuser ? '🧨 أنت المُفكِّك — افحص الأسلاك' : '📖 أنت الخبير — اقرأ الدليل';
+  // Show appropriate view
+  document.getElementById('defuseDefuserView').style.display = amDefuser ? 'block' : 'none';
+  document.getElementById('defuseExpertView').style.display = amDefuser ? 'none' : 'block';
+  document.getElementById('defuseSoloView').style.display = 'none';
+  // Render bomb for the defuser only
+  if (amDefuser) defuseRenderBomb(state.bomb, true);
+  // Start countdown (use server-provided startedAt if available; fall back to local)
+  const startedAt = (typeof state.startedAt === 'number') ? state.startedAt : Date.now();
+  defuseStartCountdown(startedAt, DEFUSE_TIMER_SECS);
+}
+
+async function defuseCutWire(idx) {
+  if (defuse.bot) { return defuseBotCutWire(idx); }
+  const code = defuse.code; if (!code) return;
+  const ssnap = await fb.db.ref('rooms/d'+code+'/state').once('value');
+  const st = ssnap.val() || {};
+  if (st.phase !== 'battle' || st.defuserRole !== defuse.role) return;
+  const correct = (idx === st.correct);
+  const updates = {};
+  updates['state/phase'] = 'roundEnd';
+  updates['state/result'] = correct ? 'defused' : 'boom';
+  updates['state/cutIdx'] = idx;
+  if (correct) updates['state/scoreOK'] = (st.scoreOK||0) + 1;
+  else updates['state/scoreBoom'] = (st.scoreBoom||0) + 1;
+  await fb.db.ref('rooms/d'+code).update(updates);
+}
+
+async function defuseTimeOut() {
+  if (defuse.bot) { return defuseBotTimeout(); }
+  if (defuse.role !== 'p0') return; // only host pushes timeout
+  const code = defuse.code; if (!code) return;
+  const ssnap = await fb.db.ref('rooms/d'+code+'/state').once('value');
+  const st = ssnap.val() || {};
+  if (st.phase !== 'battle') return; // already ended
+  await fb.db.ref('rooms/d'+code).update({
+    'state/phase':'roundEnd',
+    'state/result':'timeout',
+    'state/scoreBoom': (st.scoreBoom||0) + 1
+  });
+}
+
+function defuseEnterRoundEnd(state) {
+  clearInterval(defuse.localTimerInt);
+  defuseShowStage('defuseEnd');
+  const result = state.result;
+  let emoji, text, reveal = '';
+  if (result === 'defused') {
+    emoji = '🎉'; text = '✅ تم تفكيك القنبلة بنجاح!';
+    try { soundTrapWin(); if (typeof launchConfetti==='function') launchConfetti(); } catch(e){}
+  } else if (result === 'boom') {
+    emoji = '💥'; text = '💣 انفجرت! قطعتم السلك الخاطئ';
+    try { soundTrapBoom(); if (typeof trapPlayBoomEffect === 'function') trapPlayBoomEffect(); } catch(e){}
+    if (state.bomb && typeof state.correct === 'number') {
+      reveal = 'السلك الصحيح كان: ' + (state.correct+1) + ' (' + (DEFUSE_WIRE_NAMES[state.bomb.wires[state.correct]] || '') + ')';
+    }
+  } else if (result === 'timeout') {
+    emoji = '⏰'; text = '💥 انتهى الوقت! القنبلة انفجرت';
+    try { soundTrapLose(); if (typeof trapPlayBoomEffect === 'function') trapPlayBoomEffect(); } catch(e){}
+    if (state.bomb && typeof state.correct === 'number') {
+      reveal = 'السلك الصحيح كان: ' + (state.correct+1) + ' (' + (DEFUSE_WIRE_NAMES[state.bomb.wires[state.correct]] || '') + ')';
+    }
+  }
+  document.getElementById('defuseEndEmoji').textContent = emoji;
+  document.getElementById('defuseEndText').textContent = text;
+  document.getElementById('defuseEndReveal').textContent = reveal;
+  // Rematch buttons
+  const btn = document.getElementById('defuseRematchBtn');
+  const wait = document.getElementById('defuseRematchWait');
+  const canTrigger = defuse.bot || defuse.role === 'p0';
+  btn.style.display = canTrigger ? 'inline-block' : 'none';
+  wait.style.display = canTrigger ? 'none' : 'inline-block';
+}
+
+async function defusePlayAgain() {
+  if (defuse.bot) { return defuseBotPlayAgain(); }
+  if (defuse.role !== 'p0') { showToast('⏳ في انتظار المضيف…', 'var(--gold)'); return; }
+  const ssnap = await fb.db.ref('rooms/d'+defuse.code+'/state').once('value');
+  const st = ssnap.val() || {};
+  const bomb = defuseGenerateBomb();
+  const correct = defuseFindCorrectWire(bomb);
+  // Swap defuser role
+  const newDefuser = (st.defuserRole === 'p0') ? 'p1' : 'p0';
+  await fb.db.ref('rooms/d'+defuse.code+'/state').set({
+    phase:'battle', round:(st.round||1)+1,
+    bomb, correct,
+    defuserRole: newDefuser,
+    startedAt: firebase.database.ServerValue.TIMESTAMP,
+    scoreOK: st.scoreOK||0,
+    scoreBoom: st.scoreBoom||0
+  });
+}
+
+function leaveDefuse() {
+  defuseDetachListeners();
+  if (!defuse.bot) {
+    try {
+      if (defuse.code && defuse.role === 'p0') fb.db.ref('rooms/d'+defuse.code).remove();
+      else if (defuse.code && defuse.role === 'p1') fb.db.ref('rooms/d'+defuse.code+'/players/p1').remove();
+    } catch(e){}
+  }
+  defuse.code = null; defuse.role = null; defuse.opponentRole = null;
+  defuse.bot = false; defuse.localState = null; defuse.localPlayers = null;
+  defuse.scoreOK = 0; defuse.scoreBoom = 0;
+  document.getElementById('defuseScreen').style.display = 'none';
+  goToLanding();
+}
+
+// Defuse Solo (Bot) mode — single player sees both views
+function startDefuseBotGame() {
+  const name = (document.getElementById('defuseHostName').value.trim()) || 'أنت';
+  defuse.bot = true; defuse.code = null; defuse.role = 'p0'; defuse.opponentRole = 'p1';
+  defuse.name = name; defuse.oppName = '🧠 الحل';
+  defuse.scoreOK = 0; defuse.scoreBoom = 0;
+  const bomb = defuseGenerateBomb();
+  defuse.localState = { bomb, correct: defuseFindCorrectWire(bomb), startedAt: Date.now() };
+  defuseOpenScreen();
+  defuseShowStage('defuseBattle');
+  defuseSoloRender();
+}
+
+function defuseSoloRender() {
+  document.getElementById('defuseScoreOK').textContent = defuse.scoreOK;
+  document.getElementById('defuseScoreBoom').textContent = defuse.scoreBoom;
+  const banner = document.getElementById('defuseRoleBanner');
+  banner.className = 'defuse-role-banner';
+  banner.textContent = '🧠 حل اللغز بنفسك';
+  // Show both views
+  document.getElementById('defuseDefuserView').style.display = 'block';
+  document.getElementById('defuseExpertView').style.display = 'block';
+  document.getElementById('defuseSoloView').style.display = 'block';
+  defuseRenderBomb(defuse.localState.bomb, true);
+  defuseStartCountdown(defuse.localState.startedAt, DEFUSE_TIMER_SECS);
+}
+
+function defuseBotCutWire(idx) {
+  const st = defuse.localState; if (!st) return;
+  const correct = (idx === st.correct);
+  clearInterval(defuse.localTimerInt);
+  st.result = correct ? 'defused' : 'boom';
+  if (correct) defuse.scoreOK++;
+  else defuse.scoreBoom++;
+  defuseEnterRoundEnd(st);
+}
+
+function defuseBotTimeout() {
+  const st = defuse.localState; if (!st) return;
+  clearInterval(defuse.localTimerInt);
+  if (st.result) return; // already ended
+  st.result = 'timeout';
+  defuse.scoreBoom++;
+  defuseEnterRoundEnd(st);
+}
+
+function defuseBotPlayAgain() {
+  const bomb = defuseGenerateBomb();
+  defuse.localState = { bomb, correct: defuseFindCorrectWire(bomb), startedAt: Date.now() };
+  defuseShowStage('defuseBattle');
+  defuseSoloRender();
 }
 
 // ── ONLINE REJOIN (reconnect to a room after refresh/disconnect) ──
