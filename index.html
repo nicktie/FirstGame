@@ -191,8 +191,9 @@ body {
 /* Trap game */
 #trapScreen { max-width:760px; margin:0 auto; padding:20px 16px 40px; }
 .trap-rules { background:var(--option-bg); border:1px dashed var(--border); border-radius:12px; padding:14px; margin:10px 0 14px; }
-.trap-rule { display:flex; align-items:center; gap:10px; font-size:0.88rem; color:var(--text); padding:5px 0; }
-.trap-rule-num { display:inline-flex; align-items:center; justify-content:center; width:24px; height:24px; border-radius:50%; background:var(--gold); color:var(--dark); font-weight:900; font-family:'Tajawal',sans-serif; font-size:0.85rem; flex-shrink:0; }
+.trap-rule { display:flex; align-items:flex-start; gap:10px; font-size:0.88rem; color:var(--text); padding:5px 0; line-height:1.75; }
+.trap-rule-num { display:inline-flex; align-items:center; justify-content:center; width:24px; height:24px; border-radius:50%; background:var(--gold); color:var(--dark); font-weight:900; font-family:'Tajawal',sans-serif; font-size:0.85rem; flex-shrink:0; margin-top:1px; }
+.trap-rule-text { flex:1; min-width:0; }
 .trap-vs-row { display:flex; align-items:center; justify-content:center; gap:14px; margin:18px 0; }
 .trap-player-card { flex:1; max-width:200px; background:var(--card-bg); border:2px solid var(--border); border-radius:16px; padding:18px 10px; text-align:center; transition:border-color 0.25s; }
 .trap-player-card.p0 { border-color:#6495ed55; }
@@ -1187,10 +1188,10 @@ body.theme-gold .net-indicator { color:var(--gold); }
       <div class="online-panel">
         <div class="online-panel-title">💣 لعبة الفخ</div>
         <div class="trap-rules">
-          <div class="trap-rule"><span class="trap-rule-num">١</span>كل لاعب يخفي <strong>٣ قنابل</strong> في لوحة خصمه</div>
-          <div class="trap-rule"><span class="trap-rule-num">٢</span>بالتناوب تختار مربعاً من لوحتك</div>
-          <div class="trap-rule"><span class="trap-rule-num">٣</span>لو وقعت على قنبلة، تفقد <span style="color:#e05c5c">❤️</span></div>
-          <div class="trap-rule"><span class="trap-rule-num">٤</span>أول من يفقد ٣ قلوب يخسر</div>
+          <div class="trap-rule"><span class="trap-rule-num">١</span><span class="trap-rule-text">كل لاعب يخفي <strong>٣ قنابل</strong> في لوحة خصمه</span></div>
+          <div class="trap-rule"><span class="trap-rule-num">٢</span><span class="trap-rule-text">بالتناوب تختار مربعاً من لوحتك</span></div>
+          <div class="trap-rule"><span class="trap-rule-num">٣</span><span class="trap-rule-text">لو وقعت على قنبلة، تفقد <span style="color:#e05c5c">❤️</span></span></div>
+          <div class="trap-rule"><span class="trap-rule-num">٤</span><span class="trap-rule-text">أول من يفقد ٣ قلوب يخسر</span></div>
         </div>
         <input class="online-input" id="trapHostName" type="text" maxlength="16" placeholder="اسمك">
         <label class="trap-bot-toggle" for="trapBotMode">
@@ -1213,10 +1214,10 @@ body.theme-gold .net-indicator { color:var(--gold); }
       <div class="online-panel">
         <div class="online-panel-title">🎮 لعبة XO</div>
         <div class="trap-rules">
-          <div class="trap-rule"><span class="trap-rule-num">١</span>اللعبة الكلاسيكية على لوحة <strong>٣×٣</strong></div>
-          <div class="trap-rule"><span class="trap-rule-num">٢</span>أنت <span class="xo-score x" style="font-weight:900">X</span> والخصم <span class="xo-score o" style="font-weight:900">O</span></div>
-          <div class="trap-rule"><span class="trap-rule-num">٣</span>أول من يصنع <strong>ثلاثة في سطر</strong> يفوز</div>
-          <div class="trap-rule"><span class="trap-rule-num">٤</span>لو امتلأت اللوحة بدون فائز فهو تعادل</div>
+          <div class="trap-rule"><span class="trap-rule-num">١</span><span class="trap-rule-text">اللعبة الكلاسيكية على لوحة <strong>٣×٣</strong></span></div>
+          <div class="trap-rule"><span class="trap-rule-num">٢</span><span class="trap-rule-text">أنت <span class="xo-score x" style="font-weight:900">X</span> والخصم <span class="xo-score o" style="font-weight:900">O</span></span></div>
+          <div class="trap-rule"><span class="trap-rule-num">٣</span><span class="trap-rule-text">أول من يصنع <strong>ثلاثة في سطر</strong> يفوز</span></div>
+          <div class="trap-rule"><span class="trap-rule-num">٤</span><span class="trap-rule-text">لو امتلأت اللوحة بدون فائز فهو تعادل</span></div>
         </div>
         <input class="online-input" id="xoHostName" type="text" maxlength="16" placeholder="اسمك">
         <label class="trap-bot-toggle" for="xoBotMode">
@@ -1239,10 +1240,10 @@ body.theme-gold .net-indicator { color:var(--gold); }
       <div class="online-panel">
         <div class="online-panel-title">🔴🟡 أربعة في صف</div>
         <div class="trap-rules">
-          <div class="trap-rule"><span class="trap-rule-num">١</span>لوحة <strong>٧×٦</strong>، الأقراص تسقط للأسفل</div>
-          <div class="trap-rule"><span class="trap-rule-num">٢</span>أنت <span class="c4-disc r" style="display:inline-block;width:14px;height:14px;border-radius:50%;background:#e05c5c;vertical-align:middle"></span> والخصم <span class="c4-disc y" style="display:inline-block;width:14px;height:14px;border-radius:50%;background:#f0c040;vertical-align:middle"></span></div>
-          <div class="trap-rule"><span class="trap-rule-num">٣</span>أول من يصنع <strong>أربعة متتالية</strong> أفقياً أو رأسياً أو قطرياً يفوز</div>
-          <div class="trap-rule"><span class="trap-rule-num">٤</span>لو امتلأت اللوحة فهو تعادل</div>
+          <div class="trap-rule"><span class="trap-rule-num">١</span><span class="trap-rule-text">لوحة <strong>٧×٦</strong> — الأقراص تسقط للأسفل</span></div>
+          <div class="trap-rule"><span class="trap-rule-num">٢</span><span class="trap-rule-text">أنت <span class="c4-disc r" style="display:inline-block;width:14px;height:14px;border-radius:50%;background:#e05c5c;vertical-align:middle"></span> والخصم <span class="c4-disc y" style="display:inline-block;width:14px;height:14px;border-radius:50%;background:#f0c040;vertical-align:middle"></span></span></div>
+          <div class="trap-rule"><span class="trap-rule-num">٣</span><span class="trap-rule-text">أول من يصنع <strong>أربعة متتالية</strong> أفقياً أو رأسياً أو قطرياً يفوز</span></div>
+          <div class="trap-rule"><span class="trap-rule-num">٤</span><span class="trap-rule-text">لو امتلأت اللوحة فهو تعادل</span></div>
         </div>
         <input class="online-input" id="c4HostName" type="text" maxlength="16" placeholder="اسمك">
         <label class="trap-bot-toggle" for="c4BotMode">
@@ -1265,10 +1266,10 @@ body.theme-gold .net-indicator { color:var(--gold); }
       <div class="online-panel">
         <div class="online-panel-title">🃏 لعبة الذاكرة</div>
         <div class="trap-rules">
-          <div class="trap-rule"><span class="trap-rule-num">١</span><strong>١٦ بطاقة</strong> (٨ أزواج) مقلوبة على الطاولة</div>
-          <div class="trap-rule"><span class="trap-rule-num">٢</span>اقلب بطاقتين بدورك — لو تطابقتا تأخذهما وتستمر</div>
-          <div class="trap-rule"><span class="trap-rule-num">٣</span>لو لم تتطابقا، تنقلب لمكانها ودور الخصم</div>
-          <div class="trap-rule"><span class="trap-rule-num">٤</span>من يجمع أكثر أزواج يفوز</div>
+          <div class="trap-rule"><span class="trap-rule-num">١</span><span class="trap-rule-text"><strong>١٦ بطاقة</strong> (٨ أزواج) مقلوبة على الطاولة</span></div>
+          <div class="trap-rule"><span class="trap-rule-num">٢</span><span class="trap-rule-text">اقلب بطاقتين بدورك — لو تطابقتا تأخذهما وتستمر</span></div>
+          <div class="trap-rule"><span class="trap-rule-num">٣</span><span class="trap-rule-text">لو لم تتطابقا، تنقلب لمكانها ودور الخصم</span></div>
+          <div class="trap-rule"><span class="trap-rule-num">٤</span><span class="trap-rule-text">من يجمع أكثر أزواج يفوز</span></div>
         </div>
         <input class="online-input" id="memHostName" type="text" maxlength="16" placeholder="اسمك">
         <label class="trap-bot-toggle" for="memBotMode">
@@ -1291,10 +1292,10 @@ body.theme-gold .net-indicator { color:var(--gold); }
       <div class="online-panel">
         <div class="online-panel-title">🧨 إبطال القنبلة</div>
         <div class="trap-rules">
-          <div class="trap-rule"><span class="trap-rule-num">١</span>لاعب يرى <strong>الأسلاك</strong>، لاعب يرى <strong>الدليل السري</strong></div>
-          <div class="trap-rule"><span class="trap-rule-num">٢</span><strong>تكلموا</strong> صوتياً أو كتابياً — وصف الأسلاك واتبع التعليمات</div>
-          <div class="trap-rule"><span class="trap-rule-num">٣</span>اقطعوا السلك الصحيح خلال <strong>٩٠ ثانية</strong></div>
-          <div class="trap-rule"><span class="trap-rule-num">٤</span>سلك خاطئ = 💥 — تتبادلون الأدوار كل جولة</div>
+          <div class="trap-rule"><span class="trap-rule-num">١</span><span class="trap-rule-text">لاعب يرى الأسلاك ولاعب آخر يرى الدليل السري</span></div>
+          <div class="trap-rule"><span class="trap-rule-num">٢</span><span class="trap-rule-text">تكلموا صوتياً أو كتابياً واتبعوا التعليمات</span></div>
+          <div class="trap-rule"><span class="trap-rule-num">٣</span><span class="trap-rule-text">اقطعوا السلك الصحيح خلال <strong>٩٠ ثانية</strong></span></div>
+          <div class="trap-rule"><span class="trap-rule-num">٤</span><span class="trap-rule-text">السلك الخاطئ ينفجر 💥 — والأدوار تتبدّل كل جولة</span></div>
         </div>
         <input class="online-input" id="defuseHostName" type="text" maxlength="16" placeholder="اسمك">
         <label class="trap-bot-toggle" for="defuseBotMode">
