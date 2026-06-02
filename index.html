@@ -811,6 +811,23 @@ body.theme-darkpurple { --dark:#100726; --card-bg:#1a0e36; --border:#2e1f55; --t
 .lb-tabs { display:flex; gap:8px; justify-content:center; max-width:560px; margin:0 auto 16px; }
 /* Network indicator (top-left pill) */
 .net-indicator { position:fixed; top:8px; left:8px; z-index:9998; display:flex; align-items:center; gap:6px; padding:5px 10px; border-radius:50px; background:rgba(19,19,26,0.78); border:1px solid var(--border); color:var(--text); font-family:'Cairo',sans-serif; font-size:0.7rem; cursor:pointer; backdrop-filter:blur(6px); transition:all 0.25s; }
+.mute-btn { position:fixed; top:8px; left:110px; z-index:9998; width:34px; height:34px; border-radius:50%; background:rgba(19,19,26,0.78); border:1px solid var(--border); color:var(--text); font-size:1rem; cursor:pointer; backdrop-filter:blur(6px); display:flex; align-items:center; justify-content:center; transition:all 0.2s; }
+.mute-btn:hover { border-color:var(--gold); }
+.mute-btn.muted { color:#888; }
+body.theme-light .net-indicator, body.theme-light .mute-btn { background:rgba(255,255,255,0.92); }
+/* Loading state for async buttons */
+.start-btn.is-loading, .online-copy-btn.is-loading { position:relative; pointer-events:none; opacity:0.75; }
+.start-btn.is-loading::after, .online-copy-btn.is-loading::after { content:''; position:absolute; right:14px; top:50%; width:14px; height:14px; margin-top:-7px; border:2px solid currentColor; border-top-color:transparent; border-radius:50%; animation:btnSpin 0.7s linear infinite; }
+@keyframes btnSpin { to { transform:rotate(360deg); } }
+/* Nudge banner */
+.nudge-banner { position:fixed; top:50px; left:50%; transform:translateX(-50%); z-index:9700; background:rgba(201,168,76,0.95); color:#1a1410; padding:10px 18px; border-radius:50px; font-family:'Tajawal',sans-serif; font-weight:900; font-size:0.95rem; box-shadow:0 8px 24px rgba(0,0,0,0.4); animation:nudgeDrop 0.6s ease forwards, nudgeFade 0.5s ease 2.5s forwards; pointer-events:none; }
+@keyframes nudgeDrop { 0% { transform:translateX(-50%) translateY(-80px); opacity:0; } 60% { transform:translateX(-50%) translateY(6px); opacity:1; } 100% { transform:translateX(-50%) translateY(0); opacity:1; } }
+@keyframes nudgeFade { to { transform:translateX(-50%) translateY(-20px); opacity:0; } }
+.nudge-btn { background:rgba(201,168,76,0.12); border:1.5px dashed var(--gold); color:var(--gold); border-radius:50px; padding:7px 14px; font-family:'Tajawal',sans-serif; font-weight:700; cursor:pointer; font-size:0.85rem; transition:all 0.2s; }
+.nudge-btn:hover:not(:disabled) { background:rgba(201,168,76,0.22); }
+.nudge-btn:disabled { opacity:0.4; cursor:not-allowed; }
+/* Disconnect banner */
+.disconnect-banner { background:rgba(224,92,92,0.12); border:1.5px solid #e05c5c; color:#e05c5c; border-radius:12px; padding:10px 14px; text-align:center; font-family:'Tajawal',sans-serif; font-weight:700; margin-bottom:12px; font-size:0.9rem; }
 .net-bars { display:flex; align-items:flex-end; gap:2px; height:12px; }
 .net-bars span { width:3px; background:rgba(232,224,208,0.25); border-radius:1px; transition:background 0.25s, height 0.25s; }
 .net-bars span:nth-child(1) { height:30%; } .net-bars span:nth-child(2) { height:55%; } .net-bars span:nth-child(3) { height:80%; } .net-bars span:nth-child(4) { height:100%; }
@@ -923,6 +940,7 @@ body.theme-gold .net-indicator { color:var(--gold); }
   <div class="net-bars"><span></span><span></span><span></span><span></span></div>
   <span id="netLabel">…</span>
 </div>
+<button id="muteBtn" class="mute-btn" onclick="toggleMute()" title="كتم الأصوات">🔊</button>
 
 <!-- ══ LANDING / HOME SCREEN ══ -->
 <div id="landingScreen" class="setup-screen">
@@ -1170,7 +1188,7 @@ body.theme-gold .net-indicator { color:var(--gold); }
           </div>
         </div>
       </div>
-      <button class="start-btn" style="margin-top:16px" onclick="createRoom()">🚀 إنشاء غرفة</button>
+      <button class="start-btn" style="margin-top:16px" onclick="withBtnLoading(this, createRoom)">🚀 إنشاء غرفة</button>
     </div>
 
     <div class="online-or">— أو —</div>
@@ -1180,7 +1198,7 @@ body.theme-gold .net-indicator { color:var(--gold); }
       <div class="online-panel-sub">أدخل الرمز اللي وصلك من المضيف.</div>
       <input class="online-input" id="joinName" type="text" maxlength="16" placeholder="اسمك">
       <input class="online-input online-code-input" id="joinCode" type="text" inputmode="numeric" maxlength="6" placeholder="رمز الغرفة">
-      <button class="start-btn" style="margin-top:14px;background:linear-gradient(135deg,#6495ed,#3a6bc4)" onclick="joinRoom()">🎮 دخول</button>
+      <button class="start-btn" style="margin-top:14px;background:linear-gradient(135deg,#6495ed,#3a6bc4)" onclick="withBtnLoading(this, joinRoom)">🎮 دخول</button>
     </div>
     </div> <!-- /onlineQuizPanels -->
 
@@ -1198,7 +1216,7 @@ body.theme-gold .net-indicator { color:var(--gold); }
           <input type="checkbox" id="trapBotMode">
           <span>🤖 لعب مع الكمبيوتر <span class="trap-bot-hint">(بدون انتظار خصم)</span></span>
         </label>
-        <button class="start-btn" style="margin-top:16px" onclick="createTrapRoom()">💣 إنشاء غرفة فخ</button>
+        <button class="start-btn" style="margin-top:16px" onclick="withBtnLoading(this, createTrapRoom)">💣 إنشاء غرفة فخ</button>
       </div>
       <div class="online-or">— أو —</div>
       <div class="online-panel">
@@ -1206,7 +1224,7 @@ body.theme-gold .net-indicator { color:var(--gold); }
         <div class="online-panel-sub">أدخل الرمز اللي وصلك من الخصم.</div>
         <input class="online-input" id="trapJoinName" type="text" maxlength="16" placeholder="اسمك">
         <input class="online-input online-code-input" id="trapJoinCode" type="text" inputmode="numeric" maxlength="6" placeholder="رمز الغرفة">
-        <button class="start-btn" style="margin-top:14px;background:linear-gradient(135deg,#e05c5c,#9a3030)" onclick="joinTrapRoom()">⚔️ دخول للمعركة</button>
+        <button class="start-btn" style="margin-top:14px;background:linear-gradient(135deg,#e05c5c,#9a3030)" onclick="withBtnLoading(this, joinTrapRoom)">⚔️ دخول للمعركة</button>
       </div>
     </div>
 
@@ -1224,7 +1242,7 @@ body.theme-gold .net-indicator { color:var(--gold); }
           <input type="checkbox" id="xoBotMode">
           <span>🤖 لعب مع الكمبيوتر <span class="trap-bot-hint">(بدون انتظار خصم)</span></span>
         </label>
-        <button class="start-btn" style="margin-top:16px" onclick="createXoRoom()">🎮 إنشاء غرفة XO</button>
+        <button class="start-btn" style="margin-top:16px" onclick="withBtnLoading(this, createXoRoom)">🎮 إنشاء غرفة XO</button>
       </div>
       <div class="online-or">— أو —</div>
       <div class="online-panel">
@@ -1232,7 +1250,7 @@ body.theme-gold .net-indicator { color:var(--gold); }
         <div class="online-panel-sub">أدخل الرمز اللي وصلك من الخصم.</div>
         <input class="online-input" id="xoJoinName" type="text" maxlength="16" placeholder="اسمك">
         <input class="online-input online-code-input" id="xoJoinCode" type="text" inputmode="numeric" maxlength="6" placeholder="رمز الغرفة">
-        <button class="start-btn" style="margin-top:14px;background:linear-gradient(135deg,#6495ed,#3a6bc4)" onclick="joinXoRoom()">🎮 دخول للعبة</button>
+        <button class="start-btn" style="margin-top:14px;background:linear-gradient(135deg,#6495ed,#3a6bc4)" onclick="withBtnLoading(this, joinXoRoom)">🎮 دخول للعبة</button>
       </div>
     </div>
 
@@ -1250,7 +1268,7 @@ body.theme-gold .net-indicator { color:var(--gold); }
           <input type="checkbox" id="c4BotMode">
           <span>🤖 لعب مع الكمبيوتر <span class="trap-bot-hint">(بدون انتظار خصم)</span></span>
         </label>
-        <button class="start-btn" style="margin-top:16px" onclick="createC4Room()">🎯 إنشاء غرفة</button>
+        <button class="start-btn" style="margin-top:16px" onclick="withBtnLoading(this, createC4Room)">🎯 إنشاء غرفة</button>
       </div>
       <div class="online-or">— أو —</div>
       <div class="online-panel">
@@ -1258,7 +1276,7 @@ body.theme-gold .net-indicator { color:var(--gold); }
         <div class="online-panel-sub">أدخل الرمز اللي وصلك من الخصم.</div>
         <input class="online-input" id="c4JoinName" type="text" maxlength="16" placeholder="اسمك">
         <input class="online-input online-code-input" id="c4JoinCode" type="text" inputmode="numeric" maxlength="6" placeholder="رمز الغرفة">
-        <button class="start-btn" style="margin-top:14px;background:linear-gradient(135deg,#6495ed,#3a6bc4)" onclick="joinC4Room()">🎮 دخول للعبة</button>
+        <button class="start-btn" style="margin-top:14px;background:linear-gradient(135deg,#6495ed,#3a6bc4)" onclick="withBtnLoading(this, joinC4Room)">🎮 دخول للعبة</button>
       </div>
     </div>
 
@@ -1276,7 +1294,7 @@ body.theme-gold .net-indicator { color:var(--gold); }
           <input type="checkbox" id="memBotMode">
           <span>🤖 لعب مع الكمبيوتر <span class="trap-bot-hint">(بدون انتظار خصم)</span></span>
         </label>
-        <button class="start-btn" style="margin-top:16px" onclick="createMemRoom()">🎴 إنشاء غرفة</button>
+        <button class="start-btn" style="margin-top:16px" onclick="withBtnLoading(this, createMemRoom)">🎴 إنشاء غرفة</button>
       </div>
       <div class="online-or">— أو —</div>
       <div class="online-panel">
@@ -1284,7 +1302,7 @@ body.theme-gold .net-indicator { color:var(--gold); }
         <div class="online-panel-sub">أدخل الرمز اللي وصلك من الخصم.</div>
         <input class="online-input" id="memJoinName" type="text" maxlength="16" placeholder="اسمك">
         <input class="online-input online-code-input" id="memJoinCode" type="text" inputmode="numeric" maxlength="6" placeholder="رمز الغرفة">
-        <button class="start-btn" style="margin-top:14px;background:linear-gradient(135deg,#6495ed,#3a6bc4)" onclick="joinMemRoom()">🎮 دخول للعبة</button>
+        <button class="start-btn" style="margin-top:14px;background:linear-gradient(135deg,#6495ed,#3a6bc4)" onclick="withBtnLoading(this, joinMemRoom)">🎮 دخول للعبة</button>
       </div>
     </div>
 
@@ -1302,7 +1320,7 @@ body.theme-gold .net-indicator { color:var(--gold); }
           <input type="checkbox" id="defuseBotMode">
           <span>🧠 حل وحدك <span class="trap-bot-hint">(تشوف الكل وتحل كلغز)</span></span>
         </label>
-        <button class="start-btn" style="margin-top:16px" onclick="createDefuseRoom()">💣 إنشاء غرفة</button>
+        <button class="start-btn" style="margin-top:16px" onclick="withBtnLoading(this, createDefuseRoom)">💣 إنشاء غرفة</button>
       </div>
       <div class="online-or">— أو —</div>
       <div class="online-panel">
@@ -1310,7 +1328,7 @@ body.theme-gold .net-indicator { color:var(--gold); }
         <div class="online-panel-sub">أدخل الرمز اللي وصلك من الخصم.</div>
         <input class="online-input" id="defuseJoinName" type="text" maxlength="16" placeholder="اسمك">
         <input class="online-input online-code-input" id="defuseJoinCode" type="text" inputmode="numeric" maxlength="6" placeholder="رمز الغرفة">
-        <button class="start-btn" style="margin-top:14px;background:linear-gradient(135deg,#e05c5c,#9a3030)" onclick="joinDefuseRoom()">⚔️ دخول للمعركة</button>
+        <button class="start-btn" style="margin-top:14px;background:linear-gradient(135deg,#e05c5c,#9a3030)" onclick="withBtnLoading(this, joinDefuseRoom)">⚔️ دخول للمعركة</button>
       </div>
     </div>
   </div>
@@ -4047,11 +4065,62 @@ function changeRounds(delta) {
 
 // ── Sound (Web Audio API — no files needed) ──
 let audioCtx = null;
+let isMuted = false;
+try { isMuted = localStorage.getItem('quizMuted') === '1'; } catch(e){}
+function applyMuteUI() {
+  const b = document.getElementById('muteBtn'); if (!b) return;
+  b.textContent = isMuted ? '🔇' : '🔊';
+  b.classList.toggle('muted', isMuted);
+  b.title = isMuted ? 'تفعيل الأصوات' : 'كتم الأصوات';
+}
+function toggleMute() {
+  isMuted = !isMuted;
+  try { localStorage.setItem('quizMuted', isMuted ? '1' : '0'); } catch(e){}
+  applyMuteUI();
+  if (!isMuted) { try { playTone(700, 0.06, 'sine', 0.18); } catch(e){} }
+}
+window.addEventListener('DOMContentLoaded', applyMuteUI);
+
+// Async button loading helper — applies .is-loading while fn runs
+async function withBtnLoading(btn, fn) {
+  if (!btn) return fn();
+  btn.classList.add('is-loading');
+  try { return await fn(); }
+  finally { btn.classList.remove('is-loading'); }
+}
+
+// Detect opponent leaving and surface a clear notice
+function checkOpponentLeft(stateObj, players) {
+  if (!stateObj || !stateObj.opponentRole || !stateObj.role) return;
+  const opp = players[stateObj.opponentRole] || {};
+  const oppHere = !!opp.joined;
+  if (stateObj._oppWasJoined && !oppHere) {
+    showToast('🚪 خرج خصمك من الغرفة', 'var(--wrong)');
+  }
+  stateObj._oppWasJoined = oppHere;
+}
+
+// Nudge the opponent — writes a timestamped ping to the room
+async function sendNudge(prefix, code) {
+  if (!code) return;
+  try {
+    await fb.db.ref('rooms/'+prefix+code+'/nudge').set({ ts:firebase.database.ServerValue.TIMESTAMP });
+  } catch(e) {}
+}
+function showNudge() {
+  const banner = document.createElement('div');
+  banner.className = 'nudge-banner';
+  banner.textContent = '📳 خصمك يستعجلك!';
+  document.body.appendChild(banner);
+  try { playTone(880, 0.06, 'triangle', 0.22); setTimeout(()=>playTone(1180, 0.07, 'triangle', 0.18), 70); } catch(e){}
+  setTimeout(()=>{ try { banner.remove(); } catch(e){} }, 3200);
+}
 function getAudio() {
   if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
   return audioCtx;
 }
 function playTone(freq, dur, type='sine', vol=0.3) {
+  if (isMuted) return;
   try {
     const ctx = getAudio();
     const osc = ctx.createOscillator();
@@ -4125,6 +4194,7 @@ function soundTrapSafe() {
   setTimeout(()=>playTone(880, 0.09, 'sine', 0.15), 60);
 }
 function soundTrapBoom() {
+  if (isMuted) return;
   // Dramatic explosion: low whoosh + noise burst (simulated with detuned sawtooth)
   try {
     const ctx = getAudio();
@@ -4617,7 +4687,7 @@ function startMusic() {
   playBgMusic();
 }
 function playBgMusic() {
-  if (!musicPlaying) return;
+  if (!musicPlaying || isMuted) return;
   try {
     const ctx = getAudio();
     const notes = [261,294,329,349,392,440,494,523];
@@ -5765,7 +5835,7 @@ async function joinTrapRoom() {
   if (!ensureFirebase()) return;
   const name = (document.getElementById('trapJoinName').value.trim()) || 'الخصم';
   const code = (document.getElementById('trapJoinCode').value.trim());
-  if (!/^\d{6}$/.test(code)) { showToast('⚠️ الرمز يجب أن يكون ٦ أرقام', 'var(--wrong)'); return; }
+  if (!/^\d{6}$/.test(code)) { showToast('⚠️ رمز الغرفة يتكون من ٦ أرقام بالضبط.', 'var(--wrong)'); return; }
   let data;
   try {
     const snap = await fb.db.ref('rooms/t'+code).once('value');
@@ -5774,8 +5844,8 @@ async function joinTrapRoom() {
     showToast('⚠️ تعذّر الوصول للغرفة: ' + (e && e.message ? e.message : ''), 'var(--wrong)');
     return;
   }
-  if (!data) { showToast('⚠️ الغرفة غير موجودة', 'var(--wrong)'); return; }
-  if (data.players && data.players.p1 && data.players.p1.joined) { showToast('⚠️ الغرفة ممتلئة', 'var(--wrong)'); return; }
+  if (!data) { showToast('⚠️ الغرفة غير موجودة. تأكد من الرمز أو اطلب من المضيف رمزاً جديداً.', 'var(--wrong)'); return; }
+  if (data.players && data.players.p1 && data.players.p1.joined) { showToast('⚠️ الغرفة ممتلئة. انتظر الجولة التالية أو اطلب غرفة جديدة.', 'var(--wrong)'); return; }
   trap.code = code; trap.role = 'p1'; trap.opponentRole = 'p0';
   trap.name = name; trap.myPlants = []; trap.confirmed = false;
   try {
@@ -5810,6 +5880,7 @@ function trapDetachListeners() {
 }
 
 function trapRenderPlayers(players) {
+  checkOpponentLeft(trap, players);
   const p0 = players.p0 || {};
   const p1 = players.p1 || {};
   document.getElementById('trapP0Name').textContent = p0.name || 'بانتظار...';
@@ -6261,12 +6332,12 @@ async function joinXoRoom() {
   if (!ensureFirebase()) return;
   const name = (document.getElementById('xoJoinName').value.trim()) || 'الخصم';
   const code = (document.getElementById('xoJoinCode').value.trim());
-  if (!/^\d{6}$/.test(code)) { showToast('⚠️ الرمز يجب أن يكون ٦ أرقام', 'var(--wrong)'); return; }
+  if (!/^\d{6}$/.test(code)) { showToast('⚠️ رمز الغرفة يتكون من ٦ أرقام بالضبط.', 'var(--wrong)'); return; }
   let data;
   try { const snap = await fb.db.ref('rooms/x'+code).once('value'); data = snap.val(); }
   catch(e) { showToast('⚠️ تعذّر الوصول للغرفة: ' + (e && e.message ? e.message : ''), 'var(--wrong)'); return; }
-  if (!data) { showToast('⚠️ الغرفة غير موجودة', 'var(--wrong)'); return; }
-  if (data.players && data.players.p1 && data.players.p1.joined) { showToast('⚠️ الغرفة ممتلئة', 'var(--wrong)'); return; }
+  if (!data) { showToast('⚠️ الغرفة غير موجودة. تأكد من الرمز أو اطلب من المضيف رمزاً جديداً.', 'var(--wrong)'); return; }
+  if (data.players && data.players.p1 && data.players.p1.joined) { showToast('⚠️ الغرفة ممتلئة. انتظر الجولة التالية أو اطلب غرفة جديدة.', 'var(--wrong)'); return; }
   xo.code = code; xo.role = 'p1'; xo.opponentRole = 'p0';
   xo.name = name; xo.bot = false; xo.scoreX = 0; xo.scoreO = 0;
   try { await fb.db.ref('rooms/x'+code+'/players/p1').set({ name, score:0, joined:true }); }
@@ -6294,6 +6365,7 @@ function xoDetachListeners() {
 }
 
 function xoRenderPlayers(players) {
+  checkOpponentLeft(xo, players);
   const p0 = players.p0 || {}; const p1 = players.p1 || {};
   document.getElementById('xoP0Name').textContent = p0.name || 'بانتظار...';
   document.getElementById('xoP1Name').textContent = p1.name || 'بانتظار...';
@@ -6606,15 +6678,15 @@ async function joinC4Room() {
   if (!ensureFirebase()) return;
   const name = (document.getElementById('c4JoinName').value.trim()) || 'الخصم';
   const code = (document.getElementById('c4JoinCode').value.trim());
-  if (!/^\d{6}$/.test(code)) { showToast('⚠️ الرمز يجب أن يكون ٦ أرقام', 'var(--wrong)'); return; }
+  if (!/^\d{6}$/.test(code)) { showToast('⚠️ رمز الغرفة يتكون من ٦ أرقام بالضبط.', 'var(--wrong)'); return; }
   let data;
   try { const snap = await fb.db.ref('rooms/c'+code).once('value'); data = snap.val(); }
-  catch(e) { showToast('⚠️ تعذّر الوصول للغرفة', 'var(--wrong)'); return; }
-  if (!data) { showToast('⚠️ الغرفة غير موجودة', 'var(--wrong)'); return; }
-  if (data.players && data.players.p1 && data.players.p1.joined) { showToast('⚠️ الغرفة ممتلئة', 'var(--wrong)'); return; }
+  catch(e) { showToast('⚠️ مشكلة في الاتصال — تحقق من الإنترنت ثم أعد المحاولة', 'var(--wrong)'); return; }
+  if (!data) { showToast('⚠️ الغرفة غير موجودة. تأكد من الرمز أو اطلب من المضيف رمزاً جديداً.', 'var(--wrong)'); return; }
+  if (data.players && data.players.p1 && data.players.p1.joined) { showToast('⚠️ الغرفة ممتلئة. انتظر الجولة التالية أو اطلب غرفة جديدة.', 'var(--wrong)'); return; }
   c4.code = code; c4.role = 'p1'; c4.opponentRole = 'p0'; c4.name = name; c4.bot = false;
   try { await fb.db.ref('rooms/c'+code+'/players/p1').set({ name, score:0, joined:true }); }
-  catch(e) { showToast('⚠️ تعذّر الانضمام', 'var(--wrong)'); c4.code=null; return; }
+  catch(e) { showToast('⚠️ مشكلة في الاتصال — تحقق من الإنترنت ثم أعد المحاولة', 'var(--wrong)'); c4.code=null; return; }
   c4AttachListeners();
   c4OpenScreen(); c4ShowStage('c4Lobby');
   document.getElementById('c4CodeDisplay').textContent = code;
@@ -6635,6 +6707,7 @@ function c4DetachListeners() {
 }
 
 function c4RenderPlayers(players) {
+  checkOpponentLeft(c4, players);
   const p0 = players.p0 || {}; const p1 = players.p1 || {};
   document.getElementById('c4P0Name').textContent = p0.name || 'بانتظار...';
   document.getElementById('c4P1Name').textContent = p1.name || 'بانتظار...';
@@ -6956,7 +7029,7 @@ async function createMemRoom() {
       state:{ phase:'lobby' }
     });
   } catch(e) {
-    showToast('⚠️ تعذّر إنشاء الغرفة', 'var(--wrong)'); mem.code = null; return;
+    showToast('⚠️ مشكلة في الاتصال — تحقق من الإنترنت ثم أعد المحاولة', 'var(--wrong)'); mem.code = null; return;
   }
   memAttachListeners();
   memOpenScreen(); memShowStage('memLobby');
@@ -6968,15 +7041,15 @@ async function joinMemRoom() {
   if (!ensureFirebase()) return;
   const name = (document.getElementById('memJoinName').value.trim()) || 'الخصم';
   const code = (document.getElementById('memJoinCode').value.trim());
-  if (!/^\d{6}$/.test(code)) { showToast('⚠️ الرمز يجب أن يكون ٦ أرقام', 'var(--wrong)'); return; }
+  if (!/^\d{6}$/.test(code)) { showToast('⚠️ رمز الغرفة يتكون من ٦ أرقام بالضبط.', 'var(--wrong)'); return; }
   let data;
   try { const snap = await fb.db.ref('rooms/m'+code).once('value'); data = snap.val(); }
-  catch(e) { showToast('⚠️ تعذّر الوصول للغرفة', 'var(--wrong)'); return; }
-  if (!data) { showToast('⚠️ الغرفة غير موجودة', 'var(--wrong)'); return; }
-  if (data.players && data.players.p1 && data.players.p1.joined) { showToast('⚠️ الغرفة ممتلئة', 'var(--wrong)'); return; }
+  catch(e) { showToast('⚠️ مشكلة في الاتصال — تحقق من الإنترنت ثم أعد المحاولة', 'var(--wrong)'); return; }
+  if (!data) { showToast('⚠️ الغرفة غير موجودة. تأكد من الرمز أو اطلب من المضيف رمزاً جديداً.', 'var(--wrong)'); return; }
+  if (data.players && data.players.p1 && data.players.p1.joined) { showToast('⚠️ الغرفة ممتلئة. انتظر الجولة التالية أو اطلب غرفة جديدة.', 'var(--wrong)'); return; }
   mem.code = code; mem.role = 'p1'; mem.opponentRole = 'p0'; mem.name = name; mem.bot = false;
   try { await fb.db.ref('rooms/m'+code+'/players/p1').set({ name, score:0, joined:true }); }
-  catch(e) { showToast('⚠️ تعذّر الانضمام', 'var(--wrong)'); mem.code=null; return; }
+  catch(e) { showToast('⚠️ مشكلة في الاتصال — تحقق من الإنترنت ثم أعد المحاولة', 'var(--wrong)'); mem.code=null; return; }
   memAttachListeners();
   memOpenScreen(); memShowStage('memLobby');
   document.getElementById('memCodeDisplay').textContent = code;
@@ -6997,6 +7070,7 @@ function memDetachListeners() {
 }
 
 function memRenderPlayers(players) {
+  checkOpponentLeft(mem, players);
   const p0 = players.p0 || {}; const p1 = players.p1 || {};
   document.getElementById('memP0Name').textContent = p0.name || 'بانتظار...';
   document.getElementById('memP1Name').textContent = p1.name || 'بانتظار...';
@@ -7388,16 +7462,16 @@ async function joinDefuseRoom() {
   if (!ensureFirebase()) return;
   const name = (document.getElementById('defuseJoinName').value.trim()) || 'الخصم';
   const code = (document.getElementById('defuseJoinCode').value.trim());
-  if (!/^\d{6}$/.test(code)) { showToast('⚠️ الرمز يجب أن يكون ٦ أرقام', 'var(--wrong)'); return; }
+  if (!/^\d{6}$/.test(code)) { showToast('⚠️ رمز الغرفة يتكون من ٦ أرقام بالضبط.', 'var(--wrong)'); return; }
   let data;
   try { const snap = await fb.db.ref('rooms/d'+code).once('value'); data = snap.val(); }
-  catch(e) { showToast('⚠️ تعذّر الوصول للغرفة', 'var(--wrong)'); return; }
-  if (!data) { showToast('⚠️ الغرفة غير موجودة', 'var(--wrong)'); return; }
-  if (data.players && data.players.p1 && data.players.p1.joined) { showToast('⚠️ الغرفة ممتلئة', 'var(--wrong)'); return; }
+  catch(e) { showToast('⚠️ مشكلة في الاتصال — تحقق من الإنترنت ثم أعد المحاولة', 'var(--wrong)'); return; }
+  if (!data) { showToast('⚠️ الغرفة غير موجودة. تأكد من الرمز أو اطلب من المضيف رمزاً جديداً.', 'var(--wrong)'); return; }
+  if (data.players && data.players.p1 && data.players.p1.joined) { showToast('⚠️ الغرفة ممتلئة. انتظر الجولة التالية أو اطلب غرفة جديدة.', 'var(--wrong)'); return; }
   defuse.code = code; defuse.role = 'p1'; defuse.opponentRole = 'p0'; defuse.name = name; defuse.bot = false;
   defuse.scoreOK = 0; defuse.scoreBoom = 0; defuse._lastRound = -1;
   try { await fb.db.ref('rooms/d'+code+'/players/p1').set({ name, joined:true }); }
-  catch(e) { showToast('⚠️ تعذّر الانضمام', 'var(--wrong)'); defuse.code=null; return; }
+  catch(e) { showToast('⚠️ مشكلة في الاتصال — تحقق من الإنترنت ثم أعد المحاولة', 'var(--wrong)'); defuse.code=null; return; }
   defuseAttachListeners();
   defuseOpenScreen(); defuseShowStage('defuseLobby');
   document.getElementById('defuseCodeDisplay').textContent = code;
@@ -7419,6 +7493,7 @@ function defuseDetachListeners() {
 }
 
 function defuseRenderPlayers(players) {
+  checkOpponentLeft(defuse, players);
   const p0 = players.p0 || {}; const p1 = players.p1 || {};
   document.getElementById('defuseP0Name').textContent = p0.name || 'بانتظار...';
   document.getElementById('defuseP1Name').textContent = p1.name || 'بانتظار...';
