@@ -843,6 +843,9 @@ body.theme-gold .net-indicator { color:var(--gold); }
 /* Landing / home page */
 .home-intro { max-width:620px; margin:0 auto 24px; text-align:center; color:var(--text); }
 .home-intro p { color:var(--muted); font-size:0.95rem; line-height:1.7; margin-bottom:6px; }
+.presence-counter { display:inline-block; margin-top:10px; background:rgba(61,186,122,0.12); border:1.5px solid #3dba7a; color:#3dba7a; border-radius:50px; padding:6px 16px; font-family:'Tajawal',sans-serif; font-weight:800; font-size:0.88rem; animation:presencePulse 2.4s ease infinite; }
+.presence-counter #presenceCount { font-size:1.05rem; }
+@keyframes presencePulse { 0%, 100% { box-shadow:0 0 0 0 rgba(61,186,122,0.4); } 50% { box-shadow:0 0 0 5px rgba(61,186,122,0); } }
 .home-grid { display:grid; grid-template-columns:1fr 1fr; gap:14px; max-width:620px; margin:0 auto 22px; }
 .home-cta { background:var(--card-bg); border:1.5px solid var(--border); border-radius:18px; padding:22px 16px; cursor:pointer; text-align:center; transition:transform 0.15s, border-color 0.2s, box-shadow 0.25s; }
 .home-cta:hover { border-color:var(--gold); transform:translateY(-2px); box-shadow:0 12px 28px rgba(0,0,0,0.25); }
@@ -953,6 +956,7 @@ body.theme-gold .net-indicator { color:var(--gold); }
   <div class="home-intro">
     <p style="font-family:'Tajawal',sans-serif;font-size:1.15rem;font-weight:700;color:var(--gold);margin-bottom:8px">🎮 خمس ألعاب بانتظارك: أسئلة • فخ • XO • أربعة في صف • ذاكرة</p>
     <p>العب مع أصحابك على نفس الجهاز، أو من جوالك مع أي شخص حول العالم. اختر طريقة اللعب وابدأ:</p>
+    <div id="presenceCounter" class="presence-counter" style="display:none">🟢 <span id="presenceCount">0</span> لاعب أونلاين الآن</div>
   </div>
 
   <div class="home-grid">
@@ -1624,6 +1628,7 @@ body.theme-gold .net-indicator { color:var(--gold); }
       <div class="room-code-lbl">رمز الغرفة</div>
       <div class="room-code" id="roomCodeDisplay">------</div>
       <button class="online-copy-btn" onclick="copyRoomCode()">📋 نسخ الرمز</button>
+      <button class="online-copy-btn" onclick="copyQuizLink()">🔗 نسخ رابط الدعوة</button>
     </div>
     <div class="lobby-players-title">👥 اللاعبون: <span id="lobbyCount">0</span></div>
     <div class="lobby-players" id="lobbyPlayers"></div>
@@ -1697,6 +1702,7 @@ body.theme-gold .net-indicator { color:var(--gold); }
       <div class="room-code-lbl">رمز الغرفة</div>
       <div class="room-code" id="trapCodeDisplay">------</div>
       <button class="online-copy-btn" onclick="copyTrapCode()">📋 نسخ الرمز</button>
+      <button class="online-copy-btn" onclick="copyTrapLink()">🔗 نسخ رابط الدعوة</button>
     </div>
     <div class="trap-vs-row">
       <div class="trap-player-card p0" id="trapP0Card">
@@ -1773,6 +1779,7 @@ body.theme-gold .net-indicator { color:var(--gold); }
       <div class="room-code-lbl">رمز الغرفة</div>
       <div class="room-code" id="xoCodeDisplay">------</div>
       <button class="online-copy-btn" onclick="copyXoCode()">📋 نسخ الرمز</button>
+      <button class="online-copy-btn" onclick="copyXoLink()">🔗 نسخ رابط الدعوة</button>
     </div>
     <div class="trap-vs-row">
       <div class="trap-player-card p0" id="xoP0Card">
@@ -1822,6 +1829,7 @@ body.theme-gold .net-indicator { color:var(--gold); }
       <div class="room-code-lbl">رمز الغرفة</div>
       <div class="room-code" id="c4CodeDisplay">------</div>
       <button class="online-copy-btn" onclick="copyC4Code()">📋 نسخ الرمز</button>
+      <button class="online-copy-btn" onclick="copyC4Link()">🔗 نسخ رابط الدعوة</button>
     </div>
     <div class="trap-vs-row">
       <div class="trap-player-card p0" id="c4P0Card">
@@ -1872,6 +1880,7 @@ body.theme-gold .net-indicator { color:var(--gold); }
       <div class="room-code-lbl">رمز الغرفة</div>
       <div class="room-code" id="memCodeDisplay">------</div>
       <button class="online-copy-btn" onclick="copyMemCode()">📋 نسخ الرمز</button>
+      <button class="online-copy-btn" onclick="copyMemLink()">🔗 نسخ رابط الدعوة</button>
     </div>
     <div class="trap-vs-row">
       <div class="trap-player-card p0" id="memP0Card">
@@ -1919,6 +1928,7 @@ body.theme-gold .net-indicator { color:var(--gold); }
       <div class="room-code-lbl">رمز الغرفة</div>
       <div class="room-code" id="defuseCodeDisplay">------</div>
       <button class="online-copy-btn" onclick="copyDefuseCode()">📋 نسخ الرمز</button>
+      <button class="online-copy-btn" onclick="copyDefuseLink()">🔗 نسخ رابط الدعوة</button>
     </div>
     <div class="trap-vs-row">
       <div class="trap-player-card p0" id="defuseP0Card">
@@ -5056,6 +5066,59 @@ function ensureFirebase() {
   return true;
 }
 
+// ── Online presence: shows the live count of connected players ──
+let presenceId = null;
+let _presenceAttached = false;
+function getPresenceId() {
+  if (presenceId) return presenceId;
+  try { presenceId = sessionStorage.getItem('quizPresenceId'); } catch(e){}
+  if (!presenceId) {
+    presenceId = 'p_' + Math.random().toString(36).slice(2, 10) + Date.now().toString(36);
+    try { sessionStorage.setItem('quizPresenceId', presenceId); } catch(e){}
+  }
+  return presenceId;
+}
+function setupPresence() {
+  if (_presenceAttached) return;
+  if (!fbReady()) return;
+  _presenceAttached = true;
+  const id = getPresenceId();
+  const myRef = fb.db.ref('rooms/_p/'+id);
+  const allRef = fb.db.ref('rooms/_p');
+  // Stale entries (>2 min old) get scrubbed by anyone watching
+  const TWO_MIN = 2 * 60 * 1000;
+  try {
+    fb.db.ref('.info/connected').on('value', snap => {
+      if (snap.val() === true) {
+        try { myRef.onDisconnect().remove(); } catch(e){}
+        try { myRef.set(firebase.database.ServerValue.TIMESTAMP); } catch(e){}
+      }
+    });
+    // Heartbeat — refresh my own timestamp every 45s so stale-cleanup doesn't kill me
+    setInterval(() => { try { myRef.set(firebase.database.ServerValue.TIMESTAMP); } catch(e){} }, 45000);
+    allRef.on('value', snap => {
+      const all = snap.val() || {};
+      const now = Date.now();
+      let count = 0;
+      Object.keys(all).forEach(k => {
+        const ts = all[k];
+        if (typeof ts === 'number' && (now - ts) < TWO_MIN) count++;
+      });
+      const el = document.getElementById('presenceCounter');
+      const numEl = document.getElementById('presenceCount');
+      if (numEl) numEl.textContent = count;
+      if (el) el.style.display = count > 0 ? 'inline-block' : 'none';
+    });
+  } catch(e){}
+}
+// Try to attach presence shortly after load (Firebase needs the SDK to be ready)
+function tryAttachPresence(retries) {
+  if (fbReady()) { setupPresence(); return; }
+  if (retries <= 0) return;
+  setTimeout(()=>tryAttachPresence(retries-1), 500);
+}
+window.addEventListener('DOMContentLoaded', () => tryAttachPresence(20));
+
 function setOnlineTimer(secs, el) {
   online.timer = secs;
   document.querySelectorAll('#onlineTimerOpts .timer-opt').forEach(o=>o.classList.remove('active'));
@@ -5690,6 +5753,53 @@ function copyRoomCode() {
   if (navigator.clipboard) navigator.clipboard.writeText(code);
   showToast('📋 تم نسخ الرمز: '+code, 'var(--gold)');
 }
+
+// ── Invite Links ──
+// URL format: ?r={code}&g={game}  (g ∈ quiz|trap|xo|c4|mem|defuse)
+function buildInviteURL(gameType, code) {
+  return window.location.origin + window.location.pathname + '?r=' + code + '&g=' + gameType;
+}
+function copyInviteLink(gameType, code) {
+  if (!code) { showToast('⚠️ لم يتم إنشاء غرفة بعد', 'var(--wrong)'); return; }
+  const url = buildInviteURL(gameType, code);
+  if (navigator.clipboard) navigator.clipboard.writeText(url);
+  showToast('🔗 تم نسخ رابط الدعوة! شاركه مع خصمك', 'var(--gold)');
+  if (navigator.share) {
+    try { navigator.share({ title:'انضم لي في تحدي الثلاثة', text:'رابط الغرفة:', url }).catch(()=>{}); } catch(e){}
+  }
+}
+function copyQuizLink() { copyInviteLink('quiz', online && online.code); }
+function copyTrapLink() { copyInviteLink('trap', typeof trap !== 'undefined' && trap.code); }
+function copyXoLink() { copyInviteLink('xo', typeof xo !== 'undefined' && xo.code); }
+function copyC4Link() { copyInviteLink('c4', typeof c4 !== 'undefined' && c4.code); }
+function copyMemLink() { copyInviteLink('mem', typeof mem !== 'undefined' && mem.code); }
+function copyDefuseLink() { copyInviteLink('defuse', typeof defuse !== 'undefined' && defuse.code); }
+
+// On page load: if URL has ?r=CODE&g=GAME, jump to the right join input and prefill
+function consumeInviteFromURL() {
+  try {
+    const params = new URLSearchParams(window.location.search);
+    const code = (params.get('r') || '').trim();
+    const game = (params.get('g') || '').trim();
+    if (!/^\d{6}$/.test(code)) return;
+    const validGames = { quiz:'joinCode', trap:'trapJoinCode', xo:'xoJoinCode', c4:'c4JoinCode', mem:'memJoinCode', defuse:'defuseJoinCode' };
+    if (!validGames[game]) return;
+    setTimeout(() => {
+      try {
+        if (typeof goToOnline === 'function') goToOnline();
+        if (typeof pickOnlineGameType === 'function') pickOnlineGameType(game);
+        const inp = document.getElementById(validGames[game]); if (inp) inp.value = code;
+        // Clear params so a refresh doesn't re-trigger the navigation
+        if (window.history && window.history.replaceState) {
+          window.history.replaceState({}, '', window.location.pathname);
+        }
+        showToast('🔗 رابط الدعوة جاهز — اكتب اسمك واضغط دخول', 'var(--gold)');
+        if (inp) { inp.focus(); inp.scrollIntoView({ behavior:'smooth', block:'center' }); }
+      } catch(e){}
+    }, 350);
+  } catch(e){}
+}
+window.addEventListener('DOMContentLoaded', consumeInviteFromURL);
 // ── PWA: register service worker ──
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', () => navigator.serviceWorker.register('sw.js').catch(()=>{}));
