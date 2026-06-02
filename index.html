@@ -897,6 +897,24 @@ body.theme-gold .net-indicator { color:var(--gold); }
 .achievement-banner .ach-name { font-family:'Tajawal',sans-serif; font-weight:900; font-size:1.05rem; margin-top:2px; }
 @keyframes achDrop { 0% { transform:translateX(-50%) translateY(-100px) scale(0.9); opacity:0; } 60% { transform:translateX(-50%) translateY(8px) scale(1.05); opacity:1; } 100% { transform:translateX(-50%) translateY(0) scale(1); opacity:1; } }
 @keyframes achFade { to { transform:translateX(-50%) translateY(-30px); opacity:0; } }
+/* Game leaderboard */
+#gameLbScreen { max-width:620px; margin:0 auto; padding:20px 16px 40px; }
+.glb-tabs { display:flex; gap:6px; margin-bottom:14px; flex-wrap:wrap; justify-content:center; }
+.glb-tab { background:var(--card-bg); border:1.5px solid var(--border); color:var(--muted); border-radius:50px; padding:8px 14px; font-family:'Tajawal',sans-serif; font-weight:700; font-size:0.85rem; cursor:pointer; transition:all 0.18s; }
+.glb-tab:hover { border-color:var(--gold); }
+.glb-tab.active { background:var(--gold); color:var(--dark); border-color:var(--gold); }
+.glb-list { background:var(--card-bg); border:1.5px solid var(--border); border-radius:14px; padding:10px; min-height:200px; }
+.glb-row { display:flex; align-items:center; gap:10px; padding:10px 12px; border-bottom:1px dashed var(--border); }
+.glb-row:last-child { border-bottom:none; }
+.glb-row.me { background:rgba(201,168,76,0.12); border-radius:10px; }
+.glb-rank { font-family:'Tajawal',sans-serif; font-weight:900; color:var(--gold); width:32px; font-size:0.95rem; }
+.glb-rank.gold { color:#f0d040; }
+.glb-rank.silver { color:#c0c0c0; }
+.glb-rank.bronze { color:#cd7f32; }
+.glb-avatar { font-size:1.4rem; line-height:1; }
+.glb-name { flex:1; font-family:'Tajawal',sans-serif; font-weight:800; color:var(--text); font-size:0.95rem; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; min-width:0; }
+.glb-wins { font-family:'Tajawal',sans-serif; font-weight:900; color:var(--gold); }
+.glb-empty { text-align:center; padding:30px 16px; color:var(--muted); font-size:0.9rem; }
 .home-grid { display:grid; grid-template-columns:1fr 1fr; gap:14px; max-width:620px; margin:0 auto 22px; }
 .home-cta { background:var(--card-bg); border:1.5px solid var(--border); border-radius:18px; padding:22px 16px; cursor:pointer; text-align:center; transition:transform 0.15s, border-color 0.2s, box-shadow 0.25s; }
 .home-cta:hover { border-color:var(--gold); transform:translateY(-2px); box-shadow:0 12px 28px rgba(0,0,0,0.25); }
@@ -1026,7 +1044,10 @@ body.theme-gold .net-indicator { color:var(--gold); }
   <div style="text-align:center;margin:8px auto 20px;max-width:620px">
     <button class="start-btn" style="max-width:340px;background:linear-gradient(135deg,var(--gold),#a8720c)" onclick="quickPlay()">⚡ العب الآن — ٥ أسئلة عشوائية</button>
     <div style="font-size:0.74rem;color:var(--muted);margin-top:6px">بدون إعداد — جواب سريع للتسلية</div>
-    <button class="lb-tab" style="max-width:200px;margin-top:14px" onclick="openProfile()">🏅 ملفي وإحصائياتي</button>
+    <div style="display:flex;gap:8px;justify-content:center;margin-top:14px;flex-wrap:wrap">
+      <button class="lb-tab" style="max-width:170px" onclick="openProfile()">🏅 ملفي وإحصائياتي</button>
+      <button class="lb-tab" style="max-width:170px" onclick="openGameLeaderboards()">🌐 لوحات الصدارة</button>
+    </div>
   </div>
 
   <div id="resumeBanner" style="display:none;max-width:620px;margin:0 auto 16px;background:rgba(201,168,76,0.12);border:1.5px solid var(--gold);border-radius:14px;padding:14px;text-align:center">
@@ -2131,6 +2152,25 @@ body.theme-gold .net-indicator { color:var(--gold); }
   </div>
   <div class="profile-section-title" style="margin-top:24px">🏅 الإنجازات <span class="ps-count" id="profileBadgesCount">0 / 0</span></div>
   <div class="profile-badges" id="profileBadges"></div>
+</div>
+
+<div id="gameLbScreen" style="display:none">
+  <div class="page-header">
+    <button class="back-btn" onclick="goToLanding()">← الرئيسية</button>
+    <div class="page-title">🏆 لوحات الصدارة الأسبوعية</div>
+    <div style="width:60px"></div>
+  </div>
+  <div class="glb-tabs" id="glbTabs">
+    <button class="glb-tab active" data-game="trap" onclick="switchGameLb('trap')">💣 الفخ</button>
+    <button class="glb-tab" data-game="xo" onclick="switchGameLb('xo')">🎮 XO</button>
+    <button class="glb-tab" data-game="c4" onclick="switchGameLb('c4')">🔴 أربعة</button>
+    <button class="glb-tab" data-game="mem" onclick="switchGameLb('mem')">🃏 الذاكرة</button>
+    <button class="glb-tab" data-game="defuse" onclick="switchGameLb('defuse')">🧨 القنبلة</button>
+  </div>
+  <div class="glb-list" id="glbList">
+    <div class="glb-empty">⏳ جاري التحميل…</div>
+  </div>
+  <div style="text-align:center;font-size:0.78rem;color:var(--muted);margin-top:14px">تتجدد كل أسبوع. الترتيب بحسب عدد الفوز/التفكيك في الأسبوع الحالي.</div>
 </div>
 
 <div id="profileEditOverlay" class="profile-edit-overlay" style="display:none">
@@ -6064,14 +6104,21 @@ function defaultProfile() {
   };
 }
 function loadProfile() {
+  let prof;
   try { const raw = localStorage.getItem(PROFILE_KEY); if (raw) {
     const p = JSON.parse(raw);
     const d = defaultProfile();
     p.stats = p.stats || {};
     Object.keys(d.stats).forEach(k => { p.stats[k] = Object.assign({}, d.stats[k], p.stats[k] || {}); });
-    return Object.assign(d, p);
+    prof = Object.assign(d, p);
   } } catch(e){}
-  return defaultProfile();
+  if (!prof) prof = defaultProfile();
+  // Ensure stable playerId for leaderboards
+  if (!prof.playerId) {
+    prof.playerId = 'u' + Math.random().toString(36).slice(2, 8) + Date.now().toString(36).slice(-4);
+    try { saveProfile(prof); } catch(e){}
+  }
+  return prof;
 }
 function saveProfile(p) { try { localStorage.setItem(PROFILE_KEY, JSON.stringify(p)); } catch(e){} }
 function updateProfileStat(game, mutator) {
@@ -6106,6 +6153,59 @@ function recordGameResult(game, result) {
     if (typeof result.pairs === 'number') s.pairs = (s.pairs||0) + result.pairs;
   });
   try { checkAchievements(); } catch(e){}
+  // Push to global per-game leaderboard
+  try { if (result.won || result.defused) gameLeaderboardBump(game, 1); } catch(e){}
+}
+
+// ── Per-game Leaderboards (Firebase) ──
+// Path: leaderboard_games/{week}/{game}/{playerId} = { name, avatar, wins, ts }
+function gameLeaderboardBump(game, inc) {
+  if (!fbReady()) return;
+  const p = loadProfile();
+  const ref = fb.db.ref('leaderboard_games/'+isoWeekId()+'/'+game+'/'+p.playerId);
+  ref.transaction(cur => {
+    cur = cur || { wins:0 };
+    return {
+      name: p.name || 'لاعب',
+      avatar: p.avatar || '🦁',
+      wins: (cur.wins||0) + inc,
+      ts: Date.now()
+    };
+  }).catch(()=>{});
+}
+function gameLeaderboardLoad(game, cb) {
+  if (!fbReady()) { cb([]); return; }
+  fb.db.ref('leaderboard_games/'+isoWeekId()+'/'+game).orderByChild('wins').limitToLast(20).once('value').then(snap => {
+    const arr = [];
+    snap.forEach(c => { const v = c.val(); arr.push({ id:c.key, ...v }); });
+    arr.sort((a,b) => (b.wins||0) - (a.wins||0));
+    cb(arr);
+  }).catch(()=>cb([]));
+}
+
+let _glbCurrentGame = 'trap';
+function openGameLeaderboards() {
+  hideAllScreens();
+  document.getElementById('gameLbScreen').style.display = 'block';
+  switchGameLb(_glbCurrentGame);
+}
+function switchGameLb(game) {
+  _glbCurrentGame = game;
+  document.querySelectorAll('.glb-tab').forEach(t => t.classList.toggle('active', t.dataset.game === game));
+  const list = document.getElementById('glbList');
+  list.innerHTML = '<div class="glb-empty">⏳ جاري التحميل…</div>';
+  gameLeaderboardLoad(game, arr => {
+    if (!arr.length) {
+      list.innerHTML = '<div class="glb-empty">لا توجد نتائج هذا الأسبوع بعد — كن الأول!</div>';
+      return;
+    }
+    const me = (loadProfile().playerId || '');
+    list.innerHTML = arr.map((r, i) => {
+      const rankCls = i===0 ? 'gold' : i===1 ? 'silver' : i===2 ? 'bronze' : '';
+      const medal = i===0 ? '🥇' : i===1 ? '🥈' : i===2 ? '🥉' : (i+1);
+      return '<div class="glb-row' + (r.id===me ? ' me' : '') + '"><div class="glb-rank ' + rankCls + '">' + medal + '</div><div class="glb-avatar">' + (r.avatar || '🙂') + '</div><div class="glb-name">' + (r.name || 'لاعب') + '</div><div class="glb-wins">' + (r.wins||0) + ' فوز</div></div>';
+    }).join('');
+  });
 }
 
 // ── Achievements / Badges ──
