@@ -846,6 +846,16 @@ body.theme-gold .net-indicator { color:var(--gold); }
 .presence-counter { display:inline-block; margin-top:10px; background:rgba(61,186,122,0.12); border:1.5px solid #3dba7a; color:#3dba7a; border-radius:50px; padding:6px 16px; font-family:'Tajawal',sans-serif; font-weight:800; font-size:0.88rem; animation:presencePulse 2.4s ease infinite; }
 .presence-counter #presenceCount { font-size:1.05rem; }
 @keyframes presencePulse { 0%, 100% { box-shadow:0 0 0 0 rgba(61,186,122,0.4); } 50% { box-shadow:0 0 0 5px rgba(61,186,122,0); } }
+/* Open rooms browse list */
+.open-rooms-panel { border:1.5px solid #3dba7a55 !important; }
+.open-rooms-list { max-height:240px; overflow-y:auto; margin-top:6px; }
+.open-rooms-empty { padding:14px 4px; text-align:center; color:var(--muted); font-size:0.85rem; font-style:italic; }
+.open-room-row { display:flex; align-items:center; gap:10px; padding:10px 12px; background:var(--option-bg); border:1px solid var(--border); border-radius:10px; margin-bottom:6px; cursor:pointer; transition:all 0.15s; }
+.open-room-row:hover { border-color:var(--gold); background:rgba(201,168,76,0.08); }
+.orr-host { flex:1; font-family:'Tajawal',sans-serif; font-weight:700; color:var(--text); font-size:0.92rem; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; min-width:0; }
+.orr-code { font-family:'Cairo',monospace; color:var(--muted); font-size:0.78rem; letter-spacing:1px; }
+.orr-join { background:linear-gradient(135deg,#3dba7a,#2a8a55); color:#fff; border:none; border-radius:8px; padding:6px 14px; font-family:'Tajawal',sans-serif; font-weight:900; font-size:0.82rem; cursor:pointer; flex-shrink:0; transition:transform 0.15s; }
+.orr-join:hover { transform:scale(1.06); }
 .home-grid { display:grid; grid-template-columns:1fr 1fr; gap:14px; max-width:620px; margin:0 auto 22px; }
 .home-cta { background:var(--card-bg); border:1.5px solid var(--border); border-radius:18px; padding:22px 16px; cursor:pointer; text-align:center; transition:transform 0.15s, border-color 0.2s, box-shadow 0.25s; }
 .home-cta:hover { border-color:var(--gold); transform:translateY(-2px); box-shadow:0 12px 28px rgba(0,0,0,0.25); }
@@ -1207,6 +1217,10 @@ body.theme-gold .net-indicator { color:var(--gold); }
     </div> <!-- /onlineQuizPanels -->
 
     <div id="onlineTrapPanels" style="display:none">
+      <div class="online-panel open-rooms-panel" id="trapOpenRoomsPanel" style="display:none">
+        <div class="online-panel-title">🌐 الغرف المفتوحة</div>
+        <div class="open-rooms-list" id="trapOpenRooms"></div>
+      </div>
       <div class="online-panel">
         <div class="online-panel-title">💣 لعبة الفخ</div>
         <div class="trap-rules">
@@ -1233,6 +1247,10 @@ body.theme-gold .net-indicator { color:var(--gold); }
     </div>
 
     <div id="onlineXoPanels" style="display:none">
+      <div class="online-panel open-rooms-panel" id="xoOpenRoomsPanel" style="display:none">
+        <div class="online-panel-title">🌐 الغرف المفتوحة</div>
+        <div class="open-rooms-list" id="xoOpenRooms"></div>
+      </div>
       <div class="online-panel">
         <div class="online-panel-title">🎮 لعبة XO</div>
         <div class="trap-rules">
@@ -1259,6 +1277,10 @@ body.theme-gold .net-indicator { color:var(--gold); }
     </div>
 
     <div id="onlineC4Panels" style="display:none">
+      <div class="online-panel open-rooms-panel" id="c4OpenRoomsPanel" style="display:none">
+        <div class="online-panel-title">🌐 الغرف المفتوحة</div>
+        <div class="open-rooms-list" id="c4OpenRooms"></div>
+      </div>
       <div class="online-panel">
         <div class="online-panel-title">🔴🟡 أربعة في صف</div>
         <div class="trap-rules">
@@ -1285,6 +1307,10 @@ body.theme-gold .net-indicator { color:var(--gold); }
     </div>
 
     <div id="onlineMemPanels" style="display:none">
+      <div class="online-panel open-rooms-panel" id="memOpenRoomsPanel" style="display:none">
+        <div class="online-panel-title">🌐 الغرف المفتوحة</div>
+        <div class="open-rooms-list" id="memOpenRooms"></div>
+      </div>
       <div class="online-panel">
         <div class="online-panel-title">🃏 لعبة الذاكرة</div>
         <div class="trap-rules">
@@ -1311,6 +1337,10 @@ body.theme-gold .net-indicator { color:var(--gold); }
     </div>
 
     <div id="onlineDefusePanels" style="display:none">
+      <div class="online-panel open-rooms-panel" id="defuseOpenRoomsPanel" style="display:none">
+        <div class="online-panel-title">🌐 الغرف المفتوحة</div>
+        <div class="open-rooms-list" id="defuseOpenRooms"></div>
+      </div>
       <div class="online-panel">
         <div class="online-panel-title">🧨 إبطال القنبلة</div>
         <div class="trap-rules">
@@ -3448,6 +3478,7 @@ function hideAllScreens() {
 function goToLanding() {
   hideAllScreens();
   document.getElementById('landingScreen').style.display = 'block';
+  if (typeof detachOpenRoomsListener === 'function') detachOpenRoomsListener();
 }
 function goToOffline() {
   hideAllScreens();
@@ -3471,6 +3502,7 @@ function goToOnline() {
   setGameMode('online');
   if (typeof restoreOnlineAccState === 'function') restoreOnlineAccState();
   if (typeof updateOnlineAccSummaries === 'function') updateOnlineAccSummaries();
+  if (typeof attachOpenRoomsListener === 'function') attachOpenRoomsListener();
 }
 function toggleGuide() {
   const body = document.getElementById('guideBody');
@@ -5836,6 +5868,77 @@ function pickOnlineGameType(t) {
   document.getElementById('onlineC4Panels').style.display = t==='c4' ? 'block' : 'none';
   document.getElementById('onlineMemPanels').style.display = t==='mem' ? 'block' : 'none';
   document.getElementById('onlineDefusePanels').style.display = t==='defuse' ? 'block' : 'none';
+}
+
+// ── Open Rooms Browser ──
+// Listens to rooms node and surfaces empty/lobby rooms by game prefix
+const OPEN_ROOMS_PREFIXES = { trap:'t', xo:'x', c4:'c', mem:'m', defuse:'d' };
+const OPEN_ROOMS_GAME_LABELS = { trap:{name:'الفخ', avatar:'🛡️'}, xo:{name:'XO', avatar:'🎮'}, c4:{name:'أربعة في صف', avatar:'🔴'}, mem:{name:'الذاكرة', avatar:'🃏'}, defuse:{name:'إبطال القنبلة', avatar:'🧨'} };
+let _openRoomsCb = null;
+
+function attachOpenRoomsListener() {
+  if (_openRoomsCb || !fbReady()) return;
+  const ref = fb.db.ref('rooms');
+  _openRoomsCb = ref.on('value', snap => {
+    const rooms = snap.val() || {};
+    Object.entries(OPEN_ROOMS_PREFIXES).forEach(([gameKey, prefix]) => {
+      const list = [];
+      Object.entries(rooms).forEach(([key, room]) => {
+        if (!key || !key.startsWith(prefix) || key.length !== 7) return; // expect prefix + 6 digits
+        if (!room || !room.meta || !room.players) return;
+        if (room.meta.status !== 'lobby') return;
+        const p0 = room.players.p0 || {}, p1 = room.players.p1 || {};
+        if (!p0.joined) return;
+        if (p1.joined) return; // skip full
+        // Skip my own room if I created one
+        const myState = (gameKey==='trap'?trap : gameKey==='xo'?xo : gameKey==='c4'?c4 : gameKey==='mem'?mem : defuse);
+        if (myState && myState.code && myState.role==='p0' && key === prefix+myState.code) return;
+        list.push({ code: key.slice(1), hostName: p0.name || room.meta.hostName || 'لاعب', _ts: room.meta.createdAt || 0 });
+      });
+      list.sort((a,b) => (b._ts||0) - (a._ts||0));
+      renderOpenRoomsList(gameKey, list);
+    });
+  });
+}
+function detachOpenRoomsListener() {
+  if (!_openRoomsCb || !fbReady()) return;
+  try { fb.db.ref('rooms').off('value', _openRoomsCb); } catch(e){}
+  _openRoomsCb = null;
+}
+
+function renderOpenRoomsList(gameKey, list) {
+  const panel = document.getElementById(gameKey + 'OpenRoomsPanel');
+  const el = document.getElementById(gameKey + 'OpenRooms');
+  if (!el || !panel) return;
+  const label = OPEN_ROOMS_GAME_LABELS[gameKey] || { name:'', avatar:'🎮' };
+  if (!list.length) {
+    panel.style.display = 'none'; // hide entirely when empty
+    el.innerHTML = '';
+    return;
+  }
+  panel.style.display = 'block';
+  el.innerHTML = list.slice(0, 10).map(r => {
+    const safeHost = String(r.hostName).replace(/[<>"&]/g, '');
+    return `<div class="open-room-row" onclick="joinOpenRoom('${gameKey}', '${r.code}')">
+      <span class="orr-host">${label.avatar} ${safeHost}</span>
+      <span class="orr-code">#${r.code}</span>
+      <button class="orr-join" onclick="event.stopPropagation();joinOpenRoom('${gameKey}','${r.code}')">⚔️ دخول</button>
+    </div>`;
+  }).join('');
+}
+
+function joinOpenRoom(gameKey, code) {
+  const inputMap = { trap:'trapJoinCode', xo:'xoJoinCode', c4:'c4JoinCode', mem:'memJoinCode', defuse:'defuseJoinCode' };
+  const nameInputMap = { trap:'trapJoinName', xo:'xoJoinName', c4:'c4JoinName', mem:'memJoinName', defuse:'defuseJoinName' };
+  const joinFnMap = { trap:joinTrapRoom, xo:joinXoRoom, c4:joinC4Room, mem:joinMemRoom, defuse:joinDefuseRoom };
+  const inp = document.getElementById(inputMap[gameKey]); if (inp) inp.value = code;
+  const nameInp = document.getElementById(nameInputMap[gameKey]);
+  if (nameInp && !nameInp.value.trim()) {
+    showToast('✏️ اكتب اسمك أولاً ثم انضم', 'var(--gold)');
+    try { nameInp.focus(); nameInp.scrollIntoView({behavior:'smooth', block:'center'}); } catch(e){}
+    return;
+  }
+  if (joinFnMap[gameKey]) joinFnMap[gameKey]();
 }
 
 // ════════════════════════════════════════════════════════════
