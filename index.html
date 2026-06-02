@@ -880,6 +880,23 @@ body.theme-gold .net-indicator { color:var(--gold); }
 .profile-edit-avatars .av-choice { aspect-ratio:1; background:var(--option-bg); border:1.5px solid var(--border); border-radius:10px; display:flex; align-items:center; justify-content:center; font-size:1.4rem; cursor:pointer; transition:all 0.15s; }
 .profile-edit-avatars .av-choice:hover { border-color:var(--gold); transform:scale(1.05); }
 .profile-edit-avatars .av-choice.selected { border-color:var(--gold); background:rgba(201,168,76,0.18); box-shadow:0 0 0 3px rgba(201,168,76,0.15); }
+.profile-section-title { font-family:'Tajawal',sans-serif; font-weight:900; color:var(--gold); font-size:1.1rem; margin-bottom:10px; display:flex; align-items:center; justify-content:space-between; padding-bottom:6px; border-bottom:1px dashed var(--border); }
+.profile-section-title .ps-count { font-size:0.85rem; background:var(--option-bg); border:1px solid var(--gold); border-radius:50px; padding:3px 12px; }
+.profile-badges { display:grid; grid-template-columns:repeat(auto-fill, minmax(120px, 1fr)); gap:10px; }
+.badge-item { background:var(--card-bg); border:1.5px solid var(--border); border-radius:12px; padding:12px 10px; text-align:center; transition:all 0.2s; }
+.badge-item.earned { border-color:var(--gold); background:rgba(201,168,76,0.08); }
+.badge-item.locked { opacity:0.45; }
+.bi-emoji { font-size:1.8rem; line-height:1; margin-bottom:4px; }
+.badge-item.earned .bi-emoji { filter:drop-shadow(0 0 8px rgba(201,168,76,0.4)); }
+.bi-name { font-family:'Tajawal',sans-serif; font-weight:900; font-size:0.85rem; color:var(--text); margin-bottom:4px; }
+.badge-item.earned .bi-name { color:var(--gold); }
+.bi-desc { font-size:0.7rem; color:var(--muted); line-height:1.4; }
+.achievement-banner { position:fixed; top:60px; left:50%; transform:translateX(-50%); z-index:9700; background:linear-gradient(135deg,#c9a84c,#a8720c); color:#1a1410; padding:14px 22px; border-radius:14px; box-shadow:0 8px 28px rgba(0,0,0,0.5); display:flex; align-items:center; gap:14px; min-width:280px; max-width:90vw; pointer-events:none; animation:achDrop 0.6s ease forwards, achFade 0.5s ease 3.6s forwards; }
+.achievement-banner .ach-emoji { font-size:2.4rem; line-height:1; }
+.achievement-banner .ach-title { font-family:'Tajawal',sans-serif; font-weight:700; font-size:0.85rem; opacity:0.85; }
+.achievement-banner .ach-name { font-family:'Tajawal',sans-serif; font-weight:900; font-size:1.05rem; margin-top:2px; }
+@keyframes achDrop { 0% { transform:translateX(-50%) translateY(-100px) scale(0.9); opacity:0; } 60% { transform:translateX(-50%) translateY(8px) scale(1.05); opacity:1; } 100% { transform:translateX(-50%) translateY(0) scale(1); opacity:1; } }
+@keyframes achFade { to { transform:translateX(-50%) translateY(-30px); opacity:0; } }
 .home-grid { display:grid; grid-template-columns:1fr 1fr; gap:14px; max-width:620px; margin:0 auto 22px; }
 .home-cta { background:var(--card-bg); border:1.5px solid var(--border); border-radius:18px; padding:22px 16px; cursor:pointer; text-align:center; transition:transform 0.15s, border-color 0.2s, box-shadow 0.25s; }
 .home-cta:hover { border-color:var(--gold); transform:translateY(-2px); box-shadow:0 12px 28px rgba(0,0,0,0.25); }
@@ -2112,6 +2129,8 @@ body.theme-gold .net-indicator { color:var(--gold); }
       <div class="psc-row"><span>أفضل سلسلة تفكيك:</span><b id="psDefuseBest">0</b></div>
     </div>
   </div>
+  <div class="profile-section-title" style="margin-top:24px">🏅 الإنجازات <span class="ps-count" id="profileBadgesCount">0 / 0</span></div>
+  <div class="profile-badges" id="profileBadges"></div>
 </div>
 
 <div id="profileEditOverlay" class="profile-edit-overlay" style="display:none">
@@ -6086,6 +6105,64 @@ function recordGameResult(game, result) {
     if (typeof result.score === 'number') s.totalScore = (s.totalScore||0) + result.score;
     if (typeof result.pairs === 'number') s.pairs = (s.pairs||0) + result.pairs;
   });
+  try { checkAchievements(); } catch(e){}
+}
+
+// ── Achievements / Badges ──
+const ACHIEVEMENTS = [
+  { id:'first_win',      name:'الفوز الأول',          desc:'فوز واحد في أي لعبة',         emoji:'🏆', check:(p) => Object.values(p.stats).some(s => (s.wins||0) > 0) },
+  { id:'all_games',      name:'مستكشف الألعاب',       desc:'العب جولة واحدة في كل الألعاب الست', emoji:'🌟', check:(p) => ['trap','xo','c4','mem','defuse','quiz'].every(g => (p.stats[g].games||0) > 0) },
+  { id:'trap_3wins',     name:'بطل الفخ',             desc:'٣ انتصارات في لعبة الفخ',     emoji:'💣', check:(p) => (p.stats.trap.wins||0) >= 3 },
+  { id:'trap_streak5',   name:'تاجر الحظ',            desc:'٥ انتصارات متتالية في الفخ',  emoji:'🍀', check:(p) => (p.stats.trap.bestStreak||0) >= 5 },
+  { id:'xo_5wins',       name:'ملك XO',               desc:'٥ انتصارات في XO',           emoji:'🎮', check:(p) => (p.stats.xo.wins||0) >= 5 },
+  { id:'c4_5wins',       name:'محترف Connect 4',      desc:'٥ انتصارات في أربعة في صف',  emoji:'🔴', check:(p) => (p.stats.c4.wins||0) >= 5 },
+  { id:'mem_5wins',      name:'ذاكرة الفيل',          desc:'٥ انتصارات في الذاكرة',      emoji:'🐘', check:(p) => (p.stats.mem.wins||0) >= 5 },
+  { id:'mem_pairs50',    name:'جامع الأزواج',         desc:'اكتشف ٥٠ زوجاً في الذاكرة',  emoji:'🃏', check:(p) => (p.stats.mem.pairs||0) >= 50 },
+  { id:'defuse_streak3', name:'مفكك محترف',           desc:'٣ تفكيكات متتالية',          emoji:'🧨', check:(p) => (p.stats.defuse.bestStreak||0) >= 3 },
+  { id:'defuse_streak10',name:'خبير القنابل',         desc:'١٠ تفكيكات متتالية',         emoji:'💎', check:(p) => (p.stats.defuse.bestStreak||0) >= 10 },
+  { id:'quiz_10rounds',  name:'عاشق الأسئلة',         desc:'العب ١٠ جولات في لعبة الأسئلة', emoji:'📚', check:(p) => (p.stats.quiz.games||0) >= 10 },
+  { id:'pro_player',     name:'لاعب محترف',           desc:'٢٥ فوزاً عبر كل الألعاب',    emoji:'⭐', check:(p) => Object.values(p.stats).reduce((sum,s) => sum + (s.wins||0), 0) >= 25 }
+];
+function checkAchievements() {
+  const p = loadProfile();
+  p.badges = p.badges || [];
+  const newOnes = [];
+  ACHIEVEMENTS.forEach(a => {
+    if (p.badges.includes(a.id)) return;
+    try { if (a.check(p)) { p.badges.push(a.id); newOnes.push(a); } } catch(e){}
+  });
+  if (newOnes.length) {
+    saveProfile(p);
+    newOnes.forEach((a, i) => setTimeout(() => showAchievementToast(a), i * 1800));
+    // Refresh profile if currently visible
+    if (document.getElementById('profileScreen') && document.getElementById('profileScreen').style.display === 'block') {
+      try { renderBadges(); } catch(e){}
+    }
+  }
+}
+function showAchievementToast(a) {
+  const banner = document.createElement('div');
+  banner.className = 'achievement-banner';
+  banner.innerHTML = '<div class="ach-emoji">' + a.emoji + '</div><div><div class="ach-title">🏅 إنجاز جديد!</div><div class="ach-name">' + a.name + '</div></div>';
+  document.body.appendChild(banner);
+  try {
+    playTone(523, 0.12, 'triangle', 0.25);
+    setTimeout(()=>playTone(659, 0.12, 'triangle', 0.25), 120);
+    setTimeout(()=>playTone(784, 0.2, 'triangle', 0.28), 240);
+  } catch(e){}
+  setTimeout(() => { try { banner.remove(); } catch(e){} }, 4200);
+}
+function renderBadges() {
+  const el = document.getElementById('profileBadges'); if (!el) return;
+  const p = loadProfile();
+  const earned = new Set(p.badges || []);
+  el.innerHTML = ACHIEVEMENTS.map(a => {
+    const got = earned.has(a.id);
+    return '<div class="badge-item ' + (got ? 'earned' : 'locked') + '" title="' + a.desc + '"><div class="bi-emoji">' + (got ? a.emoji : '🔒') + '</div><div class="bi-name">' + a.name + '</div><div class="bi-desc">' + a.desc + '</div></div>';
+  }).join('');
+  // Count
+  const ct = document.getElementById('profileBadgesCount');
+  if (ct) ct.textContent = earned.size + ' / ' + ACHIEVEMENTS.length;
 }
 
 function openProfile() {
@@ -6119,6 +6196,7 @@ function renderProfile() {
   document.getElementById('psDefuseOK').textContent = s.defuse.wins || 0;
   document.getElementById('psDefuseBoom').textContent = s.defuse.losses || 0;
   document.getElementById('psDefuseBest').textContent = s.defuse.bestStreak || 0;
+  try { renderBadges(); } catch(e){}
 }
 function pct(w, total) { if (!total) return '—'; return Math.round((w/total)*100) + '%'; }
 
