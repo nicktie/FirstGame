@@ -856,6 +856,30 @@ body.theme-gold .net-indicator { color:var(--gold); }
 .orr-code { font-family:'Cairo',monospace; color:var(--muted); font-size:0.78rem; letter-spacing:1px; }
 .orr-join { background:linear-gradient(135deg,#3dba7a,#2a8a55); color:#fff; border:none; border-radius:8px; padding:6px 14px; font-family:'Tajawal',sans-serif; font-weight:900; font-size:0.82rem; cursor:pointer; flex-shrink:0; transition:transform 0.15s; }
 .orr-join:hover { transform:scale(1.06); }
+/* Player profile */
+#profileScreen { max-width:680px; margin:0 auto; padding:20px 16px 40px; }
+.profile-card { background:var(--card-bg); border:2px solid var(--gold); border-radius:18px; padding:22px 18px; text-align:center; margin-bottom:18px; box-shadow:0 8px 24px rgba(201,168,76,0.18); }
+.profile-avatar { font-size:4rem; line-height:1; }
+.profile-name { font-family:'Tajawal',sans-serif; font-weight:900; color:var(--gold); font-size:1.6rem; margin-top:8px; }
+.profile-meta { font-size:0.78rem; color:var(--muted); margin-top:4px; }
+.profile-edit-row { display:flex; gap:8px; justify-content:center; margin-top:16px; flex-wrap:wrap; }
+.profile-edit-btn { background:rgba(201,168,76,0.12); border:1px solid var(--gold); color:var(--gold); border-radius:10px; padding:8px 14px; font-family:'Tajawal',sans-serif; font-weight:700; font-size:0.85rem; cursor:pointer; transition:all 0.18s; }
+.profile-edit-btn:hover { background:rgba(201,168,76,0.2); }
+.profile-stats { display:grid; grid-template-columns:repeat(2,1fr); gap:12px; }
+@media (max-width:520px) { .profile-stats { grid-template-columns:1fr; } }
+.profile-stat-card { background:var(--card-bg); border:1.5px solid var(--border); border-radius:14px; padding:14px; }
+.psc-icon { font-size:1.6rem; line-height:1; margin-bottom:4px; }
+.psc-title { font-family:'Tajawal',sans-serif; font-weight:900; color:var(--gold); font-size:1rem; margin-bottom:8px; padding-bottom:6px; border-bottom:1px dashed var(--border); }
+.psc-row { display:flex; justify-content:space-between; align-items:center; padding:4px 0; font-size:0.86rem; color:var(--text); }
+.psc-row b { font-family:'Tajawal',sans-serif; font-weight:900; color:var(--gold); }
+.profile-edit-overlay { position:fixed; inset:0; z-index:9500; background:rgba(0,0,0,0.7); display:flex; align-items:center; justify-content:center; backdrop-filter:blur(4px); padding:16px; }
+.profile-edit-modal { background:var(--card-bg); border:2px solid var(--gold); border-radius:18px; padding:22px 18px; max-width:420px; width:100%; max-height:90vh; overflow-y:auto; }
+.profile-edit-title { font-family:'Tajawal',sans-serif; font-weight:900; color:var(--gold); font-size:1.2rem; text-align:center; margin-bottom:12px; }
+.profile-edit-sublabel { font-size:0.85rem; color:var(--muted); margin-top:10px; margin-bottom:6px; }
+.profile-edit-avatars { display:grid; grid-template-columns:repeat(6,1fr); gap:6px; }
+.profile-edit-avatars .av-choice { aspect-ratio:1; background:var(--option-bg); border:1.5px solid var(--border); border-radius:10px; display:flex; align-items:center; justify-content:center; font-size:1.4rem; cursor:pointer; transition:all 0.15s; }
+.profile-edit-avatars .av-choice:hover { border-color:var(--gold); transform:scale(1.05); }
+.profile-edit-avatars .av-choice.selected { border-color:var(--gold); background:rgba(201,168,76,0.18); box-shadow:0 0 0 3px rgba(201,168,76,0.15); }
 .home-grid { display:grid; grid-template-columns:1fr 1fr; gap:14px; max-width:620px; margin:0 auto 22px; }
 .home-cta { background:var(--card-bg); border:1.5px solid var(--border); border-radius:18px; padding:22px 16px; cursor:pointer; text-align:center; transition:transform 0.15s, border-color 0.2s, box-shadow 0.25s; }
 .home-cta:hover { border-color:var(--gold); transform:translateY(-2px); box-shadow:0 12px 28px rgba(0,0,0,0.25); }
@@ -985,6 +1009,7 @@ body.theme-gold .net-indicator { color:var(--gold); }
   <div style="text-align:center;margin:8px auto 20px;max-width:620px">
     <button class="start-btn" style="max-width:340px;background:linear-gradient(135deg,var(--gold),#a8720c)" onclick="quickPlay()">⚡ العب الآن — ٥ أسئلة عشوائية</button>
     <div style="font-size:0.74rem;color:var(--muted);margin-top:6px">بدون إعداد — جواب سريع للتسلية</div>
+    <button class="lb-tab" style="max-width:200px;margin-top:14px" onclick="openProfile()">🏅 ملفي وإحصائياتي</button>
   </div>
 
   <div id="resumeBanner" style="display:none;max-width:620px;margin:0 auto 16px;background:rgba(201,168,76,0.12);border:1.5px solid var(--gold);border-radius:14px;padding:14px;text-align:center">
@@ -2030,6 +2055,74 @@ body.theme-gold .net-indicator { color:var(--gold); }
         <button class="start-btn" id="defuseRematchWait" style="max-width:170px;display:none;background:rgba(100,149,237,0.15);color:#6495ed;border-color:#6495ed">⏳ في انتظار المضيف…</button>
         <button class="start-btn" style="max-width:130px;background:linear-gradient(135deg,#888,#555)" onclick="leaveDefuse()">↩️ خروج</button>
       </div>
+    </div>
+  </div>
+</div>
+
+<div id="profileScreen" style="display:none">
+  <div class="page-header">
+    <button class="back-btn" onclick="goToLanding()">← الرئيسية</button>
+    <div class="page-title">🏅 ملفي الشخصي</div>
+    <div style="width:60px"></div>
+  </div>
+  <div class="profile-card">
+    <div class="profile-avatar" id="profileAvatar">🦁</div>
+    <div class="profile-name" id="profileNameDisplay">لاعب</div>
+    <div class="profile-meta" id="profileMeta">منذ بضع لحظات</div>
+    <div class="profile-edit-row">
+      <button class="profile-edit-btn" onclick="openProfileEdit()">✏️ تعديل الاسم والأفاتار</button>
+      <button class="profile-edit-btn" style="background:rgba(224,92,92,0.1);border-color:#e05c5c55;color:#e05c5c" onclick="resetProfile()">🗑️ مسح الإحصائيات</button>
+    </div>
+  </div>
+  <div class="profile-stats">
+    <div class="profile-stat-card" data-game="quiz">
+      <div class="psc-icon">🧠</div>
+      <div class="psc-title">لعبة الأسئلة</div>
+      <div class="psc-row"><span>الجولات:</span><b id="psQuizGames">0</b></div>
+      <div class="psc-row"><span>إجمالي النقاط:</span><b id="psQuizScore">0</b></div>
+    </div>
+    <div class="profile-stat-card" data-game="trap">
+      <div class="psc-icon">💣</div>
+      <div class="psc-title">لعبة الفخ</div>
+      <div class="psc-row"><span>فوز / خسارة:</span><b><span id="psTrapWins">0</span> / <span id="psTrapLosses">0</span></b></div>
+      <div class="psc-row"><span>أفضل سلسلة فوز:</span><b id="psTrapBest">0</b></div>
+    </div>
+    <div class="profile-stat-card" data-game="xo">
+      <div class="psc-icon">🎮</div>
+      <div class="psc-title">XO</div>
+      <div class="psc-row"><span>فوز/خسارة/تعادل:</span><b><span id="psXoWins">0</span>/<span id="psXoLosses">0</span>/<span id="psXoDraws">0</span></b></div>
+      <div class="psc-row"><span>نسبة الفوز:</span><b id="psXoRate">—</b></div>
+    </div>
+    <div class="profile-stat-card" data-game="c4">
+      <div class="psc-icon">🔴</div>
+      <div class="psc-title">أربعة في صف</div>
+      <div class="psc-row"><span>فوز/خسارة/تعادل:</span><b><span id="psC4Wins">0</span>/<span id="psC4Losses">0</span>/<span id="psC4Draws">0</span></b></div>
+      <div class="psc-row"><span>نسبة الفوز:</span><b id="psC4Rate">—</b></div>
+    </div>
+    <div class="profile-stat-card" data-game="mem">
+      <div class="psc-icon">🃏</div>
+      <div class="psc-title">الذاكرة</div>
+      <div class="psc-row"><span>فوز / خسارة:</span><b><span id="psMemWins">0</span> / <span id="psMemLosses">0</span></b></div>
+      <div class="psc-row"><span>أزواج اكتشفت:</span><b id="psMemPairs">0</b></div>
+    </div>
+    <div class="profile-stat-card" data-game="defuse">
+      <div class="psc-icon">🧨</div>
+      <div class="psc-title">إبطال القنبلة</div>
+      <div class="psc-row"><span>تفكيك / انفجار:</span><b><span id="psDefuseOK">0</span> / <span id="psDefuseBoom">0</span></b></div>
+      <div class="psc-row"><span>أفضل سلسلة تفكيك:</span><b id="psDefuseBest">0</b></div>
+    </div>
+  </div>
+</div>
+
+<div id="profileEditOverlay" class="profile-edit-overlay" style="display:none">
+  <div class="profile-edit-modal">
+    <div class="profile-edit-title">✏️ تعديل الملف</div>
+    <input class="online-input" id="profileNameInput" type="text" maxlength="16" placeholder="اسمك">
+    <div class="profile-edit-sublabel">اختر أفاتاراً:</div>
+    <div class="profile-edit-avatars" id="profileEditAvatars"></div>
+    <div style="display:flex;gap:10px;margin-top:14px">
+      <button class="start-btn" style="flex:1" onclick="saveProfileEdit()">💾 حفظ</button>
+      <button class="start-btn" style="flex:1;background:linear-gradient(135deg,#888,#555)" onclick="closeProfileEdit()">إلغاء</button>
     </div>
   </div>
 </div>
@@ -3470,7 +3563,7 @@ function setGameMode(mode) {
 
 // ── Top-level navigation (landing ↔ setup) ──
 function hideAllScreens() {
-  ['landingScreen','setupScreen','gameScreen','onlineScreen','adminScreen'].forEach(id=>{
+  ['landingScreen','setupScreen','gameScreen','onlineScreen','adminScreen','profileScreen','trapScreen','xoScreen','c4Screen','memScreen','defuseScreen'].forEach(id=>{
     const e = document.getElementById(id); if (e) e.style.display = 'none';
   });
   ['finalScreen','lbScreen'].forEach(id=>{ const e=document.getElementById(id); if(e) e.classList.remove('show'); });
@@ -4549,6 +4642,14 @@ const _origNextQuestion = nextQuestion;
 const _origShowFinal = showFinal;
 function showFinalAdv() {
   try { saveToLeaderboard(); } catch(e){}
+  try {
+    // Sum the local player's score (or top score if multiplayer)
+    let myScore = 0;
+    if (typeof players !== 'undefined' && players && players.length) {
+      myScore = Math.max.apply(null, players.map(p => p.score || 0));
+    }
+    recordGameResult('quiz', { score: myScore });
+  } catch(e){}
   launchConfetti();
   soundRoundEnd();
   // Inject stats table into final card
@@ -5927,6 +6028,149 @@ function renderOpenRoomsList(gameKey, list) {
   }).join('');
 }
 
+// ── Player Profile ──
+const PROFILE_KEY = 'quizPlayerProfile';
+const PROFILE_AVATARS = ['🦁','🐯','🐻','🦊','🐼','🦄','🐲','🐸','🐵','🤖','😎','👻','🦅','🐶','🐱','🦝','🐺','🦉'];
+function defaultProfile() {
+  return {
+    name:'لاعب', avatar:'🦁', createdAt: Date.now(),
+    stats:{
+      quiz:{ games:0, totalScore:0 },
+      trap:{ games:0, wins:0, losses:0, currentStreak:0, bestStreak:0 },
+      xo:{ games:0, wins:0, losses:0, draws:0 },
+      c4:{ games:0, wins:0, losses:0, draws:0 },
+      mem:{ games:0, wins:0, losses:0, pairs:0 },
+      defuse:{ games:0, wins:0, losses:0, currentStreak:0, bestStreak:0 }
+    }
+  };
+}
+function loadProfile() {
+  try { const raw = localStorage.getItem(PROFILE_KEY); if (raw) {
+    const p = JSON.parse(raw);
+    const d = defaultProfile();
+    p.stats = p.stats || {};
+    Object.keys(d.stats).forEach(k => { p.stats[k] = Object.assign({}, d.stats[k], p.stats[k] || {}); });
+    return Object.assign(d, p);
+  } } catch(e){}
+  return defaultProfile();
+}
+function saveProfile(p) { try { localStorage.setItem(PROFILE_KEY, JSON.stringify(p)); } catch(e){} }
+function updateProfileStat(game, mutator) {
+  const p = loadProfile();
+  if (!p.stats[game]) p.stats[game] = {};
+  mutator(p.stats[game], p);
+  saveProfile(p);
+}
+function recordGameResult(game, result) {
+  // result: { won, lost, draw, defused, exploded, score, pairs }
+  updateProfileStat(game, (s) => {
+    s.games = (s.games||0) + 1;
+    if (result.won) {
+      s.wins = (s.wins||0) + 1;
+      if ('currentStreak' in s) { s.currentStreak = (s.currentStreak||0) + 1; if (s.currentStreak > (s.bestStreak||0)) s.bestStreak = s.currentStreak; }
+    }
+    if (result.lost) {
+      s.losses = (s.losses||0) + 1;
+      if ('currentStreak' in s) s.currentStreak = 0;
+    }
+    if (result.draw) { s.draws = (s.draws||0) + 1; }
+    if (result.defused) {
+      s.wins = (s.wins||0) + 1;
+      s.currentStreak = (s.currentStreak||0) + 1;
+      if (s.currentStreak > (s.bestStreak||0)) s.bestStreak = s.currentStreak;
+    }
+    if (result.exploded) {
+      s.losses = (s.losses||0) + 1;
+      s.currentStreak = 0;
+    }
+    if (typeof result.score === 'number') s.totalScore = (s.totalScore||0) + result.score;
+    if (typeof result.pairs === 'number') s.pairs = (s.pairs||0) + result.pairs;
+  });
+}
+
+function openProfile() {
+  hideAllScreens();
+  document.getElementById('profileScreen').style.display = 'block';
+  renderProfile();
+}
+function renderProfile() {
+  const p = loadProfile();
+  document.getElementById('profileAvatar').textContent = p.avatar || '🦁';
+  document.getElementById('profileNameDisplay').textContent = p.name || 'لاعب';
+  const days = Math.max(1, Math.floor((Date.now() - (p.createdAt||Date.now())) / 86400000));
+  document.getElementById('profileMeta').textContent = 'منذ ' + days + ' يوم';
+  const s = p.stats;
+  document.getElementById('psQuizGames').textContent = s.quiz.games || 0;
+  document.getElementById('psQuizScore').textContent = s.quiz.totalScore || 0;
+  document.getElementById('psTrapWins').textContent = s.trap.wins || 0;
+  document.getElementById('psTrapLosses').textContent = s.trap.losses || 0;
+  document.getElementById('psTrapBest').textContent = s.trap.bestStreak || 0;
+  document.getElementById('psXoWins').textContent = s.xo.wins || 0;
+  document.getElementById('psXoLosses').textContent = s.xo.losses || 0;
+  document.getElementById('psXoDraws').textContent = s.xo.draws || 0;
+  document.getElementById('psXoRate').textContent = pct(s.xo.wins||0, (s.xo.wins||0)+(s.xo.losses||0)+(s.xo.draws||0));
+  document.getElementById('psC4Wins').textContent = s.c4.wins || 0;
+  document.getElementById('psC4Losses').textContent = s.c4.losses || 0;
+  document.getElementById('psC4Draws').textContent = s.c4.draws || 0;
+  document.getElementById('psC4Rate').textContent = pct(s.c4.wins||0, (s.c4.wins||0)+(s.c4.losses||0)+(s.c4.draws||0));
+  document.getElementById('psMemWins').textContent = s.mem.wins || 0;
+  document.getElementById('psMemLosses').textContent = s.mem.losses || 0;
+  document.getElementById('psMemPairs').textContent = s.mem.pairs || 0;
+  document.getElementById('psDefuseOK').textContent = s.defuse.wins || 0;
+  document.getElementById('psDefuseBoom').textContent = s.defuse.losses || 0;
+  document.getElementById('psDefuseBest').textContent = s.defuse.bestStreak || 0;
+}
+function pct(w, total) { if (!total) return '—'; return Math.round((w/total)*100) + '%'; }
+
+let _profileEditAvatar = '';
+function openProfileEdit() {
+  const p = loadProfile();
+  document.getElementById('profileNameInput').value = p.name || '';
+  _profileEditAvatar = p.avatar || '🦁';
+  const grid = document.getElementById('profileEditAvatars'); grid.innerHTML = '';
+  PROFILE_AVATARS.forEach(av => {
+    const d = document.createElement('div'); d.className = 'av-choice' + (av === _profileEditAvatar ? ' selected' : '');
+    d.textContent = av;
+    d.onclick = () => { _profileEditAvatar = av; grid.querySelectorAll('.av-choice').forEach(e => e.classList.remove('selected')); d.classList.add('selected'); };
+    grid.appendChild(d);
+  });
+  document.getElementById('profileEditOverlay').style.display = 'flex';
+}
+function closeProfileEdit() { document.getElementById('profileEditOverlay').style.display = 'none'; }
+function saveProfileEdit() {
+  const name = (document.getElementById('profileNameInput').value || '').trim() || 'لاعب';
+  const p = loadProfile();
+  p.name = name;
+  p.avatar = _profileEditAvatar || p.avatar || '🦁';
+  saveProfile(p);
+  renderProfile();
+  closeProfileEdit();
+  showToast('💾 تم حفظ الملف', 'var(--gold)');
+  // Prefill name inputs across the site
+  prefillProfileName();
+}
+function resetProfile() {
+  if (!confirm('هل تريد فعلاً مسح الإحصائيات؟ لا يمكن التراجع.')) return;
+  const p = loadProfile();
+  const fresh = defaultProfile();
+  // keep name/avatar
+  fresh.name = p.name; fresh.avatar = p.avatar; fresh.createdAt = p.createdAt || Date.now();
+  saveProfile(fresh);
+  renderProfile();
+  showToast('🗑️ تم مسح الإحصائيات', 'var(--gold)');
+}
+
+// Auto-prefill name across all game create/join inputs
+function prefillProfileName() {
+  const p = loadProfile();
+  if (!p.name || p.name === 'لاعب') return;
+  ['hostName','joinName','trapHostName','trapJoinName','xoHostName','xoJoinName','c4HostName','c4JoinName','memHostName','memJoinName','defuseHostName','defuseJoinName'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el && !el.value) el.value = p.name;
+  });
+}
+window.addEventListener('DOMContentLoaded', () => setTimeout(prefillProfileName, 400));
+
 function joinOpenRoom(gameKey, code) {
   const inputMap = { trap:'trapJoinCode', xo:'xoJoinCode', c4:'c4JoinCode', mem:'memJoinCode', defuse:'defuseJoinCode' };
   const nameInputMap = { trap:'trapJoinName', xo:'xoJoinName', c4:'c4JoinName', mem:'memJoinName', defuse:'defuseJoinName' };
@@ -6340,6 +6584,7 @@ async function trapEnterEnd(state) {
     : (trap.bot ? '🤖 فاز الكمبيوتر هذه المرة!' : '😵 خسرت! وقعت في الفخاخ');
   try { if (won) soundTrapWin(); else soundTrapLose(); } catch(e){}
   if (won) { try { if (typeof launchConfetti==='function') launchConfetti(); } catch(e){} }
+  try { recordGameResult('trap', won ? { won:true } : { lost:true }); } catch(e){}
   // Rematch button: host (or bot) shows action; guest shows waiting
   const btn = document.getElementById('trapRematchBtn');
   const wait = document.getElementById('trapRematchWait');
@@ -6701,9 +6946,9 @@ function xoEnterRoundEnd(state) {
     xoShowStage('xoEnd');
     const winner = state.winner;
     let emoji, text;
-    if (winner === 'draw') { emoji = '🤝'; text = 'تعادل!'; try { soundXoDraw(); } catch(e){} }
-    else if (winner === xo.role) { emoji = '🏆'; text = '🎉 فزت بهذه الجولة!'; try { soundXoWin(); if (typeof launchConfetti==='function') launchConfetti(); } catch(e){} }
-    else { emoji = '😔'; text = 'خسرت هذه الجولة. حظ أوفر!'; try { soundXoLose(); } catch(e){} }
+    if (winner === 'draw') { emoji = '🤝'; text = 'تعادل!'; try { soundXoDraw(); } catch(e){} try { recordGameResult('xo', { draw:true }); } catch(e){} }
+    else if (winner === xo.role) { emoji = '🏆'; text = '🎉 فزت بهذه الجولة!'; try { soundXoWin(); if (typeof launchConfetti==='function') launchConfetti(); } catch(e){} try { recordGameResult('xo', { won:true }); } catch(e){} }
+    else { emoji = '😔'; text = 'خسرت هذه الجولة. حظ أوفر!'; try { soundXoLose(); } catch(e){} try { recordGameResult('xo', { lost:true }); } catch(e){} }
     document.getElementById('xoEndEmoji').textContent = emoji;
     document.getElementById('xoEndText').textContent = text;
     // Loser starts the next round (or X if draw)
@@ -7067,9 +7312,9 @@ function c4EnterRoundEnd(state) {
     c4ShowStage('c4End');
     const winner = state.winner;
     let emoji, text;
-    if (winner === 'draw') { emoji = '🤝'; text = 'تعادل! اللوحة امتلأت'; try { soundXoDraw(); } catch(e){} }
-    else if (winner === c4.role) { emoji = '🏆'; text = '🎉 فزت! ٤ متتالية'; try { soundXoWin(); if (typeof launchConfetti==='function') launchConfetti(); } catch(e){} }
-    else { emoji = '😔'; text = 'خسرت هذه الجولة'; try { soundXoLose(); } catch(e){} }
+    if (winner === 'draw') { emoji = '🤝'; text = 'تعادل! اللوحة امتلأت'; try { soundXoDraw(); } catch(e){} try { recordGameResult('c4', { draw:true }); } catch(e){} }
+    else if (winner === c4.role) { emoji = '🏆'; text = '🎉 فزت! ٤ متتالية'; try { soundXoWin(); if (typeof launchConfetti==='function') launchConfetti(); } catch(e){} try { recordGameResult('c4', { won:true }); } catch(e){} }
+    else { emoji = '😔'; text = 'خسرت هذه الجولة'; try { soundXoLose(); } catch(e){} try { recordGameResult('c4', { lost:true }); } catch(e){} }
     document.getElementById('c4EndEmoji').textContent = emoji;
     document.getElementById('c4EndText').textContent = text;
     if (c4.role === 'p0' || c4.bot) {
@@ -7397,9 +7642,20 @@ function memEnterRoundEnd(state) {
   memShowStage('memEnd');
   const winner = state.winner;
   let emoji, text;
-  if (winner === 'draw') { emoji = '🤝'; text = 'تعادل!'; try { soundXoDraw(); } catch(e){} }
-  else if (winner === mem.role) { emoji = '🏆'; text = '🎉 فزت! ذاكرتك ممتازة'; try { soundXoWin(); if (typeof launchConfetti==='function') launchConfetti(); } catch(e){} }
-  else { emoji = '😔'; text = 'خسرت هذه الجولة. حظ أوفر!'; try { soundXoLose(); } catch(e){} }
+  // My pair count for stats
+  let myPairs = 0;
+  try {
+    const isHostRole = (mem.role === 'p0');
+    myPairs = isHostRole ? ((mem.localPlayers && mem.localPlayers.p0 && mem.localPlayers.p0.score) || 0) : 0;
+    if (!mem.bot) {
+      // Online: read from latest score that the listener saw
+      const el = document.getElementById(isHostRole ? 'memP0Score' : 'memP1Score');
+      if (el) myPairs = parseInt(el.textContent) || 0;
+    }
+  } catch(e){}
+  if (winner === 'draw') { emoji = '🤝'; text = 'تعادل!'; try { soundXoDraw(); } catch(e){} try { recordGameResult('mem', { draw:true, pairs:myPairs }); } catch(e){} }
+  else if (winner === mem.role) { emoji = '🏆'; text = '🎉 فزت! ذاكرتك ممتازة'; try { soundXoWin(); if (typeof launchConfetti==='function') launchConfetti(); } catch(e){} try { recordGameResult('mem', { won:true, pairs:myPairs }); } catch(e){} }
+  else { emoji = '😔'; text = 'خسرت هذه الجولة. حظ أوفر!'; try { soundXoLose(); } catch(e){} try { recordGameResult('mem', { lost:true, pairs:myPairs }); } catch(e){} }
   document.getElementById('memEndEmoji').textContent = emoji;
   document.getElementById('memEndText').textContent = text;
   if (mem.role === 'p0' || mem.bot) {
@@ -7841,15 +8097,18 @@ function defuseEnterRoundEnd(state) {
   if (result === 'defused') {
     emoji = '🎉'; text = '✅ تم تفكيك القنبلة بنجاح!';
     try { soundTrapWin(); if (typeof launchConfetti==='function') launchConfetti(); } catch(e){}
+    try { recordGameResult('defuse', { defused:true }); } catch(e){}
   } else if (result === 'boom') {
     emoji = '💥'; text = '💣 انفجرت! قطعتم السلك الخاطئ';
     try { soundTrapBoom(); if (typeof trapPlayBoomEffect === 'function') trapPlayBoomEffect(); } catch(e){}
+    try { recordGameResult('defuse', { exploded:true }); } catch(e){}
     if (state.bomb && typeof state.correct === 'number') {
       reveal = 'السلك الصحيح كان: ' + (state.correct+1) + ' (' + (DEFUSE_WIRE_NAMES[state.bomb.wires[state.correct]] || '') + ')';
     }
   } else if (result === 'timeout') {
     emoji = '⏰'; text = '💥 انتهى الوقت! القنبلة انفجرت';
     try { soundTrapLose(); if (typeof trapPlayBoomEffect === 'function') trapPlayBoomEffect(); } catch(e){}
+    try { recordGameResult('defuse', { exploded:true }); } catch(e){}
     if (state.bomb && typeof state.correct === 'number') {
       reveal = 'السلك الصحيح كان: ' + (state.correct+1) + ' (' + (DEFUSE_WIRE_NAMES[state.bomb.wires[state.correct]] || '') + ')';
     }
