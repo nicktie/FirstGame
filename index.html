@@ -162,6 +162,33 @@ body {
 .info-modal .info-pill { display:inline-block; background:rgba(201,168,76,0.12); border:1px solid var(--gold); color:var(--gold); border-radius:50px; padding:4px 12px; font-size:0.82rem; margin:2px; font-weight:700; }
 .info-modal a.info-link { color:var(--gold); text-decoration:none; padding:6px 14px; background:rgba(201,168,76,0.12); border:1px solid var(--gold); border-radius:10px; display:inline-block; margin:4px; }
 .info-modal a.info-link:hover { background:rgba(201,168,76,0.22); }
+/* PWA install button */
+.install-btn { position:fixed; bottom:14px; right:14px; z-index:9997; background:linear-gradient(135deg, var(--gold), #a8720c); color:var(--dark); border:none; border-radius:50px; padding:10px 18px; font-family:'Tajawal',sans-serif; font-weight:900; font-size:0.88rem; cursor:pointer; box-shadow:0 6px 18px rgba(0,0,0,0.4); display:flex; align-items:center; gap:6px; animation:installBounce 0.6s cubic-bezier(0.5,0,0.3,1.3); transition:transform 0.15s; }
+.install-btn:hover { transform:scale(1.05); }
+.install-btn-x { background:none; border:none; color:var(--dark); padding:0; margin-right:2px; font-size:1rem; cursor:pointer; opacity:0.6; }
+.install-btn-x:hover { opacity:1; }
+@keyframes installBounce { 0% { transform:translateY(60px); opacity:0; } 100% { transform:translateY(0); opacity:1; } }
+/* First-time tutorial */
+.tutorial-overlay { position:fixed; inset:0; z-index:9700; background:rgba(0,0,0,0.85); backdrop-filter:blur(10px); display:flex; align-items:center; justify-content:center; padding:20px; animation:tutorialFadeIn 0.35s ease; }
+@keyframes tutorialFadeIn { from { opacity:0; } to { opacity:1; } }
+.tutorial-modal { background:var(--card-bg); border:2px solid var(--gold); border-radius:22px; padding:32px 24px 22px; max-width:440px; width:100%; text-align:center; box-shadow:0 20px 60px rgba(0,0,0,0.5); }
+.tutorial-slide { display:none; min-height:240px; }
+.tutorial-slide.active { display:block; animation:tutorialSlideIn 0.35s ease; }
+@keyframes tutorialSlideIn { from { opacity:0; transform:translateY(14px); } to { opacity:1; transform:translateY(0); } }
+.tutorial-icon { font-size:4rem; line-height:1; margin-bottom:14px; filter:drop-shadow(0 0 20px rgba(201,168,76,0.4)); }
+.tutorial-title { font-family:'Tajawal',sans-serif; font-weight:900; color:var(--gold); font-size:1.5rem; margin-bottom:10px; }
+.tutorial-body { color:var(--text); font-size:0.98rem; line-height:1.8; }
+.tutorial-body strong { color:var(--gold); }
+.tutorial-dots { display:flex; justify-content:center; gap:8px; margin:18px 0 14px; }
+.tutorial-dots .dot { width:9px; height:9px; border-radius:50%; background:var(--border); transition:all 0.25s; }
+.tutorial-dots .dot.active { background:var(--gold); transform:scale(1.25); }
+.tutorial-actions { display:flex; gap:10px; }
+.tutorial-actions button { flex:1; padding:12px; border-radius:12px; border:1.5px solid var(--border); background:var(--option-bg); color:var(--text); font-family:'Tajawal',sans-serif; font-weight:700; font-size:0.92rem; cursor:pointer; transition:all 0.15s; }
+.tutorial-actions button.primary { background:linear-gradient(135deg, var(--gold), #a8720c); color:var(--dark); border-color:var(--gold); font-weight:900; }
+.tutorial-actions button:hover { transform:translateY(-1px); }
+/* Smooth screen transitions */
+#landingScreen, #setupScreen, #profileScreen, #gameLbScreen, #adminScreen, #trapScreen, #xoScreen, #c4Screen, #memScreen, #defuseScreen, #onlineScreen { animation:screenFadeIn 0.25s ease; }
+@keyframes screenFadeIn { from { opacity:0; transform:translateY(6px); } to { opacity:1; transform:translateY(0); } }
 
 /* SCOREBOARD */
 .scoreboard { display:flex; gap:8px; max-width:760px; margin:0 auto 20px; flex-wrap:wrap; justify-content:center; }
@@ -1085,6 +1112,53 @@ body.theme-gold .net-indicator { color:var(--gold); }
   <span id="netLabel">…</span>
 </div>
 <button id="muteBtn" class="mute-btn" onclick="toggleMute()" title="كتم الأصوات">🔊</button>
+
+<button id="installAppBtn" class="install-btn" style="display:none" onclick="triggerPwaInstall()">
+  <span>📲 ثبّت اللعبة</span>
+  <button class="install-btn-x" onclick="event.stopPropagation();dismissInstallPrompt()" title="إخفاء">×</button>
+</button>
+
+<div id="tutorialOverlay" class="tutorial-overlay" style="display:none">
+  <div class="tutorial-modal">
+    <div class="tutorial-slide" data-slide="0">
+      <div class="tutorial-icon">🏆</div>
+      <div class="tutorial-title">أهلاً بك في تحدي الثلاثة!</div>
+      <div class="tutorial-body">منصة عربية فيها <strong>٦ ألعاب</strong> ممتعة تلعبها <strong>مع أصحابك</strong> من جوالك مباشرة — بدون تنزيل تطبيق.</div>
+    </div>
+    <div class="tutorial-slide" data-slide="1">
+      <div class="tutorial-icon">🎮</div>
+      <div class="tutorial-title">الألعاب المتاحة</div>
+      <div class="tutorial-body" style="text-align:right;font-size:0.95rem;line-height:2">
+        🧠 <strong>الأسئلة</strong> — ١١٥٠ سؤال<br>
+        💣 <strong>الفخ</strong> — خبّئ القنابل<br>
+        🎮 <strong>XO</strong> — الكلاسيكية<br>
+        🔴 <strong>أربعة في صف</strong> — Connect 4<br>
+        🃏 <strong>الذاكرة</strong> — اعثر على الأزواج<br>
+        🧨 <strong>إبطال القنبلة</strong> — تعاون!
+      </div>
+    </div>
+    <div class="tutorial-slide" data-slide="2">
+      <div class="tutorial-icon">🔗</div>
+      <div class="tutorial-title">شارك واللعب يبدأ</div>
+      <div class="tutorial-body">أنشئ غرفة، انسخ <strong>الرمز</strong> أو <strong>الرابط</strong>، أرسله لأصحابك. اللعبة تبدأ خلال ثوانٍ — وكل ما تنتهي جولة فيه زر "🔄 جولة جديدة" بدون مغادرة الغرفة.</div>
+    </div>
+    <div class="tutorial-slide" data-slide="3">
+      <div class="tutorial-icon">🏅</div>
+      <div class="tutorial-title">إحصائياتك وإنجازاتك</div>
+      <div class="tutorial-body">اجمع الانتصارات لتفتح <strong>١٢ إنجاز</strong>، وتنافس في <strong>لوحات الصدارة الأسبوعية</strong>. كل تقدمك محفوظ على جهازك — ابدأ اللعب الآن! 🚀</div>
+    </div>
+    <div class="tutorial-dots">
+      <span class="dot active"></span>
+      <span class="dot"></span>
+      <span class="dot"></span>
+      <span class="dot"></span>
+    </div>
+    <div class="tutorial-actions">
+      <button onclick="tutorialSkip()">تخطي</button>
+      <button class="primary" onclick="tutorialNext()" id="tutorialNextBtn">التالي ←</button>
+    </div>
+  </div>
+</div>
 
 <!-- ══ LANDING / HOME SCREEN ══ -->
 <div id="landingScreen" class="setup-screen">
@@ -6159,8 +6233,9 @@ function renderOpenRoomsList(gameKey, list) {
   if (!el || !panel) return;
   const label = OPEN_ROOMS_GAME_LABELS[gameKey] || { name:'', avatar:'🎮' };
   if (!list.length) {
-    panel.style.display = 'none'; // hide entirely when empty
-    el.innerHTML = '';
+    // Show a friendlier "be the first" panel instead of hiding entirely
+    panel.style.display = 'block';
+    el.innerHTML = '<div class="open-rooms-empty">✨ لا توجد غرف مفتوحة الآن<br><span style="color:var(--text);font-size:0.88rem;font-style:normal;display:inline-block;margin-top:6px">كن أول من ينشئ غرفة — انزل للأسفل واضغط <strong style="color:var(--gold)">إنشاء غرفة</strong></span></div>';
     return;
   }
   panel.style.display = 'block';
@@ -8624,6 +8699,90 @@ function showInfoModal(which) {
 function closeInfoModal() {
   document.getElementById('infoModalOverlay').style.display = 'none';
 }
+
+// ── PWA Install Prompt ──
+let _deferredInstallPrompt = null;
+window.addEventListener('beforeinstallprompt', (e) => {
+  e.preventDefault();
+  _deferredInstallPrompt = e;
+  if (localStorage.getItem('quizInstallDismissed') === '1') return;
+  if (window.matchMedia && window.matchMedia('(display-mode: standalone)').matches) return;
+  const btn = document.getElementById('installAppBtn'); if (btn) btn.style.display = 'flex';
+});
+function triggerPwaInstall() {
+  if (!_deferredInstallPrompt) {
+    // iOS fallback — show instructions
+    const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
+    if (isIOS) {
+      showInfoModalHTML('🍎 ثبّت اللعبة على iPhone', '<p>اضغط زر <strong>المشاركة ⬆️</strong> في أسفل المتصفح، ثم اختر:</p><div style="text-align:center;font-size:1.2rem;margin:14px 0"><strong>"إضافة إلى الشاشة الرئيسية"</strong></div><p style="font-size:0.85rem;color:var(--muted);text-align:center">ستظهر اللعبة كتطبيق على شاشة جوالك مباشرة.</p>');
+    } else {
+      showToast('⚠️ التثبيت غير متاح في متصفحك الحالي', 'var(--wrong)');
+    }
+    return;
+  }
+  _deferredInstallPrompt.prompt();
+  _deferredInstallPrompt.userChoice.then((choice) => {
+    if (choice.outcome === 'accepted') {
+      showToast('🎉 تم التثبيت! ستجد اللعبة على شاشتك', 'var(--gold)');
+    }
+    _deferredInstallPrompt = null;
+    const btn = document.getElementById('installAppBtn'); if (btn) btn.style.display = 'none';
+  });
+}
+function dismissInstallPrompt() {
+  try { localStorage.setItem('quizInstallDismissed', '1'); } catch(e){}
+  const btn = document.getElementById('installAppBtn'); if (btn) btn.style.display = 'none';
+}
+// Show install hint for iOS Safari (no beforeinstallprompt) after a delay
+window.addEventListener('load', () => {
+  setTimeout(() => {
+    const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
+    const inStandalone = window.matchMedia && window.matchMedia('(display-mode: standalone)').matches;
+    if (isIOS && !inStandalone && localStorage.getItem('quizInstallDismissed') !== '1') {
+      const btn = document.getElementById('installAppBtn');
+      if (btn) { btn.style.display = 'flex'; btn.querySelector('span').textContent = '🍎 ثبّت كتطبيق'; }
+    }
+  }, 2500);
+});
+// Helper for showing arbitrary HTML in info modal (used by iOS install help)
+function showInfoModalHTML(title, body) {
+  document.getElementById('infoModalContent').innerHTML = '<h2>' + title + '</h2>' + body;
+  document.getElementById('infoModalOverlay').style.display = 'flex';
+}
+
+// ── First-time Tutorial ──
+const TUTORIAL_KEY = 'quizTutorialSeen';
+let _tutorialIdx = 0;
+const _tutorialLastIdx = 3;
+function maybeShowTutorial() {
+  try { if (localStorage.getItem(TUTORIAL_KEY) === '1') return; } catch(e) { return; }
+  setTimeout(() => {
+    _tutorialIdx = 0;
+    document.getElementById('tutorialOverlay').style.display = 'flex';
+    renderTutorialSlide();
+  }, 800);
+}
+function renderTutorialSlide() {
+  document.querySelectorAll('.tutorial-slide').forEach((el, i) => {
+    el.classList.toggle('active', i === _tutorialIdx);
+  });
+  document.querySelectorAll('.tutorial-dots .dot').forEach((el, i) => {
+    el.classList.toggle('active', i === _tutorialIdx);
+  });
+  const next = document.getElementById('tutorialNextBtn');
+  if (next) next.textContent = (_tutorialIdx === _tutorialLastIdx) ? '🚀 ابدأ اللعب' : 'التالي ←';
+}
+function tutorialNext() {
+  if (_tutorialIdx >= _tutorialLastIdx) { tutorialFinish(); return; }
+  _tutorialIdx++;
+  renderTutorialSlide();
+}
+function tutorialSkip() { tutorialFinish(); }
+function tutorialFinish() {
+  document.getElementById('tutorialOverlay').style.display = 'none';
+  try { localStorage.setItem(TUTORIAL_KEY, '1'); } catch(e){}
+}
+window.addEventListener('DOMContentLoaded', () => setTimeout(maybeShowTutorial, 600));
 
 function openAdmin() {
   document.getElementById('setupScreen').style.display='none';
