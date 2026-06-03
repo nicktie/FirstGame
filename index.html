@@ -929,6 +929,11 @@ body.theme-gold .net-indicator { color:var(--gold); }
 .orr-code { font-family:'Cairo',monospace; color:var(--muted); font-size:0.78rem; letter-spacing:1px; }
 .orr-join { background:linear-gradient(135deg,#3dba7a,#2a8a55); color:#fff; border:none; border-radius:8px; padding:6px 14px; font-family:'Tajawal',sans-serif; font-weight:900; font-size:0.82rem; cursor:pointer; flex-shrink:0; transition:transform 0.15s; }
 .orr-join:hover { transform:scale(1.06); }
+.orr-spectate { background:linear-gradient(135deg,#6495ed,#3a6bc4); color:#fff; border:none; border-radius:8px; padding:6px 12px; font-family:'Tajawal',sans-serif; font-weight:900; font-size:0.78rem; cursor:pointer; flex-shrink:0; margin-right:4px; transition:transform 0.15s; }
+.orr-spectate:hover { transform:scale(1.06); }
+.spectator-banner { background:rgba(100,149,237,0.15); border:1.5px solid #6495ed; color:#6495ed; border-radius:12px; padding:10px 14px; text-align:center; font-family:'Tajawal',sans-serif; font-weight:800; margin-bottom:12px; font-size:0.92rem; }
+.spectator-count { display:inline-block; background:rgba(100,149,237,0.15); border:1px solid #6495ed; color:#6495ed; border-radius:50px; padding:4px 12px; font-family:'Tajawal',sans-serif; font-weight:700; font-size:0.82rem; margin-top:8px; }
+.spectator-cell-disabled { pointer-events:none !important; cursor:default !important; }
 /* Player profile */
 #profileScreen { max-width:680px; margin:0 auto; padding:20px 16px 40px; }
 .profile-card { background:var(--card-bg); border:2px solid var(--gold); border-radius:18px; padding:22px 18px; text-align:center; margin-bottom:18px; box-shadow:0 8px 24px rgba(201,168,76,0.18); }
@@ -2035,10 +2040,12 @@ body.theme-gold .net-indicator { color:var(--gold); }
       <button class="start-btn" style="margin-top:16px" onclick="xoStart()">🚀 ابدأ اللعبة</button>
     </div>
     <div id="xoLobbyWait" class="online-wait-note">في انتظار الخصم…</div>
+    <div class="spectator-count" id="xoSpectatorCount" style="display:none">👁️ ٠ متفرج</div>
     <button class="online-leave-btn" onclick="leaveXo()">↩️ خروج</button>
   </div>
 
   <div id="xoBattle" style="display:none">
+    <div class="spectator-banner" id="xoSpectatorBanner" style="display:none">👁️ أنت تشاهد فقط — لا تستطيع اللعب</div>
     <div class="trap-turn-banner" id="xoTurnBanner">🎯 دورك!</div>
     <div class="xo-score-row">
       <div class="xo-score x"><span id="xoP0NameBattle">أنت</span> <span class="xo-score-val" id="xoP0Score">0</span></div>
@@ -2085,9 +2092,11 @@ body.theme-gold .net-indicator { color:var(--gold); }
       <button class="start-btn" style="margin-top:16px" onclick="c4Start()">🚀 ابدأ اللعبة</button>
     </div>
     <div id="c4LobbyWait" class="online-wait-note">في انتظار الخصم…</div>
+    <div class="spectator-count" id="c4SpectatorCount" style="display:none">👁️ ٠ متفرج</div>
     <button class="online-leave-btn" onclick="leaveC4()">↩️ خروج</button>
   </div>
   <div id="c4Battle" style="display:none">
+    <div class="spectator-banner" id="c4SpectatorBanner" style="display:none">👁️ أنت تشاهد فقط — لا تستطيع اللعب</div>
     <div class="trap-turn-banner" id="c4TurnBanner">🎯 دورك!</div>
     <div class="xo-score-row">
       <div class="xo-score c4-r"><span id="c4P0NameBattle">أنت</span> <span class="xo-score-val" id="c4P0Score">0</span></div>
@@ -2136,9 +2145,11 @@ body.theme-gold .net-indicator { color:var(--gold); }
       <button class="start-btn" style="margin-top:16px" onclick="memStart()">🚀 ابدأ اللعبة</button>
     </div>
     <div id="memLobbyWait" class="online-wait-note">في انتظار الخصم…</div>
+    <div class="spectator-count" id="memSpectatorCount" style="display:none">👁️ ٠ متفرج</div>
     <button class="online-leave-btn" onclick="leaveMem()">↩️ خروج</button>
   </div>
   <div id="memBattle" style="display:none">
+    <div class="spectator-banner" id="memSpectatorBanner" style="display:none">👁️ أنت تشاهد فقط — لا تستطيع اللعب</div>
     <div class="trap-turn-banner" id="memTurnBanner">🎯 دورك!</div>
     <div class="xo-score-row">
       <div class="xo-score x"><span id="memP0NameBattle">أنت</span> <span class="xo-score-val" id="memP0Score">0</span></div>
@@ -6204,17 +6215,24 @@ function attachOpenRoomsListener() {
     const rooms = snap.val() || {};
     Object.entries(OPEN_ROOMS_PREFIXES).forEach(([gameKey, prefix]) => {
       const list = [];
+      const canSpectate = ['xo','c4','mem'].includes(gameKey);
       Object.entries(rooms).forEach(([key, room]) => {
         if (!key || !key.startsWith(prefix) || key.length !== 7) return; // expect prefix + 6 digits
         if (!room || !room.meta || !room.players) return;
-        if (room.meta.status !== 'lobby') return;
         const p0 = room.players.p0 || {}, p1 = room.players.p1 || {};
         if (!p0.joined) return;
-        if (p1.joined) return; // skip full
-        // Skip my own room if I created one
+        const inLobby = (room.meta.status === 'lobby');
+        const isFull = !!p1.joined;
+        // Show in list if: lobby with open slot (joinable) OR active game (spectatable)
+        if (!inLobby && !canSpectate) return; // active non-spectatable: skip
+        if (inLobby && isFull) return; // full + lobby = nothing to do
         const myState = (gameKey==='trap'?trap : gameKey==='xo'?xo : gameKey==='c4'?c4 : gameKey==='mem'?mem : defuse);
         if (myState && myState.code && myState.role==='p0' && key === prefix+myState.code) return;
-        list.push({ code: key.slice(1), hostName: p0.name || room.meta.hostName || 'لاعب', _ts: room.meta.createdAt || 0 });
+        list.push({
+          code: key.slice(1), hostName: p0.name || room.meta.hostName || 'لاعب',
+          guestName: (p1.name || ''), canJoin: inLobby && !isFull, canSpectate: canSpectate && !inLobby,
+          _ts: room.meta.createdAt || 0
+        });
       });
       list.sort((a,b) => (b._ts||0) - (a._ts||0));
       renderOpenRoomsList(gameKey, list);
@@ -6241,10 +6259,14 @@ function renderOpenRoomsList(gameKey, list) {
   panel.style.display = 'block';
   el.innerHTML = list.slice(0, 10).map(r => {
     const safeHost = String(r.hostName).replace(/[<>"&]/g, '');
-    return `<div class="open-room-row" onclick="joinOpenRoom('${gameKey}', '${r.code}')">
-      <span class="orr-host">${label.avatar} ${safeHost}</span>
+    const safeGuest = String(r.guestName || '').replace(/[<>"&]/g, '');
+    const playingLabel = r.canSpectate ? (' <small style="color:var(--muted)">vs ' + safeGuest + '</small>') : '';
+    const joinBtn = r.canJoin ? `<button class="orr-join" onclick="event.stopPropagation();joinOpenRoom('${gameKey}','${r.code}')">⚔️ دخول</button>` : '';
+    const watchBtn = r.canSpectate ? `<button class="orr-spectate" onclick="event.stopPropagation();spectateRoom('${gameKey}','${r.code}')">👁️ شاهد</button>` : '';
+    return `<div class="open-room-row">
+      <span class="orr-host">${label.avatar} ${safeHost}${playingLabel}</span>
       <span class="orr-code">#${r.code}</span>
-      <button class="orr-join" onclick="event.stopPropagation();joinOpenRoom('${gameKey}','${r.code}')">⚔️ دخول</button>
+      ${watchBtn}${joinBtn}
     </div>`;
   }).join('');
 }
@@ -6523,6 +6545,44 @@ function joinOpenRoom(gameKey, code) {
     return;
   }
   if (joinFnMap[gameKey]) joinFnMap[gameKey]();
+}
+
+// ── Spectator Mode ──
+// Available for: xo, c4, mem (turn-based games with public state)
+const SPECTATE_PREFIXES = { xo:'x', c4:'c', mem:'m' };
+async function spectateRoom(gameKey, code) {
+  if (!ensureFirebase()) return;
+  const prefix = SPECTATE_PREFIXES[gameKey]; if (!prefix) return;
+  const sid = getPresenceId();
+  const profName = (loadProfile().name) || 'متفرج';
+  // Add myself to spectators path
+  try {
+    const ref = fb.db.ref('rooms/'+prefix+code+'/spectators/'+sid);
+    await ref.set({ name: profName, ts: Date.now() });
+    ref.onDisconnect().remove();
+  } catch(e) {
+    showToast('⚠️ تعذّر الانضمام كمتفرج', 'var(--wrong)');
+    return;
+  }
+  // Wire the appropriate game's spectator handler
+  if (gameKey === 'xo') xoSpectate(code, sid);
+  else if (gameKey === 'c4') c4Spectate(code, sid);
+  else if (gameKey === 'mem') memSpectate(code, sid);
+}
+function spectatorCountLabel(n) {
+  const arDigits = ['٠','١','٢','٣','٤','٥','٦','٧','٨','٩'];
+  const num = String(n).split('').map(d => arDigits[+d] || d).join('');
+  return '👁️ ' + num + ' ' + (n === 1 ? 'متفرج' : 'متفرجون');
+}
+function attachSpectatorCounter(prefix, code, stateObj, countElId) {
+  if (!fbReady()) return;
+  const ref = fb.db.ref('rooms/'+prefix+code+'/spectators');
+  const onCount = ref.on('value', snap => {
+    const n = snap.numChildren ? snap.numChildren() : Object.keys(snap.val()||{}).length;
+    const el = document.getElementById(countElId);
+    if (el) { el.textContent = spectatorCountLabel(n); el.style.display = n > 0 ? 'inline-block' : 'none'; }
+  });
+  if (stateObj && stateObj.listeners) stateObj.listeners.push(() => { try { ref.off('value', onCount); } catch(e){} });
 }
 
 // ════════════════════════════════════════════════════════════
@@ -7146,6 +7206,20 @@ async function joinXoRoom() {
   document.getElementById('xoLobbyHost').style.display = 'none';
 }
 
+function xoSpectate(code, sid) {
+  // Set up state object as a spectator
+  xo.code = code; xo.role = 'spec'; xo.opponentRole = null; xo.bot = false;
+  xo.name = (loadProfile().name) || 'متفرج'; xo.oppName = '';
+  xo.scoreX = 0; xo.scoreO = 0; xo._specSid = sid;
+  xoAttachListeners();
+  attachSpectatorCounter('x', code, xo, 'xoSpectatorCount');
+  xoOpenScreen(); xoShowStage('xoLobby');
+  document.getElementById('xoCodeDisplay').textContent = code;
+  document.getElementById('xoLobbyHost').style.display = 'none';
+  document.getElementById('xoLobbyWait').style.display = 'block';
+  document.getElementById('xoLobbyWait').textContent = '👁️ أنت تشاهد — انتظر بداية الجولة';
+  showToast('👁️ دخلت كمتفرج', '#6495ed');
+}
 function xoAttachListeners() {
   xoDetachListeners();
   const playersRef = fb.db.ref('rooms/x'+xo.code+'/players');
@@ -7156,6 +7230,8 @@ function xoAttachListeners() {
     () => playersRef.off('value', onPlayers),
     () => stateRef.off('value', onState)
   ];
+  // Attach spectator counter for everyone (players + spectators)
+  attachSpectatorCounter('x', xo.code, xo, 'xoSpectatorCount');
 }
 function xoDetachListeners() {
   xo.listeners.forEach(off=>{ try{off();}catch(e){} });
@@ -7176,8 +7252,12 @@ function xoRenderPlayers(players) {
   if (on) on.textContent = p1.name || 'O';
   const sx = document.getElementById('xoP0Score'); if (sx) sx.textContent = xo.scoreX;
   const so = document.getElementById('xoP1Score'); if (so) so.textContent = xo.scoreO;
-  // Show start button when both joined (host only)
-  if (xo.role==='p0') {
+  // Show start button when both joined (host only) — skip for spectators
+  if (xo.role==='spec') {
+    document.getElementById('xoLobbyHost').style.display = 'none';
+    document.getElementById('xoLobbyWait').style.display = 'block';
+    document.getElementById('xoLobbyWait').textContent = '👁️ أنت تشاهد — انتظر بداية الجولة';
+  } else if (xo.role==='p0') {
     const ready = p0.joined && p1.joined;
     document.getElementById('xoLobbyHost').style.display = ready ? 'block' : 'none';
     document.getElementById('xoLobbyWait').style.display = ready ? 'none' : 'block';
@@ -7206,6 +7286,10 @@ function xoOnState(state) {
 function xoEnterBattle(state) {
   xoShowStage('xoBattle');
   const board = state.board || Array(9).fill('');
+  const isSpec = (xo.role === 'spec');
+  // Toggle spectator banner
+  const specBanner = document.getElementById('xoSpectatorBanner');
+  if (specBanner) specBanner.style.display = isSpec ? 'block' : 'none';
   // Detect an opponent move arriving (any cell newly filled by opponent's mark since last render)
   const prev = xo._lastBoard || Array(9).fill('');
   const myMarkLetter = (xo.role==='p0') ? 'X' : 'O';
@@ -7220,12 +7304,19 @@ function xoEnterBattle(state) {
   const oppMark = (xo.role==='p0') ? 'O' : 'X';
   const myCls  = (xo.role==='p0') ? 'x' : 'o';
   const oppCls = (xo.role==='p0') ? 'o' : 'x';
-  const myTurn = (state.turn === xo.role);
+  const myTurn = !isSpec && (state.turn === xo.role);
   const banner = document.getElementById('xoTurnBanner');
-  banner.className = 'trap-turn-banner ' + (myTurn ? 'my-turn' : 'opp-turn');
-  banner.innerHTML = myTurn
-    ? '🎯 دورك! ضع <span class="xo-score ' + myCls + '" style="font-weight:900;font-size:1.15em">' + myMark + '</span>'
-    : '⏳ دور ' + (xo.oppName || 'الخصم') + ' <span class="xo-score ' + oppCls + '" style="font-weight:900;font-size:1.15em">' + oppMark + '</span>';
+  if (isSpec) {
+    banner.className = 'trap-turn-banner opp-turn';
+    const activeMark = state.turn === 'p0' ? 'X' : 'O';
+    const activeCls  = state.turn === 'p0' ? 'x' : 'o';
+    banner.innerHTML = '⏳ دور <span class="xo-score ' + activeCls + '" style="font-weight:900;font-size:1.15em">' + activeMark + '</span>';
+  } else {
+    banner.className = 'trap-turn-banner ' + (myTurn ? 'my-turn' : 'opp-turn');
+    banner.innerHTML = myTurn
+      ? '🎯 دورك! ضع <span class="xo-score ' + myCls + '" style="font-weight:900;font-size:1.15em">' + myMark + '</span>'
+      : '⏳ دور ' + (xo.oppName || 'الخصم') + ' <span class="xo-score ' + oppCls + '" style="font-weight:900;font-size:1.15em">' + oppMark + '</span>';
+  }
   const boardEl = document.getElementById('xoBoard'); boardEl.innerHTML = '';
   const winLine = xoFindWin(board);
   for (let i=0; i<9; i++) {
@@ -7285,12 +7376,18 @@ function xoEnterRoundEnd(state) {
   setTimeout(() => {
     xoShowStage('xoEnd');
     const winner = state.winner;
+    const isSpec = (xo.role === 'spec');
     let emoji, text;
-    if (winner === 'draw') { emoji = '🤝'; text = 'تعادل!'; try { soundXoDraw(); } catch(e){} try { recordGameResult('xo', { draw:true }); } catch(e){} }
-    else if (winner === xo.role) { emoji = '🏆'; text = '🎉 فزت بهذه الجولة!'; try { soundXoWin(); if (typeof launchConfetti==='function') launchConfetti(); } catch(e){} try { recordGameResult('xo', { won:true }); } catch(e){} }
+    if (winner === 'draw') { emoji = '🤝'; text = 'تعادل!'; if (!isSpec) { try { soundXoDraw(); } catch(e){} try { recordGameResult('xo', { draw:true }); } catch(e){} } }
+    else if (!isSpec && winner === xo.role) { emoji = '🏆'; text = '🎉 فزت بهذه الجولة!'; try { soundXoWin(); if (typeof launchConfetti==='function') launchConfetti(); } catch(e){} try { recordGameResult('xo', { won:true }); } catch(e){} }
+    else if (isSpec) { emoji = '🏆'; text = '🎉 انتهت الجولة — ' + (winner === 'p0' ? 'X' : 'O') + ' فاز'; }
     else { emoji = '😔'; text = 'خسرت هذه الجولة. حظ أوفر!'; try { soundXoLose(); } catch(e){} try { recordGameResult('xo', { lost:true }); } catch(e){} }
     document.getElementById('xoEndEmoji').textContent = emoji;
     document.getElementById('xoEndText').textContent = text;
+    // Hide rematch button for spectators
+    const ea = document.querySelector('#xoEnd .start-btn');
+    if (ea && isSpec) ea.style.display = 'none';
+    else if (ea) ea.style.display = '';
     // Loser starts the next round (or X if draw)
     if (xo.role === 'p0' || xo.bot) {
       xo.startingTurn = (winner === 'draw') ? 'p0' : ((winner === 'p0') ? 'p1' : 'p0');
@@ -7312,13 +7409,17 @@ function leaveXo() {
   xoDetachListeners();
   if (!xo.bot) {
     try {
-      if (xo.code && xo.role === 'p0') fb.db.ref('rooms/x'+xo.code).remove();
+      if (xo.code && xo.role === 'spec' && xo._specSid) fb.db.ref('rooms/x'+xo.code+'/spectators/'+xo._specSid).remove();
+      else if (xo.code && xo.role === 'p0') fb.db.ref('rooms/x'+xo.code).remove();
       else if (xo.code && xo.role === 'p1') fb.db.ref('rooms/x'+xo.code+'/players/p1').remove();
     } catch(e){}
   }
+  // Hide spectator UI
+  const sb = document.getElementById('xoSpectatorBanner'); if (sb) sb.style.display = 'none';
+  const sc = document.getElementById('xoSpectatorCount'); if (sc) sc.style.display = 'none';
   xo.code = null; xo.role = null; xo.opponentRole = null;
   xo.bot = false; xo.localState = null; xo.localPlayers = null;
-  xo.scoreX = 0; xo.scoreO = 0; xo.startingTurn = 'p0';
+  xo.scoreX = 0; xo.scoreO = 0; xo.startingTurn = 'p0'; xo._specSid = null;
   document.getElementById('xoScreen').style.display = 'none';
   goToLanding();
 }
@@ -7491,6 +7592,18 @@ async function joinC4Room() {
   document.getElementById('c4LobbyHost').style.display = 'none';
 }
 
+function c4Spectate(code, sid) {
+  c4.code = code; c4.role = 'spec'; c4.opponentRole = null; c4.bot = false;
+  c4.name = (loadProfile().name) || 'متفرج'; c4.oppName = ''; c4._specSid = sid;
+  c4AttachListeners();
+  attachSpectatorCounter('c', code, c4, 'c4SpectatorCount');
+  c4OpenScreen(); c4ShowStage('c4Lobby');
+  document.getElementById('c4CodeDisplay').textContent = code;
+  document.getElementById('c4LobbyHost').style.display = 'none';
+  document.getElementById('c4LobbyWait').style.display = 'block';
+  document.getElementById('c4LobbyWait').textContent = '👁️ أنت تشاهد — انتظر بداية الجولة';
+  showToast('👁️ دخلت كمتفرج', '#6495ed');
+}
 function c4AttachListeners() {
   c4DetachListeners();
   const playersRef = fb.db.ref('rooms/c'+c4.code+'/players');
@@ -7498,6 +7611,7 @@ function c4AttachListeners() {
   const onPlayers = playersRef.on('value', s => c4RenderPlayers(s.val()||{}));
   const onState = stateRef.on('value', s => c4OnState(s.val()||{}));
   c4.listeners = [ () => playersRef.off('value', onPlayers), () => stateRef.off('value', onState) ];
+  attachSpectatorCounter('c', c4.code, c4, 'c4SpectatorCount');
 }
 function c4DetachListeners() {
   c4.listeners.forEach(off=>{ try{off();}catch(e){} });
@@ -7514,7 +7628,11 @@ function c4RenderPlayers(players) {
   const r1 = document.getElementById('c4P1NameBattle'); if (r1) r1.textContent = p1.name || 'أصفر';
   const sr = document.getElementById('c4P0Score'); if (sr) sr.textContent = p0.score || 0;
   const sy = document.getElementById('c4P1Score'); if (sy) sy.textContent = p1.score || 0;
-  if (c4.role==='p0') {
+  if (c4.role==='spec') {
+    document.getElementById('c4LobbyHost').style.display = 'none';
+    document.getElementById('c4LobbyWait').style.display = 'block';
+    document.getElementById('c4LobbyWait').textContent = '👁️ أنت تشاهد — انتظر بداية الجولة';
+  } else if (c4.role==='p0') {
     const ready = p0.joined && p1.joined;
     document.getElementById('c4LobbyHost').style.display = ready ? 'block' : 'none';
     document.getElementById('c4LobbyWait').style.display = ready ? 'none' : 'block';
@@ -7569,8 +7687,10 @@ function c4BoardFull(board) { return board.every(c => c); }
 
 function c4EnterBattle(state) {
   c4ShowStage('c4Battle');
+  const isSpec = (c4.role === 'spec');
+  const specBanner = document.getElementById('c4SpectatorBanner');
+  if (specBanner) specBanner.style.display = isSpec ? 'block' : 'none';
   const board = state.board || Array(C4_COLS*C4_ROWS).fill('');
-  // Detect new pieces vs previous render (so only newly placed disc animates)
   const prev = c4._lastBoard || Array(C4_COLS*C4_ROWS).fill('');
   const myLetter = (c4.role==='p0') ? 'R' : 'Y';
   const newIndices = new Set();
@@ -7581,12 +7701,18 @@ function c4EnterBattle(state) {
     }
   }
   c4._lastBoard = [...board];
-  const myTurn = (state.turn === c4.role);
+  const myTurn = !isSpec && (state.turn === c4.role);
   const banner = document.getElementById('c4TurnBanner');
-  banner.className = 'trap-turn-banner ' + (myTurn ? 'my-turn' : 'opp-turn');
-  banner.innerHTML = myTurn
-    ? '🎯 دورك! أسقط <span style="color:#e05c5c;font-weight:900">●</span>'.replace('#e05c5c', c4.role==='p0'?'#e05c5c':'#f0c040')
-    : '⏳ دور ' + (c4.oppName || 'الخصم');
+  if (isSpec) {
+    banner.className = 'trap-turn-banner opp-turn';
+    const color = state.turn === 'p0' ? '#e05c5c' : '#f0c040';
+    banner.innerHTML = '⏳ الدور للـ<span style="color:' + color + ';font-weight:900">●</span>';
+  } else {
+    banner.className = 'trap-turn-banner ' + (myTurn ? 'my-turn' : 'opp-turn');
+    banner.innerHTML = myTurn
+      ? '🎯 دورك! أسقط <span style="color:#e05c5c;font-weight:900">●</span>'.replace('#e05c5c', c4.role==='p0'?'#e05c5c':'#f0c040')
+      : '⏳ دور ' + (c4.oppName || 'الخصم');
+  }
   // Column buttons
   const colsEl = document.getElementById('c4Cols'); colsEl.innerHTML = '';
   for (let c=0; c<C4_COLS; c++) {
@@ -7651,12 +7777,16 @@ function c4EnterRoundEnd(state) {
   setTimeout(() => {
     c4ShowStage('c4End');
     const winner = state.winner;
+    const isSpec = (c4.role === 'spec');
     let emoji, text;
-    if (winner === 'draw') { emoji = '🤝'; text = 'تعادل! اللوحة امتلأت'; try { soundXoDraw(); } catch(e){} try { recordGameResult('c4', { draw:true }); } catch(e){} }
-    else if (winner === c4.role) { emoji = '🏆'; text = '🎉 فزت! ٤ متتالية'; try { soundXoWin(); if (typeof launchConfetti==='function') launchConfetti(); } catch(e){} try { recordGameResult('c4', { won:true }); } catch(e){} }
+    if (winner === 'draw') { emoji = '🤝'; text = 'تعادل! اللوحة امتلأت'; if (!isSpec) { try { soundXoDraw(); } catch(e){} try { recordGameResult('c4', { draw:true }); } catch(e){} } }
+    else if (!isSpec && winner === c4.role) { emoji = '🏆'; text = '🎉 فزت! ٤ متتالية'; try { soundXoWin(); if (typeof launchConfetti==='function') launchConfetti(); } catch(e){} try { recordGameResult('c4', { won:true }); } catch(e){} }
+    else if (isSpec) { emoji = '🏆'; text = '🎉 انتهت الجولة'; }
     else { emoji = '😔'; text = 'خسرت هذه الجولة'; try { soundXoLose(); } catch(e){} try { recordGameResult('c4', { lost:true }); } catch(e){} }
     document.getElementById('c4EndEmoji').textContent = emoji;
     document.getElementById('c4EndText').textContent = text;
+    const ea = document.querySelector('#c4End .start-btn');
+    if (ea) ea.style.display = isSpec ? 'none' : '';
     if (c4.role === 'p0' || c4.bot) {
       c4.startingTurn = (winner === 'draw') ? 'p0' : ((winner === 'p0') ? 'p1' : 'p0');
     }
@@ -7674,12 +7804,15 @@ function leaveC4() {
   c4DetachListeners();
   if (!c4.bot) {
     try {
-      if (c4.code && c4.role === 'p0') fb.db.ref('rooms/c'+c4.code).remove();
+      if (c4.code && c4.role === 'spec' && c4._specSid) fb.db.ref('rooms/c'+c4.code+'/spectators/'+c4._specSid).remove();
+      else if (c4.code && c4.role === 'p0') fb.db.ref('rooms/c'+c4.code).remove();
       else if (c4.code && c4.role === 'p1') fb.db.ref('rooms/c'+c4.code+'/players/p1').remove();
     } catch(e){}
   }
+  const sb = document.getElementById('c4SpectatorBanner'); if (sb) sb.style.display = 'none';
+  const sc = document.getElementById('c4SpectatorCount'); if (sc) sc.style.display = 'none';
   c4.code = null; c4.role = null; c4.opponentRole = null;
-  c4.bot = false; c4.localState = null; c4.localPlayers = null; c4.startingTurn = 'p0';
+  c4.bot = false; c4.localState = null; c4.localPlayers = null; c4.startingTurn = 'p0'; c4._specSid = null;
   document.getElementById('c4Screen').style.display = 'none';
   goToLanding();
 }
@@ -7854,6 +7987,18 @@ async function joinMemRoom() {
   document.getElementById('memLobbyHost').style.display = 'none';
 }
 
+function memSpectate(code, sid) {
+  mem.code = code; mem.role = 'spec'; mem.opponentRole = null; mem.bot = false;
+  mem.name = (loadProfile().name) || 'متفرج'; mem.oppName = ''; mem._specSid = sid;
+  memAttachListeners();
+  attachSpectatorCounter('m', code, mem, 'memSpectatorCount');
+  memOpenScreen(); memShowStage('memLobby');
+  document.getElementById('memCodeDisplay').textContent = code;
+  document.getElementById('memLobbyHost').style.display = 'none';
+  document.getElementById('memLobbyWait').style.display = 'block';
+  document.getElementById('memLobbyWait').textContent = '👁️ أنت تشاهد — انتظر بداية الجولة';
+  showToast('👁️ دخلت كمتفرج', '#6495ed');
+}
 function memAttachListeners() {
   memDetachListeners();
   const playersRef = fb.db.ref('rooms/m'+mem.code+'/players');
@@ -7861,6 +8006,7 @@ function memAttachListeners() {
   const onPlayers = playersRef.on('value', s => memRenderPlayers(s.val()||{}));
   const onState = stateRef.on('value', s => memOnState(s.val()||{}));
   mem.listeners = [ () => playersRef.off('value', onPlayers), () => stateRef.off('value', onState) ];
+  attachSpectatorCounter('m', mem.code, mem, 'memSpectatorCount');
 }
 function memDetachListeners() {
   mem.listeners.forEach(off=>{ try{off();}catch(e){} });
@@ -7877,7 +8023,11 @@ function memRenderPlayers(players) {
   const r1 = document.getElementById('memP1NameBattle'); if (r1) r1.textContent = p1.name || 'الخصم';
   const s0 = document.getElementById('memP0Score'); if (s0) s0.textContent = p0.score || 0;
   const s1 = document.getElementById('memP1Score'); if (s1) s1.textContent = p1.score || 0;
-  if (mem.role==='p0') {
+  if (mem.role==='spec') {
+    document.getElementById('memLobbyHost').style.display = 'none';
+    document.getElementById('memLobbyWait').style.display = 'block';
+    document.getElementById('memLobbyWait').textContent = '👁️ أنت تشاهد — انتظر بداية الجولة';
+  } else if (mem.role==='p0') {
     const ready = p0.joined && p1.joined;
     document.getElementById('memLobbyHost').style.display = ready ? 'block' : 'none';
     document.getElementById('memLobbyWait').style.display = ready ? 'none' : 'block';
@@ -7905,13 +8055,18 @@ function memOnState(state) {
 
 function memEnterBattle(state) {
   memShowStage('memBattle');
+  const isSpec = (mem.role === 'spec');
+  const specBanner = document.getElementById('memSpectatorBanner');
+  if (specBanner) specBanner.style.display = isSpec ? 'block' : 'none';
   const deck = state.deck || [];
   const flipped = state.flipped || {};
   const matched = state.matched || {};
-  const myTurn = (state.turn === mem.role);
+  const myTurn = !isSpec && (state.turn === mem.role);
   const banner = document.getElementById('memTurnBanner');
   banner.className = 'trap-turn-banner ' + (myTurn ? 'my-turn' : 'opp-turn');
-  banner.textContent = myTurn ? '🎯 دورك! اقلب بطاقتين' : '⏳ دور ' + (mem.oppName || 'الخصم');
+  banner.textContent = isSpec
+    ? ('⏳ دور اللاعب ' + (state.turn === 'p0' ? '١' : '٢'))
+    : (myTurn ? '🎯 دورك! اقلب بطاقتين' : '⏳ دور ' + (mem.oppName || 'الخصم'));
   const board = document.getElementById('memBoard'); board.innerHTML = '';
   for (let i=0; i<deck.length; i++) {
     const card = document.createElement('div'); card.className = 'mem-card'; card.dataset.idx = i;
@@ -7993,11 +8148,15 @@ function memEnterRoundEnd(state) {
       if (el) myPairs = parseInt(el.textContent) || 0;
     }
   } catch(e){}
-  if (winner === 'draw') { emoji = '🤝'; text = 'تعادل!'; try { soundXoDraw(); } catch(e){} try { recordGameResult('mem', { draw:true, pairs:myPairs }); } catch(e){} }
-  else if (winner === mem.role) { emoji = '🏆'; text = '🎉 فزت! ذاكرتك ممتازة'; try { soundXoWin(); if (typeof launchConfetti==='function') launchConfetti(); } catch(e){} try { recordGameResult('mem', { won:true, pairs:myPairs }); } catch(e){} }
+  const isSpec = (mem.role === 'spec');
+  if (winner === 'draw') { emoji = '🤝'; text = 'تعادل!'; if (!isSpec) { try { soundXoDraw(); } catch(e){} try { recordGameResult('mem', { draw:true, pairs:myPairs }); } catch(e){} } }
+  else if (!isSpec && winner === mem.role) { emoji = '🏆'; text = '🎉 فزت! ذاكرتك ممتازة'; try { soundXoWin(); if (typeof launchConfetti==='function') launchConfetti(); } catch(e){} try { recordGameResult('mem', { won:true, pairs:myPairs }); } catch(e){} }
+  else if (isSpec) { emoji = '🏆'; text = '🎉 انتهت الجولة'; }
   else { emoji = '😔'; text = 'خسرت هذه الجولة. حظ أوفر!'; try { soundXoLose(); } catch(e){} try { recordGameResult('mem', { lost:true, pairs:myPairs }); } catch(e){} }
   document.getElementById('memEndEmoji').textContent = emoji;
   document.getElementById('memEndText').textContent = text;
+  const ea = document.querySelector('#memEnd .start-btn');
+  if (ea) ea.style.display = isSpec ? 'none' : '';
   if (mem.role === 'p0' || mem.bot) {
     mem.startingTurn = (winner === 'draw') ? 'p0' : ((winner === 'p0') ? 'p1' : 'p0');
   }
@@ -8021,13 +8180,16 @@ function leaveMem() {
   memDetachListeners();
   if (!mem.bot) {
     try {
-      if (mem.code && mem.role === 'p0') fb.db.ref('rooms/m'+mem.code).remove();
+      if (mem.code && mem.role === 'spec' && mem._specSid) fb.db.ref('rooms/m'+mem.code+'/spectators/'+mem._specSid).remove();
+      else if (mem.code && mem.role === 'p0') fb.db.ref('rooms/m'+mem.code).remove();
       else if (mem.code && mem.role === 'p1') fb.db.ref('rooms/m'+mem.code+'/players/p1').remove();
     } catch(e){}
   }
+  const sb = document.getElementById('memSpectatorBanner'); if (sb) sb.style.display = 'none';
+  const sc = document.getElementById('memSpectatorCount'); if (sc) sc.style.display = 'none';
   mem.code = null; mem.role = null; mem.opponentRole = null;
   mem.bot = false; mem.localState = null; mem.localPlayers = null;
-  mem._botSeen = {}; mem.startingTurn = 'p0';
+  mem._botSeen = {}; mem.startingTurn = 'p0'; mem._specSid = null;
   document.getElementById('memScreen').style.display = 'none';
   goToLanding();
 }
