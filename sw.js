@@ -1,6 +1,6 @@
-const CACHE = 'wanees-v4';
-const RUNTIME = 'wanees-runtime-v4';
-const ASSETS = ['./', './index.html', './manifest.json', './icon-192.png', './icon-512.png', './questions.json'];
+const CACHE = 'wanees-v5';
+const RUNTIME = 'wanees-runtime-v5';
+const ASSETS = ['./', './index.html', './manifest.json', './icon-192.png', './icon-512.png', './questions.json', './wanees-logo.png'];
 
 self.addEventListener('install', e => {
   e.waitUntil(caches.open(CACHE).then(c => c.addAll(ASSETS)).then(() => self.skipWaiting()));
