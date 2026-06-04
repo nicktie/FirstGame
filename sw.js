@@ -1,5 +1,5 @@
-const CACHE = 'tahadi-v3';
-const RUNTIME = 'tahadi-runtime-v3';
+const CACHE = 'wanees-v4';
+const RUNTIME = 'wanees-runtime-v4';
 const ASSETS = ['./', './index.html', './manifest.json', './icon-192.png', './icon-512.png', './questions.json'];
 
 self.addEventListener('install', e => {
@@ -12,6 +12,10 @@ self.addEventListener('activate', e => {
       .then(keys => Promise.all(keys.filter(k => k !== CACHE && k !== RUNTIME).map(k => caches.delete(k))))
       .then(() => self.clients.claim())
   );
+});
+
+self.addEventListener('message', e => {
+  if (e.data && e.data.type === 'SKIP_WAITING') self.skipWaiting();
 });
 
 self.addEventListener('fetch', e => {
