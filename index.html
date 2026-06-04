@@ -391,10 +391,10 @@ function setGameMode(mode) {
   if (mode === 'online') renderOnlineEmojiPicker();
 }
 function hideAllScreens() {
-  ['landingScreen','gamesScreen','setupScreen','gameScreen','onlineScreen','adminScreen','profileScreen','trapScreen','xoScreen','c4Screen','memScreen','defuseScreen'].forEach(id=>{
+  ['landingScreen','gamesScreen','setupScreen','gameScreen','onlineScreen','profileScreen','trapScreen','xoScreen','c4Screen','memScreen','defuseScreen'].forEach(id=>{
     const e = document.getElementById(id); if (e) e.style.display = 'none';
   });
-  ['finalScreen','lbScreen'].forEach(id=>{ const e=document.getElementById(id); if(e) e.classList.remove('show'); });
+  ['finalScreen','lbScreen','adminScreen','gameLbScreen'].forEach(id=>{ const e=document.getElementById(id); if(e){ e.classList.remove('show'); e.style.display=''; } });
   document.body.classList.remove('on-home');
 }
 function goToLanding() {
@@ -5253,13 +5253,11 @@ window.addEventListener('DOMContentLoaded', () => setTimeout(maybeShowTutorial, 
 
 async function openAdmin() {
   try { await loadAdminSDKs(); } catch(e) { showToast('⚠️ تعذّر تحميل أدوات الإدارة', 'var(--wrong)'); return; }
-  document.getElementById('setupScreen').style.display='none';
-  document.getElementById('landingScreen').style.display='none';
-  document.getElementById('gameScreen').style.display='none';
-  document.getElementById('onlineScreen').style.display='none';
-  document.getElementById('finalScreen').classList.remove('show');
-  document.getElementById('lbScreen').classList.remove('show');
-  document.getElementById('adminScreen').classList.add('show');
+  hideAllScreens();
+  const admin = document.getElementById('adminScreen');
+  admin.style.display = '';
+  admin.classList.add('show');
+  _setNavShow(false);
   const sel = document.getElementById('aqCat');
   if (sel && !sel.options.length) {
     Object.keys(catLabels).forEach(k=>{ const o=document.createElement('option'); o.value=k; o.textContent=catLabels[k].label; sel.appendChild(o); });
