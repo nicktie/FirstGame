@@ -391,10 +391,10 @@ function setGameMode(mode) {
   if (mode === 'online') renderOnlineEmojiPicker();
 }
 function hideAllScreens() {
-  ['landingScreen','gamesScreen','setupScreen','gameScreen','onlineScreen','profileScreen','trapScreen','xoScreen','c4Screen','memScreen','defuseScreen'].forEach(id=>{
+  ['landingScreen','gamesScreen','setupScreen','gameScreen','onlineScreen','profileScreen','trapScreen','xoScreen','c4Screen','memScreen','defuseScreen','gameLbScreen'].forEach(id=>{
     const e = document.getElementById(id); if (e) e.style.display = 'none';
   });
-  ['finalScreen','lbScreen','adminScreen','gameLbScreen'].forEach(id=>{ const e=document.getElementById(id); if(e){ e.classList.remove('show'); e.style.display=''; } });
+  ['finalScreen','lbScreen','adminScreen'].forEach(id=>{ const e=document.getElementById(id); if(e){ e.classList.remove('show'); e.style.display=''; } });
   document.body.classList.remove('on-home');
 }
 function goToLanding() {
