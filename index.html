@@ -87,6 +87,8 @@ body.theme-pixel .game-page-card .gpc-btn:active{transform:translate(2px,2px);bo
 body.theme-pixel .games-page-header h2{text-shadow:3px 3px 0 var(--border)}
 @media (max-width:380px){.games-grid{grid-template-columns:1fr;max-width:340px;gap:12px}.game-page-card{min-height:auto;padding:16px 14px;flex-direction:row;text-align:right;gap:14px;align-items:center}.game-page-card .gpc-icon{font-size:2.4rem;margin:0;flex-shrink:0}.game-page-card .gpc-body{flex-grow:1;display:flex;flex-direction:column;gap:5px}.game-page-card .gpc-btn{width:auto;min-width:80px;padding:7px 14px;font-size:0.78rem}.game-page-card h3{font-size:1rem}.game-page-card p{font-size:0.74rem;padding:0;min-height:auto;-webkit-line-clamp:2}.game-page-card .gpc-badges{justify-content:flex-start;min-height:auto}.game-page-card .gpc-badges span{font-size:0.6rem;padding:1px 6px}}
 .games-modes-divider{display:flex;align-items:center;gap:14px;margin:28px auto 18px;max-width:540px;padding:0 16px;color:var(--muted);font-size:0.82rem;font-weight:700}
+.footer-links{display:none !important}
+body.on-home .footer-links{display:inline-flex !important}
 .games-modes-divider::before,.games-modes-divider::after{content:'';flex:1;height:1px;background:linear-gradient(90deg,transparent,var(--border),transparent)}
 .games-modes-divider span{white-space:nowrap;color:var(--gold);font-weight:800;letter-spacing:0.3px}
 .games-home-grid{max-width:560px;margin:0 auto 30px;padding:0 8px}
@@ -357,11 +359,13 @@ function hideAllScreens() {
     const e = document.getElementById(id); if (e) e.style.display = 'none';
   });
   ['finalScreen','lbScreen'].forEach(id=>{ const e=document.getElementById(id); if(e) e.classList.remove('show'); });
+  document.body.classList.remove('on-home');
 }
 function goToLanding() {
   hideAllScreens();
   document.getElementById('landingScreen').style.display = 'block';
   if (typeof detachOpenRoomsListener === 'function') detachOpenRoomsListener();
+  document.body.classList.add('on-home');
   _setNavShow(true);
 }
 function goToGames() {
@@ -1399,7 +1403,10 @@ function showFinalAdv() {
 let currentTheme = 'dark';
 function setTheme(t, el) {
   currentTheme = t;
-  document.body.className = t === 'dark' ? '' : 'theme-' + t;
+  Array.from(document.body.classList).forEach(c => {
+    if (c.indexOf('theme-') === 0) document.body.classList.remove(c);
+  });
+  if (t !== 'dark') document.body.classList.add('theme-' + t);
   document.querySelectorAll('.theme-chip').forEach(c => {
     c.classList.remove('active');
     const a = c.getAttribute('onclick') || '';
