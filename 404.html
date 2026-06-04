@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>الصفحة غير موجودة — تحدي الثلاثة</title>
+<meta name="description" content="الصفحة المطلوبة غير موجودة. عد للصفحة الرئيسية لتحدي الثلاثة.">
+<meta name="theme-color" content="#c9a84c">
+<link rel="icon" type="image/png" sizes="192x192" href="/FirstGame/icon-192.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;700;900&display=swap" rel="stylesheet">
+<style>
+:root { --gold:#c9a84c; --gold-light:#f0d080; --dark:#0b0b0f; --card-bg:#13131a; --border:#252535; --text:#e8e0d0; --muted:#888; }
+* { margin:0; padding:0; box-sizing:border-box; }
+body { background:var(--dark); color:var(--text); font-family:'Tajawal',Tahoma,sans-serif; min-height:100vh; display:flex; align-items:center; justify-content:center; padding:24px; background-image:radial-gradient(ellipse at 50% 50%, rgba(201,168,76,0.08) 0%, transparent 60%); }
+.box { max-width:480px; width:100%; text-align:center; background:var(--card-bg); border:1.5px solid var(--gold); border-radius:22px; padding:40px 28px; box-shadow:0 16px 50px rgba(0,0,0,0.5), inset 0 1px 0 rgba(201,168,76,0.1); animation:slideUp 0.5s ease; }
+@keyframes slideUp { from { opacity:0; transform:translateY(20px); } to { opacity:1; transform:translateY(0); } }
+.num { font-size:6rem; font-weight:900; color:var(--gold); line-height:1; text-shadow:0 0 40px rgba(201,168,76,0.4); animation:pulse 2.5s ease-in-out infinite; }
+@keyframes pulse { 0%,100% { transform:scale(1); } 50% { transform:scale(1.04); } }
+.lost { font-size:3rem; margin:8px 0; }
+h1 { font-size:1.4rem; font-weight:900; color:var(--gold); margin-bottom:10px; }
+p { color:var(--text); font-size:1rem; line-height:1.7; margin-bottom:20px; }
+p.small { color:var(--muted); font-size:0.85rem; margin-bottom:24px; }
+.btn { display:inline-block; padding:14px 28px; background:linear-gradient(135deg, var(--gold), #a8720c); color:var(--dark); border-radius:14px; font-weight:900; font-size:1rem; text-decoration:none; box-shadow:0 6px 20px rgba(201,168,76,0.28); transition:transform 0.18s; }
+.btn:hover { transform:translateY(-2px); }
+.games { display:flex; justify-content:center; gap:14px; margin:24px 0; font-size:1.8rem; }
+.games span { animation:float 3s ease-in-out infinite; }
+.games span:nth-child(2) { animation-delay:0.3s; }
+.games span:nth-child(3) { animation-delay:0.6s; }
+.games span:nth-child(4) { animation-delay:0.9s; }
+.games span:nth-child(5) { animation-delay:1.2s; }
+.games span:nth-child(6) { animation-delay:1.5s; }
+@keyframes float { 0%,100% { transform:translateY(0); } 50% { transform:translateY(-6px); } }
+.foot { font-size:0.78rem; color:var(--muted); margin-top:24px; padding-top:18px; border-top:1px dashed var(--border); }
+.foot strong { color:var(--gold); }
+</style>
+</head>
+<body>
+<div class="box">
+  <div class="num">٤٠٤</div>
+  <div class="lost">🧭</div>
+  <h1>تهت في الطريق!</h1>
+  <p>الصفحة اللي تبيها غير موجودة. لكن لا تشيل هم — عندنا ست ألعاب بانتظارك.</p>
+  <div class="games"><span>🧠</span><span>💣</span><span>🎮</span><span>🔴</span><span>🃏</span><span>🧨</span></div>
+  <p class="small">جرّب الصفحة الرئيسية وابدأ اللعب</p>
+  <a href="/FirstGame/" class="btn">🏆 الصفحة الرئيسية</a>
+  <div class="foot">© 2026 <strong>DALMOO3 DIGITAL PRODUCTS</strong></div>
+</div>
+</body>
+</html>
