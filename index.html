@@ -92,22 +92,23 @@ body.theme-pixel .games-page-header h2{text-shadow:3px 3px 0 var(--border)}
 .games-modes-divider{display:flex;align-items:center;gap:14px;margin:28px auto 18px;max-width:540px;padding:0 16px;color:var(--muted);font-size:0.82rem;font-weight:700}
 .footer-links{display:none !important}
 body.on-home .footer-links{display:inline-flex !important}
-.wanees-logo-img{width:min(300px,72vw);aspect-ratio:880/744;margin:0 auto;background:url('wanees-logo.png?v=3') center/contain no-repeat;transform-origin:center center;will-change:transform;filter:drop-shadow(0 8px 18px rgba(232,105,74,0.32)) drop-shadow(0 3px 8px rgba(100,149,237,0.22));animation:waneesFloat 4.5s ease-in-out infinite;cursor:pointer;transition:transform 0.2s;position:relative;background-color:transparent}
+.wanees-logo-img{width:min(300px,72vw);aspect-ratio:880/744;margin:0 auto;background:url('wanees-logo-base.png?v=1') center/contain no-repeat;transform-origin:center center;will-change:transform;filter:drop-shadow(0 8px 18px rgba(232,105,74,0.32)) drop-shadow(0 3px 8px rgba(100,149,237,0.22));animation:waneesFloat 4.5s ease-in-out infinite;cursor:pointer;transition:transform 0.2s;position:relative;background-color:transparent;--logo-text:#c9a84c}
 .wanees-logo-img.pressed{animation:waneesPressed 0.42s cubic-bezier(.34,1.56,.64,1)}
 @keyframes waneesPressed{0%{transform:scale(1)}30%{transform:scale(0.94) rotate(-1.5deg)}55%{transform:scale(1.06) rotate(0.8deg)}80%{transform:scale(0.98) rotate(-0.3deg)}100%{transform:scale(1)}}
 .wanees-logo-img:active{transform:scale(0.97)}
-.wanees-logo-img::before{content:'';position:absolute;right:11%;top:6%;width:18%;height:23%;border-radius:50%;background:radial-gradient(circle,rgba(255,200,90,0.6) 0%,rgba(255,140,70,0.25) 35%,transparent 70%);opacity:0;pointer-events:none;transform:translate(50%,-50%) scale(0.4);transition:opacity 0.2s}
+.wanees-logo-img::before{content:'';position:absolute;right:11%;top:6%;width:18%;height:23%;border-radius:50%;background:radial-gradient(circle,rgba(255,200,90,0.6) 0%,rgba(255,140,70,0.25) 35%,transparent 70%);opacity:0;pointer-events:none;transform:translate(50%,-50%) scale(0.4);transition:opacity 0.2s;z-index:2}
 .wanees-logo-img.pressed::before{animation:waneesJoystickGlow 0.6s ease-out}
 @keyframes waneesJoystickGlow{0%{opacity:0;transform:translate(50%,-50%) scale(0.4)}30%{opacity:1;transform:translate(50%,-50%) scale(1.1)}100%{opacity:0;transform:translate(50%,-50%) scale(1.4)}}
+.wanees-logo-img::after{content:'';position:absolute;inset:0;background:var(--logo-text);-webkit-mask:url('wanees-logo-text.png?v=1') center/contain no-repeat;mask:url('wanees-logo-text.png?v=1') center/contain no-repeat;pointer-events:none;z-index:1;transition:background 0.3s}
 @keyframes waneesFloat{0%{transform:translateY(0) rotate(-3deg)}25%{transform:translateY(-6px) rotate(-2deg)}50%{transform:translateY(-9px) rotate(-3deg)}75%{transform:translateY(-4px) rotate(-4deg)}100%{transform:translateY(0) rotate(-3deg)}}
 .wanees-logo-img:hover{transform:translateY(-6px) rotate(-1deg) scale(1.04);animation-play-state:paused}
-body.theme-dark .wanees-logo-img{filter:drop-shadow(0 8px 22px rgba(232,105,74,0.4)) drop-shadow(0 4px 14px rgba(100,149,237,0.3)) drop-shadow(0 0 30px rgba(240,210,90,0.15))}
-body.theme-light .wanees-logo-img{filter:drop-shadow(0 6px 14px rgba(40,20,80,0.22)) drop-shadow(0 2px 6px rgba(80,40,140,0.16))}
-body.theme-gold .wanees-logo-img{filter:drop-shadow(0 8px 22px rgba(255,180,50,0.45)) drop-shadow(0 4px 14px rgba(255,140,40,0.32)) drop-shadow(0 0 32px rgba(240,200,90,0.22)) hue-rotate(-8deg) saturate(1.08)}
-body.theme-blue .wanees-logo-img{filter:drop-shadow(0 8px 22px rgba(80,140,255,0.42)) drop-shadow(0 4px 14px rgba(100,180,240,0.32)) drop-shadow(0 0 30px rgba(120,180,255,0.22)) hue-rotate(38deg) saturate(0.95)}
-body.theme-purple .wanees-logo-img{filter:drop-shadow(0 6px 16px rgba(139,92,246,0.32)) drop-shadow(0 2px 6px rgba(120,60,200,0.2))}
-body.theme-darkpurple .wanees-logo-img{filter:drop-shadow(0 8px 22px rgba(180,140,255,0.45)) drop-shadow(0 4px 14px rgba(160,100,230,0.32)) drop-shadow(0 0 32px rgba(180,140,242,0.22)) saturate(1.08)}
-body.theme-pixel .wanees-logo-img{filter:drop-shadow(4px 4px 0 rgba(29,14,42,0.55)) drop-shadow(-2px -2px 0 rgba(255,255,255,0.18)) contrast(1.05);animation:waneesFloatPixel 4.5s ease-in-out infinite;image-rendering:pixelated}
+body.theme-dark .wanees-logo-img{--logo-text:#c9a84c;filter:drop-shadow(0 8px 22px rgba(232,105,74,0.4)) drop-shadow(0 4px 14px rgba(100,149,237,0.3)) drop-shadow(0 0 30px rgba(240,210,90,0.15))}
+body.theme-light .wanees-logo-img{--logo-text:#6d28d9;filter:drop-shadow(0 6px 14px rgba(40,20,80,0.22)) drop-shadow(0 2px 6px rgba(80,40,140,0.16))}
+body.theme-gold .wanees-logo-img{--logo-text:#f59e0b;filter:drop-shadow(0 8px 22px rgba(255,180,50,0.45)) drop-shadow(0 4px 14px rgba(255,140,40,0.32)) drop-shadow(0 0 32px rgba(240,200,90,0.22))}
+body.theme-blue .wanees-logo-img{--logo-text:#3b82f6;filter:drop-shadow(0 8px 22px rgba(80,140,255,0.42)) drop-shadow(0 4px 14px rgba(100,180,240,0.32)) drop-shadow(0 0 30px rgba(120,180,255,0.22))}
+body.theme-purple .wanees-logo-img{--logo-text:#8b5cf6;filter:drop-shadow(0 6px 16px rgba(139,92,246,0.32)) drop-shadow(0 2px 6px rgba(120,60,200,0.2))}
+body.theme-darkpurple .wanees-logo-img{--logo-text:#c4b5fd;filter:drop-shadow(0 8px 22px rgba(180,140,255,0.45)) drop-shadow(0 4px 14px rgba(160,100,230,0.32)) drop-shadow(0 0 32px rgba(180,140,242,0.22))}
+body.theme-pixel .wanees-logo-img{--logo-text:#ec4899;filter:drop-shadow(4px 4px 0 rgba(29,14,42,0.55)) drop-shadow(-2px -2px 0 rgba(255,255,255,0.18)) contrast(1.05);animation:waneesFloatPixel 4.5s ease-in-out infinite;image-rendering:pixelated}
 @keyframes waneesFloatPixel{0%,100%{transform:translateY(0) rotate(-3deg)}50%{transform:translateY(-7px) rotate(-3deg)}}
 @media (max-width:380px){.wanees-logo-img{width:min(270px,78vw)}}
 @media (prefers-reduced-motion:reduce){.wanees-logo-img{animation:none;transform:rotate(-3deg)}}
