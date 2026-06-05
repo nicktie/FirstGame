@@ -371,8 +371,8 @@ function renderPlayerSetup() {
     input.addEventListener('blur',  () => { input.style.borderColor = t.color + '33'; });
     input.addEventListener('input', () => {
       const idx = parseInt(avatarDiv.dataset.idx);
-      if (input.value.trim() === 'سهى') avatarDiv.textContent = '💜';
-      else if (avatarDiv.textContent === '💜') avatarDiv.textContent = AVATARS[idx];
+      if (input.value.trim() === 'سهى') avatarDiv.textContent = '❤️';
+      else if (avatarDiv.textContent === '❤️') avatarDiv.textContent = AVATARS[idx];
     });
 
     card.appendChild(avatarDiv);
@@ -632,7 +632,7 @@ async function startGame() {
       const t = PLAYER_TEMPLATES[i];
       const nameEl = document.getElementById('name' + i);
       const name = (nameEl ? nameEl.value.trim() : '') || t.defaultName;
-      const avatar = (name === 'سهى') ? '💜' : AVATARS[i];
+      const avatar = (name === 'سهى') ? '❤️' : AVATARS[i];
       PLAYERS.push({ id: i, cls: t.cls, color: t.color, avatar, name });
     }
   }
@@ -2230,7 +2230,7 @@ function renderLobbyPlayers(players) {
     ids.forEach(id => {
       const p = players[id];
       const chip = document.createElement('div'); chip.className = 'lobby-player-chip';
-      const av = p.name==='سهى' ? '💜' : (p.avatar || '🙂');
+      const av = p.name==='سهى' ? '❤️' : (p.avatar || '🙂');
       chip.textContent = av + ' ' + p.name + (id===online.playerId ? ' (أنت)' : '');
       (p.team === 1 ? c1 : c0).appendChild(chip);
     });
@@ -2241,7 +2241,7 @@ function renderLobbyPlayers(players) {
     ids.forEach(id => {
       const chip = document.createElement('div');
       chip.className = 'lobby-player-chip';
-      const av = players[id].name==='سهى' ? '💜' : (players[id].avatar || '🙂');
+      const av = players[id].name==='سهى' ? '❤️' : (players[id].avatar || '🙂');
       chip.textContent = av + ' ' + players[id].name + (id===online.playerId ? ' (أنت)' : '');
       flat.appendChild(chip);
     });
@@ -2546,7 +2546,7 @@ function renderLeaderboard(players) {
   arr.forEach((p,i)=>{
     const row = document.createElement('div');
     row.className = 'olb-row' + (p.id===online.playerId?' me':'');
-    const av = p.name==='سهى' ? '💜' : (p.avatar || '🙂');
+    const av = p.name==='سهى' ? '❤️' : (p.avatar || '🙂');
     row.innerHTML = `<div class="olb-rank">${i+1}</div><div class="olb-name">${av} ${p.name}</div><div class="olb-score">${p.score||0}</div>`;
     box.appendChild(row);
   });
