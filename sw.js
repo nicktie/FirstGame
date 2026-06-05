@@ -1,4 +1,4 @@
-const CACHE = 'wanees-v13';
+const CACHE = 'wanees-v14';
 const RUNTIME = 'wanees-runtime-v5';
 const ASSETS = ['./', './index.html', './manifest.json', './icon-192.png', './icon-512.png', './questions.json', './wanees-logo.png?v=3'];
 
