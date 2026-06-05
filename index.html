@@ -6036,20 +6036,35 @@ window.addEventListener('load', ()=>{ measureNet(); watchServerConnection(); });
   .dino-ctrl-btn{font-size:0.95rem;min-height:64px}
   .dino-hearts{font-size:1.05rem}
 }
+body.dino-active .mute-btn,body.dino-active .net-indicator,body.dino-active .install-btn{display:none !important}
+.dino-mute-btn{background:rgba(201,168,76,0.12);border:1px solid var(--border);color:var(--text);width:36px;height:36px;border-radius:50%;font-size:1rem;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.dino-mute-btn:active{transform:scale(0.92)}
+.dino-biome-banner{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%) scale(0);background:rgba(14,16,20,0.92);border:2px solid var(--gold);border-radius:14px;padding:18px 28px;text-align:center;pointer-events:none;backdrop-filter:blur(8px);box-shadow:0 0 40px rgba(201,168,76,0.4)}
+.dino-biome-banner.show{animation:dinoBiomeReveal 2.6s cubic-bezier(.34,1.56,.64,1) forwards}
+@keyframes dinoBiomeReveal{0%{transform:translate(-50%,-50%) scale(0)}15%{transform:translate(-50%,-50%) scale(1.1)}25%,75%{transform:translate(-50%,-50%) scale(1);opacity:1}100%{transform:translate(-50%,-50%) scale(0.9);opacity:0}}
+.dbb-emoji{font-size:2.6rem;line-height:1;margin-bottom:6px;filter:drop-shadow(0 0 12px rgba(201,168,76,0.5))}
+.dbb-label{font-family:'Tajawal',sans-serif;color:var(--muted);font-size:0.75rem;letter-spacing:2px;margin-bottom:4px}
+.dbb-name{font-family:'Tajawal',sans-serif;font-weight:900;color:var(--gold);font-size:1.6rem}
 </style>
 <div id="dinoScreen" class="dino-screen" style="display:none">
   <div class="dino-topbar">
     <button class="back-btn" onclick="exitDino()">← الرئيسية</button>
     <div class="dino-score-display">
-      <span class="ds-best">⭐ أفضل نتيجة: <b id="dinoBestDisplay">0</b></span>
+      <span class="ds-best">⭐ أفضل: <b id="dinoBestDisplay">0</b></span>
+      <span class="ds-best" id="dinoBiomeChip" style="display:none">🏜️ <b id="dinoBiomeName">الصحراء</b></span>
     </div>
-    <div style="width:60px"></div>
+    <button class="dino-mute-btn" id="dinoMuteBtn" onclick="toggleMute();syncDinoMuteIcon()" title="كتم">🔊</button>
     <span id="dinoScoreDisplay" style="display:none">0</span>
   </div>
   <div class="dino-canvas-wrap" id="dinoCanvasWrap">
     <canvas id="dinoCanvas" width="720" height="280"></canvas>
     <div class="dino-boss-banner" id="dinoBossBanner" style="display:none">👑 جولة الزعيم</div>
     <div class="dino-milestone" id="dinoMilestone"></div>
+    <div class="dino-biome-banner" id="dinoBiomeBanner">
+      <div class="dbb-emoji" id="dbbEmoji">🏜️</div>
+      <div class="dbb-label">دخلت منطقة</div>
+      <div class="dbb-name" id="dbbName">الصحراء</div>
+    </div>
     <div class="dino-overlay" id="dinoStartOverlay">
       <div class="do-emoji" id="dinoStartEmoji">🦖</div>
       <div class="do-title">لعبة الديناصور</div>
@@ -6110,6 +6125,49 @@ const DG = {
   bossActive: false, bossDefeatedCount: 0,
   bossEndScore: 0, peacefulUntil: 0,
   reachedMilestones: new Set(),
+  biomeIdx: 0, particles: [], particleTimer: 0,
+  BIOMES: [
+    {
+      id:'desert', name:'الصحراء', emoji:'🏜️',
+      bgTop:'#0e1014', bgMid:'#1a1d24', bgBot:'#0e1014',
+      accent:'#c9a84c', accentDark:'#8b6e1f',
+      ground:'#c9a84c', hill:'rgba(60,55,40,0.45)', cloud:'rgba(255,255,255,0.78)',
+      obstacles:[
+        {kind:'cactus_thin',  w:5}, {kind:'cactus_tall', w:5},
+        {kind:'cactus_cluster',w:4}, {kind:'cactus_twisted',w:3},
+        {kind:'cactus_flower',w:3}, {kind:'rock', w:3, after:60},
+        {kind:'palm', w:2, after:200},
+        {kind:'bird_low',w:3,after:120}, {kind:'bird_mid',w:3,after:120}, {kind:'bird_high',w:2,after:120}
+      ],
+      particle:null
+    },
+    {
+      id:'winter', name:'الشتاء', emoji:'❄️',
+      bgTop:'#1a3050', bgMid:'#2a4a70', bgBot:'#0e2040',
+      accent:'#e8f0fa', accentDark:'#5a7090',
+      ground:'#a8c8e8', hill:'rgba(180,200,230,0.45)', cloud:'rgba(230,235,245,0.78)',
+      obstacles:[
+        {kind:'snowpile',  w:5}, {kind:'snowpile_big', w:4},
+        {kind:'snowman',w:4}, {kind:'icicle',w:4,after:60},
+        {kind:'iceblock',w:3,after:100},
+        {kind:'owl_low',w:3,after:120}, {kind:'owl_mid',w:3,after:120}, {kind:'owl_high',w:2,after:120}
+      ],
+      particle:'snow'
+    },
+    {
+      id:'volcano', name:'البركان', emoji:'🌋',
+      bgTop:'#2a0805', bgMid:'#4a1810', bgBot:'#1a0204',
+      accent:'#ef6044', accentDark:'#7c1d1d',
+      ground:'#b8442a', hill:'rgba(80,30,20,0.6)', cloud:'rgba(60,40,30,0.7)',
+      obstacles:[
+        {kind:'lavarock',  w:5}, {kind:'lavarock_big', w:4},
+        {kind:'flame',w:4}, {kind:'flame_tall',w:3,after:60},
+        {kind:'volcanobomb',w:3,after:100},
+        {kind:'bat_low',w:3,after:120}, {kind:'bat_mid',w:3,after:120}, {kind:'bat_high',w:2,after:120}
+      ],
+      particle:'ember'
+    }
+  ],
   _bound: false, _btnBound: false
 };
 window.DINO_GAME = DG;
@@ -6156,6 +6214,25 @@ function loadSkin() {
 }
 function saveSkin() { try { localStorage.setItem('dinoSkin', DG.skin); } catch(e){} }
 function getSkin() { return DG.SKINS.find(s=>s.id===DG.skin) || DG.SKINS[0]; }
+function getBiome() { return DG.BIOMES[DG.biomeIdx % DG.BIOMES.length]; }
+window.syncDinoMuteIcon = function() {
+  const b = document.getElementById('dinoMuteBtn');
+  if (b) b.textContent = (typeof isMuted !== 'undefined' && isMuted) ? '🔇' : '🔊';
+};
+function showBiomeBanner(biome) {
+  const el = document.getElementById('dinoBiomeBanner');
+  const em = document.getElementById('dbbEmoji');
+  const nm = document.getElementById('dbbName');
+  if (!el || !em || !nm) return;
+  em.textContent = biome.emoji;
+  nm.textContent = biome.name;
+  el.classList.remove('show');
+  void el.offsetWidth;
+  el.classList.add('show');
+  const chip = document.getElementById('dinoBiomeChip');
+  const cn = document.getElementById('dinoBiomeName');
+  if (chip && cn) { chip.style.display = 'inline-flex'; cn.textContent = biome.emoji + ' ' + biome.name; }
+}
 
 function renderSkinPicker() {
   const wrap = document.getElementById('dinoSkinPicker');
@@ -6183,12 +6260,14 @@ window.playDino = function() {
   const scr = document.getElementById('dinoScreen');
   if (!scr) return;
   scr.style.display = 'flex';
+  document.body.classList.add('dino-active');
   if (typeof _setNavShow === 'function') _setNavShow(false);
   initDino();
 };
 window.exitDino = function() {
   dinoStop();
   resetDinoState();
+  document.body.classList.remove('dino-active');
   document.getElementById('dinoStartOverlay').style.display = 'flex';
   document.getElementById('dinoGameOverOverlay').style.display = 'none';
   if (typeof goToLanding === 'function') goToLanding();
@@ -6213,6 +6292,7 @@ function initDino() {
   document.getElementById('dinoGameOverOverlay').style.display = 'none';
   document.getElementById('dinoBossBanner').style.display = 'none';
   DG.canvas.classList.remove('boss-mode');
+  if (typeof window.syncDinoMuteIcon === 'function') window.syncDinoMuteIcon();
 }
 function resetDinoState() {
   DG.state = 'idle';
@@ -6234,6 +6314,10 @@ function resetDinoState() {
   DG.peacefulUntil = 0;
   DG.bossDefeatedCount = 0;
   DG.reachedMilestones = new Set();
+  DG.biomeIdx = 0;
+  DG.particles = []; DG.particleTimer = 0;
+  const chip = document.getElementById('dinoBiomeChip');
+  if (chip) { chip.style.display = 'none'; }
 }
 window.dinoStart = function() {
   document.getElementById('dinoStartOverlay').style.display = 'none';
@@ -6400,6 +6484,10 @@ function endBossRound(victory) {
     showMilestone('✅ هزمت الزعيم! +١٠٠');
     pulseScore();
     dinoSound('bossWin');
+    // Advance biome
+    DG.biomeIdx = (DG.biomeIdx + 1) % DG.BIOMES.length;
+    DG.particles = []; DG.particleTimer = 0;
+    setTimeout(() => showBiomeBanner(getBiome()), 700);
   }
 }
 function getDinoBox() {
@@ -6415,52 +6503,64 @@ function boxesIntersect(a, b) {
   return a.x < b.x + b.w && a.x + a.w > b.x && a.y < b.y + b.h && a.y + a.h > b.y;
 }
 function spawnObstacle() {
+  const biome = getBiome();
   const s = DG.score;
-  const choices = [];
-  // Cactus variants
-  choices.push({ w:5, fn:() => makeCactus('thin', 18, 38) });
-  choices.push({ w:5, fn:() => makeCactus('tall', 22, 56) });
-  choices.push({ w:4, fn:() => makeCactus('cluster', 42, 38) });
-  choices.push({ w:3, fn:() => makeCactus('twisted', 24, 50) });
-  choices.push({ w:3, fn:() => makeCactus('flower', 22, 48) });
-  if (s > DG.ROCK_AFTER) choices.push({ w:3, fn:() => makeRock() });
-  if (s > DG.PALM_AFTER) choices.push({ w:2, fn:() => makePalm() });
-  if (s > DG.BIRD_AFTER) {
-    choices.push({ w:3, fn:() => makeBird('low') });
-    choices.push({ w:3, fn:() => makeBird('mid') });
-    choices.push({ w:2, fn:() => makeBird('high') });
-  }
-  if (DG.bossActive) {
-    // weight birds higher in boss mode
-    choices.forEach(c => { if (c.fn.toString().includes('makeBird')) c.w *= 2; });
-  }
+  const valid = biome.obstacles.filter(o => !o.after || s > o.after);
+  // boss mode: double weight of any flying obstacles (bird/owl/bat)
+  const choices = valid.map(o => ({
+    kind: o.kind,
+    w: o.w * (DG.bossActive && /^(bird|owl|bat)_/.test(o.kind) ? 2 : 1)
+  }));
   const total = choices.reduce((a,c) => a + c.w, 0);
   let r = Math.random() * total;
   for (const c of choices) {
     r -= c.w;
-    if (r <= 0) { DG.obstacles.push(c.fn()); return; }
+    if (r <= 0) { DG.obstacles.push(makeObstacle(c.kind)); return; }
   }
-  DG.obstacles.push(choices[0].fn());
+  DG.obstacles.push(makeObstacle(choices[0].kind));
 }
-function makeCactus(variant, w, h) {
-  return { type:'cactus', variant, x: DG.W + 10, y: DG.GROUND_Y - h, w, h };
-}
-function makeRock() {
-  const w = 38, h = 22;
-  return { type:'rock', x: DG.W + 10, y: DG.GROUND_Y - h, w, h };
-}
-function makePalm() {
-  // small palm tree (taller, narrow trunk + leaves) — must jump
-  const w = 26, h = 64;
-  return { type:'palm', x: DG.W + 10, y: DG.GROUND_Y - h, w, h };
-}
-function makeBird(level) {
-  const w = 50, h = 32;
+function makeObstacle(kind) {
+  const X = DG.W + 10;
+  const G = DG.GROUND_Y;
+  const TBL = {
+    cactus_thin:    { w:18, h:38, type:'cactus', variant:'thin' },
+    cactus_tall:    { w:22, h:56, type:'cactus', variant:'tall' },
+    cactus_cluster: { w:42, h:38, type:'cactus', variant:'cluster' },
+    cactus_twisted: { w:24, h:50, type:'cactus', variant:'twisted' },
+    cactus_flower:  { w:22, h:48, type:'cactus', variant:'flower' },
+    rock:           { w:38, h:22, type:'rock' },
+    palm:           { w:26, h:64, type:'palm' },
+    bird_low:       { w:50, h:32, type:'bird', level:'low' },
+    bird_mid:       { w:50, h:32, type:'bird', level:'mid' },
+    bird_high:      { w:50, h:32, type:'bird', level:'high' },
+    snowpile:       { w:32, h:22, type:'snowpile' },
+    snowpile_big:   { w:50, h:30, type:'snowpile', big:true },
+    snowman:        { w:26, h:54, type:'snowman' },
+    icicle:         { w:20, h:32, type:'icicle', level:'mid' },
+    iceblock:       { w:36, h:38, type:'iceblock' },
+    owl_low:        { w:46, h:32, type:'owl', level:'low' },
+    owl_mid:        { w:46, h:32, type:'owl', level:'mid' },
+    owl_high:       { w:46, h:32, type:'owl', level:'high' },
+    lavarock:       { w:36, h:24, type:'lavarock' },
+    lavarock_big:   { w:50, h:34, type:'lavarock', big:true },
+    flame:          { w:22, h:42, type:'flame' },
+    flame_tall:     { w:22, h:58, type:'flame', tall:true },
+    volcanobomb:    { w:30, h:28, type:'volcanobomb' },
+    bat_low:        { w:46, h:30, type:'bat', level:'low' },
+    bat_mid:        { w:46, h:30, type:'bat', level:'mid' },
+    bat_high:       { w:46, h:30, type:'bat', level:'high' }
+  };
+  const def = TBL[kind] || TBL.cactus_thin;
   let y;
-  if (level === 'low') y = DG.GROUND_Y - 64;       // forces low duck or jump-over
-  else if (level === 'mid') y = DG.GROUND_Y - 96;  // must duck
-  else y = DG.GROUND_Y - 132;                       // can run under
-  return { type:'bird', x: DG.W + 10, y, w, h };
+  // Heights tuned for hitbox semantics:
+  //   low  → forces JUMP (overlaps both standing and ducking dino)
+  //   mid  → forces DUCK (overlaps standing, ducking clears)
+  //   high → decorative (clears both)
+  if (def.level === 'low')        y = G - 58;
+  else if (def.level === 'mid')   y = G - 76;
+  else if (def.level === 'high')  y = G - 130;
+  else y = G - def.h;
+  return { x:X, y, w:def.w, h:def.h, type:def.type, variant:def.variant, big:def.big, tall:def.tall, level:def.level, flicker:0 };
 }
 function spawnHeart() {
   const w = 24, h = 24;
@@ -6525,10 +6625,17 @@ function onDinoDeath() {
 function drawDinoFrame(dead) {
   const ctx = DG.ctx;
   if (!ctx) return;
-  ctx.clearRect(0, 0, DG.W, DG.H);
+  const biome = getBiome();
+  // Biome background gradient
+  const grad = ctx.createLinearGradient(0, 0, 0, DG.H);
+  grad.addColorStop(0, biome.bgTop);
+  grad.addColorStop(0.55, biome.bgMid);
+  grad.addColorStop(1, biome.bgBot);
+  ctx.fillStyle = grad;
+  ctx.fillRect(0, 0, DG.W, DG.H);
   // Night overlay
   if (DG.isNight) {
-    ctx.fillStyle = 'rgba(8,10,16,0.55)';
+    ctx.fillStyle = 'rgba(8,10,16,0.45)';
     ctx.fillRect(0, 0, DG.W, DG.H);
     ctx.fillStyle = 'rgba(255,255,255,0.6)';
     const off = Math.floor(-DG.ground * 0.3);
@@ -6540,7 +6647,7 @@ function drawDinoFrame(dead) {
     ctx.beginPath();
     ctx.arc(DG.W - 90, 40, 13, 0, Math.PI * 2);
     ctx.fill();
-    ctx.fillStyle = 'rgba(14,16,20,1)';
+    ctx.fillStyle = biome.bgMid;
     ctx.beginPath();
     ctx.arc(DG.W - 84, 36, 11, 0, Math.PI * 2);
     ctx.fill();
@@ -6551,7 +6658,7 @@ function drawDinoFrame(dead) {
     ctx.fillRect(0, 0, DG.W, DG.H);
   }
   // Clouds
-  ctx.fillStyle = DG.isNight ? 'rgba(180,180,200,0.45)' : 'rgba(255,255,255,0.78)';
+  ctx.fillStyle = biome.cloud;
   DG.clouds.forEach(c => {
     ctx.beginPath();
     ctx.arc(c.x, c.y, 9, 0, Math.PI * 2);
@@ -6559,8 +6666,8 @@ function drawDinoFrame(dead) {
     ctx.arc(c.x + 22, c.y, 8, 0, Math.PI * 2);
     ctx.fill();
   });
-  // Distant hills (visual variety)
-  ctx.fillStyle = DG.isNight ? 'rgba(30,40,55,0.7)' : 'rgba(60,55,40,0.45)';
+  // Distant hills
+  ctx.fillStyle = biome.hill;
   const hOff = -DG.ground * 0.15;
   for (let i = -1; i < 6; i++) {
     const cx = ((i * 180 + hOff) % (DG.W + 360) + DG.W + 360) % (DG.W + 360) - 180;
@@ -6570,18 +6677,22 @@ function drawDinoFrame(dead) {
     ctx.closePath();
     ctx.fill();
   }
+  // Particles (snow/embers)
+  drawDinoParticles(ctx, biome);
   // Ground line
-  ctx.strokeStyle = '#c9a84c';
+  ctx.strokeStyle = biome.ground;
   ctx.lineWidth = 2;
   ctx.beginPath();
   ctx.moveTo(0, DG.GROUND_Y + 1);
   ctx.lineTo(DG.W, DG.GROUND_Y + 1);
   ctx.stroke();
-  ctx.fillStyle = 'rgba(201,168,76,0.55)';
+  ctx.fillStyle = biome.ground;
+  ctx.globalAlpha = 0.55;
   for (let x = DG.ground; x < DG.W; x += 24) {
     ctx.fillRect(x, DG.GROUND_Y + 6, 10, 2);
     ctx.fillRect(x + 14, DG.GROUND_Y + 11, 4, 1);
   }
+  ctx.globalAlpha = 1;
   // Collectibles
   DG.collectibles.forEach(c => drawHeartCollectible(ctx, c));
   // Obstacles
@@ -6677,6 +6788,47 @@ function drawObstacle(ctx, o) {
   else if (o.type === 'rock') drawRock(ctx, o);
   else if (o.type === 'palm') drawPalm(ctx, o);
   else if (o.type === 'bird') drawBird(ctx, o);
+  else if (o.type === 'snowpile') drawSnowpile(ctx, o);
+  else if (o.type === 'snowman') drawSnowman(ctx, o);
+  else if (o.type === 'icicle') drawIcicle(ctx, o);
+  else if (o.type === 'iceblock') drawIceBlock(ctx, o);
+  else if (o.type === 'owl') drawOwl(ctx, o);
+  else if (o.type === 'lavarock') drawLavaRock(ctx, o);
+  else if (o.type === 'flame') drawFlame(ctx, o);
+  else if (o.type === 'volcanobomb') drawVolcanoBomb(ctx, o);
+  else if (o.type === 'bat') drawBat(ctx, o);
+}
+function drawDinoParticles(ctx, biome) {
+  if (!biome.particle) { DG.particles = []; return; }
+  // Spawn
+  DG.particleTimer = (DG.particleTimer || 0) + 1;
+  if (DG.particleTimer > (biome.particle === 'snow' ? 2 : 3)) {
+    DG.particleTimer = 0;
+    if (biome.particle === 'snow') {
+      DG.particles.push({ x: Math.random() * (DG.W + 80) - 40, y: -4, vy: 0.6 + Math.random() * 0.9, vx: -0.4 - Math.random() * 0.6, r: 1 + Math.random() * 2, kind:'snow' });
+    } else if (biome.particle === 'ember') {
+      DG.particles.push({ x: Math.random() * DG.W, y: DG.GROUND_Y - 2, vy: -0.6 - Math.random() * 0.8, vx: (Math.random() - 0.5) * 0.6, r: 1 + Math.random() * 1.8, kind:'ember', life: 60 + Math.random() * 60 });
+    }
+  }
+  // Update + draw
+  for (let i = DG.particles.length - 1; i >= 0; i--) {
+    const p = DG.particles[i];
+    p.x += p.vx;
+    p.y += p.vy;
+    if (p.kind === 'snow') {
+      if (p.y > DG.GROUND_Y) { DG.particles.splice(i, 1); continue; }
+      ctx.fillStyle = 'rgba(255,255,255,0.85)';
+      ctx.fillRect(p.x, p.y, p.r, p.r);
+    } else if (p.kind === 'ember') {
+      p.life--;
+      if (p.life <= 0 || p.y < 20) { DG.particles.splice(i, 1); continue; }
+      const a = Math.max(0, Math.min(1, p.life / 80));
+      ctx.fillStyle = 'rgba(255,' + Math.floor(120 + a * 100) + ',40,' + a + ')';
+      ctx.fillRect(p.x, p.y, p.r, p.r);
+    }
+  }
+  // Cap particle count for perf
+  if (DG.particles.length > 220) DG.particles.splice(0, DG.particles.length - 220);
 }
 function drawCactus(ctx, o) {
   const { x, y, w, h, variant } = o;
@@ -6823,6 +6975,284 @@ function drawBird(ctx, o) {
   ctx.fillStyle = bossy ? '#dc2626' : '#a8720c';
   ctx.fillRect(x + 10, y + 16, 6, 8);
   ctx.fillRect(x + 6, y + 18, 4, 4);
+}
+function drawSnowpile(ctx, o) {
+  const { x, y, w, h } = o;
+  // White rounded mound with shadow
+  ctx.fillStyle = '#dde8f4';
+  ctx.beginPath();
+  ctx.ellipse(x + w/2, y + h, w/2, h, 0, Math.PI, 0);
+  ctx.fill();
+  // Highlight
+  ctx.fillStyle = 'rgba(255,255,255,0.7)';
+  ctx.beginPath();
+  ctx.ellipse(x + w*0.4, y + h - 3, w*0.3, h*0.6, 0, Math.PI, 0);
+  ctx.fill();
+  // Snowflake sparkles
+  ctx.fillStyle = 'rgba(255,255,255,0.9)';
+  ctx.fillRect(x + w*0.55, y + h*0.4, 2, 2);
+  ctx.fillRect(x + w*0.3, y + h*0.6, 1, 1);
+  if (o.big) {
+    ctx.fillStyle = '#a8c8e8';
+    ctx.fillRect(x + w*0.2, y + h - 4, 3, 3);
+  }
+}
+function drawSnowman(ctx, o) {
+  const { x, y, w, h } = o;
+  // Bottom snowball
+  ctx.fillStyle = '#f0f6fc';
+  ctx.beginPath(); ctx.arc(x + w/2, y + h - 12, 13, 0, Math.PI * 2); ctx.fill();
+  // Top snowball
+  ctx.beginPath(); ctx.arc(x + w/2, y + 18, 9, 0, Math.PI * 2); ctx.fill();
+  // Hat
+  ctx.fillStyle = '#1a1a1a';
+  ctx.fillRect(x + w/2 - 9, y + 6, 18, 3);
+  ctx.fillRect(x + w/2 - 6, y - 4, 12, 10);
+  // Eyes
+  ctx.fillStyle = '#1a1a1a';
+  ctx.fillRect(x + w/2 - 4, y + 14, 2, 2);
+  ctx.fillRect(x + w/2 + 2, y + 14, 2, 2);
+  // Nose (carrot)
+  ctx.fillStyle = '#f59e0b';
+  ctx.fillRect(x + w/2 - 1, y + 18, 4, 2);
+  // Buttons
+  ctx.fillStyle = '#1a1a1a';
+  ctx.fillRect(x + w/2 - 1, y + h - 16, 2, 2);
+  ctx.fillRect(x + w/2 - 1, y + h - 10, 2, 2);
+  // Arms
+  ctx.strokeStyle = '#7c5a2e';
+  ctx.lineWidth = 2;
+  ctx.beginPath();
+  ctx.moveTo(x + w/2 - 5, y + 28); ctx.lineTo(x - 4, y + 22);
+  ctx.moveTo(x + w/2 + 5, y + 28); ctx.lineTo(x + w + 4, y + 22);
+  ctx.stroke();
+}
+function drawIcicle(ctx, o) {
+  const { x, y, w, h } = o;
+  // Triangle hanging down from y=0
+  ctx.fillStyle = '#c8e0f4';
+  ctx.beginPath();
+  ctx.moveTo(x, y);
+  ctx.lineTo(x + w, y);
+  ctx.lineTo(x + w/2, y + h);
+  ctx.closePath();
+  ctx.fill();
+  // Highlight
+  ctx.fillStyle = 'rgba(255,255,255,0.6)';
+  ctx.beginPath();
+  ctx.moveTo(x + 3, y + 2);
+  ctx.lineTo(x + w/2 - 1, y + h - 4);
+  ctx.lineTo(x + w/2 + 2, y + h*0.5);
+  ctx.closePath();
+  ctx.fill();
+  // Top cap (cloud-ish)
+  ctx.fillStyle = 'rgba(220,235,250,0.9)';
+  ctx.beginPath();
+  ctx.arc(x + w/2, y - 2, 6, 0, Math.PI * 2);
+  ctx.arc(x + w/2 - 5, y - 4, 4, 0, Math.PI * 2);
+  ctx.arc(x + w/2 + 5, y - 4, 4, 0, Math.PI * 2);
+  ctx.fill();
+}
+function drawIceBlock(ctx, o) {
+  const { x, y, w, h } = o;
+  // Solid ice rect
+  ctx.fillStyle = '#a8c8e8';
+  ctx.fillRect(x, y, w, h);
+  ctx.fillStyle = 'rgba(255,255,255,0.55)';
+  ctx.fillRect(x + 2, y + 2, w - 12, 4);
+  ctx.fillRect(x + 2, y + 2, 3, h - 6);
+  // Cracks
+  ctx.strokeStyle = 'rgba(255,255,255,0.45)';
+  ctx.lineWidth = 1;
+  ctx.beginPath();
+  ctx.moveTo(x + w*0.4, y + 4); ctx.lineTo(x + w*0.55, y + h*0.5); ctx.lineTo(x + w*0.35, y + h - 4);
+  ctx.moveTo(x + w*0.7, y + h*0.3); ctx.lineTo(x + w*0.85, y + h*0.6);
+  ctx.stroke();
+  // Frost edges
+  ctx.fillStyle = '#e0eef8';
+  ctx.fillRect(x, y, w, 2);
+  ctx.fillRect(x, y, 2, h);
+}
+function drawOwl(ctx, o) {
+  const { x, y, w, h } = o;
+  const phase = DG.birdPhase;
+  const flap = Math.floor(phase) % 2;
+  const bossy = DG.bossActive;
+  ctx.fillStyle = bossy ? '#ef4444' : '#6b4423';
+  // Body (rounder than bird)
+  ctx.beginPath();
+  ctx.ellipse(x + w/2, y + h/2 + 2, 16, 13, 0, 0, Math.PI*2);
+  ctx.fill();
+  // Head (big round)
+  ctx.beginPath();
+  ctx.arc(x + w/2 + 8, y + 10, 11, 0, Math.PI*2);
+  ctx.fill();
+  // Eye discs
+  ctx.fillStyle = '#f0e8d8';
+  ctx.beginPath(); ctx.arc(x + w/2 + 4, y + 8, 4, 0, Math.PI*2); ctx.fill();
+  ctx.beginPath(); ctx.arc(x + w/2 + 13, y + 8, 4, 0, Math.PI*2); ctx.fill();
+  ctx.fillStyle = '#1a1a1a';
+  ctx.beginPath(); ctx.arc(x + w/2 + 4, y + 8, 2, 0, Math.PI*2); ctx.fill();
+  ctx.beginPath(); ctx.arc(x + w/2 + 13, y + 8, 2, 0, Math.PI*2); ctx.fill();
+  // Beak
+  ctx.fillStyle = '#f59e0b';
+  ctx.beginPath();
+  ctx.moveTo(x + w/2 + 8, y + 12); ctx.lineTo(x + w/2 + 11, y + 16); ctx.lineTo(x + w/2 + 5, y + 16);
+  ctx.closePath();
+  ctx.fill();
+  // Ear tufts
+  ctx.fillStyle = bossy ? '#ef4444' : '#6b4423';
+  ctx.beginPath(); ctx.moveTo(x + w/2 + 2, y + 2); ctx.lineTo(x + w/2 + 5, y - 4); ctx.lineTo(x + w/2 + 6, y + 4); ctx.closePath(); ctx.fill();
+  ctx.beginPath(); ctx.moveTo(x + w/2 + 12, y + 2); ctx.lineTo(x + w/2 + 15, y - 4); ctx.lineTo(x + w/2 + 14, y + 4); ctx.closePath(); ctx.fill();
+  // Wings (flapping)
+  ctx.fillStyle = bossy ? '#dc2626' : '#4a2e15';
+  if (flap === 0) {
+    ctx.beginPath(); ctx.ellipse(x + w/2 - 8, y + h/2 - 4, 10, 6, -0.4, 0, Math.PI*2); ctx.fill();
+  } else {
+    ctx.beginPath(); ctx.ellipse(x + w/2 - 8, y + h/2 + 4, 10, 6, 0.4, 0, Math.PI*2); ctx.fill();
+  }
+}
+function drawLavaRock(ctx, o) {
+  const { x, y, w, h } = o;
+  // Dark rock
+  ctx.fillStyle = '#1a0805';
+  ctx.beginPath();
+  ctx.moveTo(x + 2, y + h);
+  ctx.lineTo(x + 5, y + h*0.3);
+  ctx.lineTo(x + w*0.35, y + 2);
+  ctx.lineTo(x + w*0.7, y + 4);
+  ctx.lineTo(x + w - 5, y + h*0.4);
+  ctx.lineTo(x + w - 2, y + h);
+  ctx.closePath();
+  ctx.fill();
+  // Lava cracks (glowing)
+  ctx.strokeStyle = '#ff8c1a';
+  ctx.lineWidth = 1.5;
+  ctx.beginPath();
+  ctx.moveTo(x + w*0.3, y + 6); ctx.lineTo(x + w*0.5, y + h*0.5); ctx.lineTo(x + w*0.4, y + h - 4);
+  ctx.stroke();
+  ctx.strokeStyle = '#fbbf24';
+  ctx.lineWidth = 0.8;
+  ctx.beginPath();
+  ctx.moveTo(x + w*0.6, y + h*0.3); ctx.lineTo(x + w*0.75, y + h*0.6);
+  ctx.stroke();
+  // Glow dots
+  ctx.fillStyle = '#ff8c1a';
+  ctx.fillRect(x + w*0.45, y + h*0.55, 2, 2);
+  if (o.big) {
+    ctx.fillStyle = '#ef4444';
+    ctx.fillRect(x + w*0.7, y + h*0.5, 3, 2);
+  }
+}
+function drawFlame(ctx, o) {
+  const { x, y, w, h } = o;
+  o.flicker = (o.flicker || 0) + 0.4;
+  const wob = Math.sin(o.flicker) * 1.5;
+  const wob2 = Math.cos(o.flicker * 1.3) * 1.2;
+  // Base (dark)
+  ctx.fillStyle = '#5a2010';
+  ctx.fillRect(x + 4, y + h - 6, w - 8, 6);
+  // Outer flame (red)
+  ctx.fillStyle = '#ef4444';
+  ctx.beginPath();
+  ctx.moveTo(x + 2, y + h - 4);
+  ctx.quadraticCurveTo(x - 1 + wob, y + h*0.4, x + w/2 + wob*0.5, y + 2);
+  ctx.quadraticCurveTo(x + w + 1 - wob, y + h*0.4, x + w - 2, y + h - 4);
+  ctx.closePath();
+  ctx.fill();
+  // Middle flame (orange)
+  ctx.fillStyle = '#fb923c';
+  ctx.beginPath();
+  ctx.moveTo(x + 6, y + h - 4);
+  ctx.quadraticCurveTo(x + 3 + wob2, y + h*0.5, x + w/2 + wob2*0.5, y + h*0.2);
+  ctx.quadraticCurveTo(x + w - 3 - wob2, y + h*0.5, x + w - 6, y + h - 4);
+  ctx.closePath();
+  ctx.fill();
+  // Inner flame (yellow)
+  ctx.fillStyle = '#fde047';
+  ctx.beginPath();
+  ctx.moveTo(x + w*0.35, y + h - 6);
+  ctx.quadraticCurveTo(x + w*0.4 + wob*0.3, y + h*0.55, x + w/2, y + h*0.35);
+  ctx.quadraticCurveTo(x + w*0.6 - wob*0.3, y + h*0.55, x + w*0.65, y + h - 6);
+  ctx.closePath();
+  ctx.fill();
+}
+function drawVolcanoBomb(ctx, o) {
+  const { x, y, w, h } = o;
+  // Dark sphere with red glow
+  const cx = x + w/2, cy = y + h/2;
+  // Glow halo
+  const g = ctx.createRadialGradient(cx, cy, 3, cx, cy, w);
+  g.addColorStop(0, 'rgba(239,68,68,0.5)');
+  g.addColorStop(1, 'rgba(239,68,68,0)');
+  ctx.fillStyle = g;
+  ctx.fillRect(x - 10, y - 10, w + 20, h + 20);
+  // Bomb body
+  ctx.fillStyle = '#2a0805';
+  ctx.beginPath(); ctx.arc(cx, cy, w/2 - 2, 0, Math.PI*2); ctx.fill();
+  // Cracks
+  ctx.strokeStyle = '#ff8c1a';
+  ctx.lineWidth = 1.4;
+  ctx.beginPath();
+  ctx.moveTo(cx - w*0.3, cy - 2); ctx.lineTo(cx + w*0.2, cy + w*0.15);
+  ctx.moveTo(cx + 2, cy - w*0.3); ctx.lineTo(cx + w*0.25, cy + w*0.1);
+  ctx.stroke();
+  // Highlight
+  ctx.fillStyle = 'rgba(255,140,26,0.4)';
+  ctx.beginPath(); ctx.arc(cx - w*0.2, cy - w*0.2, w*0.15, 0, Math.PI*2); ctx.fill();
+}
+function drawBat(ctx, o) {
+  const { x, y, w, h } = o;
+  const phase = DG.birdPhase;
+  const flap = Math.floor(phase) % 2;
+  const bossy = DG.bossActive;
+  ctx.fillStyle = bossy ? '#ef4444' : '#1a0a1a';
+  // Body
+  ctx.beginPath();
+  ctx.ellipse(x + w/2, y + h/2 + 2, 6, 10, 0, 0, Math.PI*2);
+  ctx.fill();
+  // Head
+  ctx.beginPath();
+  ctx.arc(x + w/2, y + 8, 6, 0, Math.PI*2);
+  ctx.fill();
+  // Ears (pointy)
+  ctx.beginPath(); ctx.moveTo(x + w/2 - 4, y + 4); ctx.lineTo(x + w/2 - 7, y - 2); ctx.lineTo(x + w/2 - 1, y + 3); ctx.closePath(); ctx.fill();
+  ctx.beginPath(); ctx.moveTo(x + w/2 + 4, y + 4); ctx.lineTo(x + w/2 + 7, y - 2); ctx.lineTo(x + w/2 + 1, y + 3); ctx.closePath(); ctx.fill();
+  // Eyes (red)
+  ctx.fillStyle = '#ef4444';
+  ctx.fillRect(x + w/2 - 3, y + 7, 2, 2);
+  ctx.fillRect(x + w/2 + 1, y + 7, 2, 2);
+  // Wings (membranous, scalloped)
+  ctx.fillStyle = bossy ? '#dc2626' : '#1a0a1a';
+  if (flap === 0) {
+    // Wings up
+    ctx.beginPath();
+    ctx.moveTo(x + w/2, y + 14);
+    ctx.quadraticCurveTo(x + w/2 - 14, y, x - 4, y + 6);
+    ctx.quadraticCurveTo(x + w/2 - 12, y + 6, x + w/2 - 6, y + 16);
+    ctx.closePath();
+    ctx.fill();
+    ctx.beginPath();
+    ctx.moveTo(x + w/2, y + 14);
+    ctx.quadraticCurveTo(x + w/2 + 14, y, x + w + 4, y + 6);
+    ctx.quadraticCurveTo(x + w/2 + 12, y + 6, x + w/2 + 6, y + 16);
+    ctx.closePath();
+    ctx.fill();
+  } else {
+    // Wings down
+    ctx.beginPath();
+    ctx.moveTo(x + w/2, y + 14);
+    ctx.quadraticCurveTo(x + w/2 - 16, y + 18, x - 2, y + 26);
+    ctx.quadraticCurveTo(x + w/2 - 10, y + 16, x + w/2 - 6, y + 16);
+    ctx.closePath();
+    ctx.fill();
+    ctx.beginPath();
+    ctx.moveTo(x + w/2, y + 14);
+    ctx.quadraticCurveTo(x + w/2 + 16, y + 18, x + w + 2, y + 26);
+    ctx.quadraticCurveTo(x + w/2 + 10, y + 16, x + w/2 + 6, y + 16);
+    ctx.closePath();
+    ctx.fill();
+  }
 }
 function drawDinoSprite(ctx, dead) {
   const skin = getSkin();
