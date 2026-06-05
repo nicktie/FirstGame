@@ -6041,15 +6041,10 @@ window.addEventListener('load', ()=>{ measureNet(); watchServerConnection(); });
   <div class="dino-topbar">
     <button class="back-btn" onclick="exitDino()">← الرئيسية</button>
     <div class="dino-score-display">
-      <div class="dino-hearts" id="dinoHearts">
-        <span class="dino-heart" data-i="0">❤️</span>
-        <span class="dino-heart" data-i="1">❤️</span>
-        <span class="dino-heart" data-i="2">❤️</span>
-      </div>
-      <span class="ds-current" id="dinoScoreDisplay">0</span>
-      <span class="ds-best">⭐ <b id="dinoBestDisplay">0</b></span>
+      <span class="ds-best">⭐ أفضل نتيجة: <b id="dinoBestDisplay">0</b></span>
     </div>
     <div style="width:60px"></div>
+    <span id="dinoScoreDisplay" style="display:none">0</span>
   </div>
   <div class="dino-canvas-wrap" id="dinoCanvasWrap">
     <canvas id="dinoCanvas" width="720" height="280"></canvas>
@@ -6118,6 +6113,43 @@ const DG = {
   _bound: false, _btnBound: false
 };
 window.DINO_GAME = DG;
+
+function dinoSound(name) {
+  if (typeof isMuted !== 'undefined' && isMuted) return;
+  if (typeof playTone !== 'function') return;
+  switch (name) {
+    case 'jump':
+      playTone(523, 0.07, 'triangle', 0.18);
+      setTimeout(() => playTone(880, 0.09, 'triangle', 0.14), 45);
+      break;
+    case 'hit':
+      playTone(220, 0.12, 'sawtooth', 0.28);
+      setTimeout(() => playTone(165, 0.18, 'sawtooth', 0.22), 90);
+      break;
+    case 'heart':
+      playTone(784, 0.07, 'triangle', 0.22);
+      setTimeout(() => playTone(1046, 0.09, 'triangle', 0.22), 55);
+      setTimeout(() => playTone(1568, 0.14, 'triangle', 0.20), 120);
+      break;
+    case 'milestone':
+      playTone(523, 0.1, 'triangle', 0.22);
+      setTimeout(() => playTone(659, 0.1, 'triangle', 0.22), 80);
+      setTimeout(() => playTone(784, 0.12, 'triangle', 0.22), 160);
+      setTimeout(() => playTone(1046, 0.18, 'triangle', 0.20), 240);
+      break;
+    case 'bossStart':
+      playTone(98, 0.32, 'sawtooth', 0.28);
+      setTimeout(() => playTone(82, 0.4, 'sawtooth', 0.24), 220);
+      setTimeout(() => playTone(110, 0.3, 'square', 0.18), 480);
+      break;
+    case 'bossWin':
+      [523, 659, 784, 988, 1175, 1568].forEach((f, i) => setTimeout(() => playTone(f, 0.18, 'triangle', 0.28), i * 80));
+      break;
+    case 'death':
+      [440, 370, 294, 220, 165].forEach((f, i) => setTimeout(() => playTone(f, 0.26, 'sawtooth', 0.22), i * 150));
+      break;
+  }
+}
 
 function loadSkin() {
   try { const v = localStorage.getItem('dinoSkin'); if (v && DG.SKINS.find(s=>s.id===v)) DG.skin = v; } catch(e){}
@@ -6239,6 +6271,7 @@ function updateDino(dt) {
       DG.reachedMilestones.add(m);
       showMilestone('🎯 ' + m + ' نقطة!');
       pulseScore();
+      dinoSound('milestone');
     }
   }
   // Boss round trigger
@@ -6321,9 +6354,11 @@ function updateDino(dt) {
         DG.hearts++;
         updateHeartsUI(true);
         showMilestone('💖 +1');
+        dinoSound('heart');
       } else {
         DG.score += 25;
         showMilestone('+25');
+        dinoSound('heart');
       }
     }
   }
@@ -6348,6 +6383,7 @@ function startBossRound() {
   document.getElementById('dinoBossBanner').style.display = 'block';
   DG.canvas.classList.add('boss-mode');
   showMilestone('👑 الزعيم قادم!');
+  dinoSound('bossStart');
 }
 function endBossRound(victory) {
   DG.bossActive = false;
@@ -6363,6 +6399,7 @@ function endBossRound(victory) {
     }
     showMilestone('✅ هزمت الزعيم! +١٠٠');
     pulseScore();
+    dinoSound('bossWin');
   }
 }
 function getDinoBox() {
@@ -6442,6 +6479,8 @@ function onHit() {
   updateHeartsUI();
   if (DG.hearts <= 0) {
     onDinoDeath();
+  } else {
+    dinoSound('hit');
   }
 }
 function updateHeartsUI(gained) {
@@ -6459,6 +6498,7 @@ function updateHeartsUI(gained) {
 function onDinoDeath() {
   DG.state = 'dead';
   cancelAnimationFrame(DG.raf);
+  dinoSound('death');
   const finalScore = Math.floor(DG.score);
   const isRecord = finalScore > DG.bestScore;
   if (isRecord) DG.bestScore = finalScore;
@@ -6549,6 +6589,65 @@ function drawDinoFrame(dead) {
   // Dino (blink if invincible)
   const showDino = !(DG.invincible > 0 && Math.floor(DG.invincible / 4) % 2 === 0);
   if (showDino || dead) drawDinoSprite(ctx, dead);
+  // HUD overlay on canvas
+  drawDinoHud(ctx);
+}
+function drawDinoHud(ctx) {
+  const pad = 16;
+  // Hearts top-left
+  for (let i = 0; i < DG.MAX_HEARTS; i++) {
+    const hx = pad + 10 + i * 28;
+    const hy = pad + 6;
+    drawHudHeart(ctx, hx, hy, i < DG.hearts);
+  }
+  // Score top-right
+  ctx.save();
+  ctx.font = 'bold 26px "Tajawal", "Courier New", monospace';
+  ctx.textAlign = 'right';
+  ctx.textBaseline = 'middle';
+  const score = Math.floor(DG.score).toString().padStart(5, '0');
+  ctx.fillStyle = 'rgba(0,0,0,0.4)';
+  ctx.fillText(score, DG.W - pad + 1, pad + 12);
+  ctx.fillStyle = '#c9a84c';
+  ctx.fillText(score, DG.W - pad, pad + 12);
+  // HI score below
+  ctx.font = 'bold 13px "Tajawal", "Courier New", monospace';
+  const hi = 'HI  ' + DG.bestScore.toString().padStart(5, '0');
+  ctx.fillStyle = 'rgba(201,168,76,0.65)';
+  ctx.fillText(hi, DG.W - pad, pad + 32);
+  ctx.restore();
+}
+function drawHudHeart(ctx, cx, cy, alive) {
+  ctx.save();
+  // Drop shadow
+  ctx.fillStyle = 'rgba(0,0,0,0.45)';
+  ctx.beginPath();
+  ctx.moveTo(cx + 1, cy + 9);
+  ctx.bezierCurveTo(cx + 12, cy + 1, cx + 12, cy - 8, cx + 1, cy - 3);
+  ctx.bezierCurveTo(cx - 10, cy - 8, cx - 10, cy + 1, cx + 1, cy + 9);
+  ctx.fill();
+  // Main
+  ctx.fillStyle = alive ? '#ef4444' : 'rgba(80,18,18,0.55)';
+  ctx.beginPath();
+  ctx.moveTo(cx, cy + 8);
+  ctx.bezierCurveTo(cx + 11, cy, cx + 11, cy - 9, cx, cy - 4);
+  ctx.bezierCurveTo(cx - 11, cy - 9, cx - 11, cy, cx, cy + 8);
+  ctx.fill();
+  if (alive) {
+    ctx.fillStyle = 'rgba(255,255,255,0.55)';
+    ctx.beginPath();
+    ctx.ellipse(cx - 3, cy - 3, 2.5, 1.6, -0.4, 0, Math.PI * 2);
+    ctx.fill();
+  } else {
+    ctx.strokeStyle = 'rgba(239,68,68,0.55)';
+    ctx.lineWidth = 1.2;
+    ctx.beginPath();
+    ctx.moveTo(cx, cy + 8);
+    ctx.bezierCurveTo(cx + 11, cy, cx + 11, cy - 9, cx, cy - 4);
+    ctx.bezierCurveTo(cx - 11, cy - 9, cx - 11, cy, cx, cy + 8);
+    ctx.stroke();
+  }
+  ctx.restore();
 }
 function drawHeartCollectible(ctx, c) {
   const bob = Math.sin(c.bobPhase) * 3;
@@ -6909,6 +7008,7 @@ function doJump() {
   if (DG.state === 'running' && DG.dinoY === 0) {
     DG.dinoVy = DG.JUMP_VEL;
     DG.isDucking = false;
+    dinoSound('jump');
   }
 }
 function doDuckStart() {
