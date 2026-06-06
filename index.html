@@ -8277,7 +8277,7 @@ body.space-active{overflow:hidden}
 .sp-hud-stage{color:#00ff88;text-shadow:0 0 8px rgba(0,255,136,0.6)}
 .sp-hud-score{color:#ffe600;text-shadow:0 0 8px rgba(255,230,0,0.5);min-width:60px;text-align:center}
 .sp-mute{flex-shrink:0;width:32px;height:32px;background:rgba(0,255,136,0.08);border:1px solid #00ff88;color:#00ff88;border-radius:50%;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:0.9rem}
-.space-arena{position:relative;flex:1;display:flex;align-items:center;justify-content:center;padding:8px;touch-action:none;user-select:none;-webkit-user-select:none}
+.space-arena{position:relative;flex:1;display:flex;flex-direction:column;align-items:center;justify-content:flex-end;padding:8px;touch-action:none;user-select:none;-webkit-user-select:none}
 .space-arena canvas{width:100%;max-width:540px;aspect-ratio:3/4;height:auto;background:#000;border-radius:8px;border:1px solid #1a2540;display:block;image-rendering:pixelated;direction:ltr;cursor:pointer}
 .sp-bomb-btn{position:absolute;bottom:16px;left:16px;width:62px;height:62px;background:radial-gradient(circle,#ff4400,#aa1100);border:2px solid #ffaa00;border-radius:50%;color:#fff;font-size:1.6rem;cursor:pointer;display:flex;align-items:center;justify-content:center;box-shadow:0 6px 22px rgba(255,68,0,0.6);font-family:'Tajawal',sans-serif;font-weight:900;display:none;z-index:6}
 .sp-bomb-btn.has{display:flex;animation:spBombPulse 1.2s ease-in-out infinite}
@@ -8309,7 +8309,7 @@ body.space-active{overflow:hidden}
 .sp-boss-hp-fill{height:100%;width:100%;background:linear-gradient(90deg,#ff3030,#ff8030);transition:width 0.25s}
 .sp-pup-active{position:absolute;top:50px;right:14px;display:flex;flex-direction:column;gap:5px;z-index:6;pointer-events:none}
 .sp-pup-chip{background:rgba(0,0,16,0.75);border:1px solid #00ff88;border-radius:6px;padding:3px 8px;font-size:0.78rem;color:#00ff88;display:flex;align-items:center;gap:5px;font-family:'Courier New',monospace}
-.sp-control-strip{height:64px;margin:6px 14px 14px;background:linear-gradient(180deg,rgba(0,255,136,0.06),rgba(0,255,136,0.14));border:2px dashed rgba(0,255,136,0.45);border-radius:14px;position:relative;touch-action:none;user-select:none;-webkit-user-select:none;cursor:ew-resize;display:flex;align-items:center;justify-content:center;flex-shrink:0;overflow:hidden;transition:background 0.15s,border-color 0.15s;z-index:6}
+.sp-control-strip{height:70px;margin:0 14px 12px;background:linear-gradient(180deg,rgba(0,255,136,0.06),rgba(0,255,136,0.14));border:2px dashed rgba(0,255,136,0.45);border-radius:14px;position:relative;touch-action:none;user-select:none;-webkit-user-select:none;cursor:ew-resize;display:flex;align-items:center;justify-content:center;flex-shrink:0;overflow:hidden;transition:background 0.15s,border-color 0.15s;z-index:6}
 .sp-control-strip.touching{background:linear-gradient(180deg,rgba(0,255,136,0.12),rgba(0,255,136,0.24));border-color:#00ff88;border-style:solid}
 .sp-control-hint{font-family:'Courier New',monospace;color:rgba(0,255,136,0.55);font-size:0.82rem;letter-spacing:4px;pointer-events:none;transition:opacity 0.2s;font-weight:700}
 .sp-control-strip.touching .sp-control-hint{opacity:0.1}
@@ -8322,7 +8322,7 @@ body.space-active{overflow:hidden}
   .sp-final-score{font-size:2.4rem}
   .sp-stage-banner-name{font-size:1.15rem}
   .sp-bomb-btn{width:54px;height:54px;font-size:1.4rem}
-  .sp-control-strip{height:56px;margin:4px 10px 12px}
+  .sp-control-strip{height:62px;margin:0 10px 10px}
   .sp-control-hint{font-size:0.75rem;letter-spacing:3px}
 }
 </style>
@@ -8379,7 +8379,7 @@ body.space-active{overflow:hidden}
 (function(){
 const SG = {
   W: 480, H: 640, ctx:null, canvas:null,
-  state:'idle', stage:0, wave:0, totalWavesPerStage:3,
+  state:'idle', stage:0, wave:0, totalWavesPerStage:5,
   score:0, lives:3, bombs:1, totalKills:0,
   player: { x:240, y:560, w:34, h:36, speed:6, fireCool:0, baseFireRate:11, invincible:0 },
   shield:0, triple:0, rapid:0, // power-up timers in frames
@@ -8577,7 +8577,7 @@ function bindSpaceControls(){
     if (!SG.touchActive) return;
     const rect = strip.getBoundingClientRect();
     const dx = clientX - SG.touchStartClientX;
-    const scale = (SG.W / Math.max(1, rect.width)) * 1.8;
+    const scale = (SG.W / Math.max(1, rect.width)) * 1.2;
     SG.touchX = SG.touchStartPlayerX + dx * scale;
     indicator.style.left = clamp(clientX - rect.left, 0, rect.width) + 'px';
   }
