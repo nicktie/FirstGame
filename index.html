@@ -8277,8 +8277,8 @@ body.space-active{overflow:hidden}
 .sp-hud-stage{color:#00ff88;text-shadow:0 0 8px rgba(0,255,136,0.6)}
 .sp-hud-score{color:#ffe600;text-shadow:0 0 8px rgba(255,230,0,0.5);min-width:60px;text-align:center}
 .sp-mute{flex-shrink:0;width:32px;height:32px;background:rgba(0,255,136,0.08);border:1px solid #00ff88;color:#00ff88;border-radius:50%;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:0.9rem}
-.space-arena{position:relative;flex:1;display:flex;align-items:center;justify-content:center;padding:6px;touch-action:none;user-select:none;-webkit-user-select:none}
-.space-arena canvas{width:100%;max-width:540px;aspect-ratio:3/5;max-height:100%;height:auto;background:#000;border-radius:8px;border:1px solid #1a2540;display:block;image-rendering:pixelated;direction:ltr;cursor:pointer}
+.space-arena{position:relative;flex:1 1 0;min-height:0;display:flex;align-items:center;justify-content:center;padding:6px;touch-action:none;user-select:none;-webkit-user-select:none;overflow:hidden}
+.space-arena canvas{width:100%;max-width:min(540px,calc((100dvh - 180px) * 3 / 5));aspect-ratio:3/5;height:auto;background:#000;border-radius:8px;border:1px solid #1a2540;display:block;image-rendering:pixelated;direction:ltr;cursor:pointer}
 .sp-bomb-btn{position:absolute;bottom:16px;left:16px;width:62px;height:62px;background:radial-gradient(circle,#ff4400,#aa1100);border:2px solid #ffaa00;border-radius:50%;color:#fff;font-size:1.6rem;cursor:pointer;display:flex;align-items:center;justify-content:center;box-shadow:0 6px 22px rgba(255,68,0,0.6);font-family:'Tajawal',sans-serif;font-weight:900;display:none;z-index:6}
 .sp-bomb-btn.has{display:flex;animation:spBombPulse 1.2s ease-in-out infinite}
 @keyframes spBombPulse{0%,100%{box-shadow:0 6px 22px rgba(255,68,0,0.6),0 0 0 0 rgba(255,170,0,0.6)}50%{box-shadow:0 6px 22px rgba(255,68,0,0.8),0 0 0 8px rgba(255,170,0,0)}}
