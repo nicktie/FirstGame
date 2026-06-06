@@ -8309,6 +8309,12 @@ body.space-active{overflow:hidden}
 .sp-boss-hp-fill{height:100%;width:100%;background:linear-gradient(90deg,#ff3030,#ff8030);transition:width 0.25s}
 .sp-pup-active{position:absolute;top:50px;right:14px;display:flex;flex-direction:column;gap:5px;z-index:6;pointer-events:none}
 .sp-pup-chip{background:rgba(0,0,16,0.75);border:1px solid #00ff88;border-radius:6px;padding:3px 8px;font-size:0.78rem;color:#00ff88;display:flex;align-items:center;gap:5px;font-family:'Courier New',monospace}
+.sp-control-strip{height:64px;margin:6px 14px 14px;background:linear-gradient(180deg,rgba(0,255,136,0.06),rgba(0,255,136,0.14));border:2px dashed rgba(0,255,136,0.45);border-radius:14px;position:relative;touch-action:none;user-select:none;-webkit-user-select:none;cursor:ew-resize;display:flex;align-items:center;justify-content:center;flex-shrink:0;overflow:hidden;transition:background 0.15s,border-color 0.15s;z-index:6}
+.sp-control-strip.touching{background:linear-gradient(180deg,rgba(0,255,136,0.12),rgba(0,255,136,0.24));border-color:#00ff88;border-style:solid}
+.sp-control-hint{font-family:'Courier New',monospace;color:rgba(0,255,136,0.55);font-size:0.82rem;letter-spacing:4px;pointer-events:none;transition:opacity 0.2s;font-weight:700}
+.sp-control-strip.touching .sp-control-hint{opacity:0.1}
+.sp-control-indicator{position:absolute;top:50%;width:38px;height:38px;border-radius:50%;background:radial-gradient(circle,rgba(0,255,136,0.7) 0%,rgba(0,255,136,0.2) 60%,rgba(0,255,136,0) 100%);border:2px solid #00ff88;transform:translate(-50%,-50%);pointer-events:none;display:none;box-shadow:0 0 18px rgba(0,255,136,0.6),inset 0 0 8px rgba(0,255,136,0.4)}
+.sp-control-strip.touching .sp-control-indicator{display:block}
 @media(max-width:640px){
   .space-topbar{padding:8px 12px;gap:6px}
   .sp-hud-item{font-size:0.78rem}
@@ -8316,6 +8322,8 @@ body.space-active{overflow:hidden}
   .sp-final-score{font-size:2.4rem}
   .sp-stage-banner-name{font-size:1.15rem}
   .sp-bomb-btn{width:54px;height:54px;font-size:1.4rem}
+  .sp-control-strip{height:56px;margin:4px 10px 12px}
+  .sp-control-hint{font-size:0.75rem;letter-spacing:3px}
 }
 </style>
 <div id="spaceScreen" class="space-screen">
@@ -8344,7 +8352,7 @@ body.space-active{overflow:hidden}
       <div class="sp-title">حرب الفضاء</div>
       <div class="sp-desc">دافع عن سفينتك ضد ٣ مراحل من الأعداء وزعمائهم. اجمع التعزيزات لتحسين قدراتك.</div>
       <div class="sp-hint">
-        🎯 <b>تحرّك:</b> اسحب الإصبع/الفأرة (أو ← →)<br>
+        🎯 <b>تحرّك:</b> اسحب على الشريط الأخضر أسفل الشاشة (أو ← →)<br>
         🔫 <b>الإطلاق:</b> تلقائي<br>
         💣 <b>القنبلة:</b> تمسح كل الأعداء — لازم تجمعها
       </div>
@@ -8361,6 +8369,10 @@ body.space-active{overflow:hidden}
         <button class="sp-btn-secondary" onclick="exitSpace()">← خروج</button>
       </div>
     </div>
+  </div>
+  <div class="sp-control-strip" id="spControlStrip">
+    <div class="sp-control-indicator" id="spControlIndicator"></div>
+    <span class="sp-control-hint">اسحب ← →</span>
   </div>
 </div>
 <script>
@@ -8533,8 +8545,8 @@ function spaceLoop(t){
 
 // === Input bindings ===
 function bindSpaceControls(){
-  const arena = document.getElementById('spaceArena');
-  const canvas = SG.canvas;
+  const strip = document.getElementById('spControlStrip');
+  const indicator = document.getElementById('spControlIndicator');
   function isActive(){
     const scr = document.getElementById('spaceScreen');
     return scr && scr.classList.contains('active');
@@ -8550,34 +8562,46 @@ function bindSpaceControls(){
     if (e.code === 'ArrowLeft' || e.key === 'ArrowLeft'){ SG.inputs.left = false; e.preventDefault(); }
     else if (e.code === 'ArrowRight' || e.key === 'ArrowRight'){ SG.inputs.right = false; e.preventDefault(); }
   });
-  function canvasToLogicalX(clientX){
-    const rect = canvas.getBoundingClientRect();
-    return ((clientX - rect.left) / rect.width) * SG.W;
-  }
-  canvas.addEventListener('touchstart', (e) => {
-    e.preventDefault();
+  // Relative-drag control strip (so the finger never covers the ship)
+  function stripStart(clientX){
+    if (!isActive()) return;
     SG.touchActive = true;
-    SG.touchX = canvasToLogicalX(e.touches[0].clientX);
-  }, { passive:false });
-  canvas.addEventListener('touchmove', (e) => {
-    e.preventDefault();
-    SG.touchX = canvasToLogicalX(e.touches[0].clientX);
-  }, { passive:false });
-  canvas.addEventListener('touchend', (e) => {
-    e.preventDefault();
+    SG.touchStartClientX = clientX;
+    SG.touchStartPlayerX = SG.player.x;
+    SG.touchX = SG.player.x;
+    strip.classList.add('touching');
+    const rect = strip.getBoundingClientRect();
+    indicator.style.left = clamp(clientX - rect.left, 0, rect.width) + 'px';
+  }
+  function stripMove(clientX){
+    if (!SG.touchActive) return;
+    const rect = strip.getBoundingClientRect();
+    const dx = clientX - SG.touchStartClientX;
+    const scale = (SG.W / Math.max(1, rect.width)) * 1.8;
+    SG.touchX = SG.touchStartPlayerX + dx * scale;
+    indicator.style.left = clamp(clientX - rect.left, 0, rect.width) + 'px';
+  }
+  function stripEnd(){
+    if (!SG.touchActive) return;
     SG.touchActive = false;
     SG.touchX = null;
+    strip.classList.remove('touching');
+  }
+  strip.addEventListener('touchstart', (e) => {
+    e.preventDefault();
+    if (e.touches.length === 0) return;
+    stripStart(e.touches[0].clientX);
   }, { passive:false });
-  canvas.addEventListener('touchcancel', () => { SG.touchActive = false; SG.touchX = null; });
-  canvas.addEventListener('mousedown', (e) => {
-    SG.touchActive = true;
-    SG.touchX = canvasToLogicalX(e.clientX);
-  });
-  canvas.addEventListener('mousemove', (e) => {
-    if (SG.touchActive) SG.touchX = canvasToLogicalX(e.clientX);
-  });
-  canvas.addEventListener('mouseup', () => { SG.touchActive = false; SG.touchX = null; });
-  canvas.addEventListener('mouseleave', () => { SG.touchActive = false; SG.touchX = null; });
+  strip.addEventListener('touchmove', (e) => {
+    e.preventDefault();
+    if (e.touches.length === 0) return;
+    stripMove(e.touches[0].clientX);
+  }, { passive:false });
+  strip.addEventListener('touchend', (e) => { e.preventDefault(); stripEnd(); }, { passive:false });
+  strip.addEventListener('touchcancel', stripEnd);
+  strip.addEventListener('mousedown', (e) => { stripStart(e.clientX); });
+  window.addEventListener('mousemove', (e) => { if (SG.touchActive) stripMove(e.clientX); });
+  window.addEventListener('mouseup', () => { if (SG.touchActive) stripEnd(); });
 }
 
 // === Update ===
