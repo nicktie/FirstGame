@@ -6170,13 +6170,19 @@ const DG = {
     { id:'camel', name:'جمل',     emoji:'🐪', color:'#c89368', acc:'#6e4a2a' },
     { id:'fox',   name:'ثعلب',    emoji:'🦊', color:'#d97706', acc:'#7a3d04' }
   ],
+  DJUMP_DURATION: 720, // frames of double-jump ability (~12s)
+  DJUMP_PERIOD_MIN: 650, DJUMP_PERIOD_MAX: 1100,
+  COMBO_TIERS: [ {n:3,mult:2}, {n:7,mult:3}, {n:12,mult:4}, {n:20,mult:5} ],
   ctx: null, canvas: null,
   state: 'idle', speed: 6.5, score: 0, bestScore: 0,
   dinoY: 0, dinoVy: 0, isDucking: false,
   hearts: 3, invincible: 0, hitFlash: 0,
+  combo: 0, multiplier: 1, comboFlash: 0,
+  djumpTimer: 0, jumpsUsed: 0, djumpTimer2: 0, djumpFx: 0,
   obstacles: [], collectibles: [],
   spawnTimer: 0, spawnNext: 80,
   heartTimer: 0, heartNext: 500,
+  djumpSpawnTimer: 0, djumpSpawnNext: 700,
   ground: 0, clouds: [], cloudTimer: 0,
   isNight: false, lastTime: 0, raf: 0,
   legPhase: 0, birdPhase: 0,
@@ -6361,9 +6367,12 @@ function resetDinoState() {
   DG.dinoY = 0; DG.dinoVy = 0; DG.isDucking = false;
   DG.hearts = DG.MAX_HEARTS;
   DG.invincible = 0; DG.hitFlash = 0;
+  DG.combo = 0; DG.multiplier = 1; DG.comboFlash = 0;
+  DG.djumpTimer = 0; DG.jumpsUsed = 0; DG.djumpFx = 0;
   DG.obstacles = []; DG.collectibles = [];
   DG.spawnTimer = 0; DG.spawnNext = 90;
   DG.heartTimer = 0; DG.heartNext = 400 + Math.random()*300;
+  DG.djumpSpawnTimer = 0; DG.djumpSpawnNext = 600 + Math.random()*400;
   DG.ground = 0;
   DG.clouds = [{x:200,y:38},{x:440,y:60},{x:640,y:28}];
   DG.cloudTimer = 0;
@@ -6405,8 +6414,15 @@ function dinoLoop(t) {
 function updateDino(dt) {
   DG.speed = Math.min(DG.MAX_SPEED, DG.speed + DG.SPEED_INC * dt);
   const prevScore = Math.floor(DG.score);
-  DG.score += DG.SCORE_PER_FRAME * dt;
+  DG.score += DG.SCORE_PER_FRAME * dt * DG.multiplier;
   const curScore = Math.floor(DG.score);
+  if (DG.comboFlash > 0) DG.comboFlash -= dt;
+  if (DG.djumpFx > 0) DG.djumpFx -= dt;
+  // Double-jump ability countdown
+  if (DG.djumpTimer > 0) {
+    DG.djumpTimer -= dt;
+    if (DG.djumpTimer <= 0) { DG.djumpTimer = 0; showMilestone('🪽 انتهى القفز المزدوج'); }
+  }
   const scoreEl = document.getElementById('dinoScoreDisplay');
   scoreEl.textContent = curScore;
   // Milestones
@@ -6435,7 +6451,7 @@ function updateDino(dt) {
   if (DG.dinoY < 0 || DG.dinoVy < 0) {
     DG.dinoVy += DG.GRAVITY * dt;
     DG.dinoY += DG.dinoVy * dt;
-    if (DG.dinoY >= 0) { DG.dinoY = 0; DG.dinoVy = 0; }
+    if (DG.dinoY >= 0) { DG.dinoY = 0; DG.dinoVy = 0; DG.jumpsUsed = 0; }
   }
   if (DG.dinoY === 0) DG.legPhase += dt * 0.35;
   DG.birdPhase += dt * 0.22;
@@ -6473,8 +6489,21 @@ function updateDino(dt) {
   } else {
     DG.heartTimer = 0;
   }
-  // Move obstacles & collectibles
-  DG.obstacles.forEach(o => { o.x -= DG.speed * dt; if (o.bob) o.bobPhase += dt * 0.18; });
+  // Spawn double-jump power-up (only when not already active, after score 100)
+  if (curScore > 100 && DG.djumpTimer <= 0 && !DG.bossActive) {
+    DG.djumpSpawnTimer += dt;
+    if (DG.djumpSpawnTimer > DG.djumpSpawnNext) {
+      spawnDjumpPowerup();
+      DG.djumpSpawnTimer = 0;
+      DG.djumpSpawnNext = DG.DJUMP_PERIOD_MIN + Math.random() * (DG.DJUMP_PERIOD_MAX - DG.DJUMP_PERIOD_MIN);
+    }
+  }
+  // Move obstacles & collectibles + combo tracking on pass
+  DG.obstacles.forEach(o => {
+    o.x -= DG.speed * dt;
+    if (o.bob) o.bobPhase += dt * 0.18;
+    if (!o.passed && o.x + o.w < DG.DINO_X) { o.passed = true; onObstacleCleared(); }
+  });
   DG.obstacles = DG.obstacles.filter(o => o.x + o.w > -30);
   DG.collectibles.forEach(c => { c.x -= DG.speed * dt; c.bobPhase += dt * 0.2; });
   DG.collectibles = DG.collectibles.filter(c => c.x + c.w > -30);
@@ -6489,12 +6518,17 @@ function updateDino(dt) {
       }
     }
   }
-  // Collect heart
+  // Collect heart / power-up
   for (let i = DG.collectibles.length - 1; i >= 0; i--) {
     const c = DG.collectibles[i];
     if (boxesIntersect(dinoBox, { x:c.x, y:c.y, w:c.w, h:c.h })) {
       DG.collectibles.splice(i, 1);
-      if (DG.hearts < DG.MAX_HEARTS) {
+      if (c.kind === 'djump') {
+        DG.djumpTimer = DG.DJUMP_DURATION;
+        DG.djumpFx = 18;
+        showMilestone('🪽 قفز مزدوج!');
+        dinoSound('heart');
+      } else if (DG.hearts < DG.MAX_HEARTS) {
         DG.hearts++;
         updateHeartsUI(true);
         showMilestone('💖 +1');
@@ -6506,6 +6540,21 @@ function updateDino(dt) {
       }
     }
   }
+}
+function onObstacleCleared() {
+  DG.combo++;
+  let mult = 1;
+  for (const tier of DG.COMBO_TIERS) { if (DG.combo >= tier.n) mult = tier.mult; }
+  if (mult !== DG.multiplier) {
+    DG.multiplier = mult;
+    DG.comboFlash = 30;
+    if (mult > 1) { showMilestone('🔥 ×' + mult + ' كومبو!'); dinoSound('milestone'); }
+  }
+}
+function spawnDjumpPowerup() {
+  const w = 28, h = 28;
+  const y = DG.GROUND_Y - 95 - Math.random() * 45;
+  DG.collectibles.push({ x: DG.W + 10, y, w, h, bobPhase: 0, kind: 'djump' });
 }
 function pulseScore() {
   const el = document.getElementById('dinoScoreDisplay');
@@ -6632,6 +6681,9 @@ function onHit() {
   DG.hearts--;
   DG.invincible = DG.INVINCIBLE_FRAMES;
   DG.hitFlash = 12;
+  // Reset combo on hit
+  if (DG.multiplier > 1) DG.comboFlash = 30;
+  DG.combo = 0; DG.multiplier = 1;
   if (DG.canvas) {
     DG.canvas.classList.add('hit-flash');
     setTimeout(()=>DG.canvas.classList.remove('hit-flash'), 380);
@@ -6754,7 +6806,7 @@ function drawDinoFrame(dead) {
   }
   ctx.globalAlpha = 1;
   // Collectibles
-  DG.collectibles.forEach(c => drawHeartCollectible(ctx, c));
+  DG.collectibles.forEach(c => { if (c.kind === 'djump') drawDjumpCollectible(ctx, c); else drawHeartCollectible(ctx, c); });
   // Obstacles
   DG.obstacles.forEach(o => drawObstacle(ctx, o));
   // Dino (blink if invincible)
@@ -6786,6 +6838,29 @@ function drawDinoHud(ctx) {
   const hi = 'HI  ' + DG.bestScore.toString().padStart(5, '0');
   ctx.fillStyle = 'rgba(201,168,76,0.65)';
   ctx.fillText(hi, DG.W - pad, pad + 32);
+  // Multiplier (center top) when active
+  if (DG.multiplier > 1) {
+    const grow = DG.comboFlash > 0 ? 1 + (DG.comboFlash / 30) * 0.5 : 1;
+    ctx.textAlign = 'center';
+    ctx.font = 'bold ' + Math.round(30 * grow) + 'px "Tajawal", "Courier New", monospace';
+    const mc = DG.multiplier >= 5 ? '#ff4444' : DG.multiplier >= 4 ? '#ff8800' : DG.multiplier >= 3 ? '#ffcc00' : '#c9a84c';
+    ctx.fillStyle = 'rgba(0,0,0,0.4)';
+    ctx.fillText('×' + DG.multiplier, DG.W/2 + 1, pad + 14);
+    ctx.fillStyle = mc;
+    ctx.fillText('×' + DG.multiplier, DG.W/2, pad + 13);
+    ctx.font = 'bold 11px "Tajawal", sans-serif';
+    ctx.fillStyle = 'rgba(255,255,255,0.6)';
+    ctx.fillText('كومبو ' + DG.combo, DG.W/2, pad + 30);
+  }
+  // Double-jump indicator
+  if (DG.djumpTimer > 0) {
+    ctx.textAlign = 'left';
+    const secs = Math.ceil(DG.djumpTimer / 60);
+    const pulse = 0.6 + 0.4 * Math.sin(DG.djumpTimer * 0.2);
+    ctx.font = 'bold 15px "Tajawal", sans-serif';
+    ctx.fillStyle = 'rgba(120,200,255,' + pulse + ')';
+    ctx.fillText('🪽 ' + secs + 'ث', pad, pad + 52);
+  }
   ctx.restore();
 }
 function drawHudHeart(ctx, cx, cy, alive) {
@@ -6842,6 +6917,37 @@ function drawHeartCollectible(ctx, c) {
   ctx.beginPath();
   ctx.ellipse(x - 4, y - 3, 2, 1.5, 0, 0, Math.PI * 2);
   ctx.fill();
+}
+function drawDjumpCollectible(ctx, c) {
+  const bob = Math.sin(c.bobPhase) * 3;
+  const x = c.x + c.w / 2;
+  const y = c.y + c.h / 2 + bob;
+  // Glow (blue/cyan)
+  const g = ctx.createRadialGradient(x, y, 2, x, y, 20);
+  g.addColorStop(0, 'rgba(120,200,255,0.5)');
+  g.addColorStop(1, 'rgba(120,200,255,0)');
+  ctx.fillStyle = g;
+  ctx.fillRect(x - 20, y - 20, 40, 40);
+  // Wing pair
+  ctx.fillStyle = '#cce6ff';
+  ctx.beginPath();
+  ctx.moveTo(x, y - 2);
+  ctx.quadraticCurveTo(x - 13, y - 9, x - 12, y + 3);
+  ctx.quadraticCurveTo(x - 8, y + 1, x, y + 4);
+  ctx.fill();
+  ctx.beginPath();
+  ctx.moveTo(x, y - 2);
+  ctx.quadraticCurveTo(x + 13, y - 9, x + 12, y + 3);
+  ctx.quadraticCurveTo(x + 8, y + 1, x, y + 4);
+  ctx.fill();
+  // Up-arrows core
+  ctx.fillStyle = '#66bbff';
+  ctx.beginPath();
+  ctx.moveTo(x, y - 7); ctx.lineTo(x - 4, y - 1); ctx.lineTo(x + 4, y - 1);
+  ctx.closePath(); ctx.fill();
+  ctx.beginPath();
+  ctx.moveTo(x, y - 2); ctx.lineTo(x - 4, y + 4); ctx.lineTo(x + 4, y + 4);
+  ctx.closePath(); ctx.fill();
 }
 function drawObstacle(ctx, o) {
   if (o.type === 'cactus') drawCactus(ctx, o);
@@ -7495,9 +7601,19 @@ function doJump() {
   const overOv = document.getElementById('dinoGameOverOverlay');
   if (DG.state === 'idle' && startOv.style.display !== 'none') { window.dinoStart(); return; }
   if (DG.state === 'dead' && overOv.style.display !== 'none') { window.dinoStart(); return; }
-  if (DG.state === 'running' && DG.dinoY === 0) {
+  if (DG.state !== 'running') return;
+  if (DG.dinoY === 0) {
+    // Ground jump
     DG.dinoVy = DG.JUMP_VEL;
     DG.isDucking = false;
+    DG.jumpsUsed = 1;
+    dinoSound('jump');
+  } else if (DG.djumpTimer > 0 && DG.jumpsUsed < 2) {
+    // Air double-jump (only with active power-up)
+    DG.dinoVy = DG.JUMP_VEL * 0.92;
+    DG.isDucking = false;
+    DG.jumpsUsed = 2;
+    DG.djumpFx = 14;
     dinoSound('jump');
   }
 }
@@ -7699,6 +7815,7 @@ const BR = {
   questionTimer:null, lastTick:0, loopRaf:0,
   popups:[], cookie:null, captcha:null,
   spawnPopupTimer:0, spawnCookieTimer:0, spawnCaptchaTimer:0,
+  trapWeights:{ popup:1, cookie:1, captcha:1 }, learnedShown:false,
   widgetsSpawned:false,
   bgCtx:null, bgCanvas:null,
   subCanvas:null, soapCanvas:null,
@@ -7843,6 +7960,7 @@ function resetBrainRotState() {
   BR.rot = 0; BR.score = 0; BR.t = 0;
   BR.rotRate = BR.baseRotRate;
   BR.spawnPopupTimer = 0; BR.spawnCookieTimer = 0; BR.spawnCaptchaTimer = 0;
+  BR.trapWeights = { popup:1, cookie:1, captcha:1 }; BR.learnedShown = false;
   BR.widgetsSpawned = false;
   BR.roast = { correctAnswers:0, wrongAnswers:0, timedOut:0, popupClosed:0, popupCtaFell:0, cookieAccept:0, cookieReject:0, captchaPerfect:0, captchaWrong:0 };
   clearTimeout(BR.questionTimer);
@@ -7884,6 +8002,22 @@ function brotLoop(t) {
   drawSoap();
   BR.loopRaf = requestAnimationFrame(brotLoop);
 }
+function learnTrap(kind, fell) {
+  // The "algorithm" adapts: traps you fall for show up more; ones you resist back off
+  const w = BR.trapWeights;
+  if (fell) {
+    w[kind] = Math.min(3, w[kind] + 0.5);
+    // First time the algorithm clearly locks onto a weakness
+    if (!BR.learnedShown && w[kind] >= 2) {
+      BR.learnedShown = true;
+      const names = { popup:'الإعلانات', cookie:'الكوكيز', captcha:'الكابتشا' };
+      try { if (typeof showToast === 'function') showToast('👁️ الخوارزمية تعرف ضعفك: ' + (names[kind] || ''), '#ff0099'); } catch(e){}
+      brot('vine');
+    }
+  } else {
+    w[kind] = Math.max(0.6, w[kind] - 0.25);
+  }
+}
 function updateBR(dt) {
   BR.t += dt;
   // Difficulty ramp
@@ -7894,20 +8028,24 @@ function updateBR(dt) {
   updateMeterUI();
   updateCellsUI();
   if (BR.rot >= 100) { onBrotDeath(); return; }
-  // Spawn distractions
+  // Spawn distractions — frequency adapts to the player's weaknesses (learning algorithm)
   BR.spawnPopupTimer += dt;
   BR.spawnCookieTimer += dt;
   BR.spawnCaptchaTimer += dt;
-  const popupDelay = Math.max(3, 8 - BR.t * 0.05);
-  if (BR.t > 10 && BR.spawnPopupTimer > popupDelay && BR.popups.length < 4) {
+  // Higher weight (trap you keep falling for) = shorter delay = appears more often
+  const popupDelay = Math.max(2, (8 - BR.t * 0.05) / BR.trapWeights.popup);
+  const maxPopups = BR.trapWeights.popup >= 2 ? 6 : 4;
+  if (BR.t > 10 && BR.spawnPopupTimer > popupDelay && BR.popups.length < maxPopups) {
     BR.spawnPopupTimer = 0;
     spawnPopup();
   }
-  if (BR.t > 25 && BR.spawnCookieTimer > 22 && !BR.cookie) {
+  const cookieDelay = Math.max(8, 22 / BR.trapWeights.cookie);
+  if (BR.t > 25 && BR.spawnCookieTimer > cookieDelay && !BR.cookie) {
     BR.spawnCookieTimer = 0;
     spawnCookie();
   }
-  if (BR.t > 45 && BR.spawnCaptchaTimer > 35 && !BR.captcha) {
+  const captchaDelay = Math.max(14, 35 / BR.trapWeights.captcha);
+  if (BR.t > 45 && BR.spawnCaptchaTimer > captchaDelay && !BR.captcha) {
     BR.spawnCaptchaTimer = 0;
     spawnCaptcha();
   }
@@ -8052,6 +8190,7 @@ function spawnPopup() {
   const trapHit = () => {
     BR.rot = Math.min(100, BR.rot + 10);
     BR.roast.popupCtaFell++;
+    learnTrap('popup', true);
     updateMeterUI();
     brot('cookie_trap');
     closePopup(el);
@@ -8075,6 +8214,7 @@ function closePopup(el) {
   brot('popup_close');
   BR.score += 8;
   BR.roast.popupClosed++;
+  learnTrap('popup', false);
   updateCellsUI();
 }
 function spawnCookie() {
@@ -8095,6 +8235,7 @@ function spawnCookie() {
   accept.addEventListener('click', () => {
     BR.rot = Math.min(100, BR.rot + 15);
     BR.roast.cookieAccept++;
+    learnTrap('cookie', true);
     updateMeterUI();
     brot('cookie_trap');
     removeCookie();
@@ -8103,6 +8244,7 @@ function spawnCookie() {
     BR.rot = Math.max(0, BR.rot - 4);
     BR.score += 60;
     BR.roast.cookieReject++;
+    learnTrap('cookie', false);
     updateMeterUI(); updateCellsUI();
     brot('correct');
     removeCookie();
@@ -8155,10 +8297,12 @@ function spawnCaptcha() {
       BR.rot = Math.max(0, BR.rot - 10);
       BR.score += 80;
       BR.roast.captchaPerfect++;
+      learnTrap('captcha', false);
       brot('correct');
     } else {
       BR.rot = Math.min(100, BR.rot + 8);
       BR.roast.captchaWrong++;
+      learnTrap('captcha', true);
       brot('wrong');
     }
     updateMeterUI(); updateCellsUI();
@@ -8837,19 +8981,49 @@ function spawnBoss(){
   SG.bossPending = false;
   const stage = cur();
   const id = stage.boss;
-  const b = { id, x: SG.W/2, y: -90, w:120, h:80, hp:30, maxHp:30, vx:1.2, fireCool:60, t:0, phase:'enter', enterTargetY: 80, attacks:[] };
-  if (id === 'carrier'){ b.hp = 30; b.maxHp = 30; }
-  else if (id === 'megaasteroid'){ b.hp = 45; b.maxHp = 45; b.w = 130; b.h = 110; b.rot = 0; }
-  else if (id === 'destroyer'){ b.hp = 60; b.maxHp = 60; b.w = 160; b.h = 70; }
+  const b = { id, x: SG.W/2, y: -90, w:120, h:80, hp:30, maxHp:30, vx:1.2, fireCool:60, t:0, phase:'enter', enterTargetY: 80, attacks:[], rage:0, flash:0, spinFire:0 };
+  if (id === 'carrier'){ b.hp = 36; b.maxHp = 36; }
+  else if (id === 'megaasteroid'){ b.hp = 48; b.maxHp = 48; b.w = 130; b.h = 110; b.rot = 0; }
+  else if (id === 'destroyer'){ b.hp = 66; b.maxHp = 66; b.w = 160; b.h = 70; }
+  b.baseVx = b.vx;
   SG.boss = b;
   document.getElementById('spBossBanner').style.display = 'block';
   document.getElementById('spBossHp').style.display = 'block';
   updateBossHp();
 }
 
+// HP fraction → rage level (0 = >66%, 1 = 33-66%, 2 = <33%)
+function bossRageForHp(b){
+  const pct = b.hp / b.maxHp;
+  if (pct <= 0.34) return 2;
+  if (pct <= 0.67) return 1;
+  return 0;
+}
+function advanceBossPhase(b, newRage){
+  b.rage = newRage;
+  b.flash = 30;
+  b.vx = b.baseVx * (1 + newRage * 0.45) * (b.vx < 0 ? -1 : 1);
+  b.fireCool = 20; // brief pause before unleashing
+  // Phase banner
+  const banner = document.getElementById('spBossBanner');
+  banner.textContent = newRage === 2 ? '🔥🔥 الزعيم في غضب! 🔥🔥' : '⚠ الزعيم يشتدّ! ⚠';
+  banner.style.display = 'block';
+  setTimeout(()=>{ if (SG.boss && SG.boss.phase === 'fight') document.getElementById('spBossBanner').style.display='none'; }, 1100);
+  spSnd('boss_in');
+  // Ring of bullets as a "shockwave" warning at rage 2
+  if (newRage === 2){
+    for (let i = 0; i < 12; i++){
+      const a = (i / 12) * Math.PI * 2;
+      SG.eBullets.push({ x:b.x, y:b.y, vx: Math.cos(a)*2.4, vy: Math.sin(a)*2.4 + 1, w:5, h:5, color:'#ffaa00' });
+    }
+  }
+  spawnExplosion(b.x, b.y, 1.4);
+}
+
 function updateBoss(dt){
   const b = SG.boss;
   b.t += dt;
+  if (b.flash > 0) b.flash -= dt;
   if (b.phase === 'enter'){
     b.y += 1.3 * dt;
     if (b.y >= b.enterTargetY){ b.y = b.enterTargetY; b.phase = 'fight'; setTimeout(()=>{document.getElementById('spBossBanner').style.display='none';}, 800); }
@@ -8862,36 +9036,67 @@ function updateBoss(dt){
     if (b.t2 > 60){ onBossDefeated(); }
     return;
   }
-  // Fight phase
+  // Phase escalation based on HP
+  const targetRage = bossRageForHp(b);
+  if (targetRage > b.rage){ advanceBossPhase(b, targetRage); }
+  // Fight phase movement (rage 2 bosses also bob vertically)
   b.x += b.vx * dt;
-  if (b.x < b.w/2 + 8){ b.x = b.w/2 + 8; b.vx *= -1; }
-  if (b.x > SG.W - b.w/2 - 8){ b.x = SG.W - b.w/2 - 8; b.vx *= -1; }
+  if (b.x < b.w/2 + 8){ b.x = b.w/2 + 8; b.vx = Math.abs(b.vx); }
+  if (b.x > SG.W - b.w/2 - 8){ b.x = SG.W - b.w/2 - 8; b.vx = -Math.abs(b.vx); }
+  if (b.rage >= 2){ b.y = b.enterTargetY + Math.sin(b.t * 0.06) * 18; }
+  // Fire rate scales with rage
   b.fireCool -= dt;
-  if (b.fireCool <= 0){ bossFire(b); b.fireCool = 30 + Math.random() * 20; }
+  if (b.fireCool <= 0){
+    bossFire(b);
+    const base = [42, 30, 20][b.rage];
+    b.fireCool = base + Math.random() * (base * 0.4);
+  }
 }
 
 function bossFire(b){
+  const rage = b.rage;
   if (b.id === 'carrier'){
-    // 3-way spread
-    SG.eBullets.push({ x:b.x, y:b.y+b.h/2, vx:0, vy:3.5, w:6, h:10, color:'#ff4444' });
-    SG.eBullets.push({ x:b.x-20, y:b.y+b.h/2, vx:-1.2, vy:3.2, w:6, h:10, color:'#ff4444' });
-    SG.eBullets.push({ x:b.x+20, y:b.y+b.h/2, vx:1.2, vy:3.2, w:6, h:10, color:'#ff4444' });
+    // spread widens with rage: 3 → 5 → 7 way
+    const n = [1, 2, 3][rage]; // half-count each side
+    for (let i = -n; i <= n; i++){
+      SG.eBullets.push({ x:b.x, y:b.y+b.h/2, vx: i * 1.1, vy: 3.4 - Math.abs(i)*0.15, w:6, h:10, color: rage>=2?'#ff7733':'#ff4444' });
+    }
+    // rage 2: also drop a fighter occasionally
+    if (rage >= 2 && Math.random() < 0.25){
+      SG.enemies.push(makeEnemy('fighter','dive', 0, 1));
+      const e = SG.enemies[SG.enemies.length-1]; e.x = b.x; e.y = b.y + b.h/2;
+    }
   } else if (b.id === 'megaasteroid'){
-    // spawn smaller asteroid
-    SG.enemies.push(makeEnemy('asteroid','straight', 0, 1));
-    const e = SG.enemies[SG.enemies.length-1];
-    e.x = b.x + rand(-30, 30); e.y = b.y + b.h/2; e.vy = 2.2;
+    // spawn 1 → 2 → 3 asteroids
+    const count = rage + 1;
+    for (let k = 0; k < count; k++){
+      SG.enemies.push(makeEnemy('asteroid','straight', 0, 1));
+      const e = SG.enemies[SG.enemies.length-1];
+      e.x = b.x + rand(-40, 40); e.y = b.y + b.h/2; e.vy = 2.0 + rage*0.4;
+    }
+    // rage >=1: also fire straight rocks-bullets
+    if (rage >= 1){
+      SG.eBullets.push({ x:b.x, y:b.y+b.h/2, vx:0, vy:3.4, w:7, h:10, color:'#ffaa66' });
+    }
   } else if (b.id === 'destroyer'){
-    // 5-way aimed
+    // 5-way aimed, widens to 7, plus a spinning spiral at rage 2
+    const spread = rage + 2; // 2,3,4 half-count
     const dx = SG.player.x - b.x;
     const dy = SG.player.y - b.y;
     const m = Math.sqrt(dx*dx + dy*dy) || 1;
     const aim = { x: dx/m, y: dy/m };
-    for (let i = -2; i <= 2; i++){
-      const angle = i * 0.18;
+    for (let i = -spread; i <= spread; i++){
+      const angle = i * 0.16;
       const ax = aim.x * Math.cos(angle) - aim.y * Math.sin(angle);
       const ay = aim.x * Math.sin(angle) + aim.y * Math.cos(angle);
       SG.eBullets.push({ x:b.x, y:b.y+b.h/2, vx:ax*3.6, vy:ay*3.6, w:5, h:9, color:'#ff66ff' });
+    }
+    if (rage >= 2){
+      b.spinFire = (b.spinFire || 0) + 0.6;
+      for (let k = 0; k < 2; k++){
+        const a = b.spinFire + k * Math.PI;
+        SG.eBullets.push({ x:b.x, y:b.y, vx: Math.cos(a)*2.8, vy: Math.sin(a)*2.8, w:5, h:5, color:'#ff99ff' });
+      }
     }
   }
 }
@@ -8900,7 +9105,13 @@ function updateBossHp(){
   const b = SG.boss;
   if (!b) return;
   const pct = Math.max(0, b.hp / b.maxHp);
-  document.getElementById('spBossHpFill').style.width = (pct * 100) + '%';
+  const fill = document.getElementById('spBossHpFill');
+  fill.style.width = (pct * 100) + '%';
+  const rage = bossRageForHp(b);
+  fill.style.background = rage >= 2
+    ? 'linear-gradient(90deg,#ff2020,#ff5500)'
+    : rage >= 1 ? 'linear-gradient(90deg,#ff5020,#ffaa30)'
+    : 'linear-gradient(90deg,#ff3030,#ff8030)';
 }
 
 function onBossDefeated(){
@@ -9306,6 +9517,20 @@ function drawPowerup(ctx, p){
 function drawBoss(ctx, b){
   ctx.save();
   ctx.translate(b.x, b.y);
+  // Rage aura glow
+  if (b.rage >= 1 && b.phase === 'fight'){
+    const auraR = Math.max(b.w, b.h) * 0.7;
+    const aura = ctx.createRadialGradient(0, 0, auraR*0.5, 0, 0, auraR);
+    const ac = b.rage >= 2 ? '255,60,30' : '255,150,30';
+    aura.addColorStop(0, 'rgba('+ac+',0)');
+    aura.addColorStop(1, 'rgba('+ac+',' + (0.18 + 0.12*Math.sin(b.t*0.15)) + ')');
+    ctx.fillStyle = aura;
+    ctx.fillRect(-auraR, -auraR, auraR*2, auraR*2);
+  }
+  // Phase-transition flash
+  if (b.flash > 0 && Math.floor(b.flash/3) % 2 === 0){
+    ctx.globalAlpha = 0.85;
+  }
   if (b.id === 'carrier'){
     ctx.fillStyle = '#cc3344';
     ctx.fillRect(-b.w/2, -b.h/2, b.w, b.h);
