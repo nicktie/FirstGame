@@ -444,6 +444,18 @@ function goToGames() {
   if (el) el.style.display = 'block';
   _setNavShow(true);
 }
+function returnFromGame() {
+  const hash = (location.hash || '#/').slice(1).split('/').filter(Boolean)[0] || '';
+  if (hash === 'games') { goToGames(); return; }
+  if (hash === 'profile') {
+    if (typeof openProfile === 'function') { hideAllScreens(); openProfile(); _setNavShow(true); return; }
+  }
+  if (hash === 'leaderboard') {
+    if (typeof openGlobalLb === 'function') { hideAllScreens(); openGlobalLb(); _setNavShow(true); return; }
+  }
+  goToLanding();
+}
+window.returnFromGame = returnFromGame;
 function playGame(kind) {
   _setNavShow(false);
   if (kind === 'dino') { playDino(); return; }
@@ -6095,7 +6107,7 @@ body.dino-active .mute-btn,body.dino-active .net-indicator,body.dino-active .ins
 </style>
 <div id="dinoScreen" class="dino-screen" style="display:none">
   <div class="dino-topbar">
-    <button class="back-btn" onclick="exitDino()">← الرئيسية</button>
+    <button class="back-btn" onclick="exitDino()">← رجوع</button>
     <div class="dino-score-display">
       <span class="ds-best">⭐ أفضل: <b id="dinoBestDisplay">0</b></span>
       <span class="ds-best" id="dinoBiomeChip" style="display:none">🏜️ <b id="dinoBiomeName">الصحراء</b></span>
@@ -6317,7 +6329,8 @@ window.exitDino = function() {
   document.body.classList.remove('dino-active');
   document.getElementById('dinoStartOverlay').style.display = 'flex';
   document.getElementById('dinoGameOverOverlay').style.display = 'none';
-  if (typeof goToLanding === 'function') goToLanding();
+  if (typeof returnFromGame === 'function') returnFromGame();
+  else if (typeof goToLanding === 'function') goToLanding();
 };
 function initDino() {
   DG.canvas = document.getElementById('dinoCanvas');
@@ -7579,7 +7592,19 @@ body.brot-active{overflow:hidden}
 .brot-widget-soap{top:8px;right:8px;width:130px;height:90px;border:2px solid var(--brot-cyan)}
 .brot-widget canvas{display:block;width:100%;height:100%}
 /* Game over overlay */
-.brot-over{position:absolute;inset:0;background:rgba(0,0,0,0.93);backdrop-filter:blur(8px);display:flex;flex-direction:column;align-items:center;justify-content:center;padding:20px;text-align:center;z-index:200;animation:brotPopupIn 0.4s}
+.brot-over{position:absolute;inset:0;background:rgba(0,0,0,0.93);backdrop-filter:blur(8px);display:flex;flex-direction:column;align-items:center;justify-content:center;padding:18px 14px;text-align:center;z-index:200;animation:brotPopupIn 0.4s;overflow-y:auto}
+.brot-diag-status{display:inline-block;background:var(--brot-red);color:#fff;padding:4px 16px;border-radius:6px;font-family:'Impact','Arial Black',sans-serif;font-size:0.85rem;letter-spacing:3px;animation:brotCtaBlink 0.55s infinite alternate;margin-bottom:8px;text-shadow:1px 1px 0 #000;border:2px solid #fff}
+.brot-diag-stats{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin:14px 0 10px;width:100%;max-width:360px}
+.brot-stat-card{background:linear-gradient(135deg,rgba(255,0,153,0.18),rgba(0,240,255,0.08));border:1.5px solid var(--brot-magenta);border-radius:10px;padding:8px 6px;text-align:center;display:flex;flex-direction:column;gap:1px}
+.brot-stat-card.good{border-color:var(--brot-lime);background:linear-gradient(135deg,rgba(0,255,102,0.18),rgba(0,240,255,0.08))}
+.bs-icon{font-size:1.3rem;line-height:1}
+.bs-num{font-family:'Impact','Arial Black',sans-serif;font-size:1.9rem;color:var(--brot-yellow);text-shadow:0 0 10px rgba(255,230,0,0.55);line-height:1}
+.brot-stat-card.good .bs-num{color:var(--brot-lime);text-shadow:0 0 10px rgba(0,255,102,0.55)}
+.bs-lbl{font-size:0.66rem;color:var(--brot-cyan);font-weight:700;line-height:1.3;margin-top:2px}
+.brot-diag-roast{background:rgba(0,0,0,0.55);border:1px solid var(--brot-magenta);border-radius:10px;padding:10px 14px;margin:6px 0 10px;max-width:380px;font-size:0.85rem;line-height:1.7;text-align:right;color:#fff}
+.brot-diag-roast p{margin:0 0 6px}
+.brot-diag-roast p:last-child{margin-bottom:0}
+.brot-diag-roast b{color:var(--brot-yellow);text-shadow:0 0 4px rgba(255,230,0,0.5)}
 .brot-over-emoji{font-size:3.2rem;line-height:1;margin-bottom:6px;filter:drop-shadow(0 0 24px var(--brot-magenta))}
 .brot-over-title{font-family:'Impact','Arial Black',sans-serif;font-weight:900;color:var(--brot-magenta);font-size:1.6rem;text-shadow:0 0 18px var(--brot-magenta),3px 3px 0 var(--brot-yellow);margin-bottom:6px;letter-spacing:2px}
 .brot-over-rank{font-family:'Impact','Arial Black',sans-serif;font-size:1.5rem;color:var(--brot-yellow);text-shadow:0 0 14px var(--brot-yellow);margin:8px 0;letter-spacing:1px}
@@ -7613,7 +7638,7 @@ body.brot-active{overflow:hidden}
 <div id="brotScreen" class="brot-screen">
   <div class="brot-bg-effects"><canvas id="brotBgCanvas"></canvas></div>
   <div class="brot-topbar">
-    <button class="brot-back-btn" onclick="exitBrainRot()">← خروج</button>
+    <button class="brot-back-btn" onclick="exitBrainRot()">← رجوع</button>
     <div class="brot-meter-wrap">
       <div class="brot-meter-label"><span>🧠 BRAIN ROT</span><span id="brotMeterPct">0%</span></div>
       <div class="brot-meter-bar"><div class="brot-meter-fill" id="brotMeterFill"></div></div>
@@ -7632,26 +7657,34 @@ body.brot-active{overflow:hidden}
     <div class="brot-start" id="brotStartOverlay">
       <div class="brot-start-emoji">🧠💀</div>
       <div class="brot-start-title">التعفّن الدماغي</div>
-      <div class="brot-start-desc">عداد التعفن يرتفع تلقائياً. أجب على الأسئلة وأغلق النوافذ بسرعة لتنخفض.<br><b style="color:var(--brot-yellow)">انتبه:</b> النقر على الفخاخ يعفّن دماغك أسرع.</div>
+      <div class="brot-start-desc">ساعات السوشيل ميديا تركت بصمتها على عقلك. هذي اللعبة اختبار حقيقي:<br><b style="color:var(--brot-yellow)">هل تقدر تقاوم؟</b> أم راح تضغط كل زر مغري مثل ما تعوّدت؟</div>
       <div class="brot-start-tips">
-        🎯 <b>ركّز:</b> جواب صح = -٨٪ تعفّن<br>
-        ❌ <b>اقفل النوافذ:</b> الـ X يهرب — لاحقه<br>
-        🍪 <b>لا توافق على شي:</b> اقرأ الأزرار
+        🎯 <b>ركّز:</b> جاوب الأسئلة الحسابية البسيطة<br>
+        ❌ <b>قاوم:</b> الإعلانات والـPop-ups فخاخ<br>
+        🍪 <b>اقرأ:</b> لا توافق على شي بدون تفكير<br>
+        🤖 <b>كن واعياً:</b> ميمز الكابتشا ستحاول إغواءك
       </div>
-      <button class="brot-btn-primary" onclick="brainrotStart()">🚀 ابدأ المعاناة</button>
+      <button class="brot-btn-primary" onclick="brainrotStart()">🚀 ابدأ الاختبار</button>
     </div>
     <div class="brot-over" id="brotOverOverlay" style="display:none">
-      <div class="brot-over-emoji">💀</div>
-      <div class="brot-over-title">تعفّن دماغك</div>
-      <div class="brot-over-label">صمدت بـ</div>
+      <div class="brot-diag-status">⚠ OVERDOSE DETECTED</div>
+      <div class="brot-over-emoji">🧠💀</div>
+      <div class="brot-over-title">تشخيص دماغك</div>
+      <div class="brot-diag-stats">
+        <div class="brot-stat-card"><div class="bs-icon">🍪</div><div class="bs-num" id="bsCookies">0</div><div class="bs-lbl">كوكيز وافقت عليها</div></div>
+        <div class="brot-stat-card"><div class="bs-icon">👆</div><div class="bs-num" id="bsTraps">0</div><div class="bs-lbl">إعلانات وقعت فيها</div></div>
+        <div class="brot-stat-card"><div class="bs-icon">❌</div><div class="bs-num" id="bsWrong">0</div><div class="bs-lbl">أسئلة خاطئة</div></div>
+        <div class="brot-stat-card good"><div class="bs-icon">✅</div><div class="bs-num" id="bsCorrect">0</div><div class="bs-lbl">مقاومات ناجحة</div></div>
+      </div>
+      <div class="brot-diag-roast" id="bsRoast"></div>
+      <div class="brot-over-label">خلايا مخ متبقية</div>
       <div class="brot-over-score" id="brotOverScore">0</div>
-      <div class="brot-over-label">خلية مخ</div>
       <div class="brot-over-rank" id="brotOverRank">—</div>
       <div class="brot-over-best">⭐ أفضل: <b id="brotOverBest">0</b></div>
       <div class="brot-over-newrec" id="brotOverNewRec" style="display:none">🎉 رقم قياسي جديد!</div>
       <div class="brot-btn-row">
         <button class="brot-btn-primary" onclick="brainrotStart()">↻ جولة ثانية</button>
-        <button class="brot-btn-secondary" onclick="exitBrainRot()">← خروج</button>
+        <button class="brot-btn-secondary" onclick="exitBrainRot()">← رجوع</button>
       </div>
     </div>
   </div>
@@ -7671,6 +7704,7 @@ const BR = {
   subCanvas:null, soapCanvas:null,
   subState:{ y:0, obstacles:[], color:'#00ff66' },
   soapState:{ x:0, slices:[] },
+  roast:{ correctAnswers:0, wrongAnswers:0, timedOut:0, popupClosed:0, popupCtaFell:0, cookieAccept:0, cookieReject:0, captchaPerfect:0, captchaWrong:0 },
   RANKS: [
     { min:0,    name:'NPC تعفّن أساسي' },
     { min:300,  name:'GigaChad مبتدئ' },
@@ -7772,7 +7806,8 @@ window.exitBrainRot = function() {
   if (scr) { scr.classList.remove('active'); scr.style.display = 'none'; }
   document.getElementById('brotStartOverlay').style.display = 'flex';
   document.getElementById('brotOverOverlay').style.display = 'none';
-  if (typeof goToLanding === 'function') goToLanding();
+  if (typeof returnFromGame === 'function') returnFromGame();
+  else if (typeof goToLanding === 'function') goToLanding();
 };
 function initBrainRot() {
   BR.arenaEl = document.getElementById('brotArena');
@@ -7809,6 +7844,7 @@ function resetBrainRotState() {
   BR.rotRate = BR.baseRotRate;
   BR.spawnPopupTimer = 0; BR.spawnCookieTimer = 0; BR.spawnCaptchaTimer = 0;
   BR.widgetsSpawned = false;
+  BR.roast = { correctAnswers:0, wrongAnswers:0, timedOut:0, popupClosed:0, popupCtaFell:0, cookieAccept:0, cookieReject:0, captchaPerfect:0, captchaWrong:0 };
   clearTimeout(BR.questionTimer);
   // clear DOM distractions
   document.querySelectorAll('.brot-popup, .brot-cookie, .brot-captcha').forEach(el => el.remove());
@@ -7936,6 +7972,7 @@ function spawnQuestion() {
   BR.questionTimer = setTimeout(() => {
     if (BR.state === 'running' && BR.qBox.style.display !== 'none') {
       BR.rot = Math.min(100, BR.rot + 8);
+      BR.roast.timedOut++;
       updateMeterUI();
       BR.qBox.style.display = 'none';
       setTimeout(spawnQuestion, 1200 + Math.random() * 1500);
@@ -7950,10 +7987,12 @@ function answerQuestion(picked, btn) {
     btn.classList.add('correct');
     BR.rot = Math.max(0, BR.rot - 8);
     BR.score += 30;
+    BR.roast.correctAnswers++;
     brot('correct');
   } else {
     btn.classList.add('wrong');
     BR.rot = Math.min(100, BR.rot + 6);
+    BR.roast.wrongAnswers++;
     brot('wrong');
   }
   updateMeterUI();
@@ -8010,20 +8049,15 @@ function spawnPopup() {
   xBtn.addEventListener('click', trySolve);
   // CTA button (trap)
   const cta = el.querySelector('.brot-popup-cta');
-  cta.addEventListener('click', (e) => {
-    e.stopPropagation();
+  const trapHit = () => {
     BR.rot = Math.min(100, BR.rot + 10);
+    BR.roast.popupCtaFell++;
     updateMeterUI();
     brot('cookie_trap');
     closePopup(el);
-  });
-  cta.addEventListener('touchstart', (e) => {
-    e.preventDefault();
-    BR.rot = Math.min(100, BR.rot + 10);
-    updateMeterUI();
-    brot('cookie_trap');
-    closePopup(el);
-  }, { passive:false });
+  };
+  cta.addEventListener('click', (e) => { e.stopPropagation(); trapHit(); });
+  cta.addEventListener('touchstart', (e) => { e.preventDefault(); trapHit(); }, { passive:false });
   // Auto-rot penalty for uncl losed popups
   el._rotTick = setInterval(() => {
     if (BR.state === 'running' && el.parentNode) {
@@ -8040,6 +8074,7 @@ function closePopup(el) {
   }, 180);
   brot('popup_close');
   BR.score += 8;
+  BR.roast.popupClosed++;
   updateCellsUI();
 }
 function spawnCookie() {
@@ -8059,6 +8094,7 @@ function spawnCookie() {
   const reject = el.querySelector('.brot-cookie-reject');
   accept.addEventListener('click', () => {
     BR.rot = Math.min(100, BR.rot + 15);
+    BR.roast.cookieAccept++;
     updateMeterUI();
     brot('cookie_trap');
     removeCookie();
@@ -8066,6 +8102,7 @@ function spawnCookie() {
   reject.addEventListener('click', () => {
     BR.rot = Math.max(0, BR.rot - 4);
     BR.score += 60;
+    BR.roast.cookieReject++;
     updateMeterUI(); updateCellsUI();
     brot('correct');
     removeCookie();
@@ -8117,9 +8154,11 @@ function spawnCaptcha() {
     if (perfect) {
       BR.rot = Math.max(0, BR.rot - 10);
       BR.score += 80;
+      BR.roast.captchaPerfect++;
       brot('correct');
     } else {
       BR.rot = Math.min(100, BR.rot + 8);
+      BR.roast.captchaWrong++;
       brot('wrong');
     }
     updateMeterUI(); updateCellsUI();
@@ -8228,6 +8267,37 @@ function drawSoap() {
     return s.y < H && s.x < W;
   });
 }
+function generateRoast(r) {
+  const lines = [];
+  if (r.cookieAccept >= 2) {
+    lines.push('🍪 وافقت على <b>' + ar(r.cookieAccept) + '</b> ملفات كوكيز بدون قراءة. مخك مدرّب على الضغط بدون تفكير — تماماً مثل كل تطبيق تستخدمه.');
+  } else if (r.cookieAccept >= 1) {
+    lines.push('🍪 وافقت على شريط الكوكيز. هذي عادة سيئة تعلّمتها من الإنترنت.');
+  }
+  if (r.popupCtaFell >= 2) {
+    lines.push('👆 ضغطت <b>' + ar(r.popupCtaFell) + '</b> إعلانات مغرية. خوارزميات السوشيل ميديا تعرف ضعفك أكثر منك.');
+  } else if (r.popupCtaFell >= 1) {
+    lines.push('👆 ضغطت إعلان مغري واحد. كم Pop-up شفت اليوم بدون ما تفكر؟');
+  }
+  if (r.wrongAnswers >= 3) {
+    lines.push('❌ أخطأت في <b>' + ar(r.wrongAnswers) + '</b> أسئلة حسابية بسيطة. ساعات Scroll اللانهائي تركت أثرها على تركيزك.');
+  }
+  if (r.timedOut >= 2) {
+    lines.push('⏰ تجمّدت في <b>' + ar(r.timedOut) + '</b> سؤال بدون إجابة. قدرة تركيزك = ٨ ثوانٍ، أقل من سمكة الذهب. شكراً تيك توك.');
+  }
+  if (r.captchaWrong >= 1 && r.captchaPerfect === 0) {
+    lines.push('🤖 فشلت في تمييز الميمز. عشت كثير داخل Meme Culture حتى ضاعت معاييرك.');
+  }
+  if (lines.length === 0) {
+    if (r.correctAnswers >= 5 && r.cookieReject >= 1) {
+      lines.push('💪 لاحظنا مقاومتك للفخاخ. مخك صامد ضد طوفان السوشيل ميديا — حافظ على هذي العادة.');
+    } else {
+      lines.push('📱 ساعات السوشيل ميديا تركت بصمتها. الإدمان الرقمي يقلّل قدرة التركيز بـ٢٣٪ خلال شهر فقط.');
+    }
+  }
+  lines.push('<br>💡 <b>الحل:</b> ٣٠ دقيقة بدون شاشة كل يوم. خلّي مخك يتنفّس.');
+  return lines.map(l => '<p>' + l + '</p>').join('');
+}
 function onBrotDeath() {
   BR.state = 'dead';
   cancelAnimationFrame(BR.loopRaf);
@@ -8249,6 +8319,15 @@ function onBrotDeath() {
   try { if (typeof brainrotLeaderboardSubmit === 'function') brainrotLeaderboardSubmit(final); } catch(e){}
   let rank = BR.RANKS[0].name;
   for (const r of BR.RANKS) if (final >= r.min) rank = r.name;
+  // Populate diagnostic stats
+  const r = BR.roast;
+  const setN = (id, v) => { const el = document.getElementById(id); if (el) el.textContent = ar(v); };
+  setN('bsCookies', r.cookieAccept);
+  setN('bsTraps', r.popupCtaFell);
+  setN('bsWrong', r.wrongAnswers);
+  setN('bsCorrect', r.correctAnswers);
+  const roastEl = document.getElementById('bsRoast');
+  if (roastEl) roastEl.innerHTML = generateRoast(r);
   document.getElementById('brotOverScore').textContent = ar(final);
   document.getElementById('brotOverBest').textContent = ar(BR.best);
   document.getElementById('brotOverRank').textContent = '🏆 ' + rank;
@@ -8328,7 +8407,7 @@ body.space-active{overflow:hidden}
 </style>
 <div id="spaceScreen" class="space-screen">
   <div class="space-topbar">
-    <button class="sp-back-btn" onclick="exitSpace()">← خروج</button>
+    <button class="sp-back-btn" onclick="exitSpace()">← رجوع</button>
     <div class="sp-hud">
       <div class="sp-hud-item"><span class="sp-hud-icon">❤️</span><span id="spLives">3</span></div>
       <div class="sp-hud-item sp-hud-stage"><span class="sp-hud-icon">🌌</span><span id="spStageLbl">1/3</span></div>
@@ -8366,7 +8445,7 @@ body.space-active{overflow:hidden}
       <div class="sp-final-rec" id="spFinalNewRec" style="display:none">🎉 رقم قياسي جديد!</div>
       <div class="sp-btn-row">
         <button class="sp-btn-primary" onclick="spaceStart()">↻ مرة ثانية</button>
-        <button class="sp-btn-secondary" onclick="exitSpace()">← خروج</button>
+        <button class="sp-btn-secondary" onclick="exitSpace()">← رجوع</button>
       </div>
     </div>
   </div>
@@ -8477,7 +8556,8 @@ window.exitSpace = function(){
   if (scr) { scr.classList.remove('active'); scr.style.display = 'none'; }
   document.getElementById('spaceStartOverlay').style.display = 'flex';
   document.getElementById('spaceOverOverlay').style.display = 'none';
-  if (typeof goToLanding === 'function') goToLanding();
+  if (typeof returnFromGame === 'function') returnFromGame();
+  else if (typeof goToLanding === 'function') goToLanding();
 };
 
 function initSpace(){
