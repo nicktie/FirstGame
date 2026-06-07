@@ -9432,17 +9432,22 @@ body.chess-active{overflow:hidden}
 @keyframes chCheckPulse{from{box-shadow:inset 0 0 6px rgba(255,50,50,0.5)}to{box-shadow:inset 0 0 16px rgba(255,50,50,0.9)}}
 .ch-sq.legal::before{content:'';position:absolute;width:32%;height:32%;border-radius:50%;background:rgba(0,0,0,0.32);pointer-events:none}
 .ch-sq.legal-capture::before{width:86%;height:86%;background:transparent;border:4px solid rgba(180,30,30,0.55);box-sizing:border-box}
-.ch-piece{font-size:clamp(1.2rem,7.5vmin,2.6rem);line-height:1;pointer-events:none;text-align:center;display:flex;align-items:center;justify-content:center;width:100%;height:100%}
-.ch-piece.w{color:#fff;text-shadow:1px 1px 0 #000,-1px -1px 0 #000,1px -1px 0 #000,-1px 1px 0 #000,0 0 4px rgba(0,0,0,0.5)}
-.ch-piece.b{color:#1a1a1a;text-shadow:0 0 1px rgba(0,0,0,0.4),1px 1px 0 rgba(255,255,255,0.3)}
+.ch-piece{pointer-events:none;display:flex;align-items:center;justify-content:center;width:100%;height:100%;padding:8%;box-sizing:border-box;position:absolute;inset:0}
+.ch-piece svg{width:100%;height:100%;display:block}
+.ch-piece.w{color:#ffffff;filter:drop-shadow(1px 1px 0 #000) drop-shadow(-1px -1px 0 #000) drop-shadow(1px -1px 0 #000) drop-shadow(-1px 1px 0 #000)}
+.ch-piece.b{color:#1a1a1a;filter:drop-shadow(0.5px 0.5px 0 rgba(255,255,255,0.18))}
+.ch-cap{display:inline-flex;width:13px;height:15px;align-items:center;justify-content:center}
+.ch-cap svg{width:100%;height:100%}
+.ch-cap.w{color:#fff;filter:drop-shadow(0 0 1px #000)}
+.ch-cap.b{color:#1a1a1a;filter:drop-shadow(0 0 1px rgba(255,255,255,0.3))}
 
 /* Board skins */
 .ch-board.skin-classic{--ch-light:#f0d9b5;--ch-dark:#b58863;--ch-border:#5d4424;--ch-select:#ffd600}
 .ch-board.skin-wood{--ch-light:#d8b074;--ch-dark:#7a4f2a;--ch-border:#2d1a08;--ch-select:#ffae00}
 .ch-board.skin-neon{--ch-light:#1a1a2a;--ch-dark:#0a0a14;--ch-border:#c9a84c;--ch-select:#ffe600}
 .ch-board.skin-neon{box-shadow:0 0 28px rgba(201,168,76,0.35),0 10px 30px rgba(0,0,0,0.5)}
-.ch-board.skin-neon .ch-piece.w{color:#fff;text-shadow:0 0 6px rgba(255,255,255,0.7),0 0 12px rgba(255,255,255,0.4)}
-.ch-board.skin-neon .ch-piece.b{color:#c9a84c;text-shadow:0 0 6px rgba(201,168,76,0.7),0 0 12px rgba(201,168,76,0.4)}
+.ch-board.skin-neon .ch-piece.w{color:#fff;filter:drop-shadow(0 0 4px rgba(255,255,255,0.7)) drop-shadow(0 0 8px rgba(255,255,255,0.35))}
+.ch-board.skin-neon .ch-piece.b{color:#c9a84c;filter:drop-shadow(0 0 4px rgba(201,168,76,0.7)) drop-shadow(0 0 8px rgba(201,168,76,0.35))}
 
 /* Game controls */
 .ch-game-controls{display:flex;gap:8px;justify-content:center;flex-shrink:0;flex-wrap:wrap}
@@ -9491,9 +9496,9 @@ body.chess-active{overflow:hidden}
     <div class="ch-setup-card">
       <div class="ch-opt-label">العب بـ:</div>
       <div class="ch-opts" data-opt="color">
-        <button class="ch-opt active" data-val="w">♔ أبيض</button>
+        <button class="ch-opt active" data-val="w">⚪ أبيض</button>
         <button class="ch-opt" data-val="random">🎲 عشوائي</button>
-        <button class="ch-opt" data-val="b">♚ أسود</button>
+        <button class="ch-opt" data-val="b">⚫ أسود</button>
       </div>
     </div>
     <div class="ch-setup-card">
@@ -9551,7 +9556,15 @@ body.chess-active{overflow:hidden}
 </div>
 <script>
 (function(){
-const PIECE_CHARS = { p:'♟', r:'♜', n:'♞', b:'♝', q:'♛', k:'♚' };
+const PIECE_PATHS = {
+  k: '<path d="M3 10 L6 4 L8 9 L10 3 L12 8 L14 3 L16 9 L18 4 L21 10 L21 14 L3 14 Z"/><circle cx="12" cy="4" r="1.4"/><path d="M5 14 L19 14 L18.5 17 L5.5 17 Z"/><path d="M4.5 17 L19.5 17 L18 23 L6 23 Z"/><ellipse cx="12" cy="26" rx="10" ry="2.5"/><rect x="2" y="25.5" width="20" height="2"/>',
+  q: '<circle cx="3.5" cy="6" r="1.5"/><circle cx="7.5" cy="3" r="1.5"/><circle cx="12" cy="2" r="1.5"/><circle cx="16.5" cy="3" r="1.5"/><circle cx="20.5" cy="6" r="1.5"/><path d="M3.5 6 L6.5 13 L7.5 4 L10 13 L12 3 L14 13 L16.5 4 L17.5 13 L20.5 6 L19.5 14 L4.5 14 Z"/><path d="M5 14 L19 14 L19 17 L5 17 Z"/><path d="M4.5 17 L19.5 17 L18 23 L6 23 Z"/><ellipse cx="12" cy="26" rx="10" ry="2.5"/><rect x="2" y="25.5" width="20" height="2"/>',
+  r: '<path d="M4 4 L4 8 L7 8 L7 6 L10 6 L10 8 L14 8 L14 6 L17 6 L17 8 L20 8 L20 4 Z"/><rect x="4" y="8" width="16" height="2"/><rect x="6" y="10" width="12" height="10"/><rect x="5" y="20" width="14" height="2"/><path d="M4.5 22 L19.5 22 L18 24 L6 24 Z"/><ellipse cx="12" cy="26" rx="10" ry="2.5"/><rect x="2" y="25.5" width="20" height="2"/>',
+  b: '<circle cx="12" cy="3" r="1.8"/><path d="M9 5 Q9 12 9 16 Q9 17 12 17 Q15 17 15 16 Q15 12 15 5 Q12 3.5 9 5 Z"/><ellipse cx="12" cy="12" rx="3.2" ry="0.7" fill-opacity="0.3"/><path d="M8 17 L16 17 L16 19 L8 19 Z"/><path d="M5 19 L19 19 L17.5 23 L6.5 23 Z"/><ellipse cx="12" cy="26" rx="10" ry="2.5"/><rect x="2" y="25.5" width="20" height="2"/>',
+  n: '<path d="M9 4 Q10 2 12 2 L15 3 L18 6 L19 9 L19 13 L18.5 16 L17 17 L13 17 L13 14 L11 14 L10 17 L6 17 L6 13 Q6 10 7 8 L8.5 5.5 Z"/><path d="M9 4 L8 6 L7 5 L8 3 Z"/><circle cx="14" cy="8" r="0.9" fill-opacity="0.6" fill="#fff"/><path d="M6 17 L18 17 L17 19 L7 19 Z"/><path d="M5 19 L19 19 L17.5 23 L6.5 23 Z"/><ellipse cx="12" cy="26" rx="10" ry="2.5"/><rect x="2" y="25.5" width="20" height="2"/>',
+  p: '<circle cx="12" cy="5" r="3.5"/><ellipse cx="12" cy="10" rx="2.5" ry="1"/><path d="M9 11 Q8 14 9 18 L15 18 Q16 14 15 11 Z"/><path d="M6 18 L18 18 L17.5 22 L6.5 22 Z"/><ellipse cx="12" cy="25" rx="10" ry="2.5"/><rect x="2" y="24.5" width="20" height="2"/>'
+};
+function pieceSVG(t){ return '<svg viewBox="0 0 24 28" xmlns="http://www.w3.org/2000/svg" fill="currentColor">' + (PIECE_PATHS[t] || '') + '</svg>'; }
 const PV = { p:100, n:320, b:330, r:500, q:900, k:20000 };
 const KNIGHT_OFFS = [[-2,-1],[-2,1],[-1,-2],[-1,2],[1,-2],[1,2],[2,-1],[2,1]];
 const KING_OFFS = [[-1,-1],[-1,0],[-1,1],[0,-1],[0,1],[1,-1],[1,0],[1,1]];
@@ -10004,7 +10017,7 @@ function renderBoard(){
     const sq = CG.squares[i];
     if (!sq) continue;
     const p = CG.board[i];
-    sq.innerHTML = p ? '<span class="ch-piece ' + p.c + '">' + PIECE_CHARS[p.t] + '</span>' : '';
+    sq.innerHTML = p ? '<div class="ch-piece ' + p.c + '">' + pieceSVG(p.t) + '</div>' : '';
     sq.classList.remove('sel', 'legal', 'legal-capture', 'lastmove', 'check');
   }
   // last move highlight
@@ -10030,8 +10043,8 @@ function renderBoard(){
 }
 function renderCaptured(){
   // captured.w = pieces white lost (so black captured); show them on white side
-  const me = CG.captured[CG.playerColor].map(t => '<span class="' + opp(CG.playerColor) + '">' + PIECE_CHARS[t] + '</span>').join('');
-  const opp_ = CG.captured[opp(CG.playerColor)].map(t => '<span class="' + CG.playerColor + '">' + PIECE_CHARS[t] + '</span>').join('');
+  const me = CG.captured[CG.playerColor].map(t => '<span class="ch-cap ' + opp(CG.playerColor) + '">' + pieceSVG(t) + '</span>').join('');
+  const opp_ = CG.captured[opp(CG.playerColor)].map(t => '<span class="ch-cap ' + CG.playerColor + '">' + pieceSVG(t) + '</span>').join('');
   document.getElementById('chMeCaptured').innerHTML = me;
   document.getElementById('chOppCaptured').innerHTML = opp_;
 }
