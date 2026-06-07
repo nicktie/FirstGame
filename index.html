@@ -6179,6 +6179,7 @@ const DG = {
   hearts: 3, invincible: 0, hitFlash: 0,
   combo: 0, multiplier: 1, comboFlash: 0,
   djumpTimer: 0, jumpsUsed: 0, djumpTimer2: 0, djumpFx: 0,
+  magnetTimer: 0,
   obstacles: [], collectibles: [],
   spawnTimer: 0, spawnNext: 80,
   heartTimer: 0, heartNext: 500,
@@ -6369,6 +6370,7 @@ function resetDinoState() {
   DG.invincible = 0; DG.hitFlash = 0;
   DG.combo = 0; DG.multiplier = 1; DG.comboFlash = 0;
   DG.djumpTimer = 0; DG.jumpsUsed = 0; DG.djumpFx = 0;
+  DG.magnetTimer = 0;
   DG.obstacles = []; DG.collectibles = [];
   DG.spawnTimer = 0; DG.spawnNext = 90;
   DG.heartTimer = 0; DG.heartNext = 400 + Math.random()*300;
@@ -6489,14 +6491,31 @@ function updateDino(dt) {
   } else {
     DG.heartTimer = 0;
   }
-  // Spawn double-jump power-up (only when not already active, after score 100)
-  if (curScore > 100 && DG.djumpTimer <= 0 && !DG.bossActive) {
+  // Spawn a power-up (double-jump or magnet) when none active, after score 100
+  if (curScore > 100 && DG.djumpTimer <= 0 && DG.magnetTimer <= 0 && !DG.bossActive) {
     DG.djumpSpawnTimer += dt;
     if (DG.djumpSpawnTimer > DG.djumpSpawnNext) {
-      spawnDjumpPowerup();
+      spawnDinoPowerup();
       DG.djumpSpawnTimer = 0;
       DG.djumpSpawnNext = DG.DJUMP_PERIOD_MIN + Math.random() * (DG.DJUMP_PERIOD_MAX - DG.DJUMP_PERIOD_MIN);
     }
+  }
+  // Magnet timer + pull collectibles toward dino
+  if (DG.magnetTimer > 0) {
+    DG.magnetTimer -= dt;
+    if (DG.magnetTimer <= 0) { DG.magnetTimer = 0; showMilestone('🧲 انتهى المغناطيس'); }
+    const dcx = DG.DINO_X + DG.DINO_W/2, dcy = DG.GROUND_Y - DG.DINO_H/2 + DG.dinoY;
+    DG.collectibles.forEach(c => {
+      if (c.kind === 'djump' || c.kind === 'magnet') return; // don't pull power-ups
+      const ccx = c.x + c.w/2, ccy = c.y + c.h/2;
+      const dx = dcx - ccx, dy = dcy - ccy;
+      const dist = Math.hypot(dx, dy) || 1;
+      if (dist < 280) {
+        const pull = 4.2 * dt;
+        c.x += (dx / dist) * pull * 1.4;
+        c.y += (dy / dist) * pull;
+      }
+    });
   }
   // Move obstacles & collectibles + combo tracking on pass
   DG.obstacles.forEach(o => {
@@ -6528,6 +6547,10 @@ function updateDino(dt) {
         DG.djumpFx = 18;
         showMilestone('🪽 قفز مزدوج!');
         dinoSound('heart');
+      } else if (c.kind === 'magnet') {
+        DG.magnetTimer = 360;
+        showMilestone('🧲 مغناطيس القلوب!');
+        dinoSound('heart');
       } else if (DG.hearts < DG.MAX_HEARTS) {
         DG.hearts++;
         updateHeartsUI(true);
@@ -6551,10 +6574,12 @@ function onObstacleCleared() {
     if (mult > 1) { showMilestone('🔥 ×' + mult + ' كومبو!'); dinoSound('milestone'); }
   }
 }
-function spawnDjumpPowerup() {
+function spawnDinoPowerup() {
   const w = 28, h = 28;
   const y = DG.GROUND_Y - 95 - Math.random() * 45;
-  DG.collectibles.push({ x: DG.W + 10, y, w, h, bobPhase: 0, kind: 'djump' });
+  // Magnet only meaningfully helps when hearts are missing; otherwise favour djump
+  const kind = (DG.hearts < DG.MAX_HEARTS && Math.random() < 0.5) ? 'magnet' : 'djump';
+  DG.collectibles.push({ x: DG.W + 10, y, w, h, bobPhase: 0, kind });
 }
 function pulseScore() {
   const el = document.getElementById('dinoScoreDisplay');
@@ -6806,7 +6831,7 @@ function drawDinoFrame(dead) {
   }
   ctx.globalAlpha = 1;
   // Collectibles
-  DG.collectibles.forEach(c => { if (c.kind === 'djump') drawDjumpCollectible(ctx, c); else drawHeartCollectible(ctx, c); });
+  DG.collectibles.forEach(c => { if (c.kind === 'djump') drawDjumpCollectible(ctx, c); else if (c.kind === 'magnet') drawMagnetCollectible(ctx, c); else drawHeartCollectible(ctx, c); });
   // Obstacles
   DG.obstacles.forEach(o => drawObstacle(ctx, o));
   // Dino (blink if invincible)
@@ -6852,14 +6877,23 @@ function drawDinoHud(ctx) {
     ctx.fillStyle = 'rgba(255,255,255,0.6)';
     ctx.fillText('كومبو ' + DG.combo, DG.W/2, pad + 30);
   }
-  // Double-jump indicator
+  // Power-up indicators
+  ctx.textAlign = 'left';
+  let iy = pad + 52;
   if (DG.djumpTimer > 0) {
-    ctx.textAlign = 'left';
     const secs = Math.ceil(DG.djumpTimer / 60);
     const pulse = 0.6 + 0.4 * Math.sin(DG.djumpTimer * 0.2);
     ctx.font = 'bold 15px "Tajawal", sans-serif';
     ctx.fillStyle = 'rgba(120,200,255,' + pulse + ')';
-    ctx.fillText('🪽 ' + secs + 'ث', pad, pad + 52);
+    ctx.fillText('🪽 ' + secs + 'ث', pad, iy);
+    iy += 20;
+  }
+  if (DG.magnetTimer > 0) {
+    const secs = Math.ceil(DG.magnetTimer / 60);
+    const pulse = 0.6 + 0.4 * Math.sin(DG.magnetTimer * 0.2);
+    ctx.font = 'bold 15px "Tajawal", sans-serif';
+    ctx.fillStyle = 'rgba(220,120,255,' + pulse + ')';
+    ctx.fillText('🧲 ' + secs + 'ث', pad, iy);
   }
   ctx.restore();
 }
@@ -6948,6 +6982,31 @@ function drawDjumpCollectible(ctx, c) {
   ctx.beginPath();
   ctx.moveTo(x, y - 2); ctx.lineTo(x - 4, y + 4); ctx.lineTo(x + 4, y + 4);
   ctx.closePath(); ctx.fill();
+}
+function drawMagnetCollectible(ctx, c) {
+  const bob = Math.sin(c.bobPhase) * 3;
+  const x = c.x + c.w / 2;
+  const y = c.y + c.h / 2 + bob;
+  // Glow (purple/magenta)
+  const g = ctx.createRadialGradient(x, y, 2, x, y, 20);
+  g.addColorStop(0, 'rgba(200,80,255,0.5)');
+  g.addColorStop(1, 'rgba(200,80,255,0)');
+  ctx.fillStyle = g;
+  ctx.fillRect(x - 20, y - 20, 40, 40);
+  // Horseshoe magnet body (red U)
+  ctx.lineWidth = 5;
+  ctx.strokeStyle = '#e0352b';
+  ctx.beginPath();
+  ctx.arc(x, y - 1, 7, Math.PI, 0, false);
+  ctx.stroke();
+  ctx.beginPath();
+  ctx.moveTo(x - 7, y - 1); ctx.lineTo(x - 7, y + 8);
+  ctx.moveTo(x + 7, y - 1); ctx.lineTo(x + 7, y + 8);
+  ctx.stroke();
+  // Pole tips (silver/grey)
+  ctx.fillStyle = '#cfd4dc';
+  ctx.fillRect(x - 9.5, y + 7, 5, 4);
+  ctx.fillRect(x + 4.5, y + 7, 5, 4);
 }
 function drawObstacle(ctx, o) {
   if (o.type === 'cactus') drawCactus(ctx, o);
@@ -7816,6 +7875,7 @@ const BR = {
   popups:[], cookie:null, captcha:null,
   spawnPopupTimer:0, spawnCookieTimer:0, spawnCaptchaTimer:0,
   trapWeights:{ popup:1, cookie:1, captcha:1 }, learnedShown:false,
+  answerStreak:0,
   widgetsSpawned:false,
   bgCtx:null, bgCanvas:null,
   subCanvas:null, soapCanvas:null,
@@ -7854,7 +7914,15 @@ const BR = {
     () => { const a = 5+Math.floor(Math.random()*10), b = 1+Math.floor(Math.random()*4); return { q: ar(a)+' − '+ar(b)+' = ؟', ans:a-b }; },
     () => { const a = 2+Math.floor(Math.random()*5), b = 2+Math.floor(Math.random()*5); return { q: ar(a)+' × '+ar(b)+' = ؟', ans:a*b }; },
     () => { const a = 6+Math.floor(Math.random()*15); const even = a%2===0; return { q: ar(a)+' زوجي أم فردي؟', ans: even?'زوجي':'فردي', textChoices:['زوجي','فردي'] }; },
-    () => { const a = 2+Math.floor(Math.random()*15), b = 2+Math.floor(Math.random()*15); if(a===b)return { q: ar(a)+' أكبر أم أصغر من '+ar(b+1)+'؟', ans:'أصغر', textChoices:['أكبر','أصغر'] }; return { q: ar(a)+' أكبر أم أصغر من '+ar(b)+'؟', ans: a>b?'أكبر':'أصغر', textChoices:['أكبر','أصغر'] }; }
+    () => { const a = 2+Math.floor(Math.random()*15), b = 2+Math.floor(Math.random()*15); if(a===b)return { q: ar(a)+' أكبر أم أصغر من '+ar(b+1)+'؟', ans:'أصغر', textChoices:['أكبر','أصغر'] }; return { q: ar(a)+' أكبر أم أصغر من '+ar(b)+'؟', ans: a>b?'أكبر':'أصغر', textChoices:['أكبر','أصغر'] }; },
+    // متتالية رقمية — أكمل النمط
+    () => { const start=2+Math.floor(Math.random()*5); const step=1+Math.floor(Math.random()*3); const seq=[start,start+step,start+step*2]; return { q: seq.map(ar).join(' ، ')+' ، ؟', ans: start+step*3 }; },
+    // عُدّ الإيموجي
+    () => { const n=2+Math.floor(Math.random()*5); return { q:'كم نار؟ '+'🔥'.repeat(n), ans:n }; },
+    // الدخيل — ليس فاكهة
+    () => { const fruits=['🍎','🍌','🍇','🍊','🍓','🍉']; const others=['🚗','⚽','📱','🚀','🎸','🔑','🧦']; const f=fruits.slice().sort(()=>Math.random()-0.5).slice(0,3); const odd=others[Math.floor(Math.random()*others.length)]; return { q:'أيها ليس فاكهة؟', ans:odd, textChoices:[...f,odd] }; },
+    // التصنيف — أيهم حيوان
+    () => { const animals=['🐶','🐱','🦁','🐘','🦊','🐸','🐼']; const non=['🍕','🌳','🚗','⭐','🎈','📚','☂️']; const a=animals[Math.floor(Math.random()*animals.length)]; const n=non.slice().sort(()=>Math.random()-0.5).slice(0,3); return { q:'أيهم حيوان؟', ans:a, textChoices:[a,...n] }; }
   ]
 };
 window.BRAIN_ROT = BR;
@@ -7961,6 +8029,7 @@ function resetBrainRotState() {
   BR.rotRate = BR.baseRotRate;
   BR.spawnPopupTimer = 0; BR.spawnCookieTimer = 0; BR.spawnCaptchaTimer = 0;
   BR.trapWeights = { popup:1, cookie:1, captcha:1 }; BR.learnedShown = false;
+  BR.answerStreak = 0;
   BR.widgetsSpawned = false;
   BR.roast = { correctAnswers:0, wrongAnswers:0, timedOut:0, popupClosed:0, popupCtaFell:0, cookieAccept:0, cookieReject:0, captchaPerfect:0, captchaWrong:0 };
   clearTimeout(BR.questionTimer);
@@ -8087,7 +8156,7 @@ function spawnQuestion() {
   BR.qOptsEl.innerHTML = '';
   let options;
   if (q.textChoices) {
-    options = q.textChoices.slice();
+    options = q.textChoices.slice().sort(() => Math.random() - 0.5);
   } else {
     options = [q.ans];
     while (options.length < 4) {
@@ -8111,6 +8180,7 @@ function spawnQuestion() {
     if (BR.state === 'running' && BR.qBox.style.display !== 'none') {
       BR.rot = Math.min(100, BR.rot + 8);
       BR.roast.timedOut++;
+      BR.answerStreak = 0;
       updateMeterUI();
       BR.qBox.style.display = 'none';
       setTimeout(spawnQuestion, 1200 + Math.random() * 1500);
@@ -8127,10 +8197,19 @@ function answerQuestion(picked, btn) {
     BR.score += 30;
     BR.roast.correctAnswers++;
     brot('correct');
+    // Awakening combo: 3 correct in a row = big rot drop
+    BR.answerStreak++;
+    if (BR.answerStreak > 0 && BR.answerStreak % 3 === 0) {
+      BR.rot = Math.max(0, BR.rot - 25);
+      BR.score += 50;
+      try { if (typeof showToast === 'function') showToast('🧠 عقلك يقاوم! صحوة −٢٥٪', '#00ff66'); } catch(e){}
+      brot('correct');
+    }
   } else {
     btn.classList.add('wrong');
     BR.rot = Math.min(100, BR.rot + 6);
     BR.roast.wrongAnswers++;
+    BR.answerStreak = 0;
     brot('wrong');
   }
   updateMeterUI();
@@ -8576,8 +8655,8 @@ body.space-active{overflow:hidden}
       <div class="sp-desc">دافع عن سفينتك ضد ٣ مراحل من الأعداء وزعمائهم. اجمع التعزيزات لتحسين قدراتك.</div>
       <div class="sp-hint">
         🎯 <b>تحرّك:</b> اسحب على الشريط الأخضر أسفل الشاشة (أو ← →)<br>
-        🔫 <b>الإطلاق:</b> تلقائي<br>
-        💣 <b>القنبلة:</b> تمسح كل الأعداء — لازم تجمعها
+        🔫 <b>الإطلاق:</b> تلقائي • 💥 <b>سلسلة قتل:</b> اقتل بسرعة بلا إصابة لمضاعفة النقاط<br>
+        ✨ <b>مراوغة:</b> مرّر قرب رصاصة العدو = نقاط • 💣 <b>القنبلة:</b> تمسح الشاشة
       </div>
       <button class="sp-btn-primary" onclick="spaceStart()">🚀 إطلاق</button>
     </div>
@@ -8604,6 +8683,8 @@ const SG = {
   W: 480, H: 800, ctx:null, canvas:null,
   state:'idle', stage:0, wave:0, totalWavesPerStage:5,
   score:0, lives:3, bombs:1, totalKills:0,
+  killCombo:0, killMult:1, comboCool:0, comboFlash:0, // kill-streak chain
+  grazeCount:0, grazeFlash:0, // bullet grazing
   player: { x:240, y:720, w:34, h:36, speed:6, fireCool:0, baseFireRate:11, invincible:0 },
   shield:0, triple:0, rapid:0, // power-up timers in frames
   enemies: [], bullets: [], eBullets: [], particles: [], powerups: [], stars: [],
@@ -8726,6 +8807,8 @@ function resetSpaceState(){
   SG.state = 'idle';
   SG.stage = 0; SG.wave = 0;
   SG.score = 0; SG.lives = 3; SG.bombs = 1; SG.totalKills = 0;
+  SG.killCombo = 0; SG.killMult = 1; SG.comboCool = 0; SG.comboFlash = 0;
+  SG.grazeCount = 0; SG.grazeFlash = 0;
   SG.player.x = SG.W/2; SG.player.y = SG.H - 80; SG.player.fireCool = 0; SG.player.invincible = 0;
   SG.shield = 0; SG.triple = 0; SG.rapid = 0;
   SG.enemies = []; SG.bullets = []; SG.eBullets = []; SG.particles = []; SG.powerups = [];
@@ -8859,10 +8942,33 @@ function updateSpace(dt){
   if (SG.shield > 0) SG.shield -= dt;
   if (SG.triple > 0) SG.triple -= dt;
   if (SG.rapid > 0) SG.rapid -= dt;
+  // Kill-combo decay (resets if no kill for ~2.5s)
+  if (SG.comboFlash > 0) SG.comboFlash -= dt;
+  if (SG.grazeFlash > 0) SG.grazeFlash -= dt;
+  if (SG.killCombo > 0){
+    SG.comboCool -= dt;
+    if (SG.comboCool <= 0){ SG.killCombo = 0; SG.killMult = 1; }
+  }
   // Update bullets
   SG.bullets.forEach(b => { b.y += b.vy * dt; });
   SG.bullets = SG.bullets.filter(b => b.y > -20);
   SG.eBullets.forEach(b => { b.y += b.vy * dt; b.x += b.vx * dt; });
+  // Bullet grazing — points for letting an enemy bullet pass very close
+  if (SG.player.invincible <= 0){
+    const px = SG.player.x, py = SG.player.y;
+    for (const b of SG.eBullets){
+      if (b.grazed) continue;
+      const dx = b.x - px, dy = b.y - py;
+      const dist2 = dx*dx + dy*dy;
+      // graze ring ~14-30px (outside the hit box but close)
+      if (dist2 < 30*30 && dist2 > 14*14){
+        b.grazed = true;
+        SG.grazeCount++;
+        SG.score += 5;
+        SG.grazeFlash = 12;
+      }
+    }
+  }
   SG.eBullets = SG.eBullets.filter(b => b.y < SG.H + 20 && b.x > -30 && b.x < SG.W + 30);
   // Update enemies
   SG.enemies.forEach(e => updateEnemy(e, dt));
@@ -9233,8 +9339,7 @@ function checkCollisions(){
         spSnd('enemy_hit');
         if (e.hp <= 0){
           spawnExplosion(e.x, e.y, 1.0);
-          SG.score += e.kill;
-          SG.totalKills++;
+          registerKill(e.kill);
           maybeDropPowerup(e.x, e.y, 0.16);
           e.dead = true;
         }
@@ -9294,9 +9399,28 @@ function checkCollisions(){
   checkPowerupPickup();
 }
 
+function registerKill(baseScore){
+  SG.totalKills++;
+  SG.killCombo++;
+  SG.comboCool = 150; // ~2.5s window to keep the chain alive
+  // Multiplier tiers: x2 after 5, x3 after 10, x4 after 18, x5 after 30
+  let mult = 1;
+  if (SG.killCombo >= 30) mult = 5;
+  else if (SG.killCombo >= 18) mult = 4;
+  else if (SG.killCombo >= 10) mult = 3;
+  else if (SG.killCombo >= 5) mult = 2;
+  if (mult !== SG.killMult){
+    SG.killMult = mult;
+    SG.comboFlash = 24;
+    if (mult > 1) spSnd('pup');
+  }
+  SG.score += baseScore * SG.killMult;
+}
 function playerHurt(){
   SG.lives--;
   SG.player.invincible = 100; // ~1.6s
+  // Getting hit breaks the kill chain
+  SG.killCombo = 0; SG.killMult = 1;
   spSnd('hurt');
   spawnExplosion(SG.player.x, SG.player.y, 1.2);
   updateHud();
@@ -9373,6 +9497,33 @@ function drawFrame(){
   });
   // Player
   drawPlayer(ctx);
+  // Kill-combo multiplier (canvas, top-center)
+  if (SG.killMult > 1){
+    const grow = SG.comboFlash > 0 ? 1 + (SG.comboFlash / 24) * 0.5 : 1;
+    ctx.save();
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'top';
+    ctx.font = 'bold ' + Math.round(24 * grow) + 'px "Courier New", monospace';
+    const mc = SG.killMult >= 5 ? '#ff3030' : SG.killMult >= 4 ? '#ff8800' : SG.killMult >= 3 ? '#ffe600' : '#00ff88';
+    ctx.fillStyle = 'rgba(0,0,0,0.5)';
+    ctx.fillText('x' + SG.killMult, SG.W/2 + 1, 9);
+    ctx.fillStyle = mc;
+    ctx.fillText('x' + SG.killMult, SG.W/2, 8);
+    ctx.font = 'bold 11px "Tajawal", sans-serif';
+    ctx.fillStyle = 'rgba(255,255,255,0.65)';
+    ctx.fillText('سلسلة ' + SG.killCombo, SG.W/2, 34);
+    ctx.restore();
+  }
+  // Graze flash indicator near the ship
+  if (SG.grazeFlash > 0){
+    ctx.save();
+    ctx.globalAlpha = SG.grazeFlash / 12;
+    ctx.fillStyle = '#66ccff';
+    ctx.font = 'bold 13px "Courier New", monospace';
+    ctx.textAlign = 'center';
+    ctx.fillText('+5 مراوغة', SG.player.x, SG.player.y - 34);
+    ctx.restore();
+  }
   // Boss UI is in DOM
   // Update HUD
   updateHud();
