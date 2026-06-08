@@ -6180,6 +6180,7 @@ const DG = {
   combo: 0, multiplier: 1, comboFlash: 0,
   djumpTimer: 0, jumpsUsed: 0, djumpTimer2: 0, djumpFx: 0,
   magnetTimer: 0,
+  panicSlow: 0,
   obstacles: [], collectibles: [],
   spawnTimer: 0, spawnNext: 80,
   heartTimer: 0, heartNext: 500,
@@ -6372,6 +6373,7 @@ function resetDinoState() {
   DG.combo = 0; DG.multiplier = 1; DG.comboFlash = 0;
   DG.djumpTimer = 0; DG.jumpsUsed = 0; DG.djumpFx = 0;
   DG.magnetTimer = 0;
+  DG.panicSlow = 0;
   DG.obstacles = []; DG.collectibles = [];
   DG.spawnTimer = 0; DG.spawnNext = 90;
   DG.heartTimer = 0; DG.heartNext = 400 + Math.random()*300;
@@ -6422,6 +6424,12 @@ function updateDino(dt) {
   const curScore = Math.floor(DG.score);
   if (DG.comboFlash > 0) DG.comboFlash -= dt;
   if (DG.djumpFx > 0) DG.djumpFx -= dt;
+  // Panic slow-mo when on last heart — world moves slower, scoring unchanged
+  const targetSlow = (DG.hearts === 1 && !DG.realBoss) ? 1 : 0;
+  if (DG.panicSlow < targetSlow) DG.panicSlow = Math.min(1, DG.panicSlow + dt * 0.06);
+  else if (DG.panicSlow > targetSlow) DG.panicSlow = Math.max(0, DG.panicSlow - dt * 0.08);
+  const slowMult = 1 - DG.panicSlow * 0.4; // up to 40% slower world
+  const worldDt = dt * slowMult;
   // Double-jump ability countdown
   if (DG.djumpTimer > 0) {
     DG.djumpTimer -= dt;
@@ -6457,8 +6465,8 @@ function updateDino(dt) {
   }
   if (DG.dinoY === 0) DG.legPhase += dt * 0.35;
   DG.birdPhase += dt * 0.22;
-  DG.ground = (DG.ground - DG.speed * dt) % 24;
-  DG.clouds.forEach(c => { c.x -= DG.speed * 0.3 * dt; });
+  DG.ground = (DG.ground - DG.speed * worldDt) % 24;
+  DG.clouds.forEach(c => { c.x -= DG.speed * 0.3 * worldDt; });
   DG.clouds = DG.clouds.filter(c => c.x > -50);
   DG.cloudTimer += dt;
   if (DG.cloudTimer > 220) {
@@ -6518,7 +6526,7 @@ function updateDino(dt) {
   }
   // Move obstacles & collectibles + combo tracking on pass
   DG.obstacles.forEach(o => {
-    o.x -= DG.speed * dt;
+    o.x -= DG.speed * worldDt;
     if (o.bob) o.bobPhase += dt * 0.18;
     if (!o.passed && o.x + o.w < DG.DINO_X) {
       o.passed = true;
@@ -6527,7 +6535,7 @@ function updateDino(dt) {
     }
   });
   DG.obstacles = DG.obstacles.filter(o => o.x + o.w > -30);
-  DG.collectibles.forEach(c => { c.x -= DG.speed * dt; c.bobPhase += dt * 0.2; });
+  DG.collectibles.forEach(c => { c.x -= DG.speed * worldDt; c.bobPhase += dt * 0.2; });
   DG.collectibles = DG.collectibles.filter(c => c.x + c.w > -30);
   // Collision (skip if invincible)
   const dinoBox = getDinoBox();
@@ -6625,28 +6633,88 @@ function updateRealBoss(dt) {
     if (b.deathT > 50 || b.x < -100) finishRealBoss();
     return;
   }
-  // Move + bob
-  b.x += b.vx * dt;
-  if (b.x < 80) { b.vx = Math.abs(b.vx); }
-  if (b.x > DG.W - 60) { b.vx = -Math.abs(b.vx); }
-  b.y = 56 + Math.sin(b.t * 0.045) * 16;
+  // Phase escalation: announce when HP first drops to 2 or 1
+  if (b.lastHp === undefined) b.lastHp = b.hp;
+  if (b.hp < b.lastHp) {
+    if (b.hp === 1) {
+      showMilestone('🔥🔥 الزعيم في غضب! 🔥🔥');
+      dinoSound('bossStart');
+      b.swoopCool = 90;
+    } else if (b.hp === 2) {
+      showMilestone('⚠ الزعيم يشتدّ!');
+    }
+    b.lastHp = b.hp;
+  }
+  // Swoop attack (only at rage phase, hp 1) — boss dives forward at dino
+  if (b.swooping) {
+    b.x += b.swoopVx * dt;
+    b.y += b.swoopVy * dt;
+    b.swoopVy += 0.35 * dt;
+    b.swoopT += dt;
+    if (b.swoopT > 38) {
+      b.swooping = false;
+      b.swoopCool = 110;
+    }
+  } else {
+    // Normal movement + bob
+    const speedMult = (b.hp === 1) ? 1.5 : (b.hp === 2 ? 1.2 : 1);
+    b.x += b.vx * dt * speedMult;
+    if (b.x < 80) { b.vx = Math.abs(b.vx); }
+    if (b.x > DG.W - 60) { b.vx = -Math.abs(b.vx); }
+    b.y = 56 + Math.sin(b.t * 0.045) * 16;
+    // Schedule swoop at rage
+    if (b.hp === 1) {
+      b.swoopCool -= dt;
+      if (b.swoopCool <= 0 && Math.abs(b.x - (DG.DINO_X + 50)) < 60) {
+        b.swooping = true;
+        b.swoopT = 0;
+        b.swoopVx = -1.8;
+        b.swoopVy = 2.6;
+        dinoSound('hit');
+      }
+    }
+    // Recover from swoop low point — boss returns up
+    if (!b.swooping && b.y > 130) {
+      b.y -= Math.min(2.5, (b.y - 56) * 0.05) * dt;
+    }
+  }
   if (b.invuln > 0) b.invuln -= dt;
-  // Fire projectile patterns; faster as HP drops
+  // Boss collision (when swooping) damages dino
+  if (b.swooping) {
+    const bb = { x: b.x - 24, y: b.y - 16, w: 48, h: 40 };
+    const dinoBox = getDinoBox();
+    if (boxesIntersect(bb, dinoBox) && DG.invincible <= 0) {
+      onHit();
+    }
+  }
+  // Fire projectile patterns; faster + denser as HP drops
   b.fireCool -= dt;
   if (b.fireCool <= 0) {
     spawnBossProjectile(b);
-    const baseDelay = [55, 45, 32][3 - b.hp] || 55;
-    b.fireCool = baseDelay + Math.random() * 25;
+    const baseDelay = [55, 42, 28][3 - b.hp] || 55;
+    b.fireCool = baseDelay + Math.random() * 22;
   }
 }
 function spawnBossProjectile(b) {
-  // Pick low (must jump) or mid (must duck)
-  const isMid = Math.random() < 0.45;
   const G = DG.GROUND_Y;
+  // Calm phase (hp 3): single low or mid
+  // Angry phase (hp 2): occasionally double (low + mid simultaneously)
+  // Rage phase (hp 1): mostly doubles, faster cadence (handled by fireCool)
+  const phase = 3 - b.hp; // 0 calm, 1 angry, 2 rage
+  const goDouble = (phase === 2 && Math.random() < 0.55) || (phase === 1 && Math.random() < 0.30);
+  const isMid = Math.random() < 0.5;
   if (isMid) {
     DG.obstacles.push({ type:'fireball', kind:'mid', x: b.x + 20, y: G - 76, w: 30, h: 28, fromBoss: true });
   } else {
     DG.obstacles.push({ type:'fireball', kind:'low', x: b.x + 20, y: G - 30, w: 28, h: 28, fromBoss: true });
+  }
+  if (goDouble) {
+    // Sister fireball at the OTHER level, with horizontal offset for spacing
+    if (isMid) {
+      DG.obstacles.push({ type:'fireball', kind:'low', x: b.x + 50, y: G - 30, w: 28, h: 28, fromBoss: true });
+    } else {
+      DG.obstacles.push({ type:'fireball', kind:'mid', x: b.x + 50, y: G - 76, w: 30, h: 28, fromBoss: true });
+    }
   }
 }
 function damageRealBoss() {
@@ -6776,6 +6844,9 @@ function onHit() {
     onDinoDeath();
   } else {
     dinoSound('hit');
+    if (DG.hearts === 1 && !DG.realBoss) {
+      showMilestone('🐢 بطء حماية!');
+    }
   }
 }
 function updateHeartsUI(gained) {
@@ -6850,6 +6921,14 @@ function drawDinoFrame(dead) {
   // Boss mode tint
   if (DG.bossActive) {
     ctx.fillStyle = 'rgba(239,68,68,0.10)';
+    ctx.fillRect(0, 0, DG.W, DG.H);
+  }
+  // Panic slow-mo vignette
+  if (DG.panicSlow > 0) {
+    const pg = ctx.createRadialGradient(DG.W/2, DG.H/2, DG.W*0.18, DG.W/2, DG.H/2, DG.W*0.7);
+    pg.addColorStop(0, 'rgba(100,180,255,0)');
+    pg.addColorStop(1, 'rgba(80,160,255,' + (0.32 * DG.panicSlow) + ')');
+    ctx.fillStyle = pg;
     ctx.fillRect(0, 0, DG.W, DG.H);
   }
   // Clouds
@@ -6953,6 +7032,13 @@ function drawDinoHud(ctx) {
     ctx.font = 'bold 15px "Tajawal", sans-serif';
     ctx.fillStyle = 'rgba(220,120,255,' + pulse + ')';
     ctx.fillText('🧲 ' + secs + 'ث', pad, iy);
+    iy += 20;
+  }
+  if (DG.panicSlow > 0.5) {
+    const pulse = 0.55 + 0.35 * Math.sin(performance.now() * 0.012);
+    ctx.font = 'bold 15px "Tajawal", sans-serif';
+    ctx.fillStyle = 'rgba(120,200,255,' + pulse + ')';
+    ctx.fillText('🐢 بطء حماية', pad, iy);
   }
   ctx.restore();
 }
@@ -9101,6 +9187,7 @@ const SG = {
   shield:0, triple:0, rapid:0, drones:0, // power-up timers in frames
   charge:0, // 0-100, auto-fills for charged shot
   nextEnemyId:1,
+  bonusTimer:0, bonusNext:38, bonusActive:false,
   enemies: [], bullets: [], eBullets: [], particles: [], powerups: [], stars: [],
   boss:null, bossEntering:false, bossPending:false,
   spawnTimer:0, spawnNext:80, waveCooldown:0,
@@ -9231,6 +9318,7 @@ function resetSpaceState(){
   SG.shield = 0; SG.triple = 0; SG.rapid = 0; SG.drones = 0;
   SG.charge = 0;
   SG.nextEnemyId = 1;
+  SG.bonusTimer = 0; SG.bonusNext = 38; SG.bonusActive = false;
   SG.enemies = []; SG.bullets = []; SG.eBullets = []; SG.particles = []; SG.powerups = [];
   SG.boss = null; SG.bossEntering = false; SG.bossPending = false;
   SG.spawnTimer = 0; SG.spawnNext = 80; SG.waveCooldown = 0;
@@ -9405,6 +9493,15 @@ function updateSpace(dt){
   // Particles
   SG.particles.forEach(p => { p.x += p.vx * dt; p.y += p.vy * dt; p.life -= dt; });
   SG.particles = SG.particles.filter(p => p.life > 0);
+  // Bonus round: asteroid swarm with big points, no enemy fire
+  if (!SG.boss && !SG.bossPending && !SG.bonusActive) {
+    SG.bonusTimer += dt;
+    if (SG.bonusTimer > SG.bonusNext) {
+      SG.bonusTimer = 0;
+      SG.bonusNext = 32 + Math.random() * 18;
+      startBonusRound();
+    }
+  }
   // Spawn waves
   if (!SG.boss && !SG.bossPending && SG.wave < SG.totalWavesPerStage){
     SG.spawnTimer += dt;
@@ -9511,6 +9608,46 @@ function fireEnemyBullet(e){
   } else {
     SG.eBullets.push({ x:e.x, y:e.y+e.h/2, vx:0, vy:3, w:4, h:9, color:e.type==='fighter'?'#ff4444':'#ffaa00' });
   }
+}
+
+// === Bonus Round (asteroid swarm) ===
+function startBonusRound() {
+  SG.bonusActive = true;
+  // Show banner
+  const banner = document.getElementById('spStageBanner');
+  document.getElementById('spsbEmoji').textContent = '⭐';
+  document.getElementById('spsbName').textContent = 'جولة المكافأة!';
+  banner.classList.remove('show');
+  void banner.offsetWidth;
+  banner.classList.add('show');
+  spSnd('pup');
+  // Spawn 7 asteroids in a staggered V formation
+  const total = 7;
+  for (let i = 0; i < total; i++) {
+    const e = makeEnemy('asteroid', 'straight', i, total);
+    e.x = (SG.W / (total + 1)) * (i + 1);
+    e.y = -50 - i * 22;
+    e.vy = 2.4;
+    e.kill = 80; // bigger reward than normal
+    e.bonusRound = true;
+    SG.enemies.push(e);
+  }
+  // End after ~12s safety net
+  setTimeout(() => {
+    if (SG.state !== 'running') return;
+    // Mark end if all bonus asteroids gone
+    const remaining = SG.enemies.filter(e => e.bonusRound).length;
+    if (remaining === 0) SG.bonusActive = false;
+  }, 8000);
+  // Also poll for end (when last bonus asteroid leaves screen)
+  const checkEnd = setInterval(() => {
+    if (SG.state !== 'running' || !SG.bonusActive) { clearInterval(checkEnd); return; }
+    const rem = SG.enemies.filter(e => e.bonusRound).length;
+    if (rem === 0) {
+      SG.bonusActive = false;
+      clearInterval(checkEnd);
+    }
+  }, 250);
 }
 
 // === Boss ===
