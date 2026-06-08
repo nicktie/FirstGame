@@ -7927,6 +7927,29 @@ body.brot-active{overflow:hidden}
 .bd-card-actions{display:flex;gap:14px;margin-top:6px;font-size:0.72rem;color:#888;font-weight:700}
 .brot-doom-claim{width:100%;background:linear-gradient(135deg,var(--brot-lime),#00aa55);color:#000;border:2px solid #fff;border-radius:10px;padding:14px;font-family:'Tajawal',sans-serif;font-weight:900;font-size:1.05rem;margin-top:8px;cursor:pointer;display:none;animation:brotCtaBlink 0.6s infinite alternate;flex-shrink:0}
 .brot-doom-claim.show{display:block}
+/* Fake push notifications */
+.brot-notification{position:absolute;top:14px;left:50%;transform:translateX(-50%);width:min(290px,88%);background:#fff;color:#1a1a1a;border-radius:14px;box-shadow:0 12px 30px rgba(0,0,0,0.55);padding:11px 13px;display:flex;align-items:center;gap:10px;z-index:75;cursor:pointer;font-family:'Tajawal','SF Pro Text',sans-serif;animation:brotNotifIn 0.45s cubic-bezier(.34,1.56,.64,1)}
+@keyframes brotNotifIn{from{top:-90px;opacity:0}to{top:14px;opacity:1}}
+.brot-notification.dismissing{animation:brotNotifOut 0.3s ease-in forwards}
+@keyframes brotNotifOut{to{top:-90px;opacity:0}}
+.bn-icon{width:38px;height:38px;border-radius:9px;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:1.4rem}
+.bn-icon.whatsapp{background:#25d366}
+.bn-icon.instagram{background:linear-gradient(135deg,#f09433,#dc2743,#bc1888)}
+.bn-icon.tiktok{background:#000}
+.bn-icon.twitter{background:#1da1f2}
+.bn-icon.snap{background:#fffc00;color:#000}
+.bn-body{flex:1;min-width:0;text-align:right}
+.bn-app{font-weight:900;font-size:0.7rem;color:#6c6c70}
+.bn-title{font-weight:900;font-size:0.88rem;color:#1a1a1a;margin:1px 0}
+.bn-msg{font-size:0.8rem;color:#444;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+/* Detox button */
+.brot-detox-btn{background:linear-gradient(135deg,#00ff66,#00aa55);color:#000;border:2px solid #fff;border-radius:50%;width:36px;height:36px;font-weight:900;font-size:1.05rem;cursor:pointer;flex-shrink:0;display:none;align-items:center;justify-content:center;position:relative;box-shadow:0 4px 10px rgba(0,255,102,0.3)}
+.brot-detox-btn.has{display:flex;animation:brotDetoxPulse 1.6s ease-in-out infinite}
+@keyframes brotDetoxPulse{0%,100%{box-shadow:0 4px 10px rgba(0,255,102,0.3)}50%{box-shadow:0 4px 16px rgba(0,255,102,0.7)}}
+.brot-detox-btn:active{transform:scale(0.92)}
+#brotDetoxCount{position:absolute;bottom:-3px;right:-3px;background:#fff;color:#000;border-radius:50%;width:16px;height:16px;font-size:0.65rem;display:flex;align-items:center;justify-content:center;font-family:'Courier New',monospace}
+.brot-meter-bar.frozen{box-shadow:inset 0 0 12px rgba(0,255,102,0.6)}
+.brot-meter-bar.frozen::after{content:'❄ مجمّد';position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);color:#fff;font-size:0.62rem;font-weight:900;text-shadow:0 0 4px #00ff66}
 /* Distraction widgets */
 .brot-widget{position:absolute;border-radius:10px;overflow:hidden;z-index:40;box-shadow:0 4px 14px rgba(0,0,0,0.5);background:#000;pointer-events:none}
 .brot-widget-sub{bottom:8px;right:8px;width:120px;height:160px;border:2px solid var(--brot-lime)}
@@ -7985,6 +8008,7 @@ body.brot-active{overflow:hidden}
       <div class="brot-meter-bar"><div class="brot-meter-fill" id="brotMeterFill"></div></div>
     </div>
     <div class="brot-cells"><span class="brot-cells-label">BRAIN CELLS</span><span id="brotCellsVal">0</span></div>
+    <button class="brot-detox-btn" id="brotDetoxBtn" onclick="useDetox()" title="Digital Detox">💊<span id="brotDetoxCount">1</span></button>
     <button class="brot-mute" id="brotMuteBtn" onclick="toggleMute();syncBrotMuteIcon()" title="كتم">🔊</button>
   </div>
   <div class="brot-arena" id="brotArena">
@@ -8041,7 +8065,9 @@ const BR = {
   popups:[], cookie:null, captcha:null,
   spawnPopupTimer:0, spawnCookieTimer:0, spawnCaptchaTimer:0,
   doomTimer:0, doom:null,
-  trapWeights:{ popup:1, cookie:1, captcha:1 }, learnedShown:false,
+  notifTimer:0, notifNext:24, notif:null,
+  detoxCount:1, detoxEarnTimer:0, freezeTimer:0,
+  trapWeights:{ popup:1, cookie:1, captcha:1, notif:1 }, learnedShown:false,
   answerStreak:0,
   widgetsSpawned:false,
   bgCtx:null, bgCanvas:null,
@@ -8196,14 +8222,16 @@ function resetBrainRotState() {
   BR.rotRate = BR.baseRotRate;
   BR.spawnPopupTimer = 0; BR.spawnCookieTimer = 0; BR.spawnCaptchaTimer = 0;
   BR.doomTimer = 0; BR.doom = null;
-  BR.trapWeights = { popup:1, cookie:1, captcha:1 }; BR.learnedShown = false;
+  BR.notifTimer = 0; BR.notifNext = 24; BR.notif = null;
+  BR.detoxCount = 1; BR.detoxEarnTimer = 0; BR.freezeTimer = 0;
+  BR.trapWeights = { popup:1, cookie:1, captcha:1, notif:1 }; BR.learnedShown = false;
   BR.answerStreak = 0;
   BR.widgetsSpawned = false;
   BR.roast = { correctAnswers:0, wrongAnswers:0, timedOut:0, popupClosed:0, popupCtaFell:0, cookieAccept:0, cookieReject:0, captchaPerfect:0, captchaWrong:0 };
   clearTimeout(BR.questionTimer);
   // clear DOM distractions
-  document.querySelectorAll('.brot-popup, .brot-cookie, .brot-captcha, .brot-doom').forEach(el => { if (el._doomTimer) clearInterval(el._doomTimer); el.remove(); });
-  BR.popups = []; BR.cookie = null; BR.captcha = null; BR.doom = null;
+  document.querySelectorAll('.brot-popup, .brot-cookie, .brot-captcha, .brot-doom, .brot-notification').forEach(el => { if (el._doomTimer) clearInterval(el._doomTimer); if (el._notifTimer) clearTimeout(el._notifTimer); if (el._rotTick) clearInterval(el._rotTick); el.remove(); });
+  BR.popups = []; BR.cookie = null; BR.captcha = null; BR.doom = null; BR.notif = null;
   const sub = document.getElementById('brotWidgetSub');
   const soap = document.getElementById('brotWidgetSoap');
   if (sub) sub.style.display = 'none';
@@ -8211,11 +8239,14 @@ function resetBrainRotState() {
   if (BR.qBox) BR.qBox.style.display = 'none';
   updateMeterUI();
   updateCellsUI();
+  if (BR.fillEl && BR.fillEl.parentNode) BR.fillEl.parentNode.classList.remove('frozen');
+  updateDetoxBtn();
 }
 window.brainrotStart = function() {
   document.getElementById('brotStartOverlay').style.display = 'none';
   document.getElementById('brotOverOverlay').style.display = 'none';
   resetBrainRotState();
+  updateDetoxBtn();
   BR.state = 'running';
   BR.lastTick = performance.now();
   cancelAnimationFrame(BR.loopRaf);
@@ -8259,9 +8290,28 @@ function updateBR(dt) {
   BR.t += dt;
   // Difficulty ramp
   BR.rotRate = BR.baseRotRate + Math.min(2.4, BR.t * 0.02);
-  BR.rot += BR.rotRate * dt;
+  // Freeze tick: meter doesn't rise while frozen (from Detox)
+  if (BR.freezeTimer > 0) {
+    BR.freezeTimer -= dt;
+    if (BR.freezeTimer <= 0) {
+      BR.freezeTimer = 0;
+      BR.fillEl && BR.fillEl.parentNode && BR.fillEl.parentNode.classList.remove('frozen');
+    }
+  } else {
+    BR.rot += BR.rotRate * dt;
+  }
   BR.rot = Math.max(0, BR.rot);
   BR.score += dt * 10; // 10 cells per second baseline
+  // Detox: earn one every 70 seconds, cap at 3
+  BR.detoxEarnTimer += dt;
+  if (BR.detoxEarnTimer > 70) {
+    BR.detoxEarnTimer = 0;
+    if (BR.detoxCount < 3) {
+      BR.detoxCount++;
+      updateDetoxBtn();
+      try { if (typeof showToast === 'function') showToast('💊 حصلت على Digital Detox!', '#00ff66'); } catch(e){}
+    }
+  }
   updateMeterUI();
   updateCellsUI();
   if (BR.rot >= 100) { onBrotDeath(); return; }
@@ -8291,6 +8341,14 @@ function updateBR(dt) {
   if (BR.t > 60 && BR.doomTimer > 80 && !BR.doom && !BR.captcha) {
     BR.doomTimer = 0;
     spawnDoomScroll();
+  }
+  // Fake push notifications — appear from the top, must ignore
+  BR.notifTimer += dt;
+  const notifDelay = Math.max(10, BR.notifNext / BR.trapWeights.notif);
+  if (BR.t > 15 && BR.notifTimer > notifDelay && !BR.notif && !BR.doom) {
+    BR.notifTimer = 0;
+    BR.notifNext = 22 + Math.random() * 16;
+    spawnNotification();
   }
   // Spawn corner widgets once after a while
   if (!BR.widgetsSpawned && BR.t > 18) {
@@ -8647,6 +8705,94 @@ function closeDoom(el){
   el.style.animation = 'brotPopupIn 0.2s reverse';
   setTimeout(() => { if (el.parentNode) el.parentNode.removeChild(el); BR.doom = null; }, 200);
 }
+const NOTIFICATIONS = [
+  { app:'whatsapp',  icon:'💬', name:'WhatsApp', sender:'سهى ❤️',     msg:'وين راحت لو ما رديت بحذفك جدياً' },
+  { app:'whatsapp',  icon:'💬', name:'WhatsApp', sender:'الشلة',        msg:'علي: شفتوا الفيديو اللي شاركته؟' },
+  { app:'whatsapp',  icon:'💬', name:'WhatsApp', sender:'الوالد',       msg:'تعال الأكل بدونك' },
+  { app:'instagram', icon:'📷', name:'Instagram', sender:'@meme_lord',  msg:'أعجب بصورتك' },
+  { app:'instagram', icon:'📷', name:'Instagram', sender:'النشاط',      msg:'٣ أشخاص جدد بدأوا متابعتك' },
+  { app:'tiktok',    icon:'🎵', name:'TikTok',    sender:'TikTok',     msg:'فيديو جديد لـ@sigma_brain — ٢.١م إعجاب' },
+  { app:'tiktok',    icon:'🎵', name:'TikTok',    sender:'TikTok',     msg:'🔥 فيديو ترند سيختفي خلال ٣ ثوانٍ' },
+  { app:'twitter',   icon:'𝕏',  name:'Twitter / X', sender:'@gigachad_99', msg:'ذكرك في تغريدة' },
+  { app:'snap',      icon:'👻', name:'Snapchat',  sender:'سعد',         msg:'أرسل لك سناب جديد' },
+  { app:'tiktok',    icon:'🎵', name:'TikTok',    sender:'TikTok',     msg:'٢٣ تعليق جديد على فيديوك' }
+];
+function spawnNotification() {
+  if (BR.state !== 'running' || BR.notif) return;
+  const n = NOTIFICATIONS[Math.floor(Math.random() * NOTIFICATIONS.length)];
+  const el = document.createElement('div');
+  el.className = 'brot-notification';
+  el.innerHTML =
+    '<div class="bn-icon ' + n.app + '">' + n.icon + '</div>' +
+    '<div class="bn-body">' +
+      '<div class="bn-app">' + n.name + ' · الآن</div>' +
+      '<div class="bn-title">' + n.sender + '</div>' +
+      '<div class="bn-msg">' + n.msg + '</div>' +
+    '</div>';
+  BR.arenaEl.appendChild(el);
+  BR.notif = el;
+  brot('popup');
+  let resolved = false;
+  const onTap = (e) => {
+    if (resolved) return;
+    resolved = true;
+    if (e) { e.preventDefault(); e.stopPropagation(); }
+    BR.rot = Math.min(100, BR.rot + 15);
+    BR.answerStreak = 0;
+    learnTrap('notif', true);
+    updateMeterUI();
+    brot('cookie_trap');
+    try { if (typeof showToast === 'function') showToast('📱 لمحت الإشعار! +١٥٪ تعفّن', '#ff3030'); } catch(e){}
+    closeNotif(el);
+  };
+  el.addEventListener('click', onTap);
+  el.addEventListener('touchstart', onTap, { passive:false });
+  // Auto-dismiss after 4s = success (resisted)
+  el._notifTimer = setTimeout(() => {
+    if (resolved) return;
+    resolved = true;
+    BR.score += 15;
+    learnTrap('notif', false);
+    updateCellsUI();
+    brot('popup_close');
+    closeNotif(el);
+  }, 4000);
+}
+function closeNotif(el) {
+  if (el._notifTimer) clearTimeout(el._notifTimer);
+  el.classList.add('dismissing');
+  setTimeout(() => { if (el.parentNode) el.parentNode.removeChild(el); BR.notif = null; }, 320);
+}
+function updateDetoxBtn() {
+  const btn = document.getElementById('brotDetoxBtn');
+  if (!btn) return;
+  if (BR.detoxCount > 0) {
+    btn.classList.add('has');
+    const c = document.getElementById('brotDetoxCount');
+    if (c) c.textContent = BR.detoxCount;
+  } else {
+    btn.classList.remove('has');
+  }
+}
+window.useDetox = function() {
+  if (BR.state !== 'running' || BR.detoxCount <= 0) return;
+  BR.detoxCount--;
+  updateDetoxBtn();
+  // Clear all popups + cookies + notifs (but not captcha/doom — those are deliberate tests)
+  document.querySelectorAll('.brot-popup, .brot-cookie, .brot-notification').forEach(el => {
+    if (el._rotTick) clearInterval(el._rotTick);
+    if (el._notifTimer) clearTimeout(el._notifTimer);
+    el.remove();
+  });
+  BR.popups = [];
+  BR.cookie = null;
+  BR.notif = null;
+  // Freeze meter for 5s
+  BR.freezeTimer = 5;
+  if (BR.fillEl && BR.fillEl.parentNode) BR.fillEl.parentNode.classList.add('frozen');
+  brot('correct');
+  try { if (typeof showToast === 'function') showToast('💊 Detox مفعّل! ٥ ثوان حماية', '#00ff66'); } catch(e){}
+};
 // Background chaos drawing
 function drawBg() {
   const ctx = BR.bgCtx;
@@ -8843,6 +8989,12 @@ body.space-active{overflow:hidden}
 .sp-bomb-btn.has{display:flex;animation:spBombPulse 1.2s ease-in-out infinite}
 @keyframes spBombPulse{0%,100%{box-shadow:0 6px 22px rgba(255,68,0,0.6),0 0 0 0 rgba(255,170,0,0.6)}50%{box-shadow:0 6px 22px rgba(255,68,0,0.8),0 0 0 8px rgba(255,170,0,0)}}
 .sp-bomb-btn:active{transform:scale(0.92)}
+.sp-charge-btn{position:absolute;bottom:16px;left:88px;width:62px;height:62px;background:radial-gradient(circle,#4a1aa0,#220060);border:2px solid #aa66ff;border-radius:50%;color:#fff;font-size:1.6rem;cursor:pointer;display:flex;align-items:center;justify-content:center;box-shadow:0 6px 22px rgba(170,102,255,0.4);font-family:'Tajawal',sans-serif;font-weight:900;z-index:6;opacity:0.55;transition:opacity 0.2s;overflow:hidden;position:absolute}
+.sp-charge-btn.ready{opacity:1;animation:spChargePulse 0.9s ease-in-out infinite alternate}
+@keyframes spChargePulse{from{box-shadow:0 6px 22px rgba(170,102,255,0.6),0 0 0 0 rgba(255,255,255,0.5)}to{box-shadow:0 6px 22px rgba(170,102,255,0.95),0 0 0 8px rgba(255,255,255,0)}}
+.sp-charge-btn:active{transform:scale(0.92)}
+.sp-charge-fill{position:absolute;bottom:0;left:0;width:100%;background:linear-gradient(180deg,rgba(255,255,255,0.5),rgba(170,102,255,0.4));pointer-events:none;transition:height 0.2s}
+.sp-charge-btn span{position:relative;z-index:2;text-shadow:1px 1px 0 #000}
 .sp-bomb-count{position:absolute;top:-4px;right:-4px;background:#ffe600;color:#1a0800;border:1.5px solid #000;border-radius:50%;width:22px;height:22px;font-size:0.8rem;font-weight:900;display:flex;align-items:center;justify-content:center;font-family:'Courier New',monospace}
 .sp-overlay{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:24px;text-align:center;color:#fff;backdrop-filter:blur(8px);background:rgba(0,0,16,0.92);z-index:10;border-radius:8px}
 .sp-overlay .sp-emoji{font-size:3.5rem;line-height:1;margin-bottom:8px;filter:drop-shadow(0 0 18px rgba(0,255,136,0.5))}
@@ -8882,6 +9034,7 @@ body.space-active{overflow:hidden}
   .sp-final-score{font-size:2.4rem}
   .sp-stage-banner-name{font-size:1.15rem}
   .sp-bomb-btn{width:54px;height:54px;font-size:1.4rem}
+  .sp-charge-btn{width:54px;height:54px;font-size:1.4rem;left:78px}
   .sp-control-strip{height:62px;margin:0 10px 10px}
   .sp-control-hint{font-size:0.75rem;letter-spacing:3px}
 }
@@ -8902,6 +9055,7 @@ body.space-active{overflow:hidden}
     <div class="sp-boss-hp" id="spBossHp"><div class="sp-boss-hp-fill" id="spBossHpFill"></div></div>
     <div class="sp-pup-active" id="spPupActive"></div>
     <button class="sp-bomb-btn" id="spBombBtn" onclick="spaceUseBomb()">💣<span class="sp-bomb-count" id="spBombCount">0</span></button>
+    <button class="sp-charge-btn" id="spChargeBtn" onclick="spaceFireCharged()"><div class="sp-charge-fill" id="spChargeFill"></div><span>⚡</span></button>
     <div class="sp-stage-banner" id="spStageBanner">
       <div class="sp-stage-banner-emoji" id="spsbEmoji">🌌</div>
       <div class="sp-stage-banner-label">المرحلة</div>
@@ -8913,8 +9067,8 @@ body.space-active{overflow:hidden}
       <div class="sp-desc">دافع عن سفينتك ضد ٣ مراحل من الأعداء وزعمائهم. اجمع التعزيزات لتحسين قدراتك.</div>
       <div class="sp-hint">
         🎯 <b>تحرّك:</b> اسحب على الشريط الأخضر أسفل الشاشة (أو ← →)<br>
-        🔫 <b>الإطلاق:</b> تلقائي • 💥 <b>سلسلة قتل:</b> اقتل بسرعة بلا إصابة لمضاعفة النقاط<br>
-        ✨ <b>مراوغة:</b> مرّر قرب رصاصة العدو = نقاط • 💣 <b>القنبلة:</b> تمسح الشاشة
+        🔫 <b>الإطلاق:</b> تلقائي • 💥 <b>سلسلة قتل:</b> اقتل بسرعة بلا إصابة<br>
+        ⚡ <b>الليزر الخارق:</b> يشحن تلقائياً — اضغط الزر البنفسجي • 💣 <b>القنبلة:</b> تمسح الشاشة
       </div>
       <button class="sp-btn-primary" onclick="spaceStart()">🚀 إطلاق</button>
     </div>
@@ -8945,6 +9099,8 @@ const SG = {
   grazeCount:0, grazeFlash:0, // bullet grazing
   player: { x:240, y:720, w:34, h:36, speed:6, fireCool:0, baseFireRate:11, invincible:0 },
   shield:0, triple:0, rapid:0, drones:0, // power-up timers in frames
+  charge:0, // 0-100, auto-fills for charged shot
+  nextEnemyId:1,
   enemies: [], bullets: [], eBullets: [], particles: [], powerups: [], stars: [],
   boss:null, bossEntering:false, bossPending:false,
   spawnTimer:0, spawnNext:80, waveCooldown:0,
@@ -9010,6 +9166,10 @@ function spSnd(name){
       playTone(60, 0.5, 'sawtooth', 0.45);
       setTimeout(()=>playTone(45, 0.6, 'sawtooth', 0.32), 200);
       break;
+    case 'charge':
+      [523, 659, 880, 1175, 1568].forEach((f, i) => setTimeout(() => playTone(f, 0.06, 'sawtooth', 0.22), i * 40));
+      setTimeout(() => playTone(2000, 0.18, 'square', 0.18), 200);
+      break;
     case 'death':
       [440,370,294,220,165,110].forEach((f,i)=>setTimeout(()=>playTone(f,0.28,'sawtooth',0.25),i*150));
       break;
@@ -9069,6 +9229,8 @@ function resetSpaceState(){
   SG.grazeCount = 0; SG.grazeFlash = 0;
   SG.player.x = SG.W/2; SG.player.y = SG.H - 80; SG.player.fireCool = 0; SG.player.invincible = 0;
   SG.shield = 0; SG.triple = 0; SG.rapid = 0; SG.drones = 0;
+  SG.charge = 0;
+  SG.nextEnemyId = 1;
   SG.enemies = []; SG.bullets = []; SG.eBullets = []; SG.particles = []; SG.powerups = [];
   SG.boss = null; SG.bossEntering = false; SG.bossPending = false;
   SG.spawnTimer = 0; SG.spawnNext = 80; SG.waveCooldown = 0;
@@ -9201,6 +9363,11 @@ function updateSpace(dt){
   if (SG.triple > 0) SG.triple -= dt;
   if (SG.rapid > 0) SG.rapid -= dt;
   if (SG.drones > 0) SG.drones -= dt;
+  // Charged-shot meter fills over ~7s
+  if (SG.charge < 100) {
+    SG.charge = Math.min(100, SG.charge + 0.24 * dt);
+    updateChargeBtn();
+  }
   // Kill-combo decay (resets if no kill for ~2.5s)
   if (SG.comboFlash > 0) SG.comboFlash -= dt;
   if (SG.grazeFlash > 0) SG.grazeFlash -= dt;
@@ -9298,6 +9465,7 @@ function spawnWave(){
 function makeEnemy(type, pattern, idx, total){
   const baseX = (SG.W / (total + 1)) * (idx + 1) + (Math.random() - 0.5) * 30;
   const e = {
+    id: SG.nextEnemyId++,
     type, pattern, x: baseX, y: -40 - idx * 18,
     vx: 0, vy: 1.4, hp: 1, kill: 30, w: 28, h: 24,
     fireCool: 60 + Math.random() * 80,
@@ -9584,6 +9752,24 @@ window.spaceUseBomb = function(){
   updateHud();
   updateBombBtn();
 };
+window.spaceFireCharged = function(){
+  if (SG.state !== 'running' || SG.charge < 100) return;
+  SG.charge = 0;
+  updateChargeBtn();
+  const px = SG.player.x, py = SG.player.y - SG.player.h/2;
+  // Piercing laser beam — passes through everything, damage 5
+  SG.bullets.push({
+    x: px, y: py, vy: -14, w: 16, h: 30,
+    piercing: true, damage: 5,
+    hitIds: new Set(),
+    color: '#fff',
+    _laser: true
+  });
+  // Side beams (smaller, also piercing but damage 2)
+  SG.bullets.push({ x: px - 18, y: py + 8, vy: -13, w: 8, h: 22, piercing: true, damage: 2, hitIds: new Set(), color:'#ddccff', _laser:true });
+  SG.bullets.push({ x: px + 18, y: py + 8, vy: -13, w: 8, h: 22, piercing: true, damage: 2, hitIds: new Set(), color:'#ddccff', _laser:true });
+  spSnd('charge');
+};
 
 // === Collisions ===
 function rectOverlap(a, b){
@@ -9596,11 +9782,14 @@ function checkCollisions(){
     const b = SG.bullets[i];
     const bb = { x:b.x - b.w/2, y:b.y - b.h/2, w:b.w, h:b.h };
     let hit = false;
+    const dmg = b.damage || 1;
     for (let j = SG.enemies.length-1; j >= 0; j--){
       const e = SG.enemies[j];
+      // Piercing bullets don't re-hit the same enemy
+      if (b.hitIds && b.hitIds.has(e.id)) continue;
       const eb = { x:e.x - e.w/2, y:e.y - e.h/2, w:e.w, h:e.h };
       if (rectOverlap(bb, eb)){
-        e.hp--;
+        e.hp -= dmg;
         spSnd('enemy_hit');
         if (e.hp <= 0){
           spawnExplosion(e.x, e.y, 1.0);
@@ -9608,20 +9797,21 @@ function checkCollisions(){
           maybeDropPowerup(e.x, e.y, 0.16);
           e.dead = true;
         }
-        hit = true;
-        break;
+        if (b.hitIds) { b.hitIds.add(e.id); /* piercing continues */ }
+        else { hit = true; break; }
       }
     }
-    // Bullet vs boss
-    if (!hit && SG.boss && SG.boss.phase === 'fight'){
+    // Bullet vs boss (piercing still hits boss but only once)
+    if (!hit && SG.boss && SG.boss.phase === 'fight' && !(b._hitBoss)){
       const bossBox = { x: SG.boss.x - SG.boss.w/2, y: SG.boss.y - SG.boss.h/2, w: SG.boss.w, h: SG.boss.h };
       if (rectOverlap(bb, bossBox)){
-        SG.boss.hp = Math.max(0, SG.boss.hp - 1);
+        SG.boss.hp = Math.max(0, SG.boss.hp - dmg);
         updateBossHp();
         spawnExplosion(b.x, b.y, 0.4);
         spSnd('enemy_hit');
         if (SG.boss.hp <= 0){ SG.boss.phase = 'dying'; SG.boss.t2 = 0; }
-        hit = true;
+        if (b.piercing){ b._hitBoss = true; /* continues */ }
+        else { hit = true; }
       }
     }
     if (hit){ SG.bullets.splice(i,1); }
@@ -9717,6 +9907,13 @@ function updateBombBtn(){
   } else {
     btn.classList.remove('has');
   }
+}
+function updateChargeBtn(){
+  const btn = document.getElementById('spChargeBtn');
+  if (!btn) return;
+  const fill = document.getElementById('spChargeFill');
+  if (fill) fill.style.height = SG.charge + '%';
+  btn.classList.toggle('ready', SG.charge >= 100);
 }
 function updatePupChips(){
   const wrap = document.getElementById('spPupActive');
@@ -9932,6 +10129,18 @@ function drawAsteroid(ctx, e){
 }
 
 function drawBullet(ctx, b, color){
+  if (b._laser) {
+    // Charged laser — outer glow, white core, purple highlight
+    ctx.fillStyle = 'rgba(170,120,255,0.4)';
+    ctx.fillRect(b.x - b.w/2 - 4, b.y - b.h/2 - 6, b.w + 8, b.h + 12);
+    ctx.fillStyle = 'rgba(170,120,255,0.7)';
+    ctx.fillRect(b.x - b.w/2 - 2, b.y - b.h/2 - 3, b.w + 4, b.h + 6);
+    ctx.fillStyle = '#fff';
+    ctx.fillRect(b.x - b.w/2, b.y - b.h/2, b.w, b.h);
+    ctx.fillStyle = 'rgba(200,180,255,0.9)';
+    ctx.fillRect(b.x - 1, b.y - b.h/2, 2, b.h);
+    return;
+  }
   ctx.fillStyle = color;
   ctx.fillRect(b.x - b.w/2, b.y - b.h/2, b.w, b.h);
 }
