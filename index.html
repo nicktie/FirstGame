@@ -10811,7 +10811,7 @@ body.wanees-active{overflow:hidden}
 .wn-btn-primary:active{transform:translateY(2px)}
 .wn-btn-secondary{background:transparent;color:#fff;border:2px solid #ffd200;border-radius:12px;padding:12px 22px;font-family:'Tajawal',sans-serif;font-weight:700;font-size:0.95rem;cursor:pointer}
 .wn-btn-row{display:flex;gap:10px;flex-wrap:wrap;justify-content:center;margin-top:8px}
-.wn-controls{display:flex;justify-content:space-between;align-items:center;padding:6px 14px 14px;gap:8px;flex-shrink:0}
+.wn-controls{display:flex;justify-content:space-between;align-items:center;padding:6px 14px 24px;gap:8px;flex-shrink:0}
 .wn-dpad{display:flex;gap:8px}
 .wn-ctrl-btn{min-width:64px;min-height:64px;background:linear-gradient(180deg,rgba(255,210,0,0.18),rgba(255,210,0,0.08));border:2px solid #ffd200;border-radius:14px;color:#ffd200;font-family:'Tajawal',sans-serif;font-weight:900;font-size:1.6rem;cursor:pointer;display:flex;align-items:center;justify-content:center;user-select:none;-webkit-user-select:none;touch-action:none}
 .wn-ctrl-btn:active,.wn-ctrl-btn.pressed{background:linear-gradient(180deg,#ffd200,#cc9900);color:#000;transform:translateY(2px)}
@@ -10879,11 +10879,11 @@ const LEVEL = [
 '                                                                                          ',
 '                                                                                  cc      ',
 '             c                                                  c                 cc      ',
-'                  ccc                                          ===                       f',
-'                                       ?bb??b                  ===                   ====f',
+'                  ccc                  s                       ===                       f',
+'                M                      ?bMb?b                  ===                   ====f',
 '                                                       cccc                          ====f',
 '                  =====                                                              ====f',
-'   p                          g          g                g       g     g                F',
+'   p                          g     k    g                g       k g   g                F',
 '#######   ###############   ##########   #######   ##########  ##########################F',
 '#######   ###############   ##########   #######   ##########  ##########################F',
 '#######   ###############   ##########   #######   ##########  ##########################F',
@@ -10898,11 +10898,13 @@ const WG = {
   player: null,
   enemies: [],
   coins: [],
+  items: [],
+  popBlocks: [],
   flag: null,
   particles: [],
   camera: { x:0 },
   score:0, coinsCollected:0, lives:3, timeLeft:300,
-  best:0,
+  best:0, stompCombo:0, stompComboTimer:0,
   inputs: { left:false, right:false, jump:false, jumpHeld:false, jumpJustPressed:false },
   raf:0, lastTime:0, timeAccum:0,
   _bound:false, _btnBound:false,
@@ -10983,6 +10985,9 @@ function loadLevel(){
   WG.level = [];
   WG.enemies = [];
   WG.coins = [];
+  WG.items = [];
+  WG.popBlocks = [];
+  WG.stompCombo = 0; WG.stompComboTimer = 0;
   WG.flag = null;
   let playerStart = { x: 32, y: 100 };
   for (let y = 0; y < LEVEL_H; y++){
@@ -10990,9 +10995,12 @@ function loadLevel(){
     const tileRow = new Array(LEVEL_W).fill(' ');
     for (let x = 0; x < LEVEL_W; x++){
       const c = row[x];
-      if (c === '#' || c === 'b' || c === '?' || c === '=') tileRow[x] = c;
-      else if (c === 'g') WG.enemies.push({ x: x*TILE, y: y*TILE, vx: -WG.ENEMY_SPEED, vy:0, w: 14, h: 14, alive:true, walkPhase:0, dir:-1 });
+      if (c === '#' || c === 'b' || c === '?' || c === '=' || c === 'M' || c === 'u') tileRow[x] = c;
+      else if (c === 'g') WG.enemies.push({ x: x*TILE, y: y*TILE, vx: -WG.ENEMY_SPEED, vy:0, w: 14, h: 14, alive:true, walkPhase:0, dir:-1, kind:'goomba' });
+      else if (c === 'k') WG.enemies.push({ x: x*TILE, y: y*TILE-2, vx: -WG.ENEMY_SPEED*0.85, vy:0, w: 14, h: 16, alive:true, walkPhase:0, dir:-1, kind:'koopa', shell:false, shellVx:0 });
       else if (c === 'c') WG.coins.push({ x: x*TILE+4, y: y*TILE+4, w:8, h:8, collected:false, phase: Math.random()*Math.PI*2 });
+      else if (c === 'm') WG.items.push({ x: x*TILE+2, y: y*TILE+2, w:12, h:14, vx:0.9, vy:0, kind:'mushroom', alive:true, onGround:false });
+      else if (c === 's') WG.items.push({ x: x*TILE+2, y: y*TILE+2, w:12, h:14, vx:1.4, vy:-2.5, kind:'star', alive:true, onGround:false });
       else if (c === 'p') { playerStart = { x: x*TILE, y: y*TILE - 4 }; }
       else if (c === 'f' || c === 'F') {
         tileRow[x] = c;
@@ -11005,7 +11013,7 @@ function loadLevel(){
     x: playerStart.x, y: playerStart.y,
     vx:0, vy:0, w:12, h:14,
     onGround:false, dir:1, invincible:0,
-    walkPhase:0, alive:true
+    walkPhase:0, alive:true, starTimer:0
   };
 }
 function resetWaneesState(){
@@ -11041,7 +11049,7 @@ function waneesLoop(t){
   WG.inputs.jumpJustPressed = false;
   WG.raf = requestAnimationFrame(waneesLoop);
 }
-function isSolid(ch){ return ch === '#' || ch === 'b' || ch === '?' || ch === '='; }
+function isSolid(ch){ return ch === '#' || ch === 'b' || ch === '?' || ch === '=' || ch === 'M' || ch === 'u'; }
 function getTileAt(px, py){
   const gx = Math.floor(px / TILE), gy = Math.floor(py / TILE);
   if (gx < 0 || gx >= LEVEL_W || gy < 0 || gy >= LEVEL_H) return null;
@@ -11107,18 +11115,48 @@ function updateWanees(dt){
   for (const e of WG.enemies){
     if (!e.alive) continue;
     if (rectsOverlap(WG.player, e)){
-      if (WG.player.vy > 0 && (WG.player.y + WG.player.h - WG.player.vy * dt) <= e.y + 4){
+      const fromAbove = WG.player.vy > 0 && (WG.player.y + WG.player.h - WG.player.vy * dt) <= e.y + 4;
+      if (fromAbove || WG.player.starTimer > 0){
         e.alive = false;
-        WG.player.vy = -3.4;
-        WG.score += 100;
+        if (fromAbove) {
+          WG.player.vy = -3.6;
+          WG.stompCombo++;
+          WG.stompComboTimer = 36;
+        }
+        const bonus = WG.stompCombo > 1 ? Math.min(800, 100 * WG.stompCombo) : 100;
+        WG.score += bonus;
         wnSnd('stomp');
         spawnPoof(e.x + e.w/2, e.y);
+        if (WG.stompCombo >= 3) spawnSparkle(e.x + e.w/2, e.y - 4);
       } else if (WG.player.invincible <= 0){
         loseLife('enemy');
         return;
       }
     }
   }
+  WG.items.forEach(it => updateItem(it, dt));
+  for (const it of WG.items){
+    if (!it.alive) continue;
+    if (rectsOverlap(WG.player, it)){
+      it.alive = false;
+      if (it.kind === 'mushroom'){
+        WG.lives++;
+        WG.score += 200;
+        spawnSparkle(it.x + it.w/2, it.y + it.h/2);
+        wnSnd('coin');
+        updateHud();
+      } else if (it.kind === 'star'){
+        WG.player.starTimer = 360;
+        WG.score += 300;
+        spawnSparkle(it.x + it.w/2, it.y + it.h/2);
+        wnSnd('coin');
+        updateHud();
+      }
+    }
+  }
+  WG.items = WG.items.filter(it => it.alive);
+  WG.popBlocks.forEach(b => { b.t -= dt; });
+  WG.popBlocks = WG.popBlocks.filter(b => b.t > 0);
   for (const c of WG.coins){
     if (c.collected) continue;
     c.phase += dt * 0.18;
@@ -11172,25 +11210,88 @@ function updatePlayer(dt){
   p.onGround = false;
   const hY = moveAxis(p, 'y', p.vy * dt);
   if (hY.hit){
-    if (p.vy > 0) p.onGround = true;
+    if (p.vy > 0) { p.onGround = true; if (WG.stompCombo > 0 && WG.stompComboTimer <= 0) WG.stompCombo = 0; }
     else if (p.vy < 0){
       const headGx = Math.floor((p.x + p.w/2) / TILE);
       const headGy = Math.floor((p.y - 1) / TILE);
       const ch = poke(headGx, headGy);
       if (ch === '?'){
-        setTile(headGx, headGy, 'b');
+        setTile(headGx, headGy, 'u');
         spawnCoinPop(headGx * TILE + TILE/2, headGy * TILE);
+        WG.popBlocks.push({ gx: headGx, gy: headGy, t: 14, ch: 'u' });
         WG.score += 50;
         WG.coinsCollected++;
         wnSnd('coin');
         updateHud();
-      } else if (ch === 'b'){
+      } else if (ch === 'M'){
+        setTile(headGx, headGy, 'u');
+        WG.popBlocks.push({ gx: headGx, gy: headGy, t: 14, ch: 'u' });
+        WG.items.push({ x: headGx*TILE+2, y: headGy*TILE - 14, w:12, h:14, vx:0.9, vy:-1.5, kind:'mushroom', alive:true, onGround:false, emerging:18 });
         wnSnd('block');
+      } else if (ch === 'b'){
+        if (p.starTimer > 0){
+          setTile(headGx, headGy, ' ');
+          spawnBrickShards(headGx * TILE + TILE/2, headGy * TILE + TILE/2);
+          WG.score += 30;
+          wnSnd('block');
+        } else {
+          WG.popBlocks.push({ gx: headGx, gy: headGy, t: 10, ch: 'b' });
+          wnSnd('block');
+        }
       }
     }
     p.vy = 0;
   }
   if (p.onGround && Math.abs(p.vx) > 0.1) p.walkPhase += dt * 0.25;
+  if (p.starTimer > 0) p.starTimer -= dt;
+  if (WG.stompComboTimer > 0) WG.stompComboTimer -= dt;
+}
+function spawnBrickShards(x, y){
+  for (let i = 0; i < 8; i++){
+    const a = Math.random() * Math.PI * 2;
+    const sp = 1.2 + Math.random() * 1.5;
+    WG.particles.push({ x, y, vx: Math.cos(a)*sp, vy: Math.sin(a)*sp - 2, life: 30, color:'#c84a1a' });
+  }
+}
+function updateItem(it, dt){
+  if (!it.alive) return;
+  if (it.emerging > 0){ it.emerging -= dt; it.y += -0.4 * dt; if (it.emerging <= 0) it.vy = 0; return; }
+  it.vy = Math.min(WG.MAX_FALL, it.vy + WG.GRAV * dt);
+  const hX = moveAxis(it, 'x', it.vx * dt);
+  if (hX.hit) it.vx *= -1;
+  const hY = moveAxis(it, 'y', it.vy * dt);
+  if (hY.hit){
+    if (it.vy > 0){ it.onGround = true; if (it.kind === 'star') it.vy = -3.6; else it.vy = 0; }
+    else it.vy = 0;
+  }
+  if (it.y > LEVEL_H * TILE + 32) it.alive = false;
+}
+function drawItem(ctx, it){
+  if (!it.alive) return;
+  const x = Math.round(it.x), y = Math.round(it.y);
+  if (it.kind === 'mushroom'){
+    ctx.fillStyle = '#dd2222';
+    ctx.fillRect(x, y, 12, 8);
+    ctx.fillRect(x+1, y-2, 10, 2);
+    ctx.fillStyle = '#fff';
+    ctx.fillRect(x+2, y+2, 3, 3);
+    ctx.fillRect(x+7, y+2, 3, 3);
+    ctx.fillStyle = '#f0c090';
+    ctx.fillRect(x+2, y+8, 8, 6);
+    ctx.fillStyle = '#222';
+    ctx.fillRect(x+4, y+10, 1, 2);
+    ctx.fillRect(x+7, y+10, 1, 2);
+  } else if (it.kind === 'star'){
+    const t = (Date.now() / 80) % 6;
+    const colors = ['#ffd200','#fff','#ff8800','#ffd200','#fff','#ff8800'];
+    ctx.fillStyle = colors[Math.floor(t)];
+    ctx.fillRect(x+5, y, 2, 14);
+    ctx.fillRect(x, y+5, 12, 4);
+    ctx.fillRect(x+2, y+2, 8, 10);
+    ctx.fillStyle = '#000';
+    ctx.fillRect(x+3, y+5, 2, 2);
+    ctx.fillRect(x+7, y+5, 2, 2);
+  }
 }
 function updateEnemy(e, dt){
   e.walkPhase += dt * 0.12;
@@ -11207,12 +11308,14 @@ function updateEnemy(e, dt){
 }
 function loseLife(reason){
   WG.lives--;
+  WG.stompCombo = 0; WG.stompComboTimer = 0;
   wnSnd(reason === 'enemy' ? 'hurt' : 'death');
   updateHud();
   if (WG.lives <= 0){
     onGameOver();
   } else {
     WG.player.invincible = 80;
+    WG.player.starTimer = 0;
     const collectedCoins = WG.coinsCollected;
     const collectedScore = WG.score;
     const collected = WG.coins.filter(c => c.collected);
@@ -11365,6 +11468,7 @@ function drawFrame(){
     }
   }
   WG.coins.forEach(c => { if (!c.collected) drawCoin(ctx, c); });
+  WG.items.forEach(it => drawItem(ctx, it));
   WG.enemies.forEach(e => { if (e.alive) drawEnemy(ctx, e); });
   WG.particles.forEach(p => {
     ctx.fillStyle = p.color;
@@ -11372,6 +11476,13 @@ function drawFrame(){
   });
   drawPlayer(ctx, WG.player);
   ctx.restore();
+  if (WG.stompCombo >= 2 && WG.stompComboTimer > 0){
+    ctx.fillStyle = '#ffd200';
+    ctx.font = 'bold 14px monospace';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillText('COMBO x' + WG.stompCombo + '!', WG.W/2, 40);
+  }
 }
 function drawCloud(ctx, cx, cy){
   ctx.beginPath();
@@ -11388,7 +11499,35 @@ function drawHill(ctx, cx, baseY){
   ctx.fill();
 }
 function drawTile(ctx, gx, gy, ch){
-  const px = gx * TILE, py = gy * TILE;
+  let px = gx * TILE, py = gy * TILE;
+  const pop = WG.popBlocks && WG.popBlocks.find(b => b.gx === gx && b.gy === gy);
+  if (pop){
+    const k = pop.t / 14;
+    py -= Math.sin((1-k) * Math.PI) * 4;
+  }
+  if (ch === 'u'){
+    ctx.fillStyle = '#8a6028';
+    ctx.fillRect(px, py, TILE, TILE);
+    ctx.fillStyle = '#503818';
+    ctx.fillRect(px, py + TILE - 2, TILE, 2);
+    ctx.fillRect(px, py, 2, TILE);
+    ctx.fillRect(px + TILE - 2, py, 2, TILE);
+    return;
+  }
+  if (ch === 'M'){
+    ctx.fillStyle = '#ffaa00';
+    ctx.fillRect(px, py, TILE, TILE);
+    ctx.fillStyle = '#c87700';
+    ctx.fillRect(px, py + TILE - 2, TILE, 2);
+    ctx.fillRect(px, py, 2, TILE);
+    ctx.fillRect(px + TILE - 2, py, 2, TILE);
+    ctx.fillStyle = '#fff';
+    ctx.font = 'bold 12px monospace';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillText('?', px + TILE/2, py + TILE/2 + 1);
+    return;
+  }
   if (ch === '#'){
     ctx.fillStyle = '#7a4b1a';
     ctx.fillRect(px, py, TILE, TILE);
@@ -11460,6 +11599,24 @@ function drawCoin(ctx, c){
 }
 function drawEnemy(ctx, e){
   const x = e.x, y = e.y;
+  if (e.kind === 'koopa'){
+    ctx.fillStyle = '#3aaa44';
+    ctx.fillRect(x + 1, y + 4, 12, 9);
+    ctx.fillStyle = '#226a2a';
+    ctx.fillRect(x + 1, y + 4, 12, 2);
+    ctx.fillStyle = '#7adb84';
+    ctx.fillRect(x + 3, y + 6, 2, 1);
+    ctx.fillRect(x + 9, y + 6, 2, 1);
+    ctx.fillStyle = '#f5d878';
+    ctx.fillRect(x + 4, y, 6, 4);
+    ctx.fillStyle = '#000';
+    ctx.fillRect(x + 5, y + 1, 1, 1);
+    ctx.fillRect(x + 8, y + 1, 1, 1);
+    ctx.fillStyle = '#f5d878';
+    ctx.fillRect(x + 2, y + 13, 3, 3);
+    ctx.fillRect(x + 9, y + 13, 3, 3);
+    return;
+  }
   ctx.fillStyle = '#7a4a1a';
   ctx.fillRect(x + 1, y + 4, 12, 10);
   ctx.fillRect(x, y + 2, 14, 6);
@@ -11485,6 +11642,12 @@ function drawPlayer(ctx, p){
   const x = Math.round(p.x), y = Math.round(p.y);
   const ph = Math.floor(p.walkPhase) % 2;
   const facingR = p.dir > 0;
+  if (p.starTimer > 0){
+    const cycle = Math.floor(Date.now() / 70) % 4;
+    const glow = ['rgba(255,210,0,0.35)','rgba(255,255,255,0.35)','rgba(100,200,255,0.35)','rgba(255,80,80,0.35)'][cycle];
+    ctx.fillStyle = glow;
+    ctx.fillRect(x - 2, y - 2, p.w + 4, p.h + 4);
+  }
   ctx.fillStyle = '#dd2222';
   ctx.fillRect(x + 1, y, 10, 3);
   ctx.fillRect(facingR ? x + 6 : x, y + 2, 6, 2);
