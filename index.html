@@ -10825,18 +10825,18 @@ body.wanees-active{overflow:hidden}
 .wn-btn-primary:active{transform:translateY(2px)}
 .wn-btn-secondary{background:transparent;color:#fff;border:2px solid #ffd200;border-radius:12px;padding:12px 22px;font-family:'Tajawal',sans-serif;font-weight:700;font-size:0.95rem;cursor:pointer}
 .wn-btn-row{display:flex;gap:10px;flex-wrap:wrap;justify-content:center;margin-top:8px}
-.wn-controls{display:flex;justify-content:space-between;align-items:center;padding:6px calc(14px + env(safe-area-inset-right,0px)) calc(24px + env(safe-area-inset-bottom,0px)) calc(14px + env(safe-area-inset-left,0px));gap:8px;flex-shrink:0}
-.wn-dpad{display:flex;gap:8px}
-.wn-ctrl-btn{min-width:64px;min-height:64px;background:linear-gradient(180deg,rgba(255,210,0,0.18),rgba(255,210,0,0.08));border:2px solid #ffd200;border-radius:14px;color:#ffd200;font-family:'Tajawal',sans-serif;font-weight:900;font-size:1.6rem;cursor:pointer;display:flex;align-items:center;justify-content:center;user-select:none;-webkit-user-select:none;-webkit-touch-callout:none;touch-action:none}
+.wn-controls{display:flex;justify-content:space-between;align-items:center;padding:6px calc(14px + env(safe-area-inset-right,0px)) calc(24px + env(safe-area-inset-bottom,0px)) calc(14px + env(safe-area-inset-left,0px));gap:8px;flex-shrink:0;direction:ltr}
+.wn-dpad{display:flex;gap:12px;direction:ltr}
+.wn-ctrl-btn{min-width:84px;min-height:84px;background:linear-gradient(180deg,rgba(255,210,0,0.18),rgba(255,210,0,0.08));border:2px solid #ffd200;border-radius:18px;color:#ffd200;font-family:'Tajawal',sans-serif;font-weight:900;font-size:2.1rem;cursor:pointer;display:flex;align-items:center;justify-content:center;user-select:none;-webkit-user-select:none;-webkit-touch-callout:none;touch-action:none}
 .wn-ctrl-btn:active,.wn-ctrl-btn.pressed{background:linear-gradient(180deg,#ffd200,#cc9900);color:#000;transform:translateY(2px)}
-.wn-jump-btn{min-width:80px;min-height:80px;font-size:1.3rem;flex-direction:column;gap:2px}
-.wn-jump-btn .wn-jump-label{font-size:0.7rem;letter-spacing:1px}
+.wn-jump-btn{min-width:100px;min-height:100px;font-size:1.6rem;flex-direction:column;gap:2px}
+.wn-jump-btn .wn-jump-label{font-size:0.82rem;letter-spacing:1px}
 @media(max-width:640px){
   .wn-topbar{padding:8px 12px;gap:6px}
   .wn-hud-item{font-size:0.78rem}
   .wno-title{font-size:1.3rem}
-  .wn-ctrl-btn{min-width:58px;min-height:58px;font-size:1.4rem}
-  .wn-jump-btn{min-width:72px;min-height:72px}
+  .wn-ctrl-btn{min-width:76px;min-height:76px;font-size:1.85rem}
+  .wn-jump-btn{min-width:90px;min-height:90px;font-size:1.4rem}
 }
 </style>
 <div id="waneesScreen" class="wanees-screen">
