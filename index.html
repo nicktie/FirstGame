@@ -10825,7 +10825,7 @@ body.wanees-active{overflow:hidden}
 .wn-btn-primary:active{transform:translateY(2px)}
 .wn-btn-secondary{background:transparent;color:#fff;border:2px solid #ffd200;border-radius:12px;padding:12px 22px;font-family:'Tajawal',sans-serif;font-weight:700;font-size:0.95rem;cursor:pointer}
 .wn-btn-row{display:flex;gap:10px;flex-wrap:wrap;justify-content:center;margin-top:8px}
-.wn-controls{display:flex;justify-content:space-between;align-items:center;padding:6px calc(14px + env(safe-area-inset-right,0px)) calc(24px + env(safe-area-inset-bottom,0px)) calc(14px + env(safe-area-inset-left,0px));gap:8px;flex-shrink:0;direction:ltr}
+.wn-controls{display:flex;justify-content:space-between;align-items:center;padding:6px calc(14px + env(safe-area-inset-right,0px)) calc(24px + env(safe-area-inset-bottom,0px)) calc(14px + env(safe-area-inset-left,0px));gap:8px;flex-shrink:0;direction:ltr;flex-direction:row-reverse}
 .wn-dpad{display:flex;gap:12px;direction:ltr}
 .wn-ctrl-btn{min-width:84px;min-height:84px;background:linear-gradient(180deg,rgba(255,210,0,0.18),rgba(255,210,0,0.08));border:2px solid #ffd200;border-radius:18px;color:#ffd200;font-family:'Tajawal',sans-serif;font-weight:900;font-size:2.1rem;cursor:pointer;display:flex;align-items:center;justify-content:center;user-select:none;-webkit-user-select:none;-webkit-touch-callout:none;touch-action:none}
 .wn-ctrl-btn:active,.wn-ctrl-btn.pressed{background:linear-gradient(180deg,#ffd200,#cc9900);color:#000;transform:translateY(2px)}
@@ -11030,9 +11030,23 @@ function loadLevel(){
     walkPhase:0, alive:true, starTimer:0
   };
 }
+function isSuhaPlayer(){
+  try {
+    const p = (typeof loadProfile === 'function') ? loadProfile() : null;
+    const name = (p && p.name ? String(p.name) : '').trim();
+    return name === 'سهى';
+  } catch(e){ return false; }
+}
 function resetWaneesState(){
   WG.state = 'idle';
-  WG.score = 0; WG.coinsCollected = 0; WG.lives = 3; WG.timeLeft = 300;
+  const suha = isSuhaPlayer();
+  WG.suhaMode = suha;
+  WG.score = 0; WG.coinsCollected = 0;
+  WG.lives = suha ? 5 : 3;
+  WG.timeLeft = suha ? 420 : 300;
+  // Easier physics for Suha: a bit faster + a bit higher jump
+  WG.PLAYER_SPEED = suha ? 2.4 : 2.0;
+  WG.JUMP_VEL = suha ? -7.2 : -6.4;
   WG.timeAccum = 0;
   WG.camera.x = 0;
   WG.particles = [];
@@ -11044,6 +11058,11 @@ window.waneesStart = function(){
   document.getElementById('waneesOverOverlay').style.display = 'none';
   resetWaneesState();
   loadLevel();
+  if (WG.suhaMode && WG.player){
+    WG.player.invincible = 180;
+    WG.player.starTimer = 180;
+    try { if (typeof showToast === 'function') showToast('❤️ وضع سهى مفعّل: قلوب أكثر، سرعة أعلى، وحماية في البداية', '#ff5577'); } catch(e){}
+  }
   WG.state = 'running';
   WG.lastTime = performance.now();
   cancelAnimationFrame(WG.raf);
@@ -11154,13 +11173,13 @@ function updateWanees(dt){
     if (rectsOverlap(WG.player, it)){
       it.alive = false;
       if (it.kind === 'mushroom'){
-        WG.lives++;
+        WG.lives += WG.suhaMode ? 2 : 1;
         WG.score += 200;
         spawnSparkle(it.x + it.w/2, it.y + it.h/2);
         wnSnd('coin');
         updateHud();
       } else if (it.kind === 'star'){
-        WG.player.starTimer = 360;
+        WG.player.starTimer = WG.suhaMode ? 600 : 360;
         WG.score += 300;
         spawnSparkle(it.x + it.w/2, it.y + it.h/2);
         wnSnd('coin');
@@ -11328,7 +11347,7 @@ function loseLife(reason){
   if (WG.lives <= 0){
     onGameOver();
   } else {
-    WG.player.invincible = 80;
+    WG.player.invincible = WG.suhaMode ? 160 : 80;
     WG.player.starTimer = 0;
     const collectedCoins = WG.coinsCollected;
     const collectedScore = WG.score;
@@ -11340,7 +11359,7 @@ function loseLife(reason){
       const wasCollected = collected.some(cc => Math.abs(cc.x - c.x) < 2 && Math.abs(cc.y - c.y) < 2);
       if (wasCollected) c.collected = true;
     });
-    WG.timeLeft = Math.max(WG.timeLeft, 60);
+    WG.timeLeft = Math.max(WG.timeLeft, WG.suhaMode ? 90 : 60);
   }
 }
 function onWin(){
