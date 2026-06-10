@@ -6484,7 +6484,7 @@ window.addEventListener('load', ()=>{ measureNet(); watchServerConnection(); });
   .dino-ctrl-btn{font-size:0.95rem;min-height:64px}
   .dino-hearts{font-size:1.05rem}
 }
-body.dino-active .mute-btn,body.dino-active .net-indicator,body.dino-active .install-btn,body.in-game .mute-btn,body.in-game .net-indicator,body.in-game .install-btn{display:none !important}
+body.dino-active .mute-btn,body.dino-active .net-indicator,body.dino-active .install-btn,body.in-game .mute-btn,body.in-game .net-indicator,body.in-game .install-btn,body.wanees-active .mute-btn,body.wanees-active .net-indicator,body.wanees-active .install-btn{display:none !important}
 .dino-mute-btn{background:rgba(201,168,76,0.12);border:1px solid var(--border);color:var(--text);width:36px;height:36px;border-radius:50%;font-size:1rem;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0}
 .dino-mute-btn:active{transform:scale(0.92)}
 .dino-biome-banner{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%) scale(0);background:rgba(14,16,20,0.92);border:2px solid var(--gold);border-radius:14px;padding:18px 28px;text-align:center;pointer-events:none;backdrop-filter:blur(8px);box-shadow:0 0 40px rgba(201,168,76,0.4)}
@@ -10883,10 +10883,10 @@ const LEVEL = [
 '                                       ?bb??b                  ===                   ====f',
 '                                                       cccc                          ====f',
 '                  =====                                                              ====f',
-'   p                          g           g                g       g     g           ====F',
-'#######    #################              ##########  ########################   ########F',
-'#######    #################              ##########  ########################   ########F',
-'#######    #################              ##########  ########################   ########F',
+'   p                          g          g                g       g     g                F',
+'#######   ###############   ##########   #######   ##########  ##########################F',
+'#######   ###############   ##########   #######   ##########  ##########################F',
+'#######   ###############   ##########   #######   ##########  ##########################F',
 ];
 const LEVEL_W = Math.max.apply(null, LEVEL.map(r => r.length));
 const LEVEL_H = LEVEL.length;
@@ -10906,7 +10906,7 @@ const WG = {
   inputs: { left:false, right:false, jump:false, jumpHeld:false, jumpJustPressed:false },
   raf:0, lastTime:0, timeAccum:0,
   _bound:false, _btnBound:false,
-  GRAV:0.34, JUMP_VEL:-5.6, MAX_FALL:6.5, PLAYER_SPEED:1.6,
+  GRAV:0.34, JUMP_VEL:-6.4, MAX_FALL:6.5, PLAYER_SPEED:2.0,
   ENEMY_SPEED:0.5
 };
 window.WANEES_GAME = WG;
