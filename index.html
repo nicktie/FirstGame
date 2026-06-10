@@ -10855,6 +10855,7 @@ body.wanees-active{overflow:hidden}
       <div class="wn-hud-item wn-hud-coin">🪙 <span id="wnCoins">0</span></div>
       <div class="wn-hud-item">⭐ <span id="wnScore">0</span></div>
       <div class="wn-hud-item wn-hud-time">⏱ <span id="wnTime">300</span></div>
+      <div class="wn-hud-item">🗺️ <span id="wnStage">1/4</span></div>
     </div>
     <button class="wn-mute" id="wnMuteBtn" onclick="toggleMute();syncWaneesMuteIcon()">🔊</button>
   </div>
@@ -10895,7 +10896,9 @@ body.wanees-active{overflow:hidden}
 <script>
 (function(){
 const TILE = 16;
-const LEVEL = [
+const LEVELS = [
+// Level 1 — Grass meadow (the original starter)
+[
 '                                                                                          ',
 '                                                                                          ',
 '                                                                                          ',
@@ -10909,9 +10912,60 @@ const LEVEL = [
 '#######   ###############   ##########   #######   ##########  ##########################F',
 '#######   ###############   ##########   #######   ##########  ##########################F',
 '#######   ###############   ##########   #######   ##########  ##########################F',
+],
+// Level 2 — Stairs and air time
+[
+'                                                                                                ',
+'                                                                                                ',
+'                                                                                                ',
+'                                                            cccc                                ',
+'                                                     ====                                       ',
+'                              cccc                                       ?bMb?                  ',
+'                  cccc                          ====                                            ',
+'                          ====                            cc                            ====   f',
+'             ?bMb?                    s                              k                     =====f',
+'   p                g    g                        g  g            k             g  k  g  g     F',
+'#######   #############    ###############    ##############    ###########  ###################F',
+'#######   #############    ###############    ##############    ###########  ###################F',
+'#######   #############    ###############    ##############    ###########  ###################F',
+],
+// Level 3 — Pit gauntlet
+[
+'                                                                                                ',
+'                                                                                                ',
+'                                                                                                ',
+'                                                                       cc                       ',
+'                                                              =====   cccc                      ',
+'                                            cc                       ======                     ',
+'                       cccc                                  cc                                 ',
+'                 s                ======                                ?bMb?                   ',
+'             ?b?b?              cccc                                                            f',
+'   p              g                  k       g              k             g  g  k              F',
+'#####    ####     ######      #####        ########      ####           #######################F',
+'#####    ####     ######      #####        ########      ####           #######################F',
+'#####    ####     ######      #####        ########      ####           #######################F',
+],
+// Level 4 — Castle finale
+[
+'                                                                                                  ',
+'                                                                                                  ',
+'                                                                                                  ',
+'                                                  cccc                                            ',
+'                              ccc            ====                                                 ',
+'                       ====           cccc                          s                             ',
+'                M                cc                        cc                              cc    ',
+'             ?Mb??b              ===                                  ?bbbM?                      ',
+'                        cccc                                                                     f',
+'   p     g  k    g  g           k  g  k  g     g  k  g  g  k  g  g  k  g    g  k  g   k  g  g   F',
+'#################################################################################################F',
+'#################################################################################################F',
+'#################################################################################################F',
+],
 ];
-const LEVEL_W = Math.max.apply(null, LEVEL.map(r => r.length));
-const LEVEL_H = LEVEL.length;
+let LEVEL = LEVELS[0];
+let LEVEL_W = Math.max.apply(null, LEVEL.map(r => r.length));
+let LEVEL_H = LEVEL.length;
+const TOTAL_LEVELS = LEVELS.length;
 const WG = {
   W: 320, H: 180, TILE: TILE,
   ctx:null, canvas:null,
@@ -11004,6 +11058,9 @@ function initWanees(){
   updateHud();
 }
 function loadLevel(){
+  LEVEL = LEVELS[Math.min(WG.currentLevel || 0, LEVELS.length - 1)];
+  LEVEL_W = Math.max.apply(null, LEVEL.map(r => r.length));
+  LEVEL_H = LEVEL.length;
   WG.level = [];
   WG.enemies = [];
   WG.coins = [];
@@ -11049,6 +11106,7 @@ function resetWaneesState(){
   WG.state = 'idle';
   const suha = isSuhaPlayer();
   WG.suhaMode = suha;
+  WG.currentLevel = 0;
   WG.score = 0; WG.coinsCollected = 0;
   WG.lives = suha ? 5 : 3;
   WG.timeLeft = suha ? 420 : 300;
@@ -11377,6 +11435,22 @@ function onWin(){
   cancelAnimationFrame(WG.raf);
   WG.score += WG.timeLeft * 10;
   wnSnd('win');
+  const isLast = WG.currentLevel >= TOTAL_LEVELS - 1;
+  if (!isLast){
+    WG.currentLevel++;
+    // Award a small breather for clearing
+    WG.lives = Math.min(WG.lives + 1, WG.suhaMode ? 9 : 6);
+    WG.timeLeft = WG.suhaMode ? 420 : 300;
+    try { if (typeof showToast === 'function') showToast('🎉 المرحلة ' + (WG.currentLevel) + ' خلصت! المرحلة ' + (WG.currentLevel + 1) + '/' + TOTAL_LEVELS, '#ffd200'); } catch(e){}
+    loadLevel();
+    if (WG.suhaMode && WG.player){ WG.player.invincible = 120; WG.player.starTimer = 120; }
+    WG.state = 'running';
+    WG.lastTime = performance.now();
+    cancelAnimationFrame(WG.raf);
+    WG.raf = requestAnimationFrame(waneesLoop);
+    updateHud();
+    return;
+  }
   saveProgress(true);
   showOverOverlay('win');
 }
@@ -11396,6 +11470,8 @@ function saveProgress(won){
         s.games = (s.games || 0) + 1;
         s.coinsCollected = (s.coinsCollected || 0) + WG.coinsCollected;
         if (won) s.levelsCleared = (s.levelsCleared || 0) + 1;
+        const reached = (WG.currentLevel || 0) + 1;
+        if (reached > (s.bestLevel || 0)) s.bestLevel = reached;
         if (final > (s.bestScore || 0)) s.bestScore = final;
       });
     }
@@ -11404,8 +11480,8 @@ function saveProgress(won){
   try { if (typeof waneesLeaderboardSubmit === 'function') waneesLeaderboardSubmit(final); } catch(e){}
 }
 function showOverOverlay(kind){
-  const emoji = kind === 'win' ? '🏁' : '💀';
-  const title = kind === 'win' ? '🎉 وصلت للعَلَم!' : '💀 انتهت اللعبة';
+  const emoji = kind === 'win' ? '👑' : '💀';
+  const title = kind === 'win' ? ('🎉 أنهيت كل ' + TOTAL_LEVELS + ' مراحل!') : '💀 انتهت اللعبة';
   document.getElementById('wnOverEmoji').textContent = emoji;
   document.getElementById('wnOverTitle').textContent = title;
   document.getElementById('wnFinalScore').textContent = Math.floor(WG.score);
@@ -11731,6 +11807,8 @@ function updateHud(){
   document.getElementById('wnCoins').textContent = WG.coinsCollected;
   document.getElementById('wnScore').textContent = String(Math.floor(WG.score)).padStart(5, '0');
   document.getElementById('wnTime').textContent = WG.timeLeft;
+  const stageEl = document.getElementById('wnStage');
+  if (stageEl) stageEl.textContent = ((WG.currentLevel || 0) + 1) + '/' + TOTAL_LEVELS;
 }
 })();
 </script>
