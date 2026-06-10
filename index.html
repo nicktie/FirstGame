@@ -10775,4 +10775,748 @@ function onSpaceDeath(){
 })();
 </script>
 
+<style>
+.wanees-screen{display:none;flex-direction:column;position:fixed;inset:0;background:#5b9bd5;overflow:hidden;z-index:9350;font-family:'Tajawal',sans-serif;direction:rtl;color:#fff;--bg:#5b9bd5;--text:#fff;--muted:#a0c0e0;--border:#2a4a70;--card-bg:#1a2540;--gold:#ffd200;--dark:#0e1a2c}
+.wanees-screen.active{display:flex}
+body.wanees-active{overflow:hidden}
+.wn-topbar{display:flex;align-items:center;justify-content:space-between;padding:10px 14px;gap:10px;background:rgba(0,0,0,0.45);border-bottom:2px solid #ffd200;flex-shrink:0;color:#fff}
+.wn-back-btn{padding:7px 14px;background:rgba(255,210,0,0.15);border:2px solid #ffd200;color:#ffd200;border-radius:8px;font-family:'Tajawal',sans-serif;font-weight:900;font-size:0.85rem;cursor:pointer;flex-shrink:0}
+.wn-hud{flex:1;display:flex;align-items:center;justify-content:center;gap:14px;font-family:'Courier New',monospace;font-weight:900;direction:ltr;flex-wrap:wrap;color:#fff}
+.wn-hud-item{display:flex;align-items:center;gap:4px;font-size:0.9rem;letter-spacing:1px}
+.wn-hud-coin{color:#ffd200;text-shadow:0 0 6px rgba(255,210,0,0.5)}
+.wn-hud-time{color:#fff}
+.wn-mute{width:32px;height:32px;background:rgba(255,210,0,0.15);border:2px solid #ffd200;color:#ffd200;border-radius:50%;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:0.9rem;flex-shrink:0}
+.wn-arena{position:relative;flex:1;display:flex;align-items:center;justify-content:center;padding:6px;touch-action:none;user-select:none;-webkit-user-select:none}
+.wn-arena canvas{width:100%;max-width:min(720px,calc((100dvh - 230px) * 16 / 9));aspect-ratio:16/9;height:auto;background:#5b9bd5;border-radius:6px;border:2px solid #2a4a70;display:block;image-rendering:pixelated;direction:ltr;cursor:pointer}
+.wn-overlay{position:absolute;inset:6px;background:rgba(14,26,44,0.92);backdrop-filter:blur(8px);display:flex;flex-direction:column;align-items:center;justify-content:center;padding:20px;text-align:center;color:#fff;border-radius:6px}
+.wno-emoji{font-size:3.4rem;line-height:1;margin-bottom:8px;filter:drop-shadow(0 0 18px rgba(255,210,0,0.5))}
+.wno-title{font-family:'Tajawal',sans-serif;font-weight:900;color:#ffd200;font-size:1.6rem;margin-bottom:8px;text-shadow:0 0 14px rgba(255,210,0,0.5)}
+.wno-desc{font-size:0.96rem;line-height:1.7;margin-bottom:14px;max-width:380px}
+.wno-hint{font-size:0.82rem;color:#a0c0e0;line-height:1.9;margin-bottom:18px;max-width:340px}
+.wno-hint b{color:#ffd200}
+.wno-stat{font-family:'Courier New',monospace;font-size:1.2rem;color:#ffd200;margin:6px 0;text-shadow:0 0 10px rgba(255,210,0,0.4)}
+.wno-stat .lbl{color:#a0c0e0;font-size:0.85rem}
+.wno-newrec{color:#7dff7d;font-weight:900;font-size:1rem;margin-bottom:10px;animation:wnBlink 0.7s infinite alternate}
+@keyframes wnBlink{from{opacity:0.6}to{opacity:1}}
+.wn-btn-primary{background:linear-gradient(135deg,#ffd200,#cc9900);color:#000;border:none;border-radius:12px;padding:13px 30px;font-family:'Tajawal',sans-serif;font-weight:900;font-size:1rem;cursor:pointer;box-shadow:0 6px 20px rgba(255,210,0,0.4);letter-spacing:1px}
+.wn-btn-primary:active{transform:translateY(2px)}
+.wn-btn-secondary{background:transparent;color:#fff;border:2px solid #ffd200;border-radius:12px;padding:12px 22px;font-family:'Tajawal',sans-serif;font-weight:700;font-size:0.95rem;cursor:pointer}
+.wn-btn-row{display:flex;gap:10px;flex-wrap:wrap;justify-content:center;margin-top:8px}
+.wn-controls{display:flex;justify-content:space-between;align-items:center;padding:6px 14px 14px;gap:8px;flex-shrink:0}
+.wn-dpad{display:flex;gap:8px}
+.wn-ctrl-btn{min-width:64px;min-height:64px;background:linear-gradient(180deg,rgba(255,210,0,0.18),rgba(255,210,0,0.08));border:2px solid #ffd200;border-radius:14px;color:#ffd200;font-family:'Tajawal',sans-serif;font-weight:900;font-size:1.6rem;cursor:pointer;display:flex;align-items:center;justify-content:center;user-select:none;-webkit-user-select:none;touch-action:none}
+.wn-ctrl-btn:active,.wn-ctrl-btn.pressed{background:linear-gradient(180deg,#ffd200,#cc9900);color:#000;transform:translateY(2px)}
+.wn-jump-btn{min-width:80px;min-height:80px;font-size:1.3rem;flex-direction:column;gap:2px}
+.wn-jump-btn .wn-jump-label{font-size:0.7rem;letter-spacing:1px}
+@media(max-width:640px){
+  .wn-topbar{padding:8px 12px;gap:6px}
+  .wn-hud-item{font-size:0.78rem}
+  .wno-title{font-size:1.3rem}
+  .wn-ctrl-btn{min-width:58px;min-height:58px;font-size:1.4rem}
+  .wn-jump-btn{min-width:72px;min-height:72px}
+}
+</style>
+<div id="waneesScreen" class="wanees-screen">
+  <div class="wn-topbar">
+    <button class="wn-back-btn" onclick="exitWanees()">← رجوع</button>
+    <div class="wn-hud">
+      <div class="wn-hud-item">❤️ <span id="wnLives">3</span></div>
+      <div class="wn-hud-item wn-hud-coin">🪙 <span id="wnCoins">0</span></div>
+      <div class="wn-hud-item">⭐ <span id="wnScore">0</span></div>
+      <div class="wn-hud-item wn-hud-time">⏱ <span id="wnTime">300</span></div>
+    </div>
+    <button class="wn-mute" id="wnMuteBtn" onclick="toggleMute();syncWaneesMuteIcon()">🔊</button>
+  </div>
+  <div class="wn-arena" id="waneesArena">
+    <canvas id="waneesCanvas" width="320" height="180"></canvas>
+    <div class="wn-overlay" id="waneesStartOverlay">
+      <div class="wno-emoji">🍄</div>
+      <div class="wno-title">ونيس — المغامرة</div>
+      <div class="wno-desc">اقفز على الأعداء، اجمع العملات الذهبية، وصل للعَلَم في نهاية المرحلة.</div>
+      <div class="wno-hint">
+        🎮 <b>تحرّك:</b> الأزرار أسفل الشاشة أو ← →<br>
+        🦘 <b>قفز:</b> اضغط طويلاً لقفزة أعلى<br>
+        💀 <b>السقوط في الهاوية</b> = خسارة حياة
+      </div>
+      <button class="wn-btn-primary" onclick="waneesStart()">🚀 ابدأ المغامرة</button>
+    </div>
+    <div class="wn-overlay" id="waneesOverOverlay" style="display:none">
+      <div class="wno-emoji" id="wnOverEmoji">💀</div>
+      <div class="wno-title" id="wnOverTitle">انتهت اللعبة</div>
+      <div class="wno-stat"><div class="lbl">النقاط</div><span id="wnFinalScore">0</span></div>
+      <div class="wno-stat"><div class="lbl">العملات</div><span id="wnFinalCoins">0</span></div>
+      <div class="wno-stat"><div class="lbl">⭐ أفضل نتيجة</div><span id="wnFinalBest">0</span></div>
+      <div class="wno-newrec" id="wnNewRec" style="display:none">🎉 رقم قياسي جديد!</div>
+      <div class="wn-btn-row">
+        <button class="wn-btn-primary" onclick="waneesStart()">↻ مرة ثانية</button>
+        <button class="wn-btn-secondary" onclick="exitWanees()">← رجوع</button>
+      </div>
+    </div>
+  </div>
+  <div class="wn-controls">
+    <div class="wn-dpad">
+      <button class="wn-ctrl-btn" id="wnLeftBtn" type="button">◄</button>
+      <button class="wn-ctrl-btn" id="wnRightBtn" type="button">►</button>
+    </div>
+    <button class="wn-ctrl-btn wn-jump-btn" id="wnJumpBtn" type="button">🦘 <span class="wn-jump-label">قفز</span></button>
+  </div>
+</div>
+<script>
+(function(){
+const TILE = 16;
+const LEVEL = [
+'                                                                                          ',
+'                                                                                          ',
+'                                                                                          ',
+'                                                                                  cc      ',
+'             c                                                  c                 cc      ',
+'                  ccc                                          ===                       f',
+'                                       ?bb??b                  ===                   ====f',
+'                                                       cccc                          ====f',
+'                  =====                                                              ====f',
+'   p                          g           g                g       g     g           ====F',
+'#######    #################              ##########  ########################   ########F',
+'#######    #################              ##########  ########################   ########F',
+'#######    #################              ##########  ########################   ########F',
+];
+const LEVEL_W = Math.max.apply(null, LEVEL.map(r => r.length));
+const LEVEL_H = LEVEL.length;
+const WG = {
+  W: 320, H: 180, TILE: TILE,
+  ctx:null, canvas:null,
+  state:'idle',
+  level: null,
+  player: null,
+  enemies: [],
+  coins: [],
+  flag: null,
+  particles: [],
+  camera: { x:0 },
+  score:0, coinsCollected:0, lives:3, timeLeft:300,
+  best:0,
+  inputs: { left:false, right:false, jump:false, jumpHeld:false, jumpJustPressed:false },
+  raf:0, lastTime:0, timeAccum:0,
+  _bound:false, _btnBound:false,
+  GRAV:0.34, JUMP_VEL:-5.6, MAX_FALL:6.5, PLAYER_SPEED:1.6,
+  ENEMY_SPEED:0.5
+};
+window.WANEES_GAME = WG;
+function wnSnd(name){
+  if (typeof isMuted !== 'undefined' && isMuted) return;
+  if (typeof playTone !== 'function') return;
+  switch(name){
+    case 'jump': playTone(660, 0.05, 'square', 0.18); setTimeout(()=>playTone(880,0.06,'square',0.16),35); break;
+    case 'coin':
+      playTone(988, 0.05, 'triangle', 0.20);
+      setTimeout(()=>playTone(1568, 0.10, 'triangle', 0.20), 55);
+      break;
+    case 'stomp':
+      playTone(220, 0.05, 'square', 0.20);
+      setTimeout(()=>playTone(165, 0.08, 'sawtooth', 0.18), 50);
+      break;
+    case 'hurt':
+      playTone(165, 0.12, 'sawtooth', 0.28);
+      setTimeout(()=>playTone(110, 0.15, 'sawtooth', 0.22), 100);
+      break;
+    case 'win':
+      [523,659,784,988,1175,1568].forEach((f,i)=>setTimeout(()=>playTone(f,0.16,'triangle',0.26),i*80));
+      break;
+    case 'death':
+      [440,370,294,220,165].forEach((f,i)=>setTimeout(()=>playTone(f,0.24,'sawtooth',0.22),i*150));
+      break;
+    case 'block': playTone(330, 0.05, 'square', 0.16); break;
+  }
+}
+window.syncWaneesMuteIcon = function(){
+  const b = document.getElementById('wnMuteBtn');
+  if (b) b.textContent = (typeof isMuted !== 'undefined' && isMuted) ? '🔇' : '🔊';
+};
+window.playWanees = function(){
+  if (typeof hideAllScreens === 'function') hideAllScreens();
+  const scr = document.getElementById('waneesScreen');
+  if (!scr) return;
+  scr.classList.add('active');
+  scr.style.display = 'flex';
+  document.body.classList.add('wanees-active');
+  if (typeof _setNavShow === 'function') _setNavShow(false);
+  initWanees();
+};
+window.exitWanees = function(){
+  waneesStop();
+  resetWaneesState();
+  document.body.classList.remove('wanees-active');
+  const scr = document.getElementById('waneesScreen');
+  if (scr) { scr.classList.remove('active'); scr.style.display = 'none'; }
+  document.getElementById('waneesStartOverlay').style.display = 'flex';
+  document.getElementById('waneesOverOverlay').style.display = 'none';
+  if (typeof returnFromGame === 'function') returnFromGame();
+  else if (typeof goToLanding === 'function') goToLanding();
+};
+function initWanees(){
+  WG.canvas = document.getElementById('waneesCanvas');
+  WG.ctx = WG.canvas.getContext('2d');
+  WG.ctx.imageSmoothingEnabled = false;
+  try {
+    const p = (typeof loadProfile === 'function') ? loadProfile() : null;
+    WG.best = (p && p.stats && p.stats.wanees && p.stats.wanees.bestScore) || 0;
+  } catch(e) { WG.best = 0; }
+  resetWaneesState();
+  syncWaneesMuteIcon();
+  if (!WG._bound) { bindWaneesControls(); WG._bound = true; }
+  if (!WG._btnBound) { bindWaneesButtons(); WG._btnBound = true; }
+  document.getElementById('waneesStartOverlay').style.display = 'flex';
+  document.getElementById('waneesOverOverlay').style.display = 'none';
+  loadLevel();
+  drawFrame();
+  updateHud();
+}
+function loadLevel(){
+  WG.level = [];
+  WG.enemies = [];
+  WG.coins = [];
+  WG.flag = null;
+  let playerStart = { x: 32, y: 100 };
+  for (let y = 0; y < LEVEL_H; y++){
+    const row = LEVEL[y].padEnd(LEVEL_W, ' ');
+    const tileRow = new Array(LEVEL_W).fill(' ');
+    for (let x = 0; x < LEVEL_W; x++){
+      const c = row[x];
+      if (c === '#' || c === 'b' || c === '?' || c === '=') tileRow[x] = c;
+      else if (c === 'g') WG.enemies.push({ x: x*TILE, y: y*TILE, vx: -WG.ENEMY_SPEED, vy:0, w: 14, h: 14, alive:true, walkPhase:0, dir:-1 });
+      else if (c === 'c') WG.coins.push({ x: x*TILE+4, y: y*TILE+4, w:8, h:8, collected:false, phase: Math.random()*Math.PI*2 });
+      else if (c === 'p') { playerStart = { x: x*TILE, y: y*TILE - 4 }; }
+      else if (c === 'f' || c === 'F') {
+        tileRow[x] = c;
+        if (!WG.flag) WG.flag = { x: x*TILE, y: y*TILE };
+      }
+    }
+    WG.level.push(tileRow);
+  }
+  WG.player = {
+    x: playerStart.x, y: playerStart.y,
+    vx:0, vy:0, w:12, h:14,
+    onGround:false, dir:1, invincible:0,
+    walkPhase:0, alive:true
+  };
+}
+function resetWaneesState(){
+  WG.state = 'idle';
+  WG.score = 0; WG.coinsCollected = 0; WG.lives = 3; WG.timeLeft = 300;
+  WG.timeAccum = 0;
+  WG.camera.x = 0;
+  WG.particles = [];
+  WG.inputs = { left:false, right:false, jump:false, jumpHeld:false, jumpJustPressed:false };
+  updateHud();
+}
+window.waneesStart = function(){
+  document.getElementById('waneesStartOverlay').style.display = 'none';
+  document.getElementById('waneesOverOverlay').style.display = 'none';
+  resetWaneesState();
+  loadLevel();
+  WG.state = 'running';
+  WG.lastTime = performance.now();
+  cancelAnimationFrame(WG.raf);
+  WG.raf = requestAnimationFrame(waneesLoop);
+};
+function waneesStop(){
+  cancelAnimationFrame(WG.raf);
+  WG.state = 'idle';
+}
+function waneesLoop(t){
+  if (WG.state !== 'running') return;
+  const dt = Math.min(40, t - WG.lastTime) / 16.667;
+  WG.lastTime = t;
+  updateWanees(dt);
+  if (WG.state !== 'running') return;
+  drawFrame();
+  WG.inputs.jumpJustPressed = false;
+  WG.raf = requestAnimationFrame(waneesLoop);
+}
+function isSolid(ch){ return ch === '#' || ch === 'b' || ch === '?' || ch === '='; }
+function getTileAt(px, py){
+  const gx = Math.floor(px / TILE), gy = Math.floor(py / TILE);
+  if (gx < 0 || gx >= LEVEL_W || gy < 0 || gy >= LEVEL_H) return null;
+  return WG.level[gy][gx];
+}
+function tileAtPixel(px, py){
+  const ch = getTileAt(px, py);
+  return ch !== null && isSolid(ch);
+}
+function moveAxis(obj, ax, delta){
+  if (delta === 0) return { hit: false };
+  let hit = false;
+  const sign = delta > 0 ? 1 : -1;
+  const remaining = Math.abs(delta);
+  const STEP = 1;
+  let moved = 0;
+  while (moved < remaining){
+    const step = Math.min(STEP, remaining - moved);
+    obj[ax] += step * sign;
+    moved += step;
+    if (collidesWithTiles(obj)) {
+      obj[ax] -= step * sign;
+      hit = true;
+      break;
+    }
+  }
+  return { hit };
+}
+function collidesWithTiles(obj){
+  const left = obj.x;
+  const right = obj.x + obj.w - 1;
+  const top = obj.y;
+  const bot = obj.y + obj.h - 1;
+  const gxL = Math.floor(left / TILE), gxR = Math.floor(right / TILE);
+  const gyT = Math.floor(top / TILE), gyB = Math.floor(bot / TILE);
+  for (let gy = gyT; gy <= gyB; gy++){
+    for (let gx = gxL; gx <= gxR; gx++){
+      if (gx < 0 || gx >= LEVEL_W || gy < 0 || gy >= LEVEL_H) continue;
+      const ch = WG.level[gy][gx];
+      if (isSolid(ch)) return true;
+    }
+  }
+  return false;
+}
+function poke(gx, gy){
+  if (gx < 0 || gx >= LEVEL_W || gy < 0 || gy >= LEVEL_H) return null;
+  return WG.level[gy][gx];
+}
+function setTile(gx, gy, ch){
+  if (gx < 0 || gx >= LEVEL_W || gy < 0 || gy >= LEVEL_H) return;
+  WG.level[gy][gx] = ch;
+}
+function updateWanees(dt){
+  WG.timeAccum += dt / 60;
+  if (WG.timeAccum >= 1){
+    WG.timeAccum = 0;
+    WG.timeLeft = Math.max(0, WG.timeLeft - 1);
+    if (WG.timeLeft === 0){ loseLife('time'); return; }
+  }
+  updatePlayer(dt);
+  if (WG.state !== 'running') return;
+  WG.enemies.forEach(e => updateEnemy(e, dt));
+  for (const e of WG.enemies){
+    if (!e.alive) continue;
+    if (rectsOverlap(WG.player, e)){
+      if (WG.player.vy > 0 && (WG.player.y + WG.player.h - WG.player.vy * dt) <= e.y + 4){
+        e.alive = false;
+        WG.player.vy = -3.4;
+        WG.score += 100;
+        wnSnd('stomp');
+        spawnPoof(e.x + e.w/2, e.y);
+      } else if (WG.player.invincible <= 0){
+        loseLife('enemy');
+        return;
+      }
+    }
+  }
+  for (const c of WG.coins){
+    if (c.collected) continue;
+    c.phase += dt * 0.18;
+    if (rectsOverlap(WG.player, c)){
+      c.collected = true;
+      WG.coinsCollected++;
+      WG.score += 50;
+      wnSnd('coin');
+      spawnSparkle(c.x + c.w/2, c.y + c.h/2);
+    }
+  }
+  WG.particles.forEach(p => { p.x += p.vx * dt; p.y += p.vy * dt; p.vy += 0.18 * dt; p.life -= dt; });
+  WG.particles = WG.particles.filter(p => p.life > 0);
+  if (WG.flag && WG.player.x + WG.player.w >= WG.flag.x){
+    onWin();
+    return;
+  }
+  if (WG.player.y > LEVEL_H * TILE + 32){
+    loseLife('pit');
+    return;
+  }
+  if (WG.player.invincible > 0) WG.player.invincible -= dt;
+  const targetCam = WG.player.x - WG.W * 0.4;
+  WG.camera.x += (targetCam - WG.camera.x) * 0.12 * dt;
+  const camMax = LEVEL_W * TILE - WG.W;
+  WG.camera.x = Math.max(0, Math.min(camMax, WG.camera.x));
+}
+function rectsOverlap(a, b){
+  return a.x < b.x + b.w && a.x + a.w > b.x && a.y < b.y + b.h && a.y + a.h > b.y;
+}
+function updatePlayer(dt){
+  const p = WG.player;
+  let targetVx = 0;
+  if (WG.inputs.left) targetVx = -WG.PLAYER_SPEED;
+  else if (WG.inputs.right) targetVx = WG.PLAYER_SPEED;
+  p.vx += (targetVx - p.vx) * 0.25 * dt;
+  if (Math.abs(p.vx) < 0.05 && targetVx === 0) p.vx = 0;
+  if (p.vx > 0.1) p.dir = 1;
+  else if (p.vx < -0.1) p.dir = -1;
+  if (WG.inputs.jumpJustPressed && p.onGround){
+    p.vy = WG.JUMP_VEL;
+    p.onGround = false;
+    wnSnd('jump');
+  }
+  if (!WG.inputs.jumpHeld && p.vy < -2.2){
+    p.vy *= 0.85;
+  }
+  p.vy = Math.min(WG.MAX_FALL, p.vy + WG.GRAV * dt);
+  const hX = moveAxis(p, 'x', p.vx * dt);
+  if (hX.hit) p.vx = 0;
+  p.onGround = false;
+  const hY = moveAxis(p, 'y', p.vy * dt);
+  if (hY.hit){
+    if (p.vy > 0) p.onGround = true;
+    else if (p.vy < 0){
+      const headGx = Math.floor((p.x + p.w/2) / TILE);
+      const headGy = Math.floor((p.y - 1) / TILE);
+      const ch = poke(headGx, headGy);
+      if (ch === '?'){
+        setTile(headGx, headGy, 'b');
+        spawnCoinPop(headGx * TILE + TILE/2, headGy * TILE);
+        WG.score += 50;
+        WG.coinsCollected++;
+        wnSnd('coin');
+        updateHud();
+      } else if (ch === 'b'){
+        wnSnd('block');
+      }
+    }
+    p.vy = 0;
+  }
+  if (p.onGround && Math.abs(p.vx) > 0.1) p.walkPhase += dt * 0.25;
+}
+function updateEnemy(e, dt){
+  e.walkPhase += dt * 0.12;
+  e.vy = Math.min(WG.MAX_FALL, e.vy + WG.GRAV * dt);
+  const hX = moveAxis(e, 'x', e.vx * dt);
+  if (hX.hit) { e.vx *= -1; e.dir *= -1; }
+  const aheadX = e.dir > 0 ? e.x + e.w + 1 : e.x - 1;
+  const belowY = e.y + e.h + 2;
+  if (!tileAtPixel(aheadX, belowY) && e.vy === 0){
+    e.vx *= -1; e.dir *= -1;
+  }
+  const hY = moveAxis(e, 'y', e.vy * dt);
+  if (hY.hit) e.vy = 0;
+}
+function loseLife(reason){
+  WG.lives--;
+  wnSnd(reason === 'enemy' ? 'hurt' : 'death');
+  updateHud();
+  if (WG.lives <= 0){
+    onGameOver();
+  } else {
+    WG.player.invincible = 80;
+    const collectedCoins = WG.coinsCollected;
+    const collectedScore = WG.score;
+    const collected = WG.coins.filter(c => c.collected);
+    loadLevel();
+    WG.coinsCollected = collectedCoins;
+    WG.score = collectedScore;
+    WG.coins.forEach(c => {
+      const wasCollected = collected.some(cc => Math.abs(cc.x - c.x) < 2 && Math.abs(cc.y - c.y) < 2);
+      if (wasCollected) c.collected = true;
+    });
+    WG.timeLeft = Math.max(WG.timeLeft, 60);
+  }
+}
+function onWin(){
+  WG.state = 'win';
+  cancelAnimationFrame(WG.raf);
+  WG.score += WG.timeLeft * 10;
+  wnSnd('win');
+  saveProgress(true);
+  showOverOverlay('win');
+}
+function onGameOver(){
+  WG.state = 'dead';
+  cancelAnimationFrame(WG.raf);
+  saveProgress(false);
+  showOverOverlay('lose');
+}
+function saveProgress(won){
+  const final = Math.floor(WG.score);
+  const isRecord = final > WG.best;
+  if (isRecord) WG.best = final;
+  try {
+    if (typeof updateProfileStat === 'function'){
+      updateProfileStat('wanees', (s) => {
+        s.games = (s.games || 0) + 1;
+        s.coinsCollected = (s.coinsCollected || 0) + WG.coinsCollected;
+        if (won) s.levelsCleared = (s.levelsCleared || 0) + 1;
+        if (final > (s.bestScore || 0)) s.bestScore = final;
+      });
+    }
+  } catch(e){}
+  try { if (typeof renderBadges === 'function') renderBadges(); } catch(e){}
+  try { if (typeof waneesLeaderboardSubmit === 'function') waneesLeaderboardSubmit(final); } catch(e){}
+}
+function showOverOverlay(kind){
+  const emoji = kind === 'win' ? '🏁' : '💀';
+  const title = kind === 'win' ? '🎉 وصلت للعَلَم!' : '💀 انتهت اللعبة';
+  document.getElementById('wnOverEmoji').textContent = emoji;
+  document.getElementById('wnOverTitle').textContent = title;
+  document.getElementById('wnFinalScore').textContent = Math.floor(WG.score);
+  document.getElementById('wnFinalCoins').textContent = WG.coinsCollected;
+  document.getElementById('wnFinalBest').textContent = WG.best;
+  const isRec = Math.floor(WG.score) >= WG.best && WG.score > 0;
+  document.getElementById('wnNewRec').style.display = isRec ? 'block' : 'none';
+  document.getElementById('waneesOverOverlay').style.display = 'flex';
+  updateHud();
+}
+function spawnPoof(x, y){
+  for (let i = 0; i < 10; i++){
+    const a = Math.random() * Math.PI * 2;
+    const sp = 0.8 + Math.random() * 1.2;
+    WG.particles.push({ x, y, vx: Math.cos(a)*sp, vy: Math.sin(a)*sp - 1, life: 28, color:'#a07050' });
+  }
+}
+function spawnSparkle(x, y){
+  for (let i = 0; i < 8; i++){
+    const a = (i / 8) * Math.PI * 2;
+    WG.particles.push({ x, y, vx: Math.cos(a)*1.5, vy: Math.sin(a)*1.5, life: 22, color:'#ffd200' });
+  }
+}
+function spawnCoinPop(x, y){
+  for (let i = 0; i < 4; i++){
+    WG.particles.push({ x, y, vx:(Math.random()-0.5)*1.2, vy:-2 - Math.random()*1.5, life:35, color:'#ffd200' });
+  }
+}
+function bindWaneesControls(){
+  function isActive(){
+    const scr = document.getElementById('waneesScreen');
+    return scr && scr.classList.contains('active');
+  }
+  document.addEventListener('keydown', (e) => {
+    if (!isActive()) return;
+    if (e.code === 'ArrowLeft' || e.key === 'ArrowLeft'){ WG.inputs.left = true; e.preventDefault(); }
+    else if (e.code === 'ArrowRight' || e.key === 'ArrowRight'){ WG.inputs.right = true; e.preventDefault(); }
+    else if (e.code === 'Space' || e.code === 'ArrowUp' || e.key === 'ArrowUp' || e.key === ' '){
+      if (!WG.inputs.jumpHeld) WG.inputs.jumpJustPressed = true;
+      WG.inputs.jumpHeld = true; WG.inputs.jump = true; e.preventDefault();
+    }
+  });
+  document.addEventListener('keyup', (e) => {
+    if (!isActive()) return;
+    if (e.code === 'ArrowLeft' || e.key === 'ArrowLeft'){ WG.inputs.left = false; e.preventDefault(); }
+    else if (e.code === 'ArrowRight' || e.key === 'ArrowRight'){ WG.inputs.right = false; e.preventDefault(); }
+    else if (e.code === 'Space' || e.code === 'ArrowUp' || e.key === 'ArrowUp' || e.key === ' '){
+      WG.inputs.jumpHeld = false; WG.inputs.jump = false; e.preventDefault();
+    }
+  });
+  window.addEventListener('blur', () => {
+    if (isActive()){ WG.inputs.left = false; WG.inputs.right = false; WG.inputs.jumpHeld = false; }
+  });
+}
+function bindWaneesButtons(){
+  const lBtn = document.getElementById('wnLeftBtn');
+  const rBtn = document.getElementById('wnRightBtn');
+  const jBtn = document.getElementById('wnJumpBtn');
+  function bindHold(btn, onDown, onUp){
+    ['touchstart','mousedown'].forEach(ev => {
+      btn.addEventListener(ev, (e) => { e.preventDefault(); btn.classList.add('pressed'); onDown(); }, { passive:false });
+    });
+    ['touchend','touchcancel','mouseup','mouseleave'].forEach(ev => {
+      btn.addEventListener(ev, () => { btn.classList.remove('pressed'); onUp(); });
+    });
+  }
+  bindHold(lBtn, () => WG.inputs.left = true, () => WG.inputs.left = false);
+  bindHold(rBtn, () => WG.inputs.right = true, () => WG.inputs.right = false);
+  bindHold(jBtn,
+    () => { if (!WG.inputs.jumpHeld) WG.inputs.jumpJustPressed = true; WG.inputs.jumpHeld = true; WG.inputs.jump = true; },
+    () => { WG.inputs.jumpHeld = false; WG.inputs.jump = false; }
+  );
+}
+function drawFrame(){
+  const ctx = WG.ctx;
+  if (!ctx) return;
+  const sky = ctx.createLinearGradient(0, 0, 0, WG.H);
+  sky.addColorStop(0, '#5b9bd5');
+  sky.addColorStop(1, '#a0d0f0');
+  ctx.fillStyle = sky;
+  ctx.fillRect(0, 0, WG.W, WG.H);
+  ctx.fillStyle = 'rgba(255,255,255,0.7)';
+  const cloudOff = -(WG.camera.x * 0.3);
+  for (let i = 0; i < 8; i++){
+    const cx = ((i * 90 + cloudOff) % (WG.W + 120) + WG.W + 120) % (WG.W + 120) - 60;
+    const cy = 18 + (i % 3) * 12;
+    drawCloud(ctx, cx, cy);
+  }
+  ctx.fillStyle = '#3b8a4f';
+  const hillOff = -(WG.camera.x * 0.5);
+  for (let i = -1; i < 8; i++){
+    const cx = ((i * 110 + hillOff) % (WG.W + 220) + WG.W + 220) % (WG.W + 220) - 110;
+    drawHill(ctx, cx, WG.H - 36);
+  }
+  ctx.save();
+  ctx.translate(-Math.floor(WG.camera.x), 0);
+  const startCol = Math.max(0, Math.floor(WG.camera.x / TILE) - 1);
+  const endCol = Math.min(LEVEL_W, Math.ceil((WG.camera.x + WG.W) / TILE) + 1);
+  for (let y = 0; y < LEVEL_H; y++){
+    for (let x = startCol; x < endCol; x++){
+      const ch = WG.level[y][x];
+      if (ch !== ' ') drawTile(ctx, x, y, ch);
+    }
+  }
+  WG.coins.forEach(c => { if (!c.collected) drawCoin(ctx, c); });
+  WG.enemies.forEach(e => { if (e.alive) drawEnemy(ctx, e); });
+  WG.particles.forEach(p => {
+    ctx.fillStyle = p.color;
+    ctx.fillRect(Math.round(p.x), Math.round(p.y), 2, 2);
+  });
+  drawPlayer(ctx, WG.player);
+  ctx.restore();
+}
+function drawCloud(ctx, cx, cy){
+  ctx.beginPath();
+  ctx.arc(cx, cy, 7, 0, Math.PI*2);
+  ctx.arc(cx + 8, cy - 3, 9, 0, Math.PI*2);
+  ctx.arc(cx + 17, cy, 7, 0, Math.PI*2);
+  ctx.fill();
+}
+function drawHill(ctx, cx, baseY){
+  ctx.beginPath();
+  ctx.moveTo(cx, baseY);
+  ctx.quadraticCurveTo(cx + 55, baseY - 40, cx + 110, baseY);
+  ctx.closePath();
+  ctx.fill();
+}
+function drawTile(ctx, gx, gy, ch){
+  const px = gx * TILE, py = gy * TILE;
+  if (ch === '#'){
+    ctx.fillStyle = '#7a4b1a';
+    ctx.fillRect(px, py, TILE, TILE);
+    ctx.fillStyle = '#2a8a3a';
+    ctx.fillRect(px, py, TILE, 4);
+    ctx.fillStyle = '#3b8a4f';
+    ctx.fillRect(px+2, py, 2, 3);
+    ctx.fillRect(px+10, py, 2, 3);
+    ctx.fillStyle = '#5a3010';
+    ctx.fillRect(px+2, py+8, 3, 2);
+    ctx.fillRect(px+11, py+12, 3, 2);
+  } else if (ch === 'b'){
+    ctx.fillStyle = '#c84a1a';
+    ctx.fillRect(px, py, TILE, TILE);
+    ctx.fillStyle = '#7a2810';
+    ctx.fillRect(px, py+7, TILE, 1);
+    ctx.fillRect(px, py+15, TILE, 1);
+    ctx.fillRect(px+5, py, 1, 8);
+    ctx.fillRect(px+11, py+8, 1, 8);
+    ctx.fillRect(px+5, py+8, 1, 8);
+    ctx.fillStyle = '#ffaa66';
+    ctx.fillRect(px, py, TILE, 1);
+  } else if (ch === '?'){
+    ctx.fillStyle = '#ffaa00';
+    ctx.fillRect(px, py, TILE, TILE);
+    ctx.fillStyle = '#c87700';
+    ctx.fillRect(px, py + TILE - 2, TILE, 2);
+    ctx.fillRect(px, py, 2, TILE);
+    ctx.fillRect(px + TILE - 2, py, 2, TILE);
+    ctx.fillStyle = '#fff';
+    ctx.font = 'bold 12px monospace';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillText('?', px + TILE/2, py + TILE/2 + 1);
+  } else if (ch === '='){
+    ctx.fillStyle = '#7a4b1a';
+    ctx.fillRect(px, py, TILE, TILE - 4);
+    ctx.fillStyle = '#2a8a3a';
+    ctx.fillRect(px, py, TILE, 3);
+  } else if (ch === 'f' || ch === 'F'){
+    ctx.fillStyle = '#cccccc';
+    ctx.fillRect(px + TILE/2 - 1, py, 2, TILE);
+    if (ch === 'F'){
+      ctx.fillStyle = '#888';
+      ctx.fillRect(px + 4, py + TILE - 4, 8, 4);
+    }
+  }
+  if (ch === 'f' && (gy === 0 || WG.level[gy-1][gx] !== 'f')){
+    ctx.fillStyle = '#dd2222';
+    ctx.beginPath();
+    ctx.moveTo(px + TILE/2 + 1, py + 2);
+    ctx.lineTo(px + TILE - 1, py + 6);
+    ctx.lineTo(px + TILE/2 + 1, py + 10);
+    ctx.closePath();
+    ctx.fill();
+  }
+}
+function drawCoin(ctx, c){
+  const cx = c.x + c.w/2;
+  const cy = c.y + c.h/2 + Math.sin(c.phase) * 1.2;
+  const wob = Math.abs(Math.sin(c.phase * 0.6));
+  const w = 4 + wob * 4;
+  ctx.fillStyle = '#cc9900';
+  ctx.fillRect(Math.round(cx - w/2), Math.round(cy - 4), Math.ceil(w), 8);
+  ctx.fillStyle = '#ffd200';
+  ctx.fillRect(Math.round(cx - w/2 + 1), Math.round(cy - 3), Math.max(1, Math.ceil(w) - 2), 6);
+  ctx.fillStyle = '#fff';
+  if (w > 3) ctx.fillRect(Math.round(cx - 1), Math.round(cy - 2), 1, 4);
+}
+function drawEnemy(ctx, e){
+  const x = e.x, y = e.y;
+  ctx.fillStyle = '#7a4a1a';
+  ctx.fillRect(x + 1, y + 4, 12, 10);
+  ctx.fillRect(x, y + 2, 14, 6);
+  ctx.fillStyle = '#3a1a0a';
+  const ph = Math.floor(e.walkPhase) % 2;
+  if (ph === 0){
+    ctx.fillRect(x + 1, y + 13, 4, 2);
+    ctx.fillRect(x + 9, y + 14, 4, 1);
+  } else {
+    ctx.fillRect(x + 1, y + 14, 4, 1);
+    ctx.fillRect(x + 9, y + 13, 4, 2);
+  }
+  ctx.fillStyle = '#fff';
+  ctx.fillRect(x + 3, y + 5, 2, 3);
+  ctx.fillRect(x + 9, y + 5, 2, 3);
+  ctx.fillStyle = '#000';
+  ctx.fillRect(x + 3, y + 6, 2, 2);
+  ctx.fillRect(x + 9, y + 6, 2, 2);
+  ctx.fillRect(x + 5, y + 10, 4, 1);
+}
+function drawPlayer(ctx, p){
+  if (p.invincible > 0 && Math.floor(p.invincible / 3) % 2 === 0) return;
+  const x = Math.round(p.x), y = Math.round(p.y);
+  const ph = Math.floor(p.walkPhase) % 2;
+  const facingR = p.dir > 0;
+  ctx.fillStyle = '#dd2222';
+  ctx.fillRect(x + 1, y, 10, 3);
+  ctx.fillRect(facingR ? x + 6 : x, y + 2, 6, 2);
+  ctx.fillStyle = '#aa0a0a';
+  ctx.fillRect(x + 1, y + 2, 10, 1);
+  ctx.fillStyle = '#f0c090';
+  ctx.fillRect(x + 2, y + 3, 8, 4);
+  ctx.fillStyle = '#222';
+  ctx.fillRect(facingR ? x + 8 : x + 3, y + 4, 1, 2);
+  ctx.fillStyle = '#3a1a0a';
+  ctx.fillRect(facingR ? x + 1 : x + 9, y + 4, 2, 2);
+  ctx.fillStyle = '#2a5ea8';
+  ctx.fillRect(x + 1, y + 7, 10, 4);
+  ctx.fillStyle = '#ffd200';
+  ctx.fillRect(x + 5, y + 8, 2, 2);
+  ctx.fillStyle = '#dd2222';
+  ctx.fillRect(x, y + 7, 1, 3);
+  ctx.fillRect(x + 11, y + 7, 1, 3);
+  ctx.fillStyle = '#3a1a0a';
+  if (!p.onGround){
+    ctx.fillRect(x + 2, y + 11, 3, 3);
+    ctx.fillRect(x + 7, y + 11, 3, 3);
+  } else if (Math.abs(p.vx) > 0.1){
+    if (ph === 0){
+      ctx.fillRect(x + 2, y + 11, 3, 3);
+      ctx.fillRect(x + 7, y + 11, 3, 2);
+    } else {
+      ctx.fillRect(x + 2, y + 11, 3, 2);
+      ctx.fillRect(x + 7, y + 11, 3, 3);
+    }
+  } else {
+    ctx.fillRect(x + 2, y + 11, 3, 3);
+    ctx.fillRect(x + 7, y + 11, 3, 3);
+  }
+}
+function updateHud(){
+  document.getElementById('wnLives').textContent = WG.lives;
+  document.getElementById('wnCoins').textContent = WG.coinsCollected;
+  document.getElementById('wnScore').textContent = String(Math.floor(WG.score)).padStart(5, '0');
+  document.getElementById('wnTime').textContent = WG.timeLeft;
+}
+})();
+</script>
 </body></html>
