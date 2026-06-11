@@ -12075,5 +12075,155 @@ function updateHud(){
 .game-page-card:hover::after{opacity:1;animation:gpBorderSweep 1.8s linear infinite}
 @keyframes gpBorderSweep{from{background-position:200% 0}to{background-position:-200% 0}}
 @media (prefers-reduced-motion:reduce){.game-page-card:hover::after{animation:none;opacity:0.6}}
+
+/* ===== Online quiz polish pack ===== */
+/* Ambient floating orbs behind the entire online flow */
+#onlineScreen{position:relative;isolation:isolate}
+#onlineScreen::before{
+  content:'';position:fixed;inset:-10%;z-index:-2;pointer-events:none;
+  background:
+    radial-gradient(circle 280px at 18% 22%,rgba(100,149,237,0.16),transparent 70%),
+    radial-gradient(circle 320px at 82% 78%,rgba(224,112,80,0.13),transparent 70%),
+    radial-gradient(circle 240px at 55% 50%,rgba(201,168,76,0.10),transparent 70%);
+  filter:blur(8px);animation:oqOrbDrift 22s ease-in-out infinite alternate}
+@keyframes oqOrbDrift{
+  0%{transform:translate(0,0) scale(1);opacity:0.85}
+  50%{transform:translate(-3%,2.5%) scale(1.08);opacity:1}
+  100%{transform:translate(3%,-3%) scale(1.04);opacity:0.9}}
+@media (prefers-reduced-motion:reduce){#onlineScreen::before{animation:none}}
+
+/* Glassy panels with golden accent */
+#onlineScreen .online-panel{
+  background:linear-gradient(165deg,rgba(19,19,26,0.92),rgba(13,13,20,0.85));
+  backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);
+  box-shadow:0 18px 50px rgba(0,0,0,0.45),inset 0 1px 0 rgba(255,255,255,0.06);
+  position:relative;overflow:hidden}
+#onlineScreen .online-panel::before{
+  content:'';position:absolute;left:0;top:0;width:3px;height:100%;
+  background:linear-gradient(180deg,var(--gold),transparent);opacity:0.7}
+
+/* Room code: pulsing aura, monospace numerals */
+#onlineScreen .room-code-box{
+  background:linear-gradient(140deg,rgba(19,19,26,0.92),rgba(30,24,8,0.85));
+  box-shadow:0 14px 40px rgba(201,168,76,0.18),0 0 40px rgba(201,168,76,0.12),inset 0 1px 0 rgba(255,255,255,0.06);
+  animation:oqCodePulse 3.6s ease-in-out infinite}
+@keyframes oqCodePulse{0%,100%{box-shadow:0 14px 40px rgba(201,168,76,0.18),0 0 30px rgba(201,168,76,0.12)}50%{box-shadow:0 14px 40px rgba(201,168,76,0.22),0 0 60px rgba(201,168,76,0.28)}}
+#onlineScreen .room-code{
+  font-variant-numeric:tabular-nums;
+  background:linear-gradient(180deg,var(--gold-light) 0%,var(--gold) 60%,#8b6e1f 100%);
+  -webkit-background-clip:text;background-clip:text;color:transparent;
+  text-shadow:0 2px 12px rgba(201,168,76,0.45);filter:drop-shadow(0 0 6px rgba(201,168,76,0.4))}
+@media (prefers-reduced-motion:reduce){#onlineScreen .room-code-box{animation:none}}
+
+/* Question screen: stage shell + question card */
+#onlineQuestion{animation:oqStageIn 0.45s cubic-bezier(0.34,1.4,0.64,1)}
+@keyframes oqStageIn{from{opacity:0;transform:translateY(14px) scale(0.985)}to{opacity:1;transform:translateY(0) scale(1)}}
+#onlineQuestion .online-panel{
+  border-color:rgba(201,168,76,0.35);
+  box-shadow:0 22px 60px rgba(0,0,0,0.5),0 0 60px rgba(201,168,76,0.08),inset 0 1px 0 rgba(255,255,255,0.07)}
+#onlineQNum{display:inline-block;padding:5px 14px;background:rgba(201,168,76,0.12);border:1px solid rgba(201,168,76,0.35);border-radius:50px;color:var(--gold);font-family:'Tajawal',sans-serif;font-weight:900;letter-spacing:0.5px;font-size:0.85rem}
+#onlineCat{display:inline-block;margin-right:8px}
+#onlineQText{
+  font-family:'Tajawal',sans-serif;font-weight:900;
+  text-shadow:0 2px 8px rgba(0,0,0,0.4);
+  line-height:1.55;letter-spacing:0.2px}
+
+/* Team-turn banner — animated gradient + flag */
+.team-turn-banner{
+  position:relative;overflow:hidden;
+  background-size:200% 100% !important;
+  animation:oqBannerSheen 4s ease-in-out infinite}
+.team-turn-banner.t0{background:linear-gradient(110deg,rgba(100,149,237,0.16),rgba(100,149,237,0.32),rgba(100,149,237,0.16)) !important;box-shadow:0 6px 18px rgba(100,149,237,0.25),inset 0 1px 0 rgba(255,255,255,0.08)}
+.team-turn-banner.t1{background:linear-gradient(110deg,rgba(224,112,80,0.16),rgba(224,112,80,0.32),rgba(224,112,80,0.16)) !important;box-shadow:0 6px 18px rgba(224,112,80,0.25),inset 0 1px 0 rgba(255,255,255,0.08)}
+@keyframes oqBannerSheen{0%,100%{background-position:0 0}50%{background-position:100% 0}}
+@media (prefers-reduced-motion:reduce){.team-turn-banner{animation:none}}
+
+/* Answer options — premium press feel */
+#onlineQuestion .opt,#gameScreen .opt{
+  position:relative;overflow:hidden;
+  background:linear-gradient(170deg,var(--option-bg),rgba(13,13,20,0.85)) !important;
+  box-shadow:0 4px 12px rgba(0,0,0,0.35),inset 0 1px 0 rgba(255,255,255,0.05);
+  transition:transform 0.18s cubic-bezier(0.34,1.4,0.64,1),box-shadow 0.2s,border-color 0.2s,background 0.2s}
+#onlineQuestion .opt::before,#gameScreen .opt::before{
+  content:'';position:absolute;top:0;left:-100%;width:100%;height:100%;
+  background:linear-gradient(110deg,transparent 35%,rgba(255,255,255,0.07) 50%,transparent 65%);
+  transition:left 0.6s}
+#onlineQuestion .opt:hover:not(.correct):not(.wrong):not(.disabled),#gameScreen .opt:hover:not(.correct):not(.wrong):not(.disabled){
+  transform:translateY(-3px) scale(1.01);
+  border-color:var(--gold);
+  box-shadow:0 10px 28px rgba(201,168,76,0.28),0 0 0 1px rgba(201,168,76,0.3),inset 0 1px 0 rgba(255,255,255,0.08)}
+#onlineQuestion .opt:hover:not(.correct):not(.wrong):not(.disabled)::before,#gameScreen .opt:hover:not(.correct):not(.wrong):not(.disabled)::before{left:100%}
+#onlineQuestion .opt:active:not(.correct):not(.wrong):not(.disabled),#gameScreen .opt:active:not(.correct):not(.wrong):not(.disabled){transform:translateY(-1px) scale(0.99)}
+#onlineQuestion .opt.correct,#gameScreen .opt.correct{
+  border-color:var(--correct) !important;
+  background:linear-gradient(170deg,rgba(61,186,122,0.28),rgba(61,186,122,0.12)) !important;
+  box-shadow:0 8px 28px rgba(61,186,122,0.45),inset 0 0 0 1px rgba(61,186,122,0.4),0 0 40px rgba(61,186,122,0.25);
+  animation:oqOptCorrect 0.55s cubic-bezier(0.34,1.56,0.64,1)}
+@keyframes oqOptCorrect{0%{transform:scale(1)}40%{transform:scale(1.05)}100%{transform:scale(1)}}
+#onlineQuestion .opt.wrong,#gameScreen .opt.wrong{
+  border-color:var(--wrong) !important;
+  background:linear-gradient(170deg,rgba(224,92,92,0.24),rgba(224,92,92,0.08)) !important;
+  box-shadow:0 6px 22px rgba(224,92,92,0.32),inset 0 0 0 1px rgba(224,92,92,0.35);
+  animation:oqOptWrong 0.45s ease-out}
+@keyframes oqOptWrong{0%{transform:translateX(0)}25%{transform:translateX(-4px)}50%{transform:translateX(4px)}75%{transform:translateX(-2px)}100%{transform:translateX(0)}}
+
+/* Timer ring — count down via conic-gradient */
+#onlineScreen .online-timer{
+  position:relative;
+  background:radial-gradient(circle,var(--card-bg) 0%,rgba(13,13,20,0.95) 100%);
+  box-shadow:0 0 0 1px rgba(201,168,76,0.25),0 6px 18px rgba(0,0,0,0.4);
+  transition:transform 0.2s,box-shadow 0.2s,border-color 0.2s}
+#onlineScreen .online-timer.low{
+  border-color:var(--wrong) !important;color:var(--wrong) !important;
+  box-shadow:0 0 0 1px rgba(224,92,92,0.4),0 6px 18px rgba(224,92,92,0.35),0 0 30px rgba(224,92,92,0.25);
+  animation:oqTimerPanic 0.55s ease-in-out infinite alternate}
+@keyframes oqTimerPanic{from{transform:scale(1)}to{transform:scale(1.08)}}
+@media (prefers-reduced-motion:reduce){#onlineScreen .online-timer.low{animation:none}}
+
+/* Live leaderboard rows */
+#onlineScreen .olb-row{
+  background:linear-gradient(165deg,rgba(19,19,26,0.92),rgba(13,13,20,0.78));
+  box-shadow:0 4px 14px rgba(0,0,0,0.35),inset 0 1px 0 rgba(255,255,255,0.04);
+  border-color:rgba(255,255,255,0.06);
+  transition:transform 0.18s,box-shadow 0.18s,border-color 0.18s}
+#onlineScreen .olb-row.me{
+  border-color:var(--gold);
+  background:linear-gradient(165deg,rgba(40,30,8,0.78),rgba(20,15,4,0.85));
+  box-shadow:0 6px 20px rgba(201,168,76,0.32),inset 0 1px 0 rgba(255,200,80,0.18)}
+#onlineScreen .olb-row:hover{transform:translateY(-2px);box-shadow:0 6px 18px rgba(0,0,0,0.45)}
+
+/* Final podium polish */
+#onlineScreen .podium-block{
+  background:linear-gradient(180deg,rgba(201,168,76,0.06),transparent) !important;
+  box-shadow:0 10px 28px rgba(0,0,0,0.45),inset 0 2px 0 rgba(255,255,255,0.08);
+  position:relative;overflow:hidden}
+#onlineScreen .podium-block::after{
+  content:'';position:absolute;left:-50%;top:0;width:200%;height:100%;
+  background:linear-gradient(110deg,transparent 40%,rgba(255,255,255,0.05) 50%,transparent 60%);
+  animation:oqPodiumSheen 3s ease-in-out infinite}
+@keyframes oqPodiumSheen{0%,100%{transform:translateX(-25%)}50%{transform:translateX(25%)}}
+@media (prefers-reduced-motion:reduce){#onlineScreen .podium-block::after{animation:none}}
+
+/* Floating emoji reactions — bigger, dropped shadow */
+#onlineScreen .float-reaction{
+  filter:drop-shadow(0 4px 10px rgba(0,0,0,0.55));
+  text-shadow:0 0 12px rgba(255,255,255,0.25)}
+
+/* Reaction buttons — quick scale + glow */
+#onlineScreen .reaction-btn{
+  background:linear-gradient(160deg,var(--card-bg),rgba(13,13,20,0.95));
+  box-shadow:0 4px 12px rgba(0,0,0,0.35);
+  transition:transform 0.14s cubic-bezier(0.34,1.56,0.64,1),box-shadow 0.18s,border-color 0.18s}
+#onlineScreen .reaction-btn:hover{
+  transform:translateY(-3px) scale(1.12);
+  border-color:var(--gold);
+  box-shadow:0 8px 20px rgba(201,168,76,0.28)}
+#onlineScreen .reaction-btn:active{transform:scale(0.95)}
+
+/* Lobby player chips get a subtle sheen */
+#onlineScreen .lobby-player-chip{
+  background:linear-gradient(160deg,rgba(26,26,36,0.85),rgba(13,13,20,0.85));
+  box-shadow:0 2px 8px rgba(0,0,0,0.3),inset 0 1px 0 rgba(255,255,255,0.05);
+  transition:transform 0.18s,box-shadow 0.18s,border-color 0.18s}
 </style>
 </body></html>
