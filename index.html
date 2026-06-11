@@ -11889,4 +11889,61 @@ function updateHud(){
 }
 })();
 </script>
+<style>
+/* ===== Console-grade polish pack (board games) ===== */
+/* Ambient drifting glow behind every board game screen */
+#trapScreen,#xoScreen,#c4Screen,#memScreen,#defuseScreen{position:relative;isolation:isolate}
+#trapScreen::before,#xoScreen::before,#c4Screen::before,#memScreen::before,#defuseScreen::before{
+  content:'';position:fixed;inset:0;z-index:-1;pointer-events:none;
+  background:
+    radial-gradient(ellipse 60% 40% at 20% 15%,rgba(100,149,237,0.10),transparent 70%),
+    radial-gradient(ellipse 55% 45% at 80% 85%,rgba(160,112,224,0.10),transparent 70%),
+    radial-gradient(ellipse 45% 35% at 60% 40%,rgba(201,168,76,0.07),transparent 70%);
+  animation:gpAmbient 16s ease-in-out infinite alternate}
+@keyframes gpAmbient{
+  0%{transform:translate(0,0) scale(1);opacity:0.85}
+  50%{transform:translate(-2.5%,2%) scale(1.06);opacity:1}
+  100%{transform:translate(2%,-2.5%) scale(1.03);opacity:0.9}}
+@media (prefers-reduced-motion:reduce){
+  #trapScreen::before,#xoScreen::before,#c4Screen::before,#memScreen::before,#defuseScreen::before{animation:none}}
+
+/* — XO: neon arcade pieces — */
+.xo-board{box-shadow:0 18px 50px rgba(0,0,0,0.45),inset 0 1px 0 rgba(255,255,255,0.05);background:linear-gradient(160deg,var(--card-bg),rgba(13,13,20,0.95))}
+.xo-cell{box-shadow:inset 0 2px 8px rgba(0,0,0,0.35)}
+.xo-cell.x{color:#7db4ff;text-shadow:0 0 10px rgba(100,160,255,0.85),0 0 28px rgba(100,160,255,0.45),0 0 60px rgba(100,160,255,0.25)}
+.xo-cell.o{color:#c79bff;text-shadow:0 0 10px rgba(180,130,255,0.85),0 0 28px rgba(180,130,255,0.45),0 0 60px rgba(180,130,255,0.25)}
+.xo-cell.filled{animation:gpPiecePop 0.32s cubic-bezier(0.34,1.56,0.64,1)}
+@keyframes gpPiecePop{0%{transform:scale(0.2) rotate(-12deg)}70%{transform:scale(1.12) rotate(3deg)}100%{transform:scale(1) rotate(0)}}
+.xo-cell.win{box-shadow:0 0 0 3px rgba(201,168,76,0.3),0 0 30px rgba(201,168,76,0.5),inset 0 0 18px rgba(201,168,76,0.25)}
+
+/* — Connect 4: glossy arcade pucks — */
+.c4-board-wrap{background:linear-gradient(165deg,#2a5cb8,#173a78);box-shadow:0 18px 50px rgba(20,50,120,0.5),inset 0 2px 0 rgba(255,255,255,0.18),inset 0 -3px 8px rgba(0,0,0,0.35)}
+.c4-cell{box-shadow:inset 0 3px 8px rgba(0,0,0,0.55),inset 0 -1px 2px rgba(255,255,255,0.07)}
+.c4-disc-piece{position:relative;overflow:hidden}
+.c4-disc-piece::after{content:'';position:absolute;left:14%;top:8%;width:42%;height:30%;border-radius:50%;background:rgba(255,255,255,0.4);filter:blur(1.5px)}
+.c4-disc-piece.dropping{animation:gpC4Drop 0.5s cubic-bezier(0.55,0,0.45,1.45)}
+@keyframes gpC4Drop{0%{transform:translateY(-440%);opacity:0.9}60%{transform:translateY(0)}78%{transform:translateY(-9%)}100%{transform:translateY(0)}}
+
+/* — Memory: lacquered cards — */
+.mem-card-back{background:linear-gradient(140deg,#e8c25c 0%,#b8862e 45%,#8a5e14 100%);box-shadow:0 6px 16px rgba(0,0,0,0.4),inset 0 1px 0 rgba(255,255,255,0.35)}
+.mem-card-back::after{content:'';position:absolute;inset:0;border-radius:inherit;background:linear-gradient(115deg,transparent 30%,rgba(255,255,255,0.22) 48%,transparent 62%);pointer-events:none}
+.mem-card:hover .mem-card-back{box-shadow:0 10px 24px rgba(201,168,76,0.35),inset 0 1px 0 rgba(255,255,255,0.4)}
+.mem-card-face{box-shadow:0 6px 16px rgba(0,0,0,0.4),inset 0 0 14px rgba(201,168,76,0.12)}
+.mem-card.matched .mem-card-face{box-shadow:0 0 22px rgba(61,186,122,0.55),inset 0 0 14px rgba(61,186,122,0.25)}
+
+/* — Trap: pressure-plate cells — */
+.trap-cell{box-shadow:inset 0 2px 6px rgba(0,0,0,0.4),0 1px 0 rgba(255,255,255,0.04)}
+.trap-cell:not(.disabled):not(.revealed-safe):not(.revealed-bomb):hover{border-color:var(--gold);box-shadow:inset 0 2px 6px rgba(0,0,0,0.4),0 0 14px rgba(201,168,76,0.35);transform:translateY(-1px)}
+.trap-cell.revealed-safe{box-shadow:0 0 16px rgba(61,186,122,0.4),inset 0 0 10px rgba(61,186,122,0.2)}
+.trap-cell.revealed-bomb{box-shadow:0 0 22px rgba(224,92,92,0.6),inset 0 0 12px rgba(224,92,92,0.3)}
+
+/* — Defuse: live-wire console — */
+.defuse-bomb-panel{box-shadow:0 18px 50px rgba(0,0,0,0.5),inset 0 1px 0 rgba(255,255,255,0.07);animation:gpBombIdle 2.4s ease-in-out infinite}
+@keyframes gpBombIdle{0%,100%{box-shadow:0 18px 50px rgba(0,0,0,0.5),inset 0 1px 0 rgba(255,255,255,0.07)}50%{box-shadow:0 18px 50px rgba(0,0,0,0.5),0 0 26px rgba(224,92,92,0.18),inset 0 1px 0 rgba(255,255,255,0.07)}}
+.defuse-wire{transition:transform 0.15s,box-shadow 0.15s}
+.defuse-wire:hover{transform:translateX(-3px);box-shadow:0 0 16px rgba(240,208,128,0.22)}
+.defuse-wire-line{animation:gpWireHum 1.6s ease-in-out infinite}
+@keyframes gpWireHum{0%,100%{filter:brightness(1)}50%{filter:brightness(1.35)}}
+@media (prefers-reduced-motion:reduce){.defuse-bomb-panel,.defuse-wire-line{animation:none}}
+</style>
 </body></html>
