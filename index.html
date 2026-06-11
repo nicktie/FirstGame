@@ -11945,5 +11945,29 @@ function updateHud(){
 .defuse-wire-line{animation:gpWireHum 1.6s ease-in-out infinite}
 @keyframes gpWireHum{0%,100%{filter:brightness(1)}50%{filter:brightness(1.35)}}
 @media (prefers-reduced-motion:reduce){.defuse-bomb-panel,.defuse-wire-line{animation:none}}
+
+/* — Canvas games: retro-console screen feel — */
+.dino-canvas-wrap,.space-arena,.wn-arena{position:relative}
+.dino-canvas-wrap::after,.space-arena::after,.wn-arena::after{
+  content:'';position:absolute;inset:0;pointer-events:none;z-index:3;
+  background:repeating-linear-gradient(0deg,rgba(0,0,0,0.07) 0 1px,transparent 1px 3px);
+  mix-blend-mode:multiply;opacity:0.5;border-radius:inherit}
+.dino-canvas-wrap canvas{box-shadow:0 0 0 1px var(--border),0 14px 44px rgba(201,168,76,0.13),0 4px 18px rgba(0,0,0,0.5)}
+.space-arena canvas{box-shadow:0 0 0 1px #1a2540,0 14px 44px rgba(0,255,136,0.13),0 4px 18px rgba(0,0,0,0.6)}
+#waneesCanvas{box-shadow:0 0 0 1px rgba(255,210,0,0.25),0 14px 44px rgba(255,210,0,0.12),0 4px 18px rgba(0,0,0,0.55)}
+@media (prefers-reduced-motion:reduce){.dino-canvas-wrap::after,.space-arena::after,.wn-arena::after{display:none}}
+
+/* — Games hub: console game-cover cards — */
+.game-page-card{background:linear-gradient(165deg,var(--card-bg) 0%,rgba(10,10,16,0.97) 100%)}
+.game-page-card::after{
+  content:'';position:absolute;inset:-1.5px;border-radius:inherit;padding:1.5px;
+  background:linear-gradient(120deg,transparent 25%,rgba(201,168,76,0.7) 50%,transparent 75%);
+  background-size:250% 100%;
+  -webkit-mask:linear-gradient(#000 0 0) content-box,linear-gradient(#000 0 0);
+  -webkit-mask-composite:xor;mask-composite:exclude;
+  opacity:0;transition:opacity 0.25s;pointer-events:none}
+.game-page-card:hover::after{opacity:1;animation:gpBorderSweep 1.8s linear infinite}
+@keyframes gpBorderSweep{from{background-position:200% 0}to{background-position:-200% 0}}
+@media (prefers-reduced-motion:reduce){.game-page-card:hover::after{animation:none;opacity:0.6}}
 </style>
 </body></html>
