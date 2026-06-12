@@ -11379,30 +11379,46 @@ body.wanees-active{overflow:hidden}
 .wn-jump-btn{min-width:110px;min-height:110px;font-size:1.8rem;flex-direction:column;gap:2px;border-radius:50% !important;
   box-shadow:0 6px 16px rgba(255,210,0,0.25),inset 0 -4px 0 rgba(0,0,0,0.25)}
 .wn-jump-btn .wn-jump-label{font-size:0.82rem;letter-spacing:1px}
-/* ===== Analog joystick (left thumb) ===== */
-.wn-joy-area{flex:1;height:140px;position:relative;touch-action:none;user-select:none;-webkit-user-select:none;
-  border-radius:18px;background:radial-gradient(circle at 30% 50%,rgba(255,210,0,0.05),transparent 70%)}
-.wn-joy-hint{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);
-  color:rgba(255,210,0,0.45);font-family:'Tajawal',sans-serif;font-size:0.78rem;font-weight:700;
-  pointer-events:none;letter-spacing:1px;text-align:center;transition:opacity 0.2s}
-.wn-joy-area.active .wn-joy-hint{opacity:0}
-.wn-joy-base{position:absolute;width:120px;height:120px;border-radius:50%;
+/* ===== Full-arena touch zones + floating analog joystick ===== */
+.wn-tap-zone{position:absolute;top:48px;bottom:0;width:50%;z-index:3;
+  touch-action:none;user-select:none;-webkit-user-select:none;-webkit-touch-callout:none;
+  background:transparent;pointer-events:auto;display:flex;align-items:flex-end;justify-content:center}
+.wn-tap-left{left:0;border-top-right-radius:14px;
+  background:linear-gradient(to right,rgba(255,210,0,0.04),transparent 70%)}
+.wn-tap-right{right:0;border-top-left-radius:14px;
+  background:linear-gradient(to left,rgba(255,210,0,0.06),transparent 70%)}
+.wn-tap-right.held{background:linear-gradient(to left,rgba(255,210,0,0.18),transparent 70%)}
+.wn-tap-hint{color:rgba(255,210,0,0.45);font-family:'Tajawal',sans-serif;font-size:0.78rem;font-weight:700;
+  pointer-events:none;letter-spacing:1px;text-align:center;padding-bottom:14px;
+  text-shadow:0 1px 3px rgba(0,0,0,0.6);transition:opacity 0.2s;max-width:90%;line-height:1.4}
+.wn-tap-zone.active .wn-tap-hint{opacity:0}
+.wn-tap-hint-left{position:absolute;left:0;right:50%;bottom:0;top:48px;display:flex;align-items:flex-end;
+  justify-content:center;padding-bottom:14px;pointer-events:none;color:rgba(255,210,0,0.45);
+  font-family:'Tajawal',sans-serif;font-size:0.78rem;font-weight:700;letter-spacing:1px;
+  text-shadow:0 1px 3px rgba(0,0,0,0.6);transition:opacity 0.2s;z-index:4}
+.wn-tap-hint-left.hidden{opacity:0}
+
+.wn-joy-base{position:fixed;width:120px;height:120px;border-radius:50%;
   background:radial-gradient(circle,rgba(20,20,30,0.7) 0%,rgba(20,20,30,0.45) 65%,rgba(20,20,30,0.0) 100%);
   border:2.5px solid rgba(255,210,0,0.55);box-shadow:0 0 22px rgba(255,210,0,0.18),inset 0 0 18px rgba(0,0,0,0.4);
-  display:none;pointer-events:none;transform:translate(-50%,-50%)}
+  display:none;pointer-events:none;transform:translate(-50%,-50%);z-index:8}
 .wn-joy-base.on{display:block}
 .wn-joy-thumb{position:absolute;left:50%;top:50%;width:54px;height:54px;border-radius:50%;
   background:radial-gradient(circle at 35% 30%,#ffeb70,#ffd200 55%,#cc9900 100%);
   border:2.5px solid #fff;box-shadow:0 4px 14px rgba(0,0,0,0.4),inset 0 -3px 0 rgba(0,0,0,0.25);
   transform:translate(-50%,-50%);pointer-events:none;will-change:transform}
+/* Pulse ring shown on the right zone when held, sells the tap feedback */
+.wn-tap-right::after{content:'';position:absolute;width:90px;height:90px;border-radius:50%;
+  bottom:38px;right:38px;background:radial-gradient(circle,rgba(255,210,0,0.25) 0%,transparent 70%);
+  opacity:0;transition:opacity 0.1s;pointer-events:none}
+.wn-tap-right.held::after{opacity:1}
 @media(max-width:640px){
   .wn-topbar{padding:8px 12px;gap:6px}
   .wn-hud-item{font-size:0.78rem}
   .wno-title{font-size:1.3rem}
-  .wn-jump-btn{min-width:96px;min-height:96px;font-size:1.55rem}
-  .wn-joy-area{height:120px}
   .wn-joy-base{width:110px;height:110px}
   .wn-joy-thumb{width:48px;height:48px}
+  .wn-tap-hint,.wn-tap-hint-left{font-size:0.72rem;padding-bottom:10px}
 }
 </style>
 <div id="waneesScreen" class="wanees-screen">
@@ -11419,6 +11435,17 @@ body.wanees-active{overflow:hidden}
   </div>
   <div class="wn-arena" id="waneesArena">
     <canvas id="waneesCanvas" width="320" height="180"></canvas>
+    <!-- Big touch zones: anywhere on the bottom-left = joystick, bottom-right = jump.
+         Sits above the canvas but below the HUD overlays. -->
+    <div class="wn-tap-zone wn-tap-left" id="wnTapLeft" aria-hidden="true"></div>
+    <div class="wn-tap-zone wn-tap-right" id="wnTapRight" aria-hidden="true">
+      <span class="wn-tap-hint">🦘 المس هنا للقفز</span>
+    </div>
+    <!-- Floating joystick visuals that appear at the touch point -->
+    <div class="wn-joy-base wn-joy-floating" id="wnJoyBase">
+      <div class="wn-joy-thumb" id="wnJoyThumb"></div>
+    </div>
+    <div class="wn-tap-hint wn-tap-hint-left" id="wnJoyHintFloating">🕹️ المس واسحب يميناً ويساراً للحركة</div>
     <div class="wn-spec-banner" id="wnSpecBanner" style="display:none">
       <span class="wn-spec-dot"></span>
       <span id="wnSpecText"></span>
@@ -11477,15 +11504,8 @@ body.wanees-active{overflow:hidden}
       </div>
     </div>
   </div>
-  <div class="wn-controls">
-    <div class="wn-joy-area" id="wnJoyArea">
-      <div class="wn-joy-base" id="wnJoyBase">
-        <div class="wn-joy-thumb" id="wnJoyThumb"></div>
-      </div>
-      <div class="wn-joy-hint" id="wnJoyHint">حرّك إبهامك هنا</div>
-    </div>
-    <button class="wn-ctrl-btn wn-jump-btn" id="wnJumpBtn" type="button">🦘 <span class="wn-jump-label">قفز</span></button>
-  </div>
+  <!-- Keep a hidden jump button for legacy code paths; touch zones above own input now. -->
+  <button id="wnJumpBtn" type="button" style="display:none">قفز</button>
 </div>
 <script>
 (function(){
@@ -12410,94 +12430,135 @@ function bindWaneesControls(){
   });
 }
 function bindWaneesButtons(){
-  const jBtn = document.getElementById('wnJumpBtn');
-  function bindHold(btn, onDown, onUp){
-    ['touchstart','mousedown'].forEach(ev => {
-      btn.addEventListener(ev, (e) => { e.preventDefault(); btn.classList.add('pressed'); onDown(); }, { passive:false });
-    });
-    ['touchend','touchcancel','mouseup','mouseleave'].forEach(ev => {
-      btn.addEventListener(ev, () => { btn.classList.remove('pressed'); onUp(); });
-    });
-  }
-  bindHold(jBtn,
-    () => { if (!WG.inputs.jumpHeld) WG.inputs.jumpJustPressed = true; WG.inputs.jumpHeld = true; WG.inputs.jump = true; },
-    () => { WG.inputs.jumpHeld = false; WG.inputs.jump = false; }
-  );
-  // ===== Floating analog joystick (left thumb) =====
-  const area  = document.getElementById('wnJoyArea');
+  // ===== Full-arena floating analog joystick (left half of the screen) =====
+  // The joystick base + thumb appear wherever the player's left thumb first
+  // touches in the left tap zone; the right tap zone is the jump button —
+  // anywhere on that whole half of the screen.
+  const tapL  = document.getElementById('wnTapLeft');
+  const tapR  = document.getElementById('wnTapRight');
   const base  = document.getElementById('wnJoyBase');
   const thumb = document.getElementById('wnJoyThumb');
-  if (!area || !base || !thumb) return;
-  // Dead zone: thumb must move >12% of radius before we count input.
-  // Past the dead zone the value ramps linearly to ±1 at the edge.
+  const joyHint = document.getElementById('wnJoyHintFloating');
+  if (!tapL || !tapR || !base || !thumb) return;
   const RADIUS = 56, DEAD = 0.12;
-  let activeId = null, cx = 0, cy = 0;
+  // Joystick state
+  let joyId = null, joyCx = 0, joyCy = 0;
+  // Jump state — supports multi-touch (multiple jump taps tracked independently)
+  const jumpIds = new Set();
   function setThumbAt(dx, dy){
     const dist = Math.hypot(dx, dy);
     const clamped = dist > RADIUS ? RADIUS / dist : 1;
     const tx = dx * clamped, ty = dy * clamped;
     thumb.style.transform = `translate(calc(-50% + ${tx}px), calc(-50% + ${ty}px))`;
-    let nx = tx / RADIUS; // -1..+1
+    const nx = tx / RADIUS;
     const ax = Math.abs(nx);
     if (ax < DEAD){ WG.inputs.analogX = 0; return; }
-    const sign = nx < 0 ? -1 : 1;
-    WG.inputs.analogX = sign * Math.min(1, (ax - DEAD) / (1 - DEAD));
+    WG.inputs.analogX = (nx < 0 ? -1 : 1) * Math.min(1, (ax - DEAD) / (1 - DEAD));
   }
   function placeBaseAt(clientX, clientY){
-    const r = area.getBoundingClientRect();
-    base.style.left = (clientX - r.left) + 'px';
-    base.style.top  = (clientY - r.top)  + 'px';
+    base.style.left = clientX + 'px';
+    base.style.top  = clientY + 'px';
   }
-  function start(ev){
-    if (activeId !== null) return;
-    const p = ev.touches ? ev.touches[0] : ev;
-    activeId = ev.touches ? p.identifier : (ev.pointerId != null ? ev.pointerId : 1);
-    cx = p.clientX; cy = p.clientY;
-    placeBaseAt(cx, cy);
+  // ---- Joystick (left tap zone) ----
+  function joyStart(p, ev){
+    if (joyId !== null) return false;
+    joyId = p.identifier != null ? p.identifier : (p.pointerId != null ? p.pointerId : 1);
+    joyCx = p.clientX; joyCy = p.clientY;
+    placeBaseAt(joyCx, joyCy);
     base.classList.add('on');
-    area.classList.add('active');
+    tapL.classList.add('active');
+    if (joyHint) joyHint.classList.add('hidden');
     thumb.style.transform = 'translate(-50%,-50%)';
-    if (area.setPointerCapture && ev.pointerId != null){ try { area.setPointerCapture(ev.pointerId); } catch(e){} }
-    ev.preventDefault();
+    if (ev) ev.preventDefault();
+    return true;
   }
-  function move(ev){
-    if (activeId === null) return;
-    let p = null;
-    if (ev.touches){
-      for (const t of ev.touches){ if (t.identifier === activeId){ p = t; break; } }
-    } else if (ev.pointerId === activeId || ev.type === 'mousemove'){
-      p = ev;
-    }
-    if (!p) return;
-    setThumbAt(p.clientX - cx, p.clientY - cy);
-    ev.preventDefault();
+  function joyMove(p, ev){
+    if (joyId === null) return;
+    setThumbAt(p.clientX - joyCx, p.clientY - joyCy);
+    if (ev) ev.preventDefault();
   }
-  function end(ev){
-    if (ev.touches && ev.touches.length){
-      // Other touches still on the area, but is the tracked one gone?
-      let still = false;
-      for (const t of ev.touches){ if (t.identifier === activeId){ still = true; break; } }
-      if (still) return;
-    }
-    activeId = null;
+  function joyEnd(){
+    joyId = null;
     WG.inputs.analogX = 0;
     base.classList.remove('on');
-    area.classList.remove('active');
+    tapL.classList.remove('active');
     thumb.style.transform = 'translate(-50%,-50%)';
   }
-  // Touch (passive:false so we can preventDefault)
-  area.addEventListener('touchstart',  start, { passive:false });
-  area.addEventListener('touchmove',   move,  { passive:false });
-  area.addEventListener('touchend',    end);
-  area.addEventListener('touchcancel', end);
-  // Mouse / pen via pointer events for desktop testing
-  area.addEventListener('pointerdown', e => { if (e.pointerType !== 'touch') start(e); });
-  area.addEventListener('pointermove', e => { if (e.pointerType !== 'touch') move(e); });
-  area.addEventListener('pointerup',   e => { if (e.pointerType !== 'touch') end(e); });
-  area.addEventListener('pointercancel', e => { if (e.pointerType !== 'touch') end(e); });
-  // Safety: lose tracking if focus leaves
-  window.addEventListener('blur', () => { activeId = null; WG.inputs.analogX = 0;
-    base.classList.remove('on'); area.classList.remove('active'); thumb.style.transform = 'translate(-50%,-50%)'; });
+  // ---- Jump (right tap zone) ----
+  function jumpPress(id, ev){
+    const fresh = jumpIds.size === 0;
+    jumpIds.add(id);
+    if (fresh) WG.inputs.jumpJustPressed = true;
+    WG.inputs.jumpHeld = true;
+    WG.inputs.jump = true;
+    tapR.classList.add('held');
+    if (ev) ev.preventDefault();
+  }
+  function jumpRelease(id){
+    jumpIds.delete(id);
+    if (jumpIds.size === 0){
+      WG.inputs.jumpHeld = false;
+      WG.inputs.jump = false;
+      tapR.classList.remove('held');
+    }
+  }
+  // ===== Wire up touch + pointer events on both zones =====
+  // Joystick — touch
+  tapL.addEventListener('touchstart', ev => {
+    for (const t of ev.changedTouches){ if (joyStart(t, ev)) break; }
+  }, { passive:false });
+  tapL.addEventListener('touchmove', ev => {
+    if (joyId === null) return;
+    for (const t of ev.changedTouches){ if (t.identifier === joyId){ joyMove(t, ev); break; } }
+  }, { passive:false });
+  function tapLEnd(ev){
+    if (joyId === null) return;
+    for (const t of ev.changedTouches){ if (t.identifier === joyId){ joyEnd(); break; } }
+  }
+  tapL.addEventListener('touchend',    tapLEnd);
+  tapL.addEventListener('touchcancel', tapLEnd);
+  // Joystick — pointer (desktop / pen)
+  tapL.addEventListener('pointerdown', ev => {
+    if (ev.pointerType === 'touch') return;
+    joyStart({ identifier:ev.pointerId, clientX:ev.clientX, clientY:ev.clientY, pointerId:ev.pointerId }, ev);
+    try { tapL.setPointerCapture(ev.pointerId); } catch(e){}
+  });
+  tapL.addEventListener('pointermove', ev => {
+    if (ev.pointerType === 'touch') return;
+    if (joyId !== ev.pointerId) return;
+    joyMove({ clientX:ev.clientX, clientY:ev.clientY }, ev);
+  });
+  function tapLPtrEnd(ev){ if (ev.pointerType === 'touch') return; if (joyId === ev.pointerId) joyEnd(); }
+  tapL.addEventListener('pointerup',     tapLPtrEnd);
+  tapL.addEventListener('pointercancel', tapLPtrEnd);
+
+  // Jump — touch (independent tracking per finger so the joystick on the
+  // other half keeps working)
+  tapR.addEventListener('touchstart', ev => {
+    for (const t of ev.changedTouches) jumpPress(t.identifier, ev);
+  }, { passive:false });
+  function tapREnd(ev){
+    for (const t of ev.changedTouches) jumpRelease(t.identifier);
+  }
+  tapR.addEventListener('touchend',    tapREnd);
+  tapR.addEventListener('touchcancel', tapREnd);
+  // Jump — pointer
+  tapR.addEventListener('pointerdown', ev => {
+    if (ev.pointerType === 'touch') return;
+    jumpPress(ev.pointerId, ev);
+    try { tapR.setPointerCapture(ev.pointerId); } catch(e){}
+  });
+  function tapRPtrEnd(ev){ if (ev.pointerType === 'touch') return; jumpRelease(ev.pointerId); }
+  tapR.addEventListener('pointerup',     tapRPtrEnd);
+  tapR.addEventListener('pointercancel', tapRPtrEnd);
+
+  // Safety: lose all tracking if the window loses focus
+  window.addEventListener('blur', () => {
+    joyEnd();
+    jumpIds.clear();
+    WG.inputs.jumpHeld = false; WG.inputs.jump = false;
+    tapR.classList.remove('held');
+  });
 }
 const WN_THEMES = [
   // 1: Sunny meadow
