@@ -11696,7 +11696,8 @@ function loadLevel(){
     x: playerStart.x, y: playerStart.y,
     vx:0, vy:0, w:12, h:14,
     onGround:false, dir:1, invincible:0,
-    walkPhase:0, alive:true, starTimer:0
+    walkPhase:0, alive:true, starTimer:0,
+    jumpBuffer:0, coyote:0, jumpCut:false
   };
 }
 function isSuhaPlayer(){
@@ -12117,13 +12118,29 @@ function updatePlayer(dt){
   if (Math.abs(p.vx) < 0.05 && targetVx === 0) p.vx = 0;
   if (p.vx > 0.1) p.dir = 1;
   else if (p.vx < -0.1) p.dir = -1;
-  if ((WG.inputs.jumpJustPressed || WG.inputs.jumpHeld) && p.onGround){
+  // ===== Jump feel: buffer + coyote + soft variable cut =====
+  // Coyote time: keep "jumpable" for ~6 frames after walking off a ledge
+  // so missed timing on edges still launches.
+  if (p.onGround) p.coyote = 6; else p.coyote = Math.max(0, p.coyote - dt);
+  // Jump buffer: if pressed up to ~7 frames before landing, the jump fires
+  // the instant we touch down — feels like the press "stuck".
+  if (WG.inputs.jumpJustPressed) p.jumpBuffer = 7;
+  p.jumpBuffer = Math.max(0, p.jumpBuffer - dt);
+  const wantsJump = p.jumpBuffer > 0 || WG.inputs.jumpHeld;
+  if (wantsJump && (p.onGround || p.coyote > 0)){
     p.vy = WG.JUMP_VEL;
     p.onGround = false;
+    p.coyote = 0;
+    p.jumpBuffer = 0;
+    p.jumpCut = false;
     wnSnd('jump');
   }
-  if (!WG.inputs.jumpHeld && p.vy < -2.2){
-    p.vy *= 0.85;
+  // Variable jump height: cut once (not every frame) when the button is
+  // released early. The threshold is loose enough that a normal tap still
+  // lifts you most of the way, but quick flicks make short hops possible.
+  if (!WG.inputs.jumpHeld && p.vy < -2.8 && !p.jumpCut){
+    p.vy *= 0.55;
+    p.jumpCut = true;
   }
   p.vy = Math.min(WG.MAX_FALL, p.vy + WG.GRAV * dt);
   const hX = moveAxis(p, 'x', p.vx * dt);
