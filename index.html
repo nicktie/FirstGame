@@ -211,6 +211,197 @@ body.theme-pixel .games-modes-divider span{text-shadow:2px 2px 0 var(--border)}
 @keyframes appLoaderBar { 0% { inset:0 100% 0 0; } 100% { inset:0 0 0 100%; } }
 </style>
 <script>
+// ===== Shared GameKit: object pools, particles, screen shake, hit-stop =====
+// Designed to be small, fast, and consumable by every action game.
+(function(){
+  if (window.GameKit) return;
+  // ---- Object pool ----
+  function Pool(factory, reset, initial){
+    this.factory = factory; this.reset = reset || function(){};
+    this.free = []; this.live = [];
+    for (var i = 0; i < (initial|0); i++) this.free.push(factory());
+  }
+  Pool.prototype.acquire = function(){
+    var o = this.free.length ? this.free.pop() : this.factory();
+    this.live.push(o); o._alive = true; return o;
+  };
+  Pool.prototype.release = function(o){
+    o._alive = false; this.reset(o);
+    var i = this.live.indexOf(o);
+    if (i >= 0) this.live.splice(i, 1);
+    this.free.push(o);
+  };
+  Pool.prototype.sweep = function(pred){
+    // pred(obj) returns true if it should stay alive
+    var keep = [];
+    for (var i = 0; i < this.live.length; i++){
+      var o = this.live[i];
+      if (pred(o)) keep.push(o);
+      else { o._alive = false; this.reset(o); this.free.push(o); }
+    }
+    this.live = keep;
+  };
+  Pool.prototype.forEach = function(fn){
+    for (var i = 0; i < this.live.length; i++) fn(this.live[i], i);
+  };
+  Pool.prototype.clear = function(){
+    for (var i = 0; i < this.live.length; i++){
+      this.live[i]._alive = false; this.reset(this.live[i]); this.free.push(this.live[i]);
+    }
+    this.live.length = 0;
+  };
+
+  // ---- Particle factory ----
+  function makeParticle(){ return { x:0,y:0,vx:0,vy:0,ax:0,ay:0,life:0,maxLife:0,size:1,color:'#fff',shape:'rect',rot:0,vrot:0,_alive:false }; }
+  function resetParticle(p){ p.life = 0; p.maxLife = 0; }
+
+  // ---- ParticleSystem: pooled, batched, additive ----
+  function ParticleSystem(initial){
+    this.pool = new Pool(makeParticle, resetParticle, initial || 256);
+  }
+  ParticleSystem.prototype.emit = function(opts){
+    var p = this.pool.acquire();
+    p.x = opts.x; p.y = opts.y;
+    p.vx = opts.vx || 0; p.vy = opts.vy || 0;
+    p.ax = opts.ax || 0; p.ay = opts.ay || 0;
+    p.maxLife = p.life = opts.life || 30;
+    p.size = opts.size || 2;
+    p.color = opts.color || '#fff';
+    p.shape = opts.shape || 'rect';
+    p.rot = opts.rot || 0;
+    p.vrot = opts.vrot || 0;
+    return p;
+  };
+  ParticleSystem.prototype.burst = function(x, y, opts){
+    var n = opts.count || 12;
+    var palette = opts.palette || ['#ffe600','#ff8800','#ff3300'];
+    var speedMin = opts.speedMin != null ? opts.speedMin : 1;
+    var speedMax = opts.speedMax != null ? opts.speedMax : 3;
+    var size = opts.size || 2;
+    var life = opts.life || 36;
+    var lifeJitter = opts.lifeJitter || 16;
+    var shape = opts.shape || 'rect';
+    var gravity = opts.gravity || 0;
+    for (var i = 0; i < n; i++){
+      var a = (i / n) * Math.PI * 2 + Math.random() * 0.6;
+      var sp = speedMin + Math.random() * (speedMax - speedMin);
+      this.emit({
+        x:x, y:y, vx:Math.cos(a)*sp, vy:Math.sin(a)*sp, ay:gravity,
+        life:life + Math.random()*lifeJitter,
+        size: size + Math.random()*0.7,
+        color: palette[(Math.random()*palette.length)|0],
+        shape: shape, rot: Math.random()*Math.PI*2, vrot: (Math.random()-0.5)*0.3
+      });
+    }
+  };
+  ParticleSystem.prototype.update = function(dt){
+    var pool = this.pool;
+    pool.sweep(function(p){
+      p.vx += p.ax * dt; p.vy += p.ay * dt;
+      p.x += p.vx * dt; p.y += p.vy * dt;
+      p.rot += p.vrot * dt;
+      p.life -= dt;
+      return p.life > 0;
+    });
+  };
+  ParticleSystem.prototype.draw = function(ctx, opts){
+    opts = opts || {};
+    var additive = opts.additive !== false;
+    if (additive) ctx.globalCompositeOperation = 'lighter';
+    var live = this.pool.live;
+    for (var i = 0; i < live.length; i++){
+      var p = live[i];
+      var k = p.life / p.maxLife;
+      ctx.globalAlpha = Math.max(0, Math.min(1, k));
+      ctx.fillStyle = p.color;
+      if (p.shape === 'circle'){
+        ctx.beginPath(); ctx.arc(p.x, p.y, p.size * k, 0, Math.PI*2); ctx.fill();
+      } else if (p.shape === 'star'){
+        ctx.save(); ctx.translate(p.x, p.y); ctx.rotate(p.rot);
+        ctx.fillRect(-p.size, -0.5, p.size*2, 1);
+        ctx.fillRect(-0.5, -p.size, 1, p.size*2);
+        ctx.restore();
+      } else {
+        var s = p.size * (0.7 + k * 0.3);
+        ctx.fillRect(p.x - s/2, p.y - s/2, s, s);
+      }
+    }
+    ctx.globalAlpha = 1;
+    if (additive) ctx.globalCompositeOperation = 'source-over';
+  };
+  ParticleSystem.prototype.clear = function(){ this.pool.clear(); };
+
+  // ---- Camera shake (trauma-based, decays each frame) ----
+  function Shake(){ this.trauma = 0; this.x = 0; this.y = 0; this.rot = 0; }
+  Shake.prototype.kick = function(amount){ this.trauma = Math.min(1, this.trauma + amount); };
+  Shake.prototype.update = function(dt, opts){
+    opts = opts || {};
+    var maxOffset = opts.maxOffset || 8;
+    var maxRot = opts.maxRot || 0.04;
+    var decay = opts.decay || 0.04;
+    var t2 = this.trauma * this.trauma;
+    this.x = (Math.random() - 0.5) * 2 * maxOffset * t2;
+    this.y = (Math.random() - 0.5) * 2 * maxOffset * t2;
+    this.rot = (Math.random() - 0.5) * 2 * maxRot * t2;
+    this.trauma = Math.max(0, this.trauma - decay * dt);
+  };
+  Shake.prototype.apply = function(ctx){
+    if (this.trauma <= 0) return;
+    ctx.translate(this.x, this.y);
+    if (this.rot) ctx.rotate(this.rot);
+  };
+
+  // ---- Hit-stop (briefly freeze time to sell impact) ----
+  function HitStop(){ this.timer = 0; }
+  HitStop.prototype.hit = function(frames){ if (frames > this.timer) this.timer = frames; };
+  HitStop.prototype.tick = function(dt){
+    if (this.timer <= 0) return 1; // normal speed
+    this.timer -= dt;
+    return 0; // frozen
+  };
+
+  // ---- Fixed-step scheduler ----
+  // Keeps physics deterministic across hitches and high refresh rates.
+  function FixedStep(targetFps){
+    this.dt = 1; // in frames (60fps base = 1)
+    this.maxSubsteps = 4;
+    this.acc = 0;
+    this.last = 0;
+  }
+  FixedStep.prototype.tick = function(now, step){
+    if (!this.last) { this.last = now; return 0; }
+    var delta = (now - this.last) / 16.667; // to frames
+    this.last = now;
+    if (delta > 6) delta = 6; // cap big hitches
+    this.acc += delta;
+    var n = 0;
+    while (this.acc >= this.dt && n < this.maxSubsteps){
+      step(this.dt);
+      this.acc -= this.dt;
+      n++;
+    }
+    return n;
+  };
+
+  // ---- Screen flash overlay ----
+  function flashRect(ctx, w, h, color, alpha){
+    ctx.fillStyle = color;
+    ctx.globalAlpha = alpha;
+    ctx.fillRect(0, 0, w, h);
+    ctx.globalAlpha = 1;
+  }
+
+  window.GameKit = {
+    Pool: Pool,
+    ParticleSystem: ParticleSystem,
+    Shake: Shake,
+    HitStop: HitStop,
+    FixedStep: FixedStep,
+    flashRect: flashRect
+  };
+})();
+</script>
+<script>
 (function(){
   function hide() {
     var l = document.getElementById('appLoader'); if (!l) return;
@@ -6902,6 +7093,11 @@ window.dinoStart = function() {
   DG.state = 'running';
   DG.lastTime = performance.now();
   cancelAnimationFrame(DG.raf);
+  if (DG._gk){
+    if (DG._gk.particles) DG._gk.particles.clear();
+    if (DG._gk.shake) DG._gk.shake.trauma = 0;
+    if (DG._gk.stop) DG._gk.stop.timer = 0;
+  }
   DG.raf = requestAnimationFrame(dinoLoop);
 };
 function dinoStop() {
@@ -6910,9 +7106,18 @@ function dinoStop() {
 }
 function dinoLoop(t) {
   if (DG.state !== 'running') return;
-  const dt = Math.min(40, t - DG.lastTime) / 16.667;
+  const rawDt = Math.min(40, t - DG.lastTime) / 16.667;
   DG.lastTime = t;
+  let dt = rawDt;
+  if (DG._gk && DG._gk.stop){
+    const scale = DG._gk.stop.tick(rawDt);
+    dt = rawDt * scale;
+  }
   updateDino(dt);
+  if (DG._gk){
+    if (DG._gk.particles) DG._gk.particles.update(rawDt);
+    if (DG._gk.shake) DG._gk.shake.update(rawDt, { maxOffset: 7, maxRot: 0.018, decay: 0.06 });
+  }
   if (DG.state !== 'running') return;
   drawDinoFrame(false);
   DG.raf = requestAnimationFrame(dinoLoop);
@@ -7332,6 +7537,16 @@ function onHit() {
   DG.hearts--;
   DG.invincible = DG.INVINCIBLE_FRAMES;
   DG.hitFlash = 12;
+  // Game feel: trauma-based shake + brief hit-stop
+  if (!DG._gk){
+    DG._gk = { shake: new GameKit.Shake(), stop: new GameKit.HitStop(), particles: new GameKit.ParticleSystem(128) };
+  }
+  DG._gk.shake.kick(0.6);
+  DG._gk.stop.hit(3);
+  DG._gk.particles.burst(DG.dinoX + 22, DG.dinoY + 18, {
+    count: 16, palette:['#fff','#ffe066','#ff7a2a','#c92020'],
+    speedMin: 1.4, speedMax: 4.5, size: 2, life: 22, lifeJitter: 10, shape:'circle'
+  });
   // Reset combo on hit
   if (DG.multiplier > 1) DG.comboFlash = 30;
   DG.combo = 0; DG.multiplier = 1;
@@ -7391,6 +7606,9 @@ function onDinoDeath() {
 function drawDinoFrame(dead) {
   const ctx = DG.ctx;
   if (!ctx) return;
+  // Apply screen shake for the whole frame
+  ctx.save();
+  if (DG._gk && DG._gk.shake) DG._gk.shake.apply(ctx);
   const biome = getBiome();
   // Biome background gradient
   const grad = ctx.createLinearGradient(0, 0, 0, DG.H);
@@ -7540,6 +7758,10 @@ function drawDinoHud(ctx) {
     ctx.fillStyle = 'rgba(120,200,255,' + pulse + ')';
     ctx.fillText('🐢 بطء حماية', pad, iy);
   }
+  ctx.restore();
+  // Pooled hit particles
+  if (DG._gk && DG._gk.particles) DG._gk.particles.draw(ctx, { additive: true });
+  // End screen-shake transform
   ctx.restore();
 }
 function drawHudHeart(ctx, cx, cy, alive) {
@@ -9831,6 +10053,12 @@ function resetSpaceState(){
   SG.enemies = []; SG.bullets = []; SG.eBullets = []; SG.particles = []; SG.powerups = [];
   SG.boss = null; SG.bossEntering = false; SG.bossPending = false;
   SG.spawnTimer = 0; SG.spawnNext = 80; SG.waveCooldown = 0;
+  if (SG._gk){
+    if (SG._gk.particles) SG._gk.particles.clear();
+    if (SG._gk.shake) SG._gk.shake.trauma = 0;
+    if (SG._gk.stop) SG._gk.stop.timer = 0;
+  }
+  SG._flash = 0;
   updateHud();
   updateBombBtn();
   updatePupChips();
@@ -9859,9 +10087,20 @@ function spaceStop(){
 }
 function spaceLoop(t){
   if (SG.state !== 'running') return;
-  const dt = Math.min(40, t - SG.lastTime) / 16.667;
+  const rawDt = Math.min(40, t - SG.lastTime) / 16.667;
   SG.lastTime = t;
+  // Hit-stop: freeze logic but keep drawing so impacts read
+  let dt = rawDt;
+  if (SG._gk && SG._gk.stop){
+    const scale = SG._gk.stop.tick(rawDt);
+    dt = rawDt * scale;
+  }
   updateSpace(dt);
+  if (SG._gk){
+    if (SG._gk.particles) SG._gk.particles.update(rawDt);
+    if (SG._gk.shake) SG._gk.shake.update(rawDt, { maxOffset: 12, maxRot: 0.025, decay: 0.05 });
+    if (SG._flash > 0) SG._flash -= rawDt * 0.06;
+  }
   if (SG.state !== 'running') return;
   drawFrame();
   SG.raf = requestAnimationFrame(spaceLoop);
@@ -10393,8 +10632,16 @@ window.spaceUseBomb = function(){
     updateBossHp();
     if (SG.boss.hp <= 0){ SG.boss.phase = 'dying'; SG.boss.t2 = 0; }
   }
-  // Flash effect (particles)
-  for (let i=0;i<24;i++) SG.particles.push({ x: rand(0, SG.W), y: rand(0, SG.H), vx:0, vy:0, life:25, color:'#ffe600' });
+  // Bomb shockwave: kit shake + flash + sparkle burst
+  if (SG._gk){
+    SG._gk.shake.kick(0.85);
+    SG._gk.stop.hit(5);
+    SG._flash = Math.min(0.7, (SG._flash || 0) + 0.55);
+    SG._gk.particles.burst(SG.W/2, SG.H/2, {
+      count: 40, palette: ['#ffe600','#ff8800','#fff'],
+      speedMin: 2.5, speedMax: 7.5, size: 2, life: 36, lifeJitter: 12, shape: 'star'
+    });
+  }
   updateHud();
   updateBombBtn();
 };
@@ -10529,13 +10776,55 @@ function playerHurt(){
 }
 
 function spawnExplosion(x, y, scale){
-  const n = Math.floor(14 * scale);
-  const palette = ['#ffe600','#ff8800','#ff3300'];
-  for (let i = 0; i < n; i++){
-    const a = (i / n) * Math.PI * 2 + Math.random() * 0.4;
-    const sp = (1 + Math.random() * 3) * scale;
-    SG.particles.push({ x, y, vx: Math.cos(a) * sp, vy: Math.sin(a) * sp, life: 30 + Math.random() * 20, color: palette[Math.floor(Math.random()*palette.length)] });
+  scale = scale || 1;
+  // Boot kit lazily (so we don't add init coupling)
+  if (!SG._gk){
+    SG._gk = {
+      particles: new GameKit.ParticleSystem(512),
+      shake: new GameKit.Shake(),
+      stop: new GameKit.HitStop()
+    };
+    SG._flash = 0;
   }
+  const ps = SG._gk.particles;
+  // Outer hot fireball
+  ps.burst(x, y, {
+    count: Math.floor(18 * scale),
+    palette: ['#fff8c8','#ffe066','#ff9b2a','#ff4a18','#a01010'],
+    speedMin: 1.4 * scale,
+    speedMax: 4.5 * scale,
+    size: 2 + scale,
+    life: 26 + scale * 8,
+    lifeJitter: 14,
+    shape: 'circle'
+  });
+  // Spark trails
+  ps.burst(x, y, {
+    count: Math.floor(8 * scale),
+    palette: ['#ffffff','#fff0b0','#ffd66a'],
+    speedMin: 2.5 * scale,
+    speedMax: 5.5 * scale,
+    size: 1.2,
+    life: 18,
+    lifeJitter: 8,
+    shape: 'rect'
+  });
+  // Smoke fade
+  ps.burst(x, y, {
+    count: Math.floor(6 * scale),
+    palette: ['rgba(120,90,80,1)','rgba(80,60,55,1)'],
+    speedMin: 0.3,
+    speedMax: 0.9,
+    size: 3 + scale,
+    life: 50,
+    lifeJitter: 20,
+    shape: 'circle',
+    gravity: -0.04
+  });
+  // Game-feel: kick the camera + flash + brief freeze proportional to magnitude
+  SG._gk.shake.kick(0.18 * scale);
+  SG._flash = Math.min(0.55, (SG._flash || 0) + 0.18 * scale);
+  if (scale >= 1.0) SG._gk.stop.hit(scale >= 1.4 ? 4 : 2);
 }
 
 // === HUD ===
@@ -10577,6 +10866,9 @@ function drawFrame(){
   const ctx = SG.ctx;
   if (!ctx) return;
   const stage = cur();
+  // Apply camera shake at the top of the frame, restore at the end
+  ctx.save();
+  if (SG._gk && SG._gk.shake) SG._gk.shake.apply(ctx);
   // Background gradient
   const g = ctx.createLinearGradient(0, 0, 0, SG.H);
   g.addColorStop(0, stage.bgTop);
@@ -10634,6 +10926,14 @@ function drawFrame(){
     ctx.restore();
   }
   // Boss UI is in DOM
+  // Pooled GameKit particles drawn additively for explosion glow
+  if (SG._gk && SG._gk.particles) SG._gk.particles.draw(ctx, { additive: true });
+  // Release camera shake transform before drawing the flash overlay
+  ctx.restore();
+  // Screen flash on big impacts (stays in screen-space, no shake)
+  if (SG._flash > 0){
+    GameKit.flashRect(ctx, SG.W, SG.H, '#fff6c8', Math.min(0.55, SG._flash));
+  }
   // Update HUD
   updateHud();
   updatePupChips();
@@ -11248,9 +11548,15 @@ function waneesStop(){
 }
 function waneesLoop(t){
   if (WG.state !== 'running') return;
-  const dt = Math.min(40, t - WG.lastTime) / 16.667;
+  const rawDt = Math.min(40, t - WG.lastTime) / 16.667;
   WG.lastTime = t;
+  let dt = rawDt;
+  if (WG._gk && WG._gk.stop){
+    const scale = WG._gk.stop.tick(rawDt);
+    dt = rawDt * scale;
+  }
   updateWanees(dt);
+  if (WG._gk && WG._gk.shake) WG._gk.shake.update(rawDt, { maxOffset: 4, maxRot: 0.012, decay: 0.07 });
   if (WG.state !== 'running') return;
   drawFrame();
   WG.inputs.jumpJustPressed = false;
@@ -11335,6 +11641,10 @@ function updateWanees(dt){
         wnSnd('stomp');
         spawnPoof(e.x + e.w/2, e.y);
         if (WG.stompCombo >= 3) spawnSparkle(e.x + e.w/2, e.y - 4);
+        // Game feel: trauma + hit-stop scaling with combo
+        if (!WG._gk) WG._gk = { shake: new GameKit.Shake(), stop: new GameKit.HitStop() };
+        WG._gk.shake.kick(0.15 + Math.min(0.35, WG.stompCombo * 0.08));
+        WG._gk.stop.hit(Math.min(5, 2 + WG.stompCombo));
       } else if (WG.player.invincible <= 0){
         loseLife('enemy');
         return;
@@ -11702,6 +12012,8 @@ function wnTheme(){
 function drawFrame(){
   const ctx = WG.ctx;
   if (!ctx) return;
+  ctx.save();
+  if (WG._gk && WG._gk.shake) WG._gk.shake.apply(ctx);
   const th = wnTheme();
   WG._th = th;
   const sky = ctx.createLinearGradient(0, 0, 0, WG.H);
@@ -11784,6 +12096,7 @@ function drawFrame(){
     ctx.textBaseline = 'middle';
     ctx.fillText('COMBO x' + WG.stompCombo + '!', WG.W/2, 40);
   }
+  ctx.restore();
 }
 function drawCloud(ctx, cx, cy){
   ctx.beginPath();
@@ -12225,5 +12538,42 @@ function updateHud(){
   background:linear-gradient(160deg,rgba(26,26,36,0.85),rgba(13,13,20,0.85));
   box-shadow:0 2px 8px rgba(0,0,0,0.3),inset 0 1px 0 rgba(255,255,255,0.05);
   transition:transform 0.18s,box-shadow 0.18s,border-color 0.18s}
+
+/* ===== Site-wide premium polish ===== */
+/* Screen transitions: every screen smoothly fades up on enter */
+.setup-screen,#gameScreen,#lbScreen,#adminScreen,#onlineScreen,
+#trapScreen,#xoScreen,#c4Screen,#memScreen,#defuseScreen,
+#dinoScreen,#spaceScreen,#brotScreen,#waneesScreen{
+  animation:siteScreenIn 0.42s cubic-bezier(0.34,1.3,0.64,1)}
+@keyframes siteScreenIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+@media (prefers-reduced-motion:reduce){
+  .setup-screen,#gameScreen,#lbScreen,#adminScreen,#onlineScreen,
+  #trapScreen,#xoScreen,#c4Screen,#memScreen,#defuseScreen,
+  #dinoScreen,#spaceScreen,#brotScreen,#waneesScreen{animation:none}}
+
+/* Toast: cinematic slide-down with backdrop blur */
+#gameToast{
+  backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);
+  background:rgba(19,19,26,0.85) !important;
+  border:1px solid rgba(255,255,255,0.08) !important;
+  box-shadow:0 18px 50px rgba(0,0,0,0.55),0 0 30px rgba(201,168,76,0.12),inset 0 1px 0 rgba(255,255,255,0.08) !important}
+
+/* Make every primary button feel "tactile" */
+.start-btn,.play-again-btn{position:relative;overflow:hidden}
+.start-btn::after,.play-again-btn::after{
+  content:'';position:absolute;top:0;left:-150%;width:60%;height:100%;
+  background:linear-gradient(110deg,transparent,rgba(255,255,255,0.18),transparent);
+  transform:skewX(-22deg);pointer-events:none;transition:left 0.7s}
+.start-btn:hover::after,.play-again-btn:hover::after{left:150%}
+
+/* Pretty scrollbars (webkit) */
+::-webkit-scrollbar{width:10px;height:10px}
+::-webkit-scrollbar-track{background:rgba(0,0,0,0.18)}
+::-webkit-scrollbar-thumb{background:linear-gradient(180deg,#8b6e1f,#5a4612);border-radius:10px}
+::-webkit-scrollbar-thumb:hover{background:linear-gradient(180deg,var(--gold-light),var(--gold))}
+
+/* Focus-visible accessibility ring (so keyboard users aren't lost) */
+button:focus-visible,a:focus-visible,input:focus-visible,select:focus-visible{
+  outline:2px solid var(--gold);outline-offset:3px;border-radius:8px}
 </style>
 </body></html>
