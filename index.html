@@ -11373,25 +11373,36 @@ body.wanees-active{overflow:hidden}
 .wn-btn-spec:active{transform:translateY(0)}
 @media (prefers-reduced-motion:reduce){.wn-spec-dot{animation:none}}
 
-.wn-controls.suha-layout{flex-direction:row;position:relative}
-.wn-controls.suha-layout .wn-dpad{flex:1;justify-content:space-between}
-.wn-controls.suha-layout .wn-jump-btn{position:absolute;left:calc(14px + env(safe-area-inset-left,0px) + 100px + 12px);top:50%;transform:translateY(calc(-50% - 28px));z-index:2}
-.wn-controls.suha-layout .wn-jump-btn:active,.wn-controls.suha-layout .wn-jump-btn.pressed{transform:translateY(calc(-50% - 26px))}
-@media(max-width:640px){
-  .wn-controls.suha-layout .wn-jump-btn{left:calc(14px + env(safe-area-inset-left,0px) + 76px + 10px);transform:translateY(calc(-50% - 22px))}
-  .wn-controls.suha-layout .wn-jump-btn:active,.wn-controls.suha-layout .wn-jump-btn.pressed{transform:translateY(calc(-50% - 20px))}
-}
-.wn-dpad{display:flex;gap:12px;direction:ltr}
+/* (suha-layout overrides removed: analog joystick layout works for both characters) */
 .wn-ctrl-btn{min-width:84px;min-height:84px;background:linear-gradient(180deg,rgba(255,210,0,0.18),rgba(255,210,0,0.08));border:2px solid #ffd200;border-radius:18px;color:#ffd200;font-family:'Tajawal',sans-serif;font-weight:900;font-size:2.1rem;cursor:pointer;display:flex;align-items:center;justify-content:center;user-select:none;-webkit-user-select:none;-webkit-touch-callout:none;touch-action:none}
 .wn-ctrl-btn:active,.wn-ctrl-btn.pressed{background:linear-gradient(180deg,#ffd200,#cc9900);color:#000;transform:translateY(2px)}
-.wn-jump-btn{min-width:100px;min-height:100px;font-size:1.6rem;flex-direction:column;gap:2px}
+.wn-jump-btn{min-width:110px;min-height:110px;font-size:1.8rem;flex-direction:column;gap:2px;border-radius:50% !important;
+  box-shadow:0 6px 16px rgba(255,210,0,0.25),inset 0 -4px 0 rgba(0,0,0,0.25)}
 .wn-jump-btn .wn-jump-label{font-size:0.82rem;letter-spacing:1px}
+/* ===== Analog joystick (left thumb) ===== */
+.wn-joy-area{flex:1;height:140px;position:relative;touch-action:none;user-select:none;-webkit-user-select:none;
+  border-radius:18px;background:radial-gradient(circle at 30% 50%,rgba(255,210,0,0.05),transparent 70%)}
+.wn-joy-hint{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);
+  color:rgba(255,210,0,0.45);font-family:'Tajawal',sans-serif;font-size:0.78rem;font-weight:700;
+  pointer-events:none;letter-spacing:1px;text-align:center;transition:opacity 0.2s}
+.wn-joy-area.active .wn-joy-hint{opacity:0}
+.wn-joy-base{position:absolute;width:120px;height:120px;border-radius:50%;
+  background:radial-gradient(circle,rgba(20,20,30,0.7) 0%,rgba(20,20,30,0.45) 65%,rgba(20,20,30,0.0) 100%);
+  border:2.5px solid rgba(255,210,0,0.55);box-shadow:0 0 22px rgba(255,210,0,0.18),inset 0 0 18px rgba(0,0,0,0.4);
+  display:none;pointer-events:none;transform:translate(-50%,-50%)}
+.wn-joy-base.on{display:block}
+.wn-joy-thumb{position:absolute;left:50%;top:50%;width:54px;height:54px;border-radius:50%;
+  background:radial-gradient(circle at 35% 30%,#ffeb70,#ffd200 55%,#cc9900 100%);
+  border:2.5px solid #fff;box-shadow:0 4px 14px rgba(0,0,0,0.4),inset 0 -3px 0 rgba(0,0,0,0.25);
+  transform:translate(-50%,-50%);pointer-events:none;will-change:transform}
 @media(max-width:640px){
   .wn-topbar{padding:8px 12px;gap:6px}
   .wn-hud-item{font-size:0.78rem}
   .wno-title{font-size:1.3rem}
-  .wn-ctrl-btn{min-width:76px;min-height:76px;font-size:1.85rem}
-  .wn-jump-btn{min-width:90px;min-height:90px;font-size:1.4rem}
+  .wn-jump-btn{min-width:96px;min-height:96px;font-size:1.55rem}
+  .wn-joy-area{height:120px}
+  .wn-joy-base{width:110px;height:110px}
+  .wn-joy-thumb{width:48px;height:48px}
 }
 </style>
 <div id="waneesScreen" class="wanees-screen">
@@ -11418,8 +11429,8 @@ body.wanees-active{overflow:hidden}
       <div class="wno-title">ونيس — المغامرة</div>
       <div class="wno-desc">اقفز على الأعداء، اجمع العملات الذهبية، وصل للعَلَم في نهاية المرحلة.</div>
       <div class="wno-hint">
-        🎮 <b>تحرّك:</b> الأزرار أسفل الشاشة أو ← →<br>
-        🦘 <b>قفز:</b> اضغط زر القفز — استمر بالضغط للنقز المتواصل<br>
+        🕹️ <b>تحرّك:</b> حرّك إبهامك اليساري على الشاشة كأنه عصا تحكّم (أو ← →)<br>
+        🦘 <b>قفز:</b> الزر الذهبي يمين — استمر بالضغط للنقز المتواصل<br>
         💀 <b>السقوط في الهاوية</b> = خسارة حياة
       </div>
       <div class="wn-char-label" id="wnCharLabel" style="display:none">اختر شخصيتك</div>
@@ -11467,9 +11478,11 @@ body.wanees-active{overflow:hidden}
     </div>
   </div>
   <div class="wn-controls">
-    <div class="wn-dpad">
-      <button class="wn-ctrl-btn" id="wnLeftBtn" type="button">◄</button>
-      <button class="wn-ctrl-btn" id="wnRightBtn" type="button">►</button>
+    <div class="wn-joy-area" id="wnJoyArea">
+      <div class="wn-joy-base" id="wnJoyBase">
+        <div class="wn-joy-thumb" id="wnJoyThumb"></div>
+      </div>
+      <div class="wn-joy-hint" id="wnJoyHint">حرّك إبهامك هنا</div>
     </div>
     <button class="wn-ctrl-btn wn-jump-btn" id="wnJumpBtn" type="button">🦘 <span class="wn-jump-label">قفز</span></button>
   </div>
@@ -11562,7 +11575,7 @@ const WG = {
   camera: { x:0 },
   score:0, coinsCollected:0, lives:3, timeLeft:300,
   best:0, stompCombo:0, stompComboTimer:0,
-  inputs: { left:false, right:false, jump:false, jumpHeld:false, jumpJustPressed:false },
+  inputs: { left:false, right:false, jump:false, jumpHeld:false, jumpJustPressed:false, analogX:0 },
   raf:0, lastTime:0, timeAccum:0,
   _bound:false, _btnBound:false,
   GRAV:0.34, JUMP_VEL:-6.4, MAX_FALL:6.5, PLAYER_SPEED:2.0,
@@ -11909,7 +11922,7 @@ function resetWaneesState(){
   WG.timeAccum = 0;
   WG.camera.x = 0;
   WG.particles = [];
-  WG.inputs = { left:false, right:false, jump:false, jumpHeld:false, jumpJustPressed:false };
+  WG.inputs = { left:false, right:false, jump:false, jumpHeld:false, jumpJustPressed:false, analogX:0 };
   updateHud();
 }
 window.waneesStart = function(){
@@ -12095,8 +12108,11 @@ function rectsOverlap(a, b){
 function updatePlayer(dt){
   const p = WG.player;
   let targetVx = 0;
+  // Keyboard arrows give discrete max-speed input; touch joystick gives
+  // analog 0..1 magnitude (dead-zoned in the input handler).
   if (WG.inputs.left) targetVx = -WG.PLAYER_SPEED;
   else if (WG.inputs.right) targetVx = WG.PLAYER_SPEED;
+  else if (Math.abs(WG.inputs.analogX) > 0.0001) targetVx = WG.inputs.analogX * WG.PLAYER_SPEED;
   p.vx += (targetVx - p.vx) * 0.25 * dt;
   if (Math.abs(p.vx) < 0.05 && targetVx === 0) p.vx = 0;
   if (p.vx > 0.1) p.dir = 1;
@@ -12358,12 +12374,14 @@ function bindWaneesControls(){
     }
   });
   window.addEventListener('blur', () => {
-    if (isActive()){ WG.inputs.left = false; WG.inputs.right = false; WG.inputs.jumpHeld = false; }
+    if (isActive()){ WG.inputs.left = false; WG.inputs.right = false; WG.inputs.jumpHeld = false; WG.inputs.analogX = 0;
+      const ja = document.getElementById('wnJoyArea'); const jb = document.getElementById('wnJoyBase');
+      const jt = document.getElementById('wnJoyThumb');
+      if (ja) ja.classList.remove('active'); if (jb) jb.classList.remove('on');
+      if (jt) jt.style.transform = 'translate(-50%,-50%)'; }
   });
 }
 function bindWaneesButtons(){
-  const lBtn = document.getElementById('wnLeftBtn');
-  const rBtn = document.getElementById('wnRightBtn');
   const jBtn = document.getElementById('wnJumpBtn');
   function bindHold(btn, onDown, onUp){
     ['touchstart','mousedown'].forEach(ev => {
@@ -12373,12 +12391,85 @@ function bindWaneesButtons(){
       btn.addEventListener(ev, () => { btn.classList.remove('pressed'); onUp(); });
     });
   }
-  bindHold(lBtn, () => WG.inputs.left = true, () => WG.inputs.left = false);
-  bindHold(rBtn, () => WG.inputs.right = true, () => WG.inputs.right = false);
   bindHold(jBtn,
     () => { if (!WG.inputs.jumpHeld) WG.inputs.jumpJustPressed = true; WG.inputs.jumpHeld = true; WG.inputs.jump = true; },
     () => { WG.inputs.jumpHeld = false; WG.inputs.jump = false; }
   );
+  // ===== Floating analog joystick (left thumb) =====
+  const area  = document.getElementById('wnJoyArea');
+  const base  = document.getElementById('wnJoyBase');
+  const thumb = document.getElementById('wnJoyThumb');
+  if (!area || !base || !thumb) return;
+  // Dead zone: thumb must move >12% of radius before we count input.
+  // Past the dead zone the value ramps linearly to ±1 at the edge.
+  const RADIUS = 56, DEAD = 0.12;
+  let activeId = null, cx = 0, cy = 0;
+  function setThumbAt(dx, dy){
+    const dist = Math.hypot(dx, dy);
+    const clamped = dist > RADIUS ? RADIUS / dist : 1;
+    const tx = dx * clamped, ty = dy * clamped;
+    thumb.style.transform = `translate(calc(-50% + ${tx}px), calc(-50% + ${ty}px))`;
+    let nx = tx / RADIUS; // -1..+1
+    const ax = Math.abs(nx);
+    if (ax < DEAD){ WG.inputs.analogX = 0; return; }
+    const sign = nx < 0 ? -1 : 1;
+    WG.inputs.analogX = sign * Math.min(1, (ax - DEAD) / (1 - DEAD));
+  }
+  function placeBaseAt(clientX, clientY){
+    const r = area.getBoundingClientRect();
+    base.style.left = (clientX - r.left) + 'px';
+    base.style.top  = (clientY - r.top)  + 'px';
+  }
+  function start(ev){
+    if (activeId !== null) return;
+    const p = ev.touches ? ev.touches[0] : ev;
+    activeId = ev.touches ? p.identifier : (ev.pointerId != null ? ev.pointerId : 1);
+    cx = p.clientX; cy = p.clientY;
+    placeBaseAt(cx, cy);
+    base.classList.add('on');
+    area.classList.add('active');
+    thumb.style.transform = 'translate(-50%,-50%)';
+    if (area.setPointerCapture && ev.pointerId != null){ try { area.setPointerCapture(ev.pointerId); } catch(e){} }
+    ev.preventDefault();
+  }
+  function move(ev){
+    if (activeId === null) return;
+    let p = null;
+    if (ev.touches){
+      for (const t of ev.touches){ if (t.identifier === activeId){ p = t; break; } }
+    } else if (ev.pointerId === activeId || ev.type === 'mousemove'){
+      p = ev;
+    }
+    if (!p) return;
+    setThumbAt(p.clientX - cx, p.clientY - cy);
+    ev.preventDefault();
+  }
+  function end(ev){
+    if (ev.touches && ev.touches.length){
+      // Other touches still on the area, but is the tracked one gone?
+      let still = false;
+      for (const t of ev.touches){ if (t.identifier === activeId){ still = true; break; } }
+      if (still) return;
+    }
+    activeId = null;
+    WG.inputs.analogX = 0;
+    base.classList.remove('on');
+    area.classList.remove('active');
+    thumb.style.transform = 'translate(-50%,-50%)';
+  }
+  // Touch (passive:false so we can preventDefault)
+  area.addEventListener('touchstart',  start, { passive:false });
+  area.addEventListener('touchmove',   move,  { passive:false });
+  area.addEventListener('touchend',    end);
+  area.addEventListener('touchcancel', end);
+  // Mouse / pen via pointer events for desktop testing
+  area.addEventListener('pointerdown', e => { if (e.pointerType !== 'touch') start(e); });
+  area.addEventListener('pointermove', e => { if (e.pointerType !== 'touch') move(e); });
+  area.addEventListener('pointerup',   e => { if (e.pointerType !== 'touch') end(e); });
+  area.addEventListener('pointercancel', e => { if (e.pointerType !== 'touch') end(e); });
+  // Safety: lose tracking if focus leaves
+  window.addEventListener('blur', () => { activeId = null; WG.inputs.analogX = 0;
+    base.classList.remove('on'); area.classList.remove('active'); thumb.style.transform = 'translate(-50%,-50%)'; });
 }
 const WN_THEMES = [
   // 1: Sunny meadow
