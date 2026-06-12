@@ -11348,6 +11348,31 @@ body.wanees-active{overflow:hidden}
     /* dress flare */ 2px 10px #ff4585, 4px 10px #ff7eb3, 6px 10px #ff7eb3, 8px 10px #ff7eb3, 10px 10px #ff7eb3, 12px 10px #ff7eb3, 14px 10px #ff7eb3, 16px 10px #ff7eb3, 18px 10px #ff4585,
     /* legs + pink shoes */ 6px 12px #f0c090, 8px 12px #f0c090, 12px 12px #f0c090, 14px 12px #f0c090,
     4px 14px #ff4585, 6px 14px #ff4585, 8px 14px #ff4585, 12px 14px #ff4585, 14px 14px #ff4585, 16px 14px #ff4585}
+/* Live spectate banner */
+.wn-spec-banner{position:absolute;top:8px;left:50%;transform:translateX(-50%);z-index:5;
+  background:rgba(8,8,16,0.85);border:1.5px solid rgba(255,80,80,0.6);border-radius:20px;
+  padding:5px 12px 5px 8px;display:flex;align-items:center;gap:8px;
+  color:#fff;font-family:'Tajawal',sans-serif;font-weight:700;font-size:0.78rem;
+  box-shadow:0 4px 18px rgba(0,0,0,0.5),0 0 22px rgba(255,80,80,0.18);
+  backdrop-filter:blur(4px);-webkit-backdrop-filter:blur(4px)}
+.wn-spec-dot{width:8px;height:8px;border-radius:50%;background:#ff3838;
+  box-shadow:0 0 8px rgba(255,56,56,0.8);animation:wnSpecPulse 1.4s infinite ease-in-out}
+.wn-spec-banner.broadcasting .wn-spec-dot{background:#ff3838}
+.wn-spec-banner.watching .wn-spec-dot{background:#3dba7a;box-shadow:0 0 8px rgba(61,186,122,0.8)}
+@keyframes wnSpecPulse{0%,100%{transform:scale(1);opacity:1}50%{transform:scale(1.35);opacity:0.7}}
+.wn-spec-close{background:transparent;border:none;color:#fff;cursor:pointer;font-size:0.95rem;
+  padding:0 4px;opacity:0.7;transition:opacity 0.15s}
+.wn-spec-close:hover{opacity:1}
+.wn-spec-banner b{color:#ffd200;letter-spacing:2px;font-family:monospace}
+.wn-spec-actions{display:flex;flex-direction:column;gap:8px;margin-top:10px;width:100%;max-width:280px}
+.wn-btn-spec{background:linear-gradient(160deg,rgba(40,28,68,0.9),rgba(20,14,38,0.9));
+  border:1.5px solid #5a4a8a;border-radius:12px;padding:10px 14px;color:#dcd0ff;
+  font-family:'Tajawal',sans-serif;font-weight:700;font-size:0.85rem;cursor:pointer;
+  transition:border-color 0.2s,transform 0.12s,box-shadow 0.2s}
+.wn-btn-spec:hover{border-color:#a78cff;box-shadow:0 4px 18px rgba(167,140,255,0.25);transform:translateY(-1px)}
+.wn-btn-spec:active{transform:translateY(0)}
+@media (prefers-reduced-motion:reduce){.wn-spec-dot{animation:none}}
+
 .wn-controls.suha-layout{flex-direction:row;position:relative}
 .wn-controls.suha-layout .wn-dpad{flex:1;justify-content:space-between}
 .wn-controls.suha-layout .wn-jump-btn{position:absolute;left:calc(14px + env(safe-area-inset-left,0px) + 100px + 12px);top:50%;transform:translateY(calc(-50% - 28px));z-index:2}
@@ -11383,6 +11408,11 @@ body.wanees-active{overflow:hidden}
   </div>
   <div class="wn-arena" id="waneesArena">
     <canvas id="waneesCanvas" width="320" height="180"></canvas>
+    <div class="wn-spec-banner" id="wnSpecBanner" style="display:none">
+      <span class="wn-spec-dot"></span>
+      <span id="wnSpecText"></span>
+      <button class="wn-spec-close" onclick="stopSpectate()" type="button">✕</button>
+    </div>
     <div class="wn-overlay" id="waneesStartOverlay">
       <div class="wno-emoji">🍄</div>
       <div class="wno-title">ونيس — المغامرة</div>
@@ -11404,6 +11434,24 @@ body.wanees-active{overflow:hidden}
         </button>
       </div>
       <button class="wn-btn-primary" onclick="waneesStart()">🚀 ابدأ المغامرة</button>
+      <div class="wn-spec-actions">
+        <button class="wn-btn-spec" onclick="waneesStartBroadcast()">📡 بث مباشر — دع غيرك يتفرّج</button>
+        <button class="wn-btn-spec" onclick="openWatchPrompt()">👁️ شاهد لاعباً بالكود</button>
+      </div>
+    </div>
+    <div class="wn-overlay" id="waneesWatchPrompt" style="display:none">
+      <div class="wno-emoji">👁️</div>
+      <div class="wno-title">مشاهدة لاعب</div>
+      <div class="wno-desc">اكتب كود البث الذي وصلك من اللاعب لتتفرّج عليه مباشرة.</div>
+      <input id="wnWatchCode" placeholder="مثال: A7K9XQ" maxlength="6"
+        style="font-family:monospace;font-weight:900;font-size:1.4rem;text-align:center;letter-spacing:6px;
+        padding:12px 16px;border-radius:12px;border:2px solid #c9a84c;background:#0e0e16;color:#ffd200;
+        text-transform:uppercase;width:200px;margin:8px 0 12px" autocomplete="off">
+      <div class="wn-btn-row">
+        <button class="wn-btn-primary" onclick="confirmWatch()">▶ شاهد</button>
+        <button class="wn-btn-secondary" onclick="closeWatchPrompt()">إلغاء</button>
+      </div>
+      <div id="wnWatchErr" style="color:#ff6a6a;font-size:0.85rem;margin-top:8px;display:none"></div>
     </div>
     <div class="wn-overlay" id="waneesOverOverlay" style="display:none">
       <div class="wno-emoji" id="wnOverEmoji">💀</div>
@@ -11562,6 +11610,8 @@ window.playWanees = function(){
   initWanees();
 };
 window.exitWanees = function(){
+  if (SPEC.mode==='broadcast') stopBroadcast();
+  else if (SPEC.mode==='view') stopWatching();
   waneesStop();
   resetWaneesState();
   document.body.classList.remove('wanees-active');
@@ -11650,6 +11700,173 @@ function isSuhaPlayer(){
   if (WG.character === 'wanees') return false; // Suha-named user picked Wanees
   return true; // 'suha' or no explicit pick yet
 }
+// ===== Spectate: broadcast / watch via Firebase Realtime DB =====
+const SPEC = { mode:null, code:null, ref:null, snapAcc:0, snapEveryFrames:6,
+  off:null, dcRef:null, broadcaster:null, lastSnapAt:0, watchTimer:0 };
+function _wnFb(){ try { return (typeof fb !== 'undefined' && fb && fb.db) ? fb.db : null; } catch(e){ return null; } }
+function _wnEnsureFb(){
+  try { if (typeof ensureFirebase === 'function') ensureFirebase(); } catch(e){}
+  return _wnFb();
+}
+function _wnCode(){ const chars='ABCDEFGHJKMNPQRSTUVWXYZ23456789'; let s=''; for(let i=0;i<6;i++)s+=chars[Math.floor(Math.random()*chars.length)]; return s; }
+function _wnProfileName(){
+  try { const p = (typeof loadProfile === 'function') ? loadProfile() : null;
+        return (p && p.name) ? String(p.name).trim().slice(0,18) : 'لاعب'; } catch(e){ return 'لاعب'; }
+}
+function showSpecBanner(kind, text){
+  const b=document.getElementById('wnSpecBanner'); if(!b) return;
+  b.classList.remove('broadcasting','watching'); b.classList.add(kind);
+  document.getElementById('wnSpecText').innerHTML=text;
+  b.style.display='flex';
+}
+function hideSpecBanner(){ const b=document.getElementById('wnSpecBanner'); if(b) b.style.display='none'; }
+window.waneesStartBroadcast = function(){
+  const db = _wnEnsureFb();
+  if (!db){ try { showToast && showToast('البث يتطلب اتصال إنترنت','#ff6a6a'); } catch(e){} return; }
+  const code = _wnCode();
+  const meta = { name:_wnProfileName(), char: WG.character==='suha'?'suha':'wanees',
+    startedAt: firebase.database.ServerValue.TIMESTAMP };
+  try {
+    const ref = db.ref('wnSpec/'+code);
+    ref.child('meta').set(meta).then(()=>{
+      try { ref.onDisconnect().remove(); } catch(e){}
+      SPEC.mode='broadcast'; SPEC.code=code; SPEC.ref=ref; SPEC.snapAcc=0; SPEC.dcRef=ref;
+      showSpecBanner('broadcasting', '🔴 بث مباشر • الكود <b>'+code+'</b> • <span style="opacity:0.7">انسخ الكود لمن يرغب بالمشاهدة</span>');
+      try { navigator.clipboard && navigator.clipboard.writeText(code).catch(()=>{}); } catch(e){}
+      try { showToast && showToast('📡 البث بدأ! الكود: '+code+' (تم نسخه)', '#3dba7a'); } catch(e){}
+      waneesStart();
+    }).catch(()=>{ try { showToast && showToast('تعذّر بدء البث','#ff6a6a'); } catch(e){} });
+  } catch(e){ try { showToast && showToast('تعذّر بدء البث','#ff6a6a'); } catch(ee){} }
+};
+function publishSnapshot(frames){
+  if (SPEC.mode!=='broadcast' || !SPEC.ref || !WG.player) return;
+  SPEC.snapAcc += frames;
+  if (SPEC.snapAcc < SPEC.snapEveryFrames) return;
+  SPEC.snapAcc = 0;
+  const p = WG.player;
+  const snap = {
+    t: Date.now(),
+    lv: WG.currentLevel|0,
+    cm: WG.camera.x|0,
+    p: {x:Math.round(p.x*10)/10, y:Math.round(p.y*10)/10,
+        vx:Math.round(p.vx*100)/100, vy:Math.round(p.vy*100)/100,
+        d:p.dir, w:p.walkPhase|0, og:p.onGround?1:0,
+        iv:p.invincible|0, st:p.starTimer|0, sh:WG.suhaMode?1:0},
+    e: (WG.enemies||[]).filter(e=>e.alive).map(e=>[e.x|0,e.y|0,e.kind==='koopa'?(e.shell?2:1):0,e.dir||-1]),
+    c: (WG.coins||[]).filter(c=>!c.collected).map(c=>[c.x|0,c.y|0]),
+    i: (WG.items||[]).filter(it=>it.alive).map(it=>[it.x|0,it.y|0,it.kind==='star'?1:0]),
+    f: WG.flag ? [WG.flag.x|0,WG.flag.y|0] : null,
+    h: {l:WG.lives, c:WG.coinsCollected, s:WG.score|0, tm:WG.timeLeft|0, cb:WG.stompCombo|0},
+    s: WG.state
+  };
+  try { SPEC.ref.child('snap').set(snap); } catch(e){}
+}
+function stopBroadcast(){
+  if (SPEC.mode!=='broadcast') return;
+  try { if (SPEC.ref) SPEC.ref.remove(); } catch(e){}
+  try { if (SPEC.dcRef) SPEC.dcRef.onDisconnect().cancel(); } catch(e){}
+  SPEC.mode=null; SPEC.code=null; SPEC.ref=null; SPEC.dcRef=null; SPEC.snapAcc=0;
+  hideSpecBanner();
+}
+window.openWatchPrompt = function(){
+  const inp=document.getElementById('wnWatchCode');
+  if (inp){ inp.value=''; inp.focus(); }
+  const err=document.getElementById('wnWatchErr'); if(err){ err.style.display='none'; }
+  document.getElementById('waneesWatchPrompt').style.display='flex';
+};
+window.closeWatchPrompt = function(){ document.getElementById('waneesWatchPrompt').style.display='none'; };
+window.confirmWatch = function(){
+  const inp=document.getElementById('wnWatchCode'); const err=document.getElementById('wnWatchErr');
+  const code=(inp.value||'').trim().toUpperCase();
+  function fail(m){ if(err){err.textContent=m;err.style.display='block';} }
+  if (!/^[A-Z0-9]{4,8}$/.test(code)) return fail('الكود غير صالح');
+  const db=_wnEnsureFb();
+  if (!db) return fail('المشاهدة تتطلب اتصال إنترنت');
+  const ref=db.ref('wnSpec/'+code);
+  ref.child('meta').once('value').then(s=>{
+    if (!s.exists()) return fail('الكود غير صالح أو الجلسة انتهت');
+    const meta=s.val();
+    SPEC.mode='view'; SPEC.code=code; SPEC.ref=ref; SPEC.broadcaster=meta.name||'لاعب'; SPEC.lastSnapAt=Date.now();
+    closeWatchPrompt();
+    document.getElementById('waneesStartOverlay').style.display='none';
+    document.getElementById('waneesOverOverlay').style.display='none';
+    // Prepare viewer state: load level so the world is rendered while waiting
+    WG.character = meta.char==='suha'?'suha':'wanees';
+    WG.suhaMode = false; // viewer perks should not be visual on Wanees default
+    WG.currentLevel = 0; WG.lives=3; WG.coinsCollected=0; WG.score=0; WG.timeLeft=300;
+    WG.PLAYER_SPEED = 2.0; WG.JUMP_VEL = -6.4;
+    WG.particles=[]; WG.camera.x=0;
+    loadLevel();
+    showSpecBanner('watching', '👁️ تشاهد <b>'+escapeHtml(SPEC.broadcaster)+'</b>');
+    updateHud();
+    // Subscribe to snapshots
+    SPEC.off = ref.child('snap').on('value', snapSnap=>{
+      const snap=snapSnap.val(); if (snap) applySnapshot(snap);
+    });
+    // Heartbeat: if the broadcaster goes away, show a hint
+    if (SPEC.watchTimer) clearInterval(SPEC.watchTimer);
+    SPEC.watchTimer = setInterval(()=>{
+      if (SPEC.mode!=='view') return;
+      const stale = Date.now() - SPEC.lastSnapAt;
+      const el=document.getElementById('wnSpecText');
+      if (el && stale>4000) el.innerHTML='👁️ بانتظار <b>'+escapeHtml(SPEC.broadcaster)+'</b>… (لا توجد بيانات منذ '+Math.floor(stale/1000)+'ث)';
+      else if (el) el.innerHTML='👁️ تشاهد <b>'+escapeHtml(SPEC.broadcaster)+'</b>';
+    }, 800);
+    // Disable game loop on viewer side
+    WG.state='spectating';
+    cancelAnimationFrame(WG.raf);
+    WG.raf = requestAnimationFrame(spectateFrame);
+  }).catch(()=>fail('تعذّر الاتصال'));
+};
+function escapeHtml(s){ return String(s).replace(/[&<>"']/g, c=>({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
+function applySnapshot(snap){
+  if (!snap || SPEC.mode!=='view') return;
+  SPEC.lastSnapAt = Date.now();
+  if ((snap.lv|0) !== WG.currentLevel){
+    WG.currentLevel = snap.lv|0;
+    loadLevel();
+  }
+  WG.camera.x = snap.cm|0;
+  if (!WG.player){ WG.player = { x:0,y:0,vx:0,vy:0,w:12,h:14,onGround:false,dir:1,invincible:0,walkPhase:0,alive:true,starTimer:0 }; }
+  const p=WG.player, sp=snap.p||{};
+  p.x=sp.x||0; p.y=sp.y||0; p.vx=sp.vx||0; p.vy=sp.vy||0;
+  p.dir=sp.d||1; p.walkPhase=sp.w||0;
+  p.onGround=!!sp.og; p.invincible=sp.iv|0; p.starTimer=sp.st|0;
+  WG.suhaMode = !!sp.sh;
+  WG.enemies = (snap.e||[]).map(e=>{
+    const koopa=e[2]>0; return { x:e[0], y:e[1], vx:0, vy:0,
+      w:koopa?14:14, h:koopa?16:14, alive:true, walkPhase:0,
+      dir:e[3]||-1, kind:koopa?'koopa':'goomba', shell:e[2]===2, shellVx:0 };
+  });
+  const coinKeys = new Set((snap.c||[]).map(c=>c[0]+','+c[1]));
+  WG.coins = (snap.c||[]).map(c=>({ x:c[0], y:c[1], w:8, h:8, collected:false, phase:0 }));
+  WG.items = (snap.i||[]).map(it=>({ x:it[0], y:it[1], w:12, h:14, vx:0, vy:0,
+    kind:it[2]===1?'star':'mushroom', alive:true, onGround:false }));
+  if (snap.f){ WG.flag = { x:snap.f[0], y:snap.f[1] }; }
+  const h=snap.h||{};
+  WG.lives=h.l|0; WG.coinsCollected=h.c|0; WG.score=h.s|0; WG.timeLeft=h.tm|0;
+  WG.stompCombo=h.cb|0;
+  updateHud();
+}
+function spectateFrame(){
+  if (SPEC.mode !== 'view'){ return; }
+  try { drawFrame(); } catch(e){}
+  WG.raf = requestAnimationFrame(spectateFrame);
+}
+function stopWatching(){
+  if (SPEC.mode!=='view') return;
+  try { if (SPEC.ref && SPEC.off) SPEC.ref.child('snap').off('value', SPEC.off); } catch(e){}
+  if (SPEC.watchTimer){ clearInterval(SPEC.watchTimer); SPEC.watchTimer=0; }
+  SPEC.mode=null; SPEC.code=null; SPEC.ref=null; SPEC.off=null; SPEC.broadcaster=null;
+  cancelAnimationFrame(WG.raf);
+  WG.state='idle';
+  hideSpecBanner();
+  document.getElementById('waneesStartOverlay').style.display='flex';
+}
+window.stopSpectate = function(){
+  if (SPEC.mode==='broadcast') stopBroadcast();
+  else if (SPEC.mode==='view') stopWatching();
+};
 function loadWaneesCharacter(){
   try { const v = localStorage.getItem('waneesCharacter'); if (v === 'wanees' || v === 'suha') WG.character = v; } catch(e){}
 }
@@ -11729,6 +11946,7 @@ function waneesLoop(t){
   if (WG._gk && WG._gk.shake) WG._gk.shake.update(rawDt, { maxOffset: 4, maxRot: 0.012, decay: 0.07 });
   if (WG.state !== 'running') return;
   drawFrame();
+  publishSnapshot(rawDt);
   WG.inputs.jumpJustPressed = false;
   WG.raf = requestAnimationFrame(waneesLoop);
 }
