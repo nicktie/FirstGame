@@ -1574,30 +1574,87 @@ function openEmojiPicker(playerIdx) {
   document.getElementById('emojiOverlay').classList.add('show');
 }
 function closeEmojiPicker(e) { if(e.target.id==='emojiOverlay') document.getElementById('emojiOverlay').classList.remove('show'); }
+let _confettiRaf = 0;
 function launchConfetti() {
   const canvas = document.getElementById('confettiCanvas');
-  canvas.width = innerWidth; canvas.height = innerHeight;
+  if (!canvas) return;
+  // Cancel any running celebration so repeat wins don't stack RAF loops
+  if (_confettiRaf) { cancelAnimationFrame(_confettiRaf); _confettiRaf = 0; }
+  const dpr = Math.min(2, window.devicePixelRatio || 1);
+  canvas.width = innerWidth * dpr; canvas.height = innerHeight * dpr;
   const ctx = canvas.getContext('2d');
-  const particles = Array.from({length:120}, ()=>({
-    x: Math.random()*innerWidth, y: Math.random()*innerHeight-innerHeight,
-    r: Math.random()*6+3, dx: Math.random()*2-1, dy: Math.random()*3+2,
-    color:`hsl(${Math.random()*360},80%,60%)`, rot:Math.random()*360,
-  }));
-  let frame = 0;
-  function draw() {
-    ctx.clearRect(0,0,canvas.width,canvas.height);
-    particles.forEach(p => {
-      ctx.save(); ctx.translate(p.x,p.y); ctx.rotate(p.rot*Math.PI/180);
-      ctx.fillStyle=p.color; ctx.fillRect(-p.r/2,-p.r/2,p.r,p.r);
-      ctx.restore();
-      p.x+=p.dx; p.y+=p.dy; p.rot+=3;
-      if(p.y>innerHeight) { p.y=-10; p.x=Math.random()*innerWidth; }
-    });
-    frame++;
-    if(frame<200) requestAnimationFrame(draw);
-    else ctx.clearRect(0,0,canvas.width,canvas.height);
+  ctx.scale(dpr, dpr);
+  const W = innerWidth, H = innerHeight;
+  const COLORS = ['#f0d080','#c9a84c','#ff6b9d','#5ec8f0','#7ee08a','#c792ea','#ffd166'];
+  const SHAPES = ['rect','strip','circle'];
+  const parts = [];
+  // Two cannons firing up-and-inward from the bottom corners, plus a center pop
+  function cannon(x, y, angleCenter, spread, count, power) {
+    for (let i = 0; i < count; i++) {
+      const a = angleCenter + (Math.random() - 0.5) * spread;
+      const v = power * (0.5 + Math.random() * 0.7);
+      parts.push({
+        x, y,
+        vx: Math.cos(a) * v, vy: Math.sin(a) * v,
+        w: 4 + Math.random() * 6, h: 3 + Math.random() * 9,
+        color: COLORS[(Math.random() * COLORS.length) | 0],
+        shape: SHAPES[(Math.random() * SHAPES.length) | 0],
+        rot: Math.random() * Math.PI * 2,
+        vrot: (Math.random() - 0.5) * 0.35,
+        flutter: Math.random() * Math.PI * 2,
+        life: 1
+      });
+    }
   }
-  draw();
+  cannon(W * 0.08, H * 0.95, -Math.PI / 2 - 0.45, 0.7, 55, 17);
+  cannon(W * 0.92, H * 0.95, -Math.PI / 2 + 0.45, 0.7, 55, 17);
+  cannon(W * 0.5,  H * 0.7,  -Math.PI / 2, 1.4, 40, 12);
+  let last = performance.now();
+  const start = last;
+  function draw(now) {
+    const dt = Math.min(2.5, (now - last) / 16.667);
+    last = now;
+    const elapsed = now - start;
+    ctx.clearRect(0, 0, W, H);
+    let alive = 0;
+    for (let i = 0; i < parts.length; i++) {
+      const p = parts[i];
+      if (p.life <= 0) continue;
+      p.vy += 0.32 * dt;              // gravity
+      p.vx *= Math.pow(0.985, dt);    // drag
+      p.vy *= Math.pow(0.99, dt);
+      p.flutter += 0.18 * dt;
+      p.x += (p.vx + Math.sin(p.flutter) * 1.2) * dt;
+      p.y += p.vy * dt;
+      p.rot += p.vrot * dt;
+      if (elapsed > 1800) p.life -= 0.02 * dt; // gentle fade-out
+      if (p.y > H + 30) p.life = 0;
+      if (p.life <= 0) continue;
+      alive++;
+      ctx.save();
+      ctx.translate(p.x, p.y);
+      ctx.rotate(p.rot);
+      // fake 3D tumble: scale width with flutter phase
+      ctx.scale(Math.abs(Math.cos(p.flutter)) * 0.7 + 0.3, 1);
+      ctx.globalAlpha = Math.max(0, Math.min(1, p.life));
+      ctx.fillStyle = p.color;
+      if (p.shape === 'circle') {
+        ctx.beginPath(); ctx.arc(0, 0, p.w / 2, 0, Math.PI * 2); ctx.fill();
+      } else if (p.shape === 'strip') {
+        ctx.fillRect(-p.w / 2, -p.h, p.w / 2.5, p.h * 2);
+      } else {
+        ctx.fillRect(-p.w / 2, -p.h / 2, p.w, p.h);
+      }
+      ctx.restore();
+    }
+    if (alive > 0 && elapsed < 5000) {
+      _confettiRaf = requestAnimationFrame(draw);
+    } else {
+      ctx.clearRect(0, 0, W, H);
+      _confettiRaf = 0;
+    }
+  }
+  _confettiRaf = requestAnimationFrame(draw);
 }
 function initStats() {
   playerStats = PLAYERS.map(()=>({correct:0, wrong:0, skipped:0, streak:0, maxStreak:0, speedPts:0}));
@@ -9036,6 +9093,8 @@ function resizeBrotBg() {
 function resetBrainRotState() {
   BR.state = 'idle';
   BR.rot = 0; BR.score = 0; BR.t = 0;
+  if (BR._gkParticles) BR._gkParticles.clear();
+  BR._gkLast = null;
   BR.rotRate = BR.baseRotRate;
   BR.spawnPopupTimer = 0; BR.spawnCookieTimer = 0; BR.spawnCaptchaTimer = 0;
   BR.doomTimer = 0; BR.doom = null;
@@ -9086,6 +9145,26 @@ function brotLoop(t) {
   drawSub();
   drawSoap();
   BR.loopRaf = requestAnimationFrame(brotLoop);
+}
+// Central rot-damage hit: shakes the screen and bursts glitch particles
+// proportional to how hard the algorithm got you.
+function rotHit(amount) {
+  BR.rot = Math.min(100, BR.rot + amount);
+  const scr = document.getElementById('brotScreen');
+  if (scr) {
+    scr.classList.remove('brot-shake-sm', 'brot-shake-lg');
+    void scr.offsetWidth; // restart animation
+    scr.classList.add(amount >= 12 ? 'brot-shake-lg' : 'brot-shake-sm');
+  }
+  if (window.GameKit && BR.bgCanvas) {
+    if (!BR._gkParticles) BR._gkParticles = new GameKit.ParticleSystem(128);
+    BR._gkParticles.burst(BR.bgCanvas.width / 2, BR.bgCanvas.height / 2, {
+      count: Math.min(30, 6 + amount * 1.2),
+      palette: ['#ff0099', '#00f0ff', '#ffe600', '#00ff66'],
+      speedMin: 1.5, speedMax: 4 + amount * 0.15,
+      size: 2.5, life: 28, lifeJitter: 14, shape: 'star'
+    });
+  }
 }
 function learnTrap(kind, fell) {
   // The "algorithm" adapts: traps you fall for show up more; ones you resist back off
@@ -9227,7 +9306,7 @@ function spawnQuestion() {
   clearTimeout(BR.questionTimer);
   BR.questionTimer = setTimeout(() => {
     if (BR.state === 'running' && BR.qBox.style.display !== 'none') {
-      BR.rot = Math.min(100, BR.rot + 8);
+      rotHit(8);
       BR.roast.timedOut++;
       BR.answerStreak = 0;
       updateMeterUI();
@@ -9256,7 +9335,7 @@ function answerQuestion(picked, btn) {
     }
   } else {
     btn.classList.add('wrong');
-    BR.rot = Math.min(100, BR.rot + 6);
+    rotHit(6);
     BR.roast.wrongAnswers++;
     BR.answerStreak = 0;
     brot('wrong');
@@ -9316,7 +9395,7 @@ function spawnPopup() {
   // CTA button (trap)
   const cta = el.querySelector('.brot-popup-cta');
   const trapHit = () => {
-    BR.rot = Math.min(100, BR.rot + 10);
+    rotHit(10);
     BR.roast.popupCtaFell++;
     learnTrap('popup', true);
     updateMeterUI();
@@ -9361,7 +9440,7 @@ function spawnCookie() {
   const accept = el.querySelector('.brot-cookie-accept');
   const reject = el.querySelector('.brot-cookie-reject');
   accept.addEventListener('click', () => {
-    BR.rot = Math.min(100, BR.rot + 15);
+    rotHit(15);
     BR.roast.cookieAccept++;
     learnTrap('cookie', true);
     updateMeterUI();
@@ -9428,7 +9507,7 @@ function spawnCaptcha() {
       learnTrap('captcha', false);
       brot('correct');
     } else {
-      BR.rot = Math.min(100, BR.rot + 8);
+      rotHit(8);
       BR.roast.captchaWrong++;
       learnTrap('captcha', true);
       brot('wrong');
@@ -9484,7 +9563,7 @@ function spawnDoomScroll(){
     if (failed || !el.parentNode) return;
     failed = true;
     if (e){ e.preventDefault(); e.stopPropagation(); }
-    BR.rot = Math.min(100, BR.rot + 25);
+    rotHit(25);
     BR.answerStreak = 0;
     updateMeterUI();
     brot('cookie_trap');
@@ -9554,7 +9633,7 @@ function spawnNotification() {
     if (resolved) return;
     resolved = true;
     if (e) { e.preventDefault(); e.stopPropagation(); }
-    BR.rot = Math.min(100, BR.rot + 15);
+    rotHit(15);
     BR.answerStreak = 0;
     learnTrap('notif', true);
     updateMeterUI();
@@ -9645,6 +9724,13 @@ function drawBg() {
   g.addColorStop(1, 'rgba(255,0,153,'+(0.15 + intensity*0.25)+')');
   ctx.fillStyle = g;
   ctx.fillRect(0, 0, W, H);
+  // Glitch hit particles (BR.t runs in seconds; GameKit expects frame units)
+  if (BR._gkParticles) {
+    const fdt = Math.min(3, (BR.t - (BR._gkLast == null ? BR.t : BR._gkLast)) * 60) || 1;
+    BR._gkLast = BR.t;
+    BR._gkParticles.update(fdt);
+    BR._gkParticles.draw(ctx, { additive: true });
+  }
 }
 function drawSub() {
   const c = BR.subCanvas;
@@ -12575,5 +12661,48 @@ function updateHud(){
 /* Focus-visible accessibility ring (so keyboard users aren't lost) */
 button:focus-visible,a:focus-visible,input:focus-visible,select:focus-visible{
   outline:2px solid var(--gold);outline-offset:3px;border-radius:8px}
+
+/* Brain Rot: rot-damage screen shakes (small / large) */
+@keyframes brotShakeSm{
+  0%,100%{transform:translate(0,0)}
+  20%{transform:translate(-4px,2px)}40%{transform:translate(4px,-2px)}
+  60%{transform:translate(-3px,-2px)}80%{transform:translate(3px,2px)}}
+@keyframes brotShakeLg{
+  0%,100%{transform:translate(0,0) rotate(0)}
+  15%{transform:translate(-9px,4px) rotate(-0.6deg)}30%{transform:translate(8px,-5px) rotate(0.5deg)}
+  45%{transform:translate(-7px,-4px) rotate(-0.4deg)}60%{transform:translate(6px,4px) rotate(0.4deg)}
+  75%{transform:translate(-4px,2px)}90%{transform:translate(3px,-2px)}}
+#brotScreen.brot-shake-sm{animation:brotShakeSm 0.3s ease-out}
+#brotScreen.brot-shake-lg{animation:brotShakeLg 0.5s ease-out}
+@media (prefers-reduced-motion:reduce){
+  #brotScreen.brot-shake-sm,#brotScreen.brot-shake-lg{animation:none}}
+
+/* Games hub cards: layered glow + icon lift on hover */
+.game-page-card{will-change:transform}
+.game-page-card:hover{transform:translateY(-5px) scale(1.015)}
+.game-page-card .gpc-icon{transition:transform 0.25s cubic-bezier(0.34,1.6,0.64,1)}
+.game-page-card:hover .gpc-icon{transform:translateY(-3px) scale(1.12)}
+.game-page-card::after{
+  content:'';position:absolute;inset:0;border-radius:inherit;pointer-events:none;
+  background:radial-gradient(420px circle at 50% -10%,rgba(201,168,76,0.12),transparent 55%);
+  opacity:0;transition:opacity 0.3s}
+.game-page-card:hover::after{opacity:1}
+.game-page-card:active{transform:translateY(-1px) scale(0.99);transition-duration:0.06s}
+/* Staggered entrance for the grid */
+.games-grid .game-page-card{animation:siteScreenIn 0.5s cubic-bezier(0.34,1.3,0.64,1) backwards}
+.games-grid .game-page-card:nth-child(1){animation-delay:0.03s}
+.games-grid .game-page-card:nth-child(2){animation-delay:0.08s}
+.games-grid .game-page-card:nth-child(3){animation-delay:0.13s}
+.games-grid .game-page-card:nth-child(4){animation-delay:0.18s}
+.games-grid .game-page-card:nth-child(5){animation-delay:0.23s}
+.games-grid .game-page-card:nth-child(6){animation-delay:0.28s}
+.games-grid .game-page-card:nth-child(7){animation-delay:0.33s}
+.games-grid .game-page-card:nth-child(8){animation-delay:0.38s}
+.games-grid .game-page-card:nth-child(9){animation-delay:0.43s}
+.games-grid .game-page-card:nth-child(10){animation-delay:0.48s}
+@media (prefers-reduced-motion:reduce){
+  .games-grid .game-page-card{animation:none}
+  .game-page-card:hover{transform:none}
+  .game-page-card:hover .gpc-icon{transform:none}}
 </style>
 </body></html>
