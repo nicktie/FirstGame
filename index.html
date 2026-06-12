@@ -11392,8 +11392,8 @@ body.wanees-active{overflow:hidden}
         🦘 <b>قفز:</b> اضغط زر القفز — استمر بالضغط للنقز المتواصل<br>
         💀 <b>السقوط في الهاوية</b> = خسارة حياة
       </div>
-      <div class="wn-char-label">اختر شخصيتك</div>
-      <div class="wn-char-picker" id="wnCharPicker">
+      <div class="wn-char-label" id="wnCharLabel" style="display:none">اختر شخصيتك</div>
+      <div class="wn-char-picker" id="wnCharPicker" style="display:none">
         <button class="wn-char-btn" data-char="wanees" type="button" onclick="setWaneesCharacter('wanees')">
           <span class="wn-char-avatar wn-char-wanees" aria-hidden="true"></span>
           <span class="wn-char-name">ونيس</span>
@@ -11637,14 +11637,18 @@ function loadLevel(){
   };
 }
 function isSuhaPlayer(){
-  if (WG.character === 'suha') return true;
-  if (WG.character === 'wanees') return false;
-  // No explicit pick yet → fall back to the player's profile name for legacy
+  // Suha mode is gated entirely on the profile name — only the player whose
+  // profile is named "سهى" can ever enter Suha mode. Stored character pref
+  // is honored only within that profile.
+  let nameIsSuha = false;
   try {
     const p = (typeof loadProfile === 'function') ? loadProfile() : null;
     const name = (p && p.name ? String(p.name) : '').trim();
-    return name === 'سهى';
-  } catch(e){ return false; }
+    nameIsSuha = (name === 'سهى');
+  } catch(e){}
+  if (!nameIsSuha) return false;
+  if (WG.character === 'wanees') return false; // Suha-named user picked Wanees
+  return true; // 'suha' or no explicit pick yet
 }
 function loadWaneesCharacter(){
   try { const v = localStorage.getItem('waneesCharacter'); if (v === 'wanees' || v === 'suha') WG.character = v; } catch(e){}
@@ -11654,8 +11658,21 @@ function setWaneesCharacter(c){
   try { localStorage.setItem('waneesCharacter', c); } catch(e){}
   syncCharPicker();
 }
+function isProfileSuha(){
+  try {
+    const p = (typeof loadProfile === 'function') ? loadProfile() : null;
+    const name = (p && p.name ? String(p.name) : '').trim();
+    return name === 'سهى';
+  } catch(e){ return false; }
+}
 function syncCharPicker(){
   const pick = document.getElementById('wnCharPicker'); if (!pick) return;
+  const label = document.getElementById('wnCharLabel');
+  // Only the player whose profile name is "سهى" sees the picker.
+  const show = isProfileSuha();
+  pick.style.display = show ? 'flex' : 'none';
+  if (label) label.style.display = show ? 'block' : 'none';
+  if (!show) return; // isSuhaPlayer() already gates Suha mode on the profile name
   const cur = (WG.character === 'suha') ? 'suha' : 'wanees';
   pick.querySelectorAll('.wn-char-btn').forEach(b => {
     b.classList.toggle('active', b.dataset.char === cur);
