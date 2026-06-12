@@ -1,6 +1,6 @@
-const CACHE = 'wanees-v52';
+const CACHE = 'wanees-v53';
 const RUNTIME = 'wanees-runtime-v5';
-const ASSETS = ['./', './index.html', './manifest.json', './icon-192.png', './icon-512.png', './questions.json', './wanees-logo-base.png?v=1', './wanees-logo-text.png?v=1'];
+const ASSETS = ['./', './index.html', './iram.html', './manifest.json', './icon-192.png', './icon-512.png', './questions.json', './wanees-logo-base.png?v=1', './wanees-logo-text.png?v=1'];
 
 self.addEventListener('install', e => {
   e.waitUntil(caches.open(CACHE).then(c => c.addAll(ASSETS)).then(() => self.skipWaiting()));
@@ -30,8 +30,8 @@ self.addEventListener('fetch', e => {
   if (req.mode === 'navigate' || req.destination === 'document') {
     e.respondWith(
       fetch(req)
-        .then(res => { const copy = res.clone(); caches.open(CACHE).then(c => c.put('./index.html', copy)); return res; })
-        .catch(() => caches.match('./index.html'))
+        .then(res => { const copy = res.clone(); caches.open(CACHE).then(c => c.put(req, copy)); return res; })
+        .catch(() => caches.match(req).then(r => r || caches.match('./index.html')))
     );
     return;
   }
