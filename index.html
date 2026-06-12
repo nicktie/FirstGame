@@ -11741,7 +11741,8 @@ window.waneesStartBroadcast = function(){
   const meta = { name:_wnProfileName(), char: WG.character==='suha'?'suha':'wanees',
     startedAt: firebase.database.ServerValue.TIMESTAMP };
   try {
-    const ref = db.ref('wnSpec/'+code);
+    // Use the existing rooms/ namespace so Firebase write rules apply
+    const ref = db.ref('rooms/wnSpec_'+code);
     ref.child('meta').set(meta).then(()=>{
       try { ref.onDisconnect().remove(); } catch(e){}
       SPEC.mode='broadcast'; SPEC.code=code; SPEC.ref=ref; SPEC.snapAcc=0; SPEC.dcRef=ref;
@@ -11749,8 +11750,13 @@ window.waneesStartBroadcast = function(){
       try { navigator.clipboard && navigator.clipboard.writeText(code).catch(()=>{}); } catch(e){}
       try { showToast && showToast('📡 البث بدأ! الكود: '+code+' (تم نسخه)', '#3dba7a'); } catch(e){}
       waneesStart();
-    }).catch(()=>{ try { showToast && showToast('تعذّر بدء البث','#ff6a6a'); } catch(e){} });
-  } catch(e){ try { showToast && showToast('تعذّر بدء البث','#ff6a6a'); } catch(ee){} }
+    }).catch(err=>{
+      const msg = (err && err.code === 'PERMISSION_DENIED')
+        ? 'البث محجوب من القواعد — يحتاج تحديث صلاحيات قاعدة البيانات'
+        : ('تعذّر بدء البث: ' + (err && err.message ? err.message : 'خطأ غير معروف'));
+      try { showToast && showToast(msg, '#ff6a6a'); } catch(e){}
+    });
+  } catch(e){ try { showToast && showToast('تعذّر بدء البث: '+(e&&e.message||''),'#ff6a6a'); } catch(ee){} }
 };
 function publishSnapshot(frames){
   if (SPEC.mode!=='broadcast' || !SPEC.ref || !WG.player) return;
@@ -11796,7 +11802,7 @@ window.confirmWatch = function(){
   if (!/^[A-Z0-9]{4,8}$/.test(code)) return fail('الكود غير صالح');
   const db=_wnEnsureFb();
   if (!db) return fail('المشاهدة تتطلب اتصال إنترنت');
-  const ref=db.ref('wnSpec/'+code);
+  const ref=db.ref('rooms/wnSpec_'+code);
   ref.child('meta').once('value').then(s=>{
     if (!s.exists()) return fail('الكود غير صالح أو الجلسة انتهت');
     const meta=s.val();
@@ -11830,7 +11836,12 @@ window.confirmWatch = function(){
     WG.state='spectating';
     cancelAnimationFrame(WG.raf);
     WG.raf = requestAnimationFrame(spectateFrame);
-  }).catch(()=>fail('تعذّر الاتصال'));
+  }).catch(err=>{
+    const msg = (err && err.code === 'PERMISSION_DENIED')
+      ? 'الوصول محجوب من قواعد قاعدة البيانات'
+      : ('تعذّر الاتصال: ' + (err && err.message ? err.message : 'خطأ غير معروف'));
+    fail(msg);
+  });
 };
 function escapeHtml(s){ return String(s).replace(/[&<>"']/g, c=>({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
 function applySnapshot(snap){
