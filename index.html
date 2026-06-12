@@ -11318,6 +11318,36 @@ body.wanees-active{overflow:hidden}
 .wn-btn-secondary{background:transparent;color:#fff;border:2px solid #ffd200;border-radius:12px;padding:12px 22px;font-family:'Tajawal',sans-serif;font-weight:700;font-size:0.95rem;cursor:pointer}
 .wn-btn-row{display:flex;gap:10px;flex-wrap:wrap;justify-content:center;margin-top:8px}
 .wn-controls{display:flex;justify-content:space-between;align-items:center;padding:6px calc(14px + env(safe-area-inset-right,0px)) calc(24px + env(safe-area-inset-bottom,0px)) calc(14px + env(safe-area-inset-left,0px));gap:8px;flex-shrink:0;direction:ltr;flex-direction:row-reverse}
+.wn-char-label{font-family:'Tajawal',sans-serif;font-weight:700;font-size:0.85rem;color:#e8e0d0;margin:14px 0 8px;letter-spacing:1px;opacity:0.85}
+.wn-char-picker{display:flex;gap:14px;justify-content:center;margin-bottom:14px;flex-wrap:wrap}
+.wn-char-btn{background:rgba(20,20,32,0.7);border:2px solid #3a3a52;border-radius:14px;padding:10px 14px;cursor:pointer;
+  display:flex;flex-direction:column;align-items:center;gap:6px;min-width:88px;transition:transform 0.15s,border-color 0.2s,box-shadow 0.2s}
+.wn-char-btn:hover{transform:translateY(-2px)}
+.wn-char-btn.active{border-color:#c9a84c;background:rgba(201,168,76,0.18);box-shadow:0 6px 20px rgba(201,168,76,0.25)}
+.wn-char-btn[data-char="suha"].active{border-color:#ff5e9c;background:rgba(255,94,156,0.18);box-shadow:0 6px 20px rgba(255,94,156,0.3)}
+.wn-char-name{font-family:'Tajawal',sans-serif;font-weight:900;font-size:0.85rem;color:#fff}
+.wn-char-avatar{position:relative;width:24px;height:28px;image-rendering:pixelated}
+/* Wanees avatar (pixel art via box-shadows on a 1px seed) */
+.wn-char-wanees::before{content:'';position:absolute;left:0;top:0;width:2px;height:2px;background:transparent;
+  box-shadow:
+    /* row0: hat */ 2px 0 #dd2222, 4px 0 #dd2222, 6px 0 #dd2222, 8px 0 #dd2222, 10px 0 #dd2222, 12px 0 #dd2222, 14px 0 #dd2222, 16px 0 #dd2222, 18px 0 #dd2222,
+    /* row1: hat brim */ 0 2px #dd2222, 2px 2px #aa0a0a, 4px 2px #aa0a0a, 6px 2px #aa0a0a, 8px 2px #aa0a0a, 10px 2px #aa0a0a, 12px 2px #aa0a0a, 14px 2px #aa0a0a, 16px 2px #aa0a0a, 18px 2px #aa0a0a, 20px 2px #dd2222,
+    /* row2-3 face */ 4px 4px #f0c090, 6px 4px #f0c090, 8px 4px #222, 10px 4px #f0c090, 12px 4px #f0c090, 14px 4px #f0c090, 16px 4px #222, 18px 4px #f0c090,
+    4px 6px #3a1a0a, 6px 6px #f0c090, 8px 6px #f0c090, 10px 6px #f0c090, 12px 6px #f0c090, 14px 6px #f0c090, 16px 6px #f0c090, 18px 6px #3a1a0a,
+    /* overalls */ 2px 8px #dd2222, 4px 8px #2a5ea8, 6px 8px #2a5ea8, 8px 8px #2a5ea8, 10px 8px #ffd200, 12px 8px #2a5ea8, 14px 8px #2a5ea8, 16px 8px #2a5ea8, 18px 8px #2a5ea8, 20px 8px #dd2222,
+    2px 10px #dd2222, 4px 10px #2a5ea8, 6px 10px #2a5ea8, 8px 10px #2a5ea8, 10px 10px #2a5ea8, 12px 10px #2a5ea8, 14px 10px #2a5ea8, 16px 10px #2a5ea8, 18px 10px #2a5ea8, 20px 10px #dd2222,
+    /* legs */ 4px 12px #3a1a0a, 6px 12px #3a1a0a, 14px 12px #3a1a0a, 16px 12px #3a1a0a}
+/* Suha avatar — pink dress girl */
+.wn-char-suha::before{content:'';position:absolute;left:0;top:0;width:2px;height:2px;background:transparent;
+  box-shadow:
+    /* bow + hair top */ 4px 0 #ff5e9c, 6px 0 #ff5e9c, 14px 0 #ff5e9c, 16px 0 #ff5e9c,
+    2px 2px #5a2a18, 4px 2px #ff90c0, 6px 2px #ff5e9c, 8px 2px #5a2a18, 10px 2px #5a2a18, 12px 2px #5a2a18, 14px 2px #ff5e9c, 16px 2px #ff90c0, 18px 2px #5a2a18,
+    /* face */ 2px 4px #5a2a18, 4px 4px #f0c090, 6px 4px #f0c090, 8px 4px #222, 10px 4px #f0c090, 12px 4px #f0c090, 14px 4px #222, 16px 4px #f0c090, 18px 4px #5a2a18,
+    2px 6px #5a2a18, 4px 6px #f0c090, 6px 6px #f0c090, 8px 6px #f0c090, 10px 6px #f0c090, 12px 6px #f0c090, 14px 6px #f0c090, 16px 6px #f0c090, 18px 6px #5a2a18,
+    /* dress top + heart */ 4px 8px #ff7eb3, 6px 8px #ff7eb3, 8px 8px #ff7eb3, 10px 8px #ffd200, 12px 8px #ff7eb3, 14px 8px #ff7eb3, 16px 8px #ff7eb3,
+    /* dress flare */ 2px 10px #ff4585, 4px 10px #ff7eb3, 6px 10px #ff7eb3, 8px 10px #ff7eb3, 10px 10px #ff7eb3, 12px 10px #ff7eb3, 14px 10px #ff7eb3, 16px 10px #ff7eb3, 18px 10px #ff4585,
+    /* legs + pink shoes */ 6px 12px #f0c090, 8px 12px #f0c090, 12px 12px #f0c090, 14px 12px #f0c090,
+    4px 14px #ff4585, 6px 14px #ff4585, 8px 14px #ff4585, 12px 14px #ff4585, 14px 14px #ff4585, 16px 14px #ff4585}
 .wn-controls.suha-layout{flex-direction:row;position:relative}
 .wn-controls.suha-layout .wn-dpad{flex:1;justify-content:space-between}
 .wn-controls.suha-layout .wn-jump-btn{position:absolute;left:calc(14px + env(safe-area-inset-left,0px) + 100px + 12px);top:50%;transform:translateY(calc(-50% - 28px));z-index:2}
@@ -11359,8 +11389,19 @@ body.wanees-active{overflow:hidden}
       <div class="wno-desc">اقفز على الأعداء، اجمع العملات الذهبية، وصل للعَلَم في نهاية المرحلة.</div>
       <div class="wno-hint">
         🎮 <b>تحرّك:</b> الأزرار أسفل الشاشة أو ← →<br>
-        🦘 <b>قفز:</b> اضغط طويلاً لقفزة أعلى<br>
+        🦘 <b>قفز:</b> اضغط زر القفز — استمر بالضغط للنقز المتواصل<br>
         💀 <b>السقوط في الهاوية</b> = خسارة حياة
+      </div>
+      <div class="wn-char-label">اختر شخصيتك</div>
+      <div class="wn-char-picker" id="wnCharPicker">
+        <button class="wn-char-btn" data-char="wanees" type="button" onclick="setWaneesCharacter('wanees')">
+          <span class="wn-char-avatar wn-char-wanees" aria-hidden="true"></span>
+          <span class="wn-char-name">ونيس</span>
+        </button>
+        <button class="wn-char-btn" data-char="suha" type="button" onclick="setWaneesCharacter('suha')">
+          <span class="wn-char-avatar wn-char-suha" aria-hidden="true"></span>
+          <span class="wn-char-name">سهى ❤️</span>
+        </button>
       </div>
       <button class="wn-btn-primary" onclick="waneesStart()">🚀 ابدأ المغامرة</button>
     </div>
@@ -11539,10 +11580,12 @@ function initWanees(){
     const p = (typeof loadProfile === 'function') ? loadProfile() : null;
     WG.best = (p && p.stats && p.stats.wanees && p.stats.wanees.bestScore) || 0;
   } catch(e) { WG.best = 0; }
+  loadWaneesCharacter();
   resetWaneesState();
   syncWaneesMuteIcon();
   if (!WG._bound) { bindWaneesControls(); WG._bound = true; }
   if (!WG._btnBound) { bindWaneesButtons(); WG._btnBound = true; }
+  syncCharPicker();
   document.getElementById('waneesStartOverlay').style.display = 'flex';
   document.getElementById('waneesOverOverlay').style.display = 'none';
   loadLevel();
@@ -11560,6 +11603,12 @@ function loadLevel(){
   WG.popBlocks = [];
   WG.stompCombo = 0; WG.stompComboTimer = 0;
   WG.flag = null;
+  // Clear any stuck input state from a finger still on the jump button
+  // when the previous stage cleared (caused level 2 jump to seem dead).
+  WG.inputs.jumpHeld = false;
+  WG.inputs.jumpJustPressed = false;
+  const jBtn = document.getElementById('wnJumpBtn');
+  if (jBtn) jBtn.classList.remove('pressed');
   let playerStart = { x: 32, y: 100 };
   for (let y = 0; y < LEVEL_H; y++){
     const row = LEVEL[y].padEnd(LEVEL_W, ' ');
@@ -11588,11 +11637,29 @@ function loadLevel(){
   };
 }
 function isSuhaPlayer(){
+  if (WG.character === 'suha') return true;
+  if (WG.character === 'wanees') return false;
+  // No explicit pick yet → fall back to the player's profile name for legacy
   try {
     const p = (typeof loadProfile === 'function') ? loadProfile() : null;
     const name = (p && p.name ? String(p.name) : '').trim();
     return name === 'سهى';
   } catch(e){ return false; }
+}
+function loadWaneesCharacter(){
+  try { const v = localStorage.getItem('waneesCharacter'); if (v === 'wanees' || v === 'suha') WG.character = v; } catch(e){}
+}
+function setWaneesCharacter(c){
+  WG.character = c;
+  try { localStorage.setItem('waneesCharacter', c); } catch(e){}
+  syncCharPicker();
+}
+function syncCharPicker(){
+  const pick = document.getElementById('wnCharPicker'); if (!pick) return;
+  const cur = (WG.character === 'suha') ? 'suha' : 'wanees';
+  pick.querySelectorAll('.wn-char-btn').forEach(b => {
+    b.classList.toggle('active', b.dataset.char === cur);
+  });
 }
 function resetWaneesState(){
   WG.state = 'idle';
@@ -11799,7 +11866,7 @@ function updatePlayer(dt){
   if (Math.abs(p.vx) < 0.05 && targetVx === 0) p.vx = 0;
   if (p.vx > 0.1) p.dir = 1;
   else if (p.vx < -0.1) p.dir = -1;
-  if (WG.inputs.jumpJustPressed && p.onGround){
+  if ((WG.inputs.jumpJustPressed || WG.inputs.jumpHeld) && p.onGround){
     p.vy = WG.JUMP_VEL;
     p.onGround = false;
     wnSnd('jump');
@@ -12349,6 +12416,7 @@ function drawPlayer(ctx, p){
     ctx.fillStyle = glow;
     ctx.fillRect(x - 2, y - 2, p.w + 4, p.h + 4);
   }
+  if (WG.suhaMode) { drawSuhaSprite(ctx, x, y, ph, facingR, p); return; }
   ctx.fillStyle = '#dd2222';
   ctx.fillRect(x + 1, y, 10, 3);
   ctx.fillRect(facingR ? x + 6 : x, y + 2, 6, 2);
@@ -12382,6 +12450,105 @@ function drawPlayer(ctx, p){
   } else {
     ctx.fillRect(x + 2, y + 11, 3, 3);
     ctx.fillRect(x + 7, y + 11, 3, 3);
+  }
+}
+function drawSuhaSprite(ctx, x, y, ph, facingR, p){
+  const PINK   = '#ff7eb3';   // dress
+  const PINK_D = '#ff4585';   // dress trim / shoes
+  const BOW    = '#ff5e9c';   // hair bow
+  const HAIR   = '#5a2a18';   // chestnut hair
+  const HAIR_HL= '#7a3a22';
+  const SKIN   = '#f0c090';
+  const HEART  = '#ffd200';
+  // Hair bow (top) — two pink puffs with a yellow center bead
+  ctx.fillStyle = BOW;
+  ctx.fillRect(x + 2, y, 2, 2);
+  ctx.fillRect(x + 8, y, 2, 2);
+  ctx.fillStyle = HEART;
+  ctx.fillRect(x + 5, y, 2, 1);
+  // Hair top + bangs
+  ctx.fillStyle = HAIR;
+  ctx.fillRect(x + 1, y + 1, 10, 2);
+  ctx.fillStyle = HAIR_HL;
+  ctx.fillRect(x + 4, y + 1, 4, 1);
+  // Side hair framing face (longer on one side, swept by facing)
+  ctx.fillStyle = HAIR;
+  ctx.fillRect(x, y + 3, 1, 5);
+  ctx.fillRect(x + 11, y + 3, 1, 5);
+  // Face
+  ctx.fillStyle = SKIN;
+  ctx.fillRect(x + 1, y + 3, 10, 4);
+  // Bangs over forehead
+  ctx.fillStyle = HAIR;
+  ctx.fillRect(x + 2, y + 3, 2, 1);
+  ctx.fillRect(x + 8, y + 3, 2, 1);
+  // Eyes
+  ctx.fillStyle = '#222';
+  ctx.fillRect(x + 3, y + 4, 1, 2);
+  ctx.fillRect(x + 8, y + 4, 1, 2);
+  // Tiny blush
+  ctx.fillStyle = '#ff9bb8';
+  ctx.fillRect(x + 2, y + 5, 1, 1);
+  ctx.fillRect(x + 9, y + 5, 1, 1);
+  // Smile
+  ctx.fillStyle = '#a83056';
+  ctx.fillRect(x + 5, y + 6, 2, 1);
+  // Dress: top yoke
+  ctx.fillStyle = PINK;
+  ctx.fillRect(x + 1, y + 7, 10, 2);
+  // Sleeves
+  ctx.fillStyle = PINK_D;
+  ctx.fillRect(x, y + 7, 1, 2);
+  ctx.fillRect(x + 11, y + 7, 1, 2);
+  // Heart on chest
+  ctx.fillStyle = HEART;
+  ctx.fillRect(x + 5, y + 7, 2, 2);
+  ctx.fillStyle = '#ffeb70';
+  ctx.fillRect(x + 5, y + 7, 1, 1);
+  // Dress flare row + skirt bottom
+  ctx.fillStyle = PINK;
+  ctx.fillRect(x, y + 9, 12, 2);
+  ctx.fillStyle = PINK_D;
+  ctx.fillRect(x, y + 10, 12, 1);
+  // Legs (skin) and pink shoes — with walk cycle
+  if (!p.onGround){
+    ctx.fillStyle = SKIN;
+    ctx.fillRect(x + 3, y + 11, 2, 1);
+    ctx.fillRect(x + 7, y + 11, 2, 1);
+    ctx.fillStyle = PINK_D;
+    ctx.fillRect(x + 2, y + 12, 3, 2);
+    ctx.fillRect(x + 7, y + 12, 3, 2);
+  } else if (Math.abs(p.vx) > 0.1){
+    ctx.fillStyle = SKIN;
+    if (ph === 0){
+      ctx.fillRect(x + 3, y + 11, 2, 2);
+      ctx.fillRect(x + 7, y + 11, 2, 1);
+      ctx.fillStyle = PINK_D;
+      ctx.fillRect(x + 2, y + 13, 3, 1);
+      ctx.fillRect(x + 7, y + 12, 3, 2);
+    } else {
+      ctx.fillRect(x + 3, y + 11, 2, 1);
+      ctx.fillRect(x + 7, y + 11, 2, 2);
+      ctx.fillStyle = PINK_D;
+      ctx.fillRect(x + 2, y + 12, 3, 2);
+      ctx.fillRect(x + 7, y + 13, 3, 1);
+    }
+  } else {
+    ctx.fillStyle = SKIN;
+    ctx.fillRect(x + 3, y + 11, 2, 1);
+    ctx.fillRect(x + 7, y + 11, 2, 1);
+    ctx.fillStyle = PINK_D;
+    ctx.fillRect(x + 2, y + 12, 3, 2);
+    ctx.fillRect(x + 7, y + 12, 3, 2);
+  }
+  // Ponytail trailing in wind based on facing
+  ctx.fillStyle = HAIR;
+  if (facingR){
+    ctx.fillRect(x - 1, y + 2, 1, 3);
+    ctx.fillRect(x - 2, y + 3, 1, 3);
+  } else {
+    ctx.fillRect(x + 12, y + 2, 1, 3);
+    ctx.fillRect(x + 13, y + 3, 1, 3);
   }
 }
 function updateHud(){
