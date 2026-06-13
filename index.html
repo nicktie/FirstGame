@@ -11414,6 +11414,52 @@ body.wn-locked .top-nav{display:none !important}
   background:radial-gradient(circle at 35% 30%,#ffeb70,#ffd200 55%,#cc9900 100%);
   border:2.5px solid #fff;box-shadow:0 4px 14px rgba(0,0,0,0.4),inset 0 -3px 0 rgba(0,0,0,0.25);
   transform:translate(-50%,-50%);pointer-events:none;will-change:transform}
+/* ===== Story dialogue overlay (Wanees / Suha narrating between levels) ===== */
+.wn-dlg{position:absolute;inset:0;z-index:25;background:linear-gradient(180deg,rgba(8,10,18,0.55),rgba(8,10,18,0.78));
+  backdrop-filter:blur(4px);-webkit-backdrop-filter:blur(4px);
+  display:flex;align-items:flex-end;justify-content:center;
+  padding:16px calc(16px + env(safe-area-inset-right,0px)) calc(16px + env(safe-area-inset-bottom,0px)) calc(16px + env(safe-area-inset-left,0px));
+  animation:wnDlgFade 0.32s ease-out}
+@keyframes wnDlgFade{from{opacity:0}to{opacity:1}}
+.wn-dlg-card{display:flex;align-items:flex-end;gap:14px;width:100%;max-width:640px}
+.wn-dlg-portrait{flex-shrink:0;width:92px;height:92px;border-radius:18px;
+  background:linear-gradient(160deg,#fff6c8,#ffd24a 60%,#ff8838);
+  border:3px solid #ffd200;display:flex;align-items:center;justify-content:center;
+  font-size:3.2rem;line-height:1;box-shadow:0 10px 30px rgba(0,0,0,0.55),inset 0 -4px 0 rgba(0,0,0,0.18);
+  animation:wnDlgBob 1.8s infinite ease-in-out}
+@keyframes wnDlgBob{0%,100%{transform:translateY(0) rotate(-2deg)}50%{transform:translateY(-4px) rotate(2deg)}}
+.wn-dlg-body{flex:1;background:#fff8e8;color:#2a1810;border:3px solid #c9a84c;border-radius:18px;
+  padding:12px 14px 10px;position:relative;box-shadow:0 12px 40px rgba(0,0,0,0.55);
+  font-family:'Tajawal','Cairo',sans-serif}
+.wn-dlg-body::before{content:'';position:absolute;left:-12px;bottom:18px;width:0;height:0;
+  border:10px solid transparent;border-right-color:#c9a84c;border-left:0}
+.wn-dlg-body::after{content:'';position:absolute;left:-7px;bottom:21px;width:0;height:0;
+  border:8px solid transparent;border-right-color:#fff8e8;border-left:0}
+.wn-dlg-name{font-weight:900;font-size:0.95rem;color:#b45a10;margin-bottom:4px;letter-spacing:1px}
+.wn-dlg-text{font-weight:700;font-size:1.05rem;line-height:1.6;min-height:62px;white-space:pre-wrap;
+  color:#231510}
+.wn-dlg-row{display:flex;align-items:center;justify-content:space-between;margin-top:8px;gap:8px}
+.wn-dlg-step{font-size:0.72rem;color:#8a6a30;font-weight:700;letter-spacing:1px;font-family:'Courier New',monospace}
+.wn-dlg-actions{display:flex;gap:8px}
+.wn-dlg-skip{background:transparent;border:1.5px solid #b48a30;color:#b48a30;border-radius:10px;
+  padding:5px 12px;font-size:0.82rem;font-weight:700;cursor:pointer;font-family:'Tajawal',sans-serif}
+.wn-dlg-skip:hover,.wn-dlg-skip:active{background:#fff;color:#7a5a18}
+.wn-dlg-next{background:linear-gradient(180deg,#ffd200,#cc9900);border:2px solid #b48a30;color:#231510;
+  border-radius:50%;width:38px;height:38px;font-size:1rem;font-weight:900;cursor:pointer;
+  display:flex;align-items:center;justify-content:center;box-shadow:0 3px 0 #8a6a18;
+  animation:wnDlgNextPulse 1.1s infinite ease-in-out}
+.wn-dlg-next:active{transform:translateY(2px);box-shadow:0 1px 0 #8a6a18}
+@keyframes wnDlgNextPulse{0%,100%{transform:translateY(0)}50%{transform:translateY(-3px)}}
+@media (max-width:380px){
+  .wn-dlg-portrait{width:72px;height:72px;font-size:2.4rem}
+  .wn-dlg-text{font-size:0.95rem;min-height:54px}
+  .wn-dlg-name{font-size:0.85rem}
+}
+@media (prefers-reduced-motion:reduce){
+  .wn-dlg{animation:none}
+  .wn-dlg-portrait,.wn-dlg-next{animation:none}
+}
+
 /* Fire button: floats above the right tap zone when player has Fire Flower power */
 .wn-fire-btn{position:absolute;top:8px;right:14px;z-index:9;
   width:60px;height:60px;border-radius:50%;border:2.5px solid #ffd200;
@@ -11473,6 +11519,23 @@ body.wn-locked .top-nav{display:none !important}
       <div class="wn-joy-thumb" id="wnJoyThumb"></div>
     </div>
     <div class="wn-tap-hint wn-tap-hint-left" id="wnJoyHintFloating">🕹️ المس واسحب يميناً ويساراً للحركة</div>
+    <!-- Story dialogue overlay -->
+    <div class="wn-dlg" id="wnDialogue" style="display:none">
+      <div class="wn-dlg-card">
+        <div class="wn-dlg-portrait" id="wnDlgPortrait">🍄</div>
+        <div class="wn-dlg-body">
+          <div class="wn-dlg-name" id="wnDlgName">ونيس</div>
+          <div class="wn-dlg-text" id="wnDlgText"></div>
+          <div class="wn-dlg-row">
+            <span class="wn-dlg-step" id="wnDlgStep">1/1</span>
+            <div class="wn-dlg-actions">
+              <button class="wn-dlg-skip" onclick="dlgSkip()" type="button">تخطّى ⏭</button>
+              <button class="wn-dlg-next" onclick="dlgNext()" type="button">▼</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
     <!-- Fire button: only visible when player has Fire Flower power -->
     <button class="wn-fire-btn" id="wnFireBtn" type="button" style="display:none" aria-label="إطلاق نار">
       <span class="wn-fire-icon">🔥</span>
@@ -12000,6 +12063,89 @@ function resetWaneesState(){
   updateHud();
   syncFireBtn();
 }
+// ===== Story dialogues =====
+// Wanees is on a quest to find his little sister "Lulu". After each level
+// he gets a little closer; a short, encouraging line keeps the player
+// invested. Suha mode swaps names but keeps the same beats.
+const WN_STORY = {
+  intro: [
+    {who:'hero', text:'مرحباً! أنا {hero} 🍄\nأعيش في وادي الفطر الهادي مع أختي الصغيرة لُولُو 👧🏻💕'},
+    {who:'hero', text:'هالصبح صحيت ولُولُو مو في غرفتها… لقيت ورقة مكتوب فيها:\n"خذوها أشرار القلعة السوداء" 😱'},
+    {who:'hero', text:'أربع عوالم تفصلني عنها — مرج، صحراء، ليل نجوم، وقلعة 🏰\nراح أعبرها كلّها، مهما طوّلت!'},
+    {who:'hero', text:'هل بتساعدني أرجّع لُولُو لبيتها؟ 💪✨'},
+  ],
+  // Said before loading level N+1 (after clearing N)
+  after1: [
+    {who:'hero', text:'في طرف المرج… لقيت طوقها الذهبي 🌟\nهي مرّت من هنا فعلاً!'},
+    {who:'hero', text:'يلا للصحراء — ما راح أعيا قبل ما ألاقيها! 🏜️'},
+  ],
+  after2: [
+    {who:'hero', text:'في الرمل لقيت شالها الوردي الصغير 🧣💗\nقلبي يقول إنها قريبة…'},
+    {who:'hero', text:'الليل اقترب — لازم أوصل قبل الفجر! 🌙'},
+  ],
+  after3: [
+    {who:'hero', text:'مع نسمة الليل سمعت صوتها:\n"أخوي {hero}… أنا هنا، تعال!" 🥺'},
+    {who:'hero', text:'بقت قلعة وحدة، ولُولُو وراء بابها!\nلا تخافي يا أختي، {hero} جاي 🔥'},
+  ],
+  final: [
+    {who:'hero', text:'لُــو…لُــو!!! 🥹'},
+    {who:'lulu', text:'{hero}يييي! عرفت إنك بتجي!\nالأشرار خوّفوني بس ما بكيت — كنت متأكدة فيك ❤️'},
+    {who:'hero', text:'يلا نرجع البيت يا حبيبتي 🍄\nأمي عاملة لنا فطر مشوي ولقمة عسل! 🍯✨'},
+    {who:'lulu', text:'شكراً للي ساعد {hero} يوصلني 💞\nأنت بطل حقيقي!'},
+  ]
+};
+function _heroName(){ return WG.suhaMode ? 'سهى' : 'ونيس'; }
+function _heroFace(){ return WG.suhaMode ? '👧🏻' : '🍄'; }
+function _luluFace(){ return '🧒🏻'; }
+function _fmt(s){ return s.replace(/\{hero\}/g, _heroName()); }
+let _dlgQ = null, _dlgIdx = 0, _dlgDone = null, _dlgTypeT = 0, _dlgTyping = false;
+function showDialogue(key, onDone){
+  const seq = WN_STORY[key]; if (!seq){ if (onDone) onDone(); return; }
+  _dlgQ = seq.slice(); _dlgIdx = 0; _dlgDone = onDone;
+  document.getElementById('wnDialogue').style.display = 'flex';
+  _renderDlg();
+}
+function _renderDlg(){
+  const e = _dlgQ[_dlgIdx];
+  const isHero = e.who === 'hero';
+  document.getElementById('wnDlgPortrait').textContent = isHero ? _heroFace() : _luluFace();
+  document.getElementById('wnDlgName').textContent = isHero ? _heroName() : 'لُولُو';
+  document.getElementById('wnDlgStep').textContent = (_dlgIdx+1) + '/' + _dlgQ.length;
+  const out = document.getElementById('wnDlgText');
+  out.textContent = '';
+  const full = _fmt(e.text);
+  let i = 0;
+  _dlgTyping = true;
+  clearInterval(_dlgTypeT);
+  _dlgTypeT = setInterval(() => {
+    i += 2; out.textContent = full.slice(0, i);
+    if (i >= full.length){ clearInterval(_dlgTypeT); _dlgTyping = false; }
+  }, 28);
+}
+window.dlgNext = function(){
+  if (!_dlgQ) return;
+  // First click finishes the typewriter; next click advances
+  if (_dlgTyping){
+    clearInterval(_dlgTypeT); _dlgTyping = false;
+    document.getElementById('wnDlgText').textContent = _fmt(_dlgQ[_dlgIdx].text);
+    return;
+  }
+  if (_dlgIdx < _dlgQ.length - 1){ _dlgIdx++; _renderDlg(); return; }
+  _dlgFinish();
+};
+window.dlgSkip = function(){ _dlgFinish(); };
+function _dlgFinish(){
+  clearInterval(_dlgTypeT); _dlgTyping = false;
+  document.getElementById('wnDialogue').style.display = 'none';
+  const done = _dlgDone; _dlgQ = null; _dlgIdx = 0; _dlgDone = null;
+  if (done) done();
+}
+function _startGameplayLoop(){
+  WG.state = 'running';
+  WG.lastTime = performance.now();
+  cancelAnimationFrame(WG.raf);
+  WG.raf = requestAnimationFrame(waneesLoop);
+}
 window.waneesStart = function(){
   document.getElementById('waneesStartOverlay').style.display = 'none';
   document.getElementById('waneesOverOverlay').style.display = 'none';
@@ -12012,10 +12158,9 @@ window.waneesStart = function(){
     WG.player.starTimer = 180;
     try { if (typeof showToast === 'function') showToast('❤️ وضع سهى مفعّل: قلوب أكثر، سرعة أعلى، وحماية في البداية', '#ff5577'); } catch(e){}
   }
-  WG.state = 'running';
-  WG.lastTime = performance.now();
-  cancelAnimationFrame(WG.raf);
-  WG.raf = requestAnimationFrame(waneesLoop);
+  // Pause the game while the intro story plays, then start the loop.
+  WG.state = 'paused';
+  showDialogue('intro', _startGameplayLoop);
 };
 function waneesStop(){
   cancelAnimationFrame(WG.raf);
@@ -12515,7 +12660,8 @@ function onWin(){
   cancelAnimationFrame(WG.raf);
   WG.score += WG.timeLeft * 10;
   wnSnd('win');
-  const isLast = WG.currentLevel >= TOTAL_LEVELS - 1;
+  const clearedIdx = WG.currentLevel;          // 0..TOTAL-1 — the level just cleared
+  const isLast = clearedIdx >= TOTAL_LEVELS - 1;
   if (!isLast){
     WG.currentLevel++;
     // Award a small breather for clearing
@@ -12524,15 +12670,14 @@ function onWin(){
     try { if (typeof showToast === 'function') showToast('🎉 المرحلة ' + (WG.currentLevel) + ' خلصت! المرحلة ' + (WG.currentLevel + 1) + '/' + TOTAL_LEVELS, '#ffd200'); } catch(e){}
     loadLevel();
     if (WG.suhaMode && WG.player){ WG.player.invincible = 120; WG.player.starTimer = 120; }
-    WG.state = 'running';
-    WG.lastTime = performance.now();
-    cancelAnimationFrame(WG.raf);
-    WG.raf = requestAnimationFrame(waneesLoop);
     updateHud();
+    // Wanees says a little something between levels, then the loop kicks back on.
+    showDialogue('after' + (clearedIdx + 1), _startGameplayLoop);
     return;
   }
   saveProgress(true);
-  showOverOverlay('win');
+  // Final story beat, then the win screen — reunion with Lulu.
+  showDialogue('final', () => showOverOverlay('win'));
 }
 function onGameOver(){
   WG.state = 'dead';
