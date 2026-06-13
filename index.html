@@ -11407,6 +11407,25 @@ body.wanees-active{overflow:hidden}
   background:radial-gradient(circle at 35% 30%,#ffeb70,#ffd200 55%,#cc9900 100%);
   border:2.5px solid #fff;box-shadow:0 4px 14px rgba(0,0,0,0.4),inset 0 -3px 0 rgba(0,0,0,0.25);
   transform:translate(-50%,-50%);pointer-events:none;will-change:transform}
+/* Fire button: floats above the right tap zone when player has Fire Flower power */
+.wn-fire-btn{position:absolute;top:8px;right:14px;z-index:9;
+  width:60px;height:60px;border-radius:50%;border:2.5px solid #ffd200;
+  background:radial-gradient(circle at 35% 30%,#ffa820,#e03010 55%,#7a1010 100%);
+  display:flex;align-items:center;justify-content:center;cursor:pointer;
+  box-shadow:0 0 22px rgba(255,80,0,0.55),inset 0 -4px 0 rgba(0,0,0,0.3),0 4px 12px rgba(0,0,0,0.4);
+  animation:wnFirePulse 1.3s infinite ease-in-out;touch-action:none;user-select:none;
+  -webkit-user-select:none;padding:0}
+.wn-fire-btn:active,.wn-fire-btn.pressed{transform:scale(0.92);box-shadow:0 0 10px rgba(255,80,0,0.4)}
+.wn-fire-icon{font-size:1.7rem;line-height:1;filter:drop-shadow(0 1px 2px rgba(0,0,0,0.7))}
+.wn-fire-count{position:absolute;bottom:-6px;right:-6px;background:#0b0b0f;color:#ffd200;
+  border:1.5px solid #ffd200;border-radius:10px;padding:1px 6px;font-size:0.72rem;font-weight:900;
+  font-family:'Courier New',monospace;min-width:18px;text-align:center;line-height:1}
+@keyframes wnFirePulse{
+  0%,100%{box-shadow:0 0 22px rgba(255,80,0,0.55),inset 0 -4px 0 rgba(0,0,0,0.3),0 4px 12px rgba(0,0,0,0.4)}
+  50%{box-shadow:0 0 36px rgba(255,140,0,0.85),inset 0 -4px 0 rgba(0,0,0,0.3),0 4px 12px rgba(0,0,0,0.4)}
+}
+@media (prefers-reduced-motion:reduce){.wn-fire-btn{animation:none}}
+
 /* Pulse ring shown on the right zone when held, sells the tap feedback */
 .wn-tap-right::after{content:'';position:absolute;width:90px;height:90px;border-radius:50%;
   bottom:38px;right:38px;background:radial-gradient(circle,rgba(255,210,0,0.25) 0%,transparent 70%);
@@ -11446,6 +11465,11 @@ body.wanees-active{overflow:hidden}
       <div class="wn-joy-thumb" id="wnJoyThumb"></div>
     </div>
     <div class="wn-tap-hint wn-tap-hint-left" id="wnJoyHintFloating">🕹️ المس واسحب يميناً ويساراً للحركة</div>
+    <!-- Fire button: only visible when player has Fire Flower power -->
+    <button class="wn-fire-btn" id="wnFireBtn" type="button" style="display:none" aria-label="إطلاق نار">
+      <span class="wn-fire-icon">🔥</span>
+      <span class="wn-fire-count" id="wnFireCount">0</span>
+    </button>
     <div class="wn-spec-banner" id="wnSpecBanner" style="display:none">
       <span class="wn-spec-dot"></span>
       <span id="wnSpecText"></span>
@@ -11519,7 +11543,7 @@ const LEVELS = [
 '                                                                                  cc      ',
 '             c                                                  c                 cc      ',
 '                  ccc                  s                       ===                       f',
-'                M                      ?bMb?b                  ===                   ====f',
+'                M                      ?bNb?b                  ===                   ====f',
 '                                                       cccc                          ====f',
 '                  =====                                                              ====f',
 '   p                          g     k    g                g       k g   g                F',
@@ -11534,7 +11558,7 @@ const LEVELS = [
 '                                                                                                ',
 '                                                            cccc                                ',
 '                                                     ====                                       ',
-'                              cccc                                       ?bMb?                  ',
+'                              cccc                                       ?bNb?                  ',
 '                  cccc                          ====                                            ',
 '                          ====                            cc                            ====   f',
 '             ?bMb?                    s                              k                     =====f',
@@ -11552,7 +11576,7 @@ const LEVELS = [
 '                                                              =====   cccc                      ',
 '                                            cc                       ======                     ',
 '                       cccc                                  cc                                 ',
-'                 s                ======                                ?bMb?                   ',
+'                 s                ======                                ?bNb?                   ',
 '             ?b?b?              cccc                                                            f',
 '   p              g                  k       g              k             g  g  k              F',
 '#######   ############   #############   ############   ###########   ############   ##########F',
@@ -11568,7 +11592,7 @@ const LEVELS = [
 '                              ccc            ====                                                 ',
 '                       ====           cccc                          s                             ',
 '                M                cc                        cc                              cc    ',
-'             ?Mb??b              ===                                  ?bbbM?                      ',
+'             ?Nb??b              ===                                  ?bbbM?                      ',
 '                        cccc                                                                     f',
 '   p     g  k    g  g           k  g  k  g     g  k  g  g  k  g  g  k  g    g  k  g   k  g  g   F',
 '#################################################################################################F',
@@ -11698,12 +11722,13 @@ function loadLevel(){
     const tileRow = new Array(LEVEL_W).fill(' ');
     for (let x = 0; x < LEVEL_W; x++){
       const c = row[x];
-      if (c === '#' || c === 'b' || c === '?' || c === '=' || c === 'M' || c === 'u') tileRow[x] = c;
+      if (c === '#' || c === 'b' || c === '?' || c === '=' || c === 'M' || c === 'N' || c === 'u') tileRow[x] = c;
       else if (c === 'g') WG.enemies.push({ x: x*TILE, y: y*TILE, vx: -WG.ENEMY_SPEED, vy:0, w: 14, h: 14, alive:true, walkPhase:0, dir:-1, kind:'goomba' });
       else if (c === 'k') WG.enemies.push({ x: x*TILE, y: y*TILE-2, vx: -WG.ENEMY_SPEED*0.85, vy:0, w: 14, h: 16, alive:true, walkPhase:0, dir:-1, kind:'koopa', shell:false, shellVx:0 });
       else if (c === 'c') WG.coins.push({ x: x*TILE+4, y: y*TILE+4, w:8, h:8, collected:false, phase: Math.random()*Math.PI*2 });
       else if (c === 'm') WG.items.push({ x: x*TILE+2, y: y*TILE+2, w:12, h:14, vx:0.9, vy:0, kind:'mushroom', alive:true, onGround:false });
       else if (c === 's') WG.items.push({ x: x*TILE+2, y: y*TILE+2, w:12, h:14, vx:1.4, vy:-2.5, kind:'star', alive:true, onGround:false });
+      else if (c === 'n') WG.items.push({ x: x*TILE+2, y: y*TILE+2, w:12, h:14, vx:0, vy:0, kind:'fire', alive:true, onGround:false, bob:0 });
       else if (c === 'p') { playerStart = { x: x*TILE, y: y*TILE - 4 }; }
       else if (c === 'f' || c === 'F') {
         tileRow[x] = c;
@@ -11717,8 +11742,12 @@ function loadLevel(){
     vx:0, vy:0, w:12, h:14,
     onGround:false, dir:1, invincible:0,
     walkPhase:0, alive:true, starTimer:0,
-    jumpBuffer:0, coyote:0, jumpCut:false
+    jumpBuffer:0, coyote:0, jumpCut:false,
+    // Fire-Flower power: persists across levels until player dies/resets.
+    fireCharges: (WG.player && WG.player.fireCharges) || 0, fireCd:0
   };
+  WG.fireballs = WG.fireballs || [];
+  syncFireBtn();
 }
 function isSuhaPlayer(){
   // Suha mode is gated entirely on the profile name — only the player whose
@@ -11954,8 +11983,12 @@ function resetWaneesState(){
   WG.timeAccum = 0;
   WG.camera.x = 0;
   WG.particles = [];
-  WG.inputs = { left:false, right:false, jump:false, jumpHeld:false, jumpJustPressed:false, analogX:0 };
+  WG.fireballs = [];
+  // Forget the old player so the next loadLevel rebuilds with 0 fire charges
+  WG.player = null;
+  WG.inputs = { left:false, right:false, jump:false, jumpHeld:false, jumpJustPressed:false, analogX:0, fireTap:false };
   updateHud();
+  syncFireBtn();
 }
 window.waneesStart = function(){
   document.getElementById('waneesStartOverlay').style.display = 'none';
@@ -12101,10 +12134,22 @@ function updateWanees(dt){
         spawnSparkle(it.x + it.w/2, it.y + it.h/2);
         wnSnd('coin');
         updateHud();
+      } else if (it.kind === 'fire'){
+        WG.player.fireCharges = Math.min(99, (WG.player.fireCharges||0) + 8);
+        WG.score += 400;
+        spawnSparkle(it.x + it.w/2, it.y + it.h/2);
+        spawnSparkle(it.x + it.w/2 - 4, it.y + it.h/2 + 2);
+        spawnSparkle(it.x + it.w/2 + 4, it.y + it.h/2 + 2);
+        wnSnd('coin');
+        try { showToast && showToast('🔥 فطر النار! +8 قذائف','#ff8838'); } catch(e){}
+        syncFireBtn();
+        updateHud();
       }
     }
   }
   WG.items = WG.items.filter(it => it.alive);
+  // ===== Fireballs =====
+  updateFireballs(dt);
   WG.popBlocks.forEach(b => { b.t -= dt; });
   WG.popBlocks = WG.popBlocks.filter(b => b.t > 0);
   for (const c of WG.coins){
@@ -12199,6 +12244,11 @@ function updatePlayer(dt){
         WG.popBlocks.push({ gx: headGx, gy: headGy, t: 14, ch: 'u' });
         WG.items.push({ x: headGx*TILE+2, y: headGy*TILE - 14, w:12, h:14, vx:0.9, vy:-1.5, kind:'mushroom', alive:true, onGround:false, emerging:18 });
         wnSnd('block');
+      } else if (ch === 'N'){
+        setTile(headGx, headGy, 'u');
+        WG.popBlocks.push({ gx: headGx, gy: headGy, t: 14, ch: 'u' });
+        WG.items.push({ x: headGx*TILE+2, y: headGy*TILE - 14, w:12, h:14, vx:0, vy:-1.5, kind:'fire', alive:true, onGround:false, emerging:18, bob:0 });
+        wnSnd('block');
       } else if (ch === 'b'){
         if (p.starTimer > 0){
           setTile(headGx, headGy, ' ');
@@ -12235,6 +12285,98 @@ function updatePlayer(dt){
   }
   if (p.starTimer > 0) p.starTimer -= dt;
   if (WG.stompComboTimer > 0) WG.stompComboTimer -= dt;
+  // Fire shot
+  if (p.fireCd > 0) p.fireCd -= dt;
+  if (WG.inputs.fireTap){
+    WG.inputs.fireTap = false;
+    if (p.fireCharges > 0 && p.fireCd <= 0){
+      shootFireball(p);
+      p.fireCharges--;
+      p.fireCd = 9; // ~150ms cooldown
+      syncFireBtn();
+    }
+  }
+}
+function shootFireball(p){
+  const dir = p.dir || 1;
+  WG.fireballs.push({
+    x: p.x + p.w/2 + dir*8, y: p.y + 3,
+    vx: dir * 3.4, vy: -1.6,
+    r: 4, life: 110, bounces: 0
+  });
+  // muzzle flash
+  for (let i = 0; i < 5; i++){
+    WG.particles.push({
+      x: p.x + p.w/2 + dir*10, y: p.y + 4,
+      vx: dir * (0.5 + Math.random()) + (Math.random()-0.5)*0.6,
+      vy: -0.4 - Math.random()*0.6,
+      life: 14, color: i%2 ? '#ffd24a' : '#ff8838'
+    });
+  }
+  wnSnd('jump');
+}
+function updateFireballs(dt){
+  if (!WG.fireballs || !WG.fireballs.length) return;
+  for (const fb of WG.fireballs){
+    fb.life -= dt;
+    if (fb.life <= 0){ fb.dead = true; continue; }
+    // gravity + integrate x
+    fb.vy = Math.min(WG.MAX_FALL, fb.vy + WG.GRAV * 0.8 * dt);
+    // X axis: collide with walls
+    let nx = fb.x + fb.vx * dt;
+    let hitWall = false;
+    const probe = { x: nx - fb.r, y: fb.y - fb.r, w: fb.r*2, h: fb.r*2, vx: fb.vx };
+    if (solidAt(nx + (fb.vx > 0 ? fb.r : -fb.r), fb.y)){ hitWall = true; }
+    if (hitWall){ fb.dead = true; continue; }
+    fb.x = nx;
+    // Y axis: bounce on ground
+    let ny = fb.y + fb.vy * dt;
+    if (fb.vy > 0 && solidAt(fb.x, ny + fb.r)){
+      // snap to top of that tile
+      ny = Math.floor((ny + fb.r) / TILE) * TILE - fb.r - 0.01;
+      fb.y = ny;
+      fb.vy = -3.2;
+      fb.bounces++;
+      if (fb.bounces >= 3){ fb.dead = true; continue; }
+    } else {
+      fb.y = ny;
+    }
+    // Trail particle
+    if (Math.random() < 0.6){
+      WG.particles.push({
+        x: fb.x + (Math.random()-0.5)*2, y: fb.y + (Math.random()-0.5)*2,
+        vx: -fb.vx*0.15, vy: -0.2 - Math.random()*0.3,
+        life: 18, color: Math.random() < 0.5 ? '#ffd24a' : '#ff8838'
+      });
+    }
+    // Enemy collision
+    for (const e of WG.enemies){
+      if (!e.alive) continue;
+      if (fb.x + fb.r > e.x && fb.x - fb.r < e.x + e.w &&
+          fb.y + fb.r > e.y && fb.y - fb.r < e.y + e.h){
+        e.alive = false;
+        WG.score += 100;
+        spawnPoof(e.x + e.w/2, e.y + e.h/2);
+        for (let i=0;i<8;i++) WG.particles.push({
+          x: e.x+e.w/2, y: e.y+e.h/2,
+          vx:(Math.random()-0.5)*3, vy:-Math.random()*3-0.5,
+          life:24, color: i%2?'#ffd24a':'#ff5028'
+        });
+        wnSnd('stomp');
+        fb.dead = true;
+        break;
+      }
+    }
+  }
+  WG.fireballs = WG.fireballs.filter(fb => !fb.dead);
+}
+function solidAt(px, py){
+  const gx = Math.floor(px / TILE);
+  const gy = Math.floor(py / TILE);
+  if (gx < 0 || gy < 0 || gy >= LEVEL_H || gx >= LEVEL_W) return false;
+  const row = WG.level[gy]; if (!row) return false;
+  const c = row[gx];
+  return c === '#' || c === 'b' || c === '?' || c === 'M' || c === 'N' || c === 'u' || c === '=';
 }
 function spawnBrickShards(x, y){
   for (let i = 0; i < 8; i++){
@@ -12281,6 +12423,45 @@ function drawItem(ctx, it){
     ctx.fillStyle = '#000';
     ctx.fillRect(x+3, y+5, 2, 2);
     ctx.fillRect(x+7, y+5, 2, 2);
+  } else if (it.kind === 'fire'){
+    // Fire Flower mushroom: orange-red dome over a yellow stem, eyes,
+    // flicker on the cap to hint at its power.
+    it.bob = (it.bob || 0) + 0.2;
+    const flick = Math.floor(Date.now() / 120) % 2;
+    // cap
+    ctx.fillStyle = '#ff5028';
+    ctx.fillRect(x, y, 12, 8);
+    ctx.fillRect(x+1, y-2, 10, 2);
+    ctx.fillStyle = '#ffd24a';
+    ctx.fillRect(x+2, y+2, 3, 3);
+    ctx.fillRect(x+7, y+2, 3, 3);
+    ctx.fillRect(x+5, y+5, 2, 2);
+    // flame flicker on the cap
+    ctx.fillStyle = flick ? '#fff0a0' : '#ffe066';
+    ctx.fillRect(x+5, y-3, 2, 2);
+    ctx.fillRect(x+4, y-2, 4, 1);
+    // stem + face
+    ctx.fillStyle = '#fff0a0';
+    ctx.fillRect(x+2, y+8, 8, 6);
+    ctx.fillStyle = '#222';
+    ctx.fillRect(x+4, y+10, 1, 2);
+    ctx.fillRect(x+7, y+10, 1, 2);
+  }
+}
+function drawFireballs(ctx){
+  if (!WG.fireballs || !WG.fireballs.length) return;
+  for (const fb of WG.fireballs){
+    const x = Math.round(fb.x), y = Math.round(fb.y);
+    const flick = Math.floor(Date.now() / 50) % 2;
+    // outer glow
+    ctx.fillStyle = flick ? '#ffb420' : '#ff8038';
+    ctx.fillRect(x-4, y-3, 8, 6);
+    ctx.fillRect(x-3, y-4, 6, 8);
+    // hot core
+    ctx.fillStyle = '#ffe680';
+    ctx.fillRect(x-2, y-2, 4, 4);
+    ctx.fillStyle = '#fff';
+    ctx.fillRect(x-1, y-1, 2, 2);
   }
 }
 function updateEnemy(e, dt){
@@ -12559,6 +12740,31 @@ function bindWaneesButtons(){
     WG.inputs.jumpHeld = false; WG.inputs.jump = false;
     tapR.classList.remove('held');
   });
+  // ===== Fire Flower trigger =====
+  const fireBtn = document.getElementById('wnFireBtn');
+  if (fireBtn){
+    const fireDown = (ev) => {
+      ev.preventDefault();
+      ev.stopPropagation();
+      fireBtn.classList.add('pressed');
+      WG.inputs.fireTap = true;
+    };
+    const fireUp = () => fireBtn.classList.remove('pressed');
+    fireBtn.addEventListener('touchstart', fireDown, { passive:false });
+    fireBtn.addEventListener('touchend', fireUp);
+    fireBtn.addEventListener('touchcancel', fireUp);
+    fireBtn.addEventListener('mousedown', fireDown);
+    fireBtn.addEventListener('mouseup', fireUp);
+    fireBtn.addEventListener('mouseleave', fireUp);
+  }
+}
+function syncFireBtn(){
+  const btn = document.getElementById('wnFireBtn');
+  if (!btn) return;
+  const charges = (WG.player && WG.player.fireCharges) || 0;
+  btn.style.display = charges > 0 ? 'flex' : 'none';
+  const cnt = document.getElementById('wnFireCount');
+  if (cnt) cnt.textContent = charges;
 }
 const WN_THEMES = [
   // 1: Sunny meadow
@@ -12649,6 +12855,7 @@ function drawFrame(){
     ctx.fillStyle = p.color;
     ctx.fillRect(Math.round(p.x), Math.round(p.y), 2, 2);
   });
+  drawFireballs(ctx);
   drawPlayer(ctx, WG.player);
   ctx.restore();
   // Cinematic vignette
