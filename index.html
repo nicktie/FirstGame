@@ -11529,6 +11529,61 @@ body.wn-locked .top-nav{display:none !important}
   .wn-dlg{animation:none}
   .wn-dlg-portrait,.wn-dlg-next{animation:none}
 }
+/* ===== Villain speaker variant ===== */
+.wn-dlg-portrait.villain-face{
+  background:linear-gradient(160deg,#2a0018,#7a001a 55%,#3a0040);
+  border-color:#cc1144;
+  animation:wnVillainShake 0.45s infinite ease-in-out}
+@keyframes wnVillainShake{0%,100%{transform:rotate(-4deg) scale(1)}50%{transform:rotate(4deg) scale(1.06)}}
+.wn-dlg-body.villain-body{background:#140010;color:#ffd0e0;border-color:#cc1144}
+.wn-dlg-body.villain-body::before{border-right-color:#cc1144}
+.wn-dlg-body.villain-body::after{border-right-color:#140010}
+.wn-dlg-name.villain-name{color:#ff5577}
+.wn-dlg-text.villain-text{color:#ffd0e0}
+.wn-dlg-body.villain-body .wn-dlg-step{color:#aa6680}
+.wn-dlg-body.villain-body .wn-dlg-skip{border-color:#cc1144;color:#ff5577}
+.wn-dlg-body.villain-body .wn-dlg-next{background:linear-gradient(180deg,#cc1144,#880022);border-color:#ff5577;color:#fff;box-shadow:0 3px 0 #440011}
+/* ===== Cinematic reunion overlay ===== */
+#wnReunion{position:absolute;inset:0;z-index:30;
+  background:radial-gradient(ellipse at 50% 40%,#0e0a2e 0%,#000810 80%);
+  display:flex;flex-direction:column;align-items:center;justify-content:center;
+  gap:18px;animation:wnCinFade 0.7s ease-out}
+@keyframes wnCinFade{from{opacity:0;transform:scale(1.04)}to{opacity:1;transform:scale(1)}}
+.wn-cin-stars{position:absolute;inset:0;overflow:hidden;pointer-events:none}
+.wn-cin-star{position:absolute;border-radius:50%;background:#fff;animation:wnStarTwinkle 1.8s infinite ease-in-out}
+@keyframes wnStarTwinkle{0%,100%{opacity:0.2;transform:scale(0.8)}50%{opacity:1;transform:scale(1.2)}}
+.wn-cin-portraits{display:flex;gap:32px;align-items:flex-end;position:relative;z-index:1}
+.wn-cin-portrait{font-size:4.8rem;line-height:1;
+  filter:drop-shadow(0 0 18px rgba(255,215,80,0.9));
+  animation:wnCinFloat 2.2s infinite ease-in-out}
+.wn-cin-portrait:nth-child(3){animation-delay:-1.1s}
+.wn-cin-hearts{font-size:2rem;align-self:center;animation:wnCinHeartBeat 1.2s infinite ease-in-out}
+@keyframes wnCinFloat{0%,100%{transform:translateY(0) rotate(-2deg)}50%{transform:translateY(-10px) rotate(2deg)}}
+@keyframes wnCinHeartBeat{0%,100%{transform:scale(1)}50%{transform:scale(1.25)}}
+.wn-cin-title{font-size:1.6rem;font-weight:900;color:#ffd200;letter-spacing:2px;
+  font-family:'Tajawal','Cairo',sans-serif;text-align:center;
+  text-shadow:0 0 24px rgba(255,210,0,0.9),0 0 48px rgba(255,160,0,0.5);
+  animation:wnCinGlow 2s infinite ease-in-out;position:relative;z-index:1}
+@keyframes wnCinGlow{0%,100%{text-shadow:0 0 24px rgba(255,210,0,0.9)}50%{text-shadow:0 0 48px rgba(255,210,0,1),0 0 80px rgba(255,140,0,0.7)}}
+.wn-cin-sub{font-size:1.05rem;color:#ffccdd;font-family:'Tajawal','Cairo',sans-serif;
+  font-weight:700;text-align:center;max-width:320px;line-height:1.55;
+  position:relative;z-index:1}
+.wn-cin-walk{display:flex;gap:12px;align-items:center;font-size:2.2rem;
+  position:relative;z-index:1;
+  animation:wnCinWalkIn 1s ease-out both}
+@keyframes wnCinWalkIn{from{opacity:0;transform:translateX(-30px)}to{opacity:1;transform:translateX(0)}}
+.wn-cin-btn{background:linear-gradient(180deg,#ffd200,#cc9900);border:2px solid #b48a30;
+  color:#231510;border-radius:50px;padding:11px 32px;
+  font-size:1.05rem;font-weight:900;cursor:pointer;
+  font-family:'Tajawal','Cairo',sans-serif;
+  box-shadow:0 4px 0 #8a6a18;position:relative;z-index:1;
+  animation:wnDlgNextPulse 1.1s infinite ease-in-out}
+.wn-cin-btn:active{transform:translateY(2px);box-shadow:0 2px 0 #8a6a18}
+@media(max-width:380px){
+  .wn-cin-portrait{font-size:3.6rem}
+  .wn-cin-title{font-size:1.3rem}
+  .wn-cin-sub{font-size:0.95rem}
+}
 
 /* Fire button: floats above the right tap zone when player has Fire Flower power */
 .wn-fire-btn{position:absolute;top:8px;right:14px;z-index:9;
@@ -11593,7 +11648,7 @@ body.wn-locked .top-nav{display:none !important}
     <div class="wn-dlg" id="wnDialogue" style="display:none">
       <div class="wn-dlg-card">
         <div class="wn-dlg-portrait" id="wnDlgPortrait">🍄</div>
-        <div class="wn-dlg-body">
+        <div class="wn-dlg-body" id="wnDlgBody">
           <div class="wn-dlg-name" id="wnDlgName">ونيس</div>
           <div class="wn-dlg-text" id="wnDlgText"></div>
           <div class="wn-dlg-row">
@@ -11605,6 +11660,19 @@ body.wn-locked .top-nav{display:none !important}
           </div>
         </div>
       </div>
+    </div>
+    <!-- Cinematic reunion overlay (shown after final dialogue) -->
+    <div id="wnReunion" style="display:none" aria-live="polite">
+      <div class="wn-cin-stars" id="wnCinStars"></div>
+      <div class="wn-cin-portraits">
+        <div class="wn-cin-portrait" id="wnCinHero">🍄</div>
+        <div class="wn-cin-hearts" id="wnCinHearts">💞</div>
+        <div class="wn-cin-portrait">👧🏻</div>
+      </div>
+      <div class="wn-cin-title" id="wnCinTitle">لقاء الأبطال! 🌟</div>
+      <div class="wn-cin-sub" id="wnCinSub">أخيراً… وجدتها بعد ثمانية عوالم! 💫</div>
+      <div class="wn-cin-walk" id="wnCinWalk" style="display:none">🍄 🛤️ 🏠 👧🏻</div>
+      <button class="wn-cin-btn" onclick="wnCinemaNext()" type="button" id="wnCinBtn">متابعة ✨</button>
     </div>
     <!-- Fire button: only visible when player has Fire Flower power -->
     <button class="wn-fire-btn" id="wnFireBtn" type="button" style="display:none" aria-label="إطلاق نار">
@@ -12222,9 +12290,11 @@ const WN_STORY = {
     {who:'hero', text:'القلعة قدامي… دخّلوها فيها يبدو 🏰\nيلا أكسر الباب!'},
   ],
   after4: [
-    {who:'hero', text:'دخلت القلعة وكسّرت كل حرّاسها… بس لُولُو ما كانت هناك! 😱'},
-    {who:'hero', text:'في كتاب على عرش الملك مكتوب:\n"خبّأناها وراء سبع غابات وبحور" 📜'},
-    {who:'hero', text:'إذا اعتقدوا إني بأرجع — ما عرفوني!\nيلا للغابة 🌲💪'},
+    {who:'villain', text:'هههه… توقّعتُ إنك بتجي يا صغير الوادي 😈\nالقلعة كانت فخّ… ومشيت فيه!'},
+    {who:'villain', text:'أختك؟ يا سلام 🌑\nخبّأتها وراء سبع غابات وسبعة بحور وسبع سحابات!\nاستسلم يا فطر الوادي…'},
+    {who:'hero', text:'أنتَ…! تجرّأت على أختي؟! 😤\nما تعرفني يا ظلام — قلبي أكبر من قلعتك كلها!'},
+    {who:'villain', text:'جرّب إن استطعتَ 👻\nالغابة، الجليد، البحر، السحاب… كلهم ينتظرونك\nهل ستصمد؟'},
+    {who:'hero', text:'أختي فوق كل شيء… 💪\nيلا — المشوار ما انتهى!'},
   ],
   after5: [
     {who:'hero', text:'في الغابة سمعت أرواح الأشجار تهمس:\n"بنتك في كهف الجليد… أسرعْ" 🌳✨'},
@@ -12260,8 +12330,17 @@ function showDialogue(key, onDone){
 function _renderDlg(){
   const e = _dlgQ[_dlgIdx];
   const isHero = e.who === 'hero';
-  document.getElementById('wnDlgPortrait').textContent = isHero ? _heroFace() : _luluFace();
-  document.getElementById('wnDlgName').textContent = isHero ? _heroName() : 'لُولُو';
+  const isVillain = e.who === 'villain';
+  const portrait = document.getElementById('wnDlgPortrait');
+  const body = document.getElementById('wnDlgBody');
+  const nameEl = document.getElementById('wnDlgName');
+  const textEl = document.getElementById('wnDlgText');
+  portrait.textContent = isVillain ? '👿' : (isHero ? _heroFace() : _luluFace());
+  portrait.className = 'wn-dlg-portrait' + (isVillain ? ' villain-face' : '');
+  if (body) body.className = 'wn-dlg-body' + (isVillain ? ' villain-body' : '');
+  nameEl.textContent = isVillain ? 'جذر الظلام' : (isHero ? _heroName() : 'لُولُو');
+  nameEl.className = 'wn-dlg-name' + (isVillain ? ' villain-name' : '');
+  if (textEl) textEl.className = 'wn-dlg-text' + (isVillain ? ' villain-text' : '');
   document.getElementById('wnDlgStep').textContent = (_dlgIdx+1) + '/' + _dlgQ.length;
   const out = document.getElementById('wnDlgText');
   out.textContent = '';
@@ -12292,6 +12371,53 @@ function _dlgFinish(){
   const done = _dlgDone; _dlgQ = null; _dlgIdx = 0; _dlgDone = null;
   if (done) done();
 }
+// ===== Cinematic reunion scene (shown after final dialogue) =====
+let _cinStep = 0, _cinDone = null;
+function _buildCinStars(){
+  const c = document.getElementById('wnCinStars'); if (!c) return;
+  c.innerHTML = '';
+  for (let i = 0; i < 40; i++){
+    const s = document.createElement('span');
+    s.className = 'wn-cin-star';
+    const sz = 1 + Math.random() * 3;
+    s.style.cssText = `width:${sz}px;height:${sz}px;left:${Math.random()*100}%;top:${Math.random()*100}%;` +
+      `animation-delay:${(Math.random()*2).toFixed(2)}s;animation-duration:${(1.2+Math.random()*1.8).toFixed(2)}s`;
+    c.appendChild(s);
+  }
+}
+function showCinema(onDone){
+  _cinStep = 0; _cinDone = onDone;
+  document.getElementById('wnCinHero').textContent = _heroFace();
+  document.getElementById('wnCinTitle').textContent = 'لقاء الأبطال! 🌟';
+  document.getElementById('wnCinSub').textContent = 'أخيراً… وجدتها بعد ثمانية عوالم! 💫';
+  document.getElementById('wnCinBtn').textContent = 'متابعة ✨';
+  const walk = document.getElementById('wnCinWalk');
+  if (walk) walk.style.display = 'none';
+  _buildCinStars();
+  document.getElementById('wnReunion').style.display = 'flex';
+}
+window.wnCinemaNext = function(){
+  _cinStep++;
+  const sub = document.getElementById('wnCinSub');
+  const title = document.getElementById('wnCinTitle');
+  const btn = document.getElementById('wnCinBtn');
+  const walk = document.getElementById('wnCinWalk');
+  if (_cinStep === 1){
+    if (title) title.textContent = 'الحضن الأكبر في العالم 🥹';
+    if (sub) sub.textContent = 'لُولُو طارت من الفرح وحضنت ' + _heroName() + '…\nدموع الفرح سبقت الكلام! 😭💕';
+  } else if (_cinStep === 2){
+    if (title) title.textContent = 'يلا نرجع البيت! 🏠';
+    if (sub) sub.textContent = 'معًا… {hero} ولُولُو يمشون للبيت\nوالأمّ عاملة فطر مشوي وعسل! 🍯✨'.replace('{hero}', _heroName());
+    if (walk){
+      walk.style.display = 'flex';
+      walk.textContent = _heroFace() + ' 🛤️ 🏠 👧🏻';
+    }
+    if (btn) btn.textContent = 'أهلاً بالبيت! 🎉';
+  } else {
+    document.getElementById('wnReunion').style.display = 'none';
+    if (_cinDone) _cinDone();
+  }
+};
 function _startGameplayLoop(){
   WG.state = 'running';
   WG.lastTime = performance.now();
@@ -12828,8 +12954,8 @@ function onWin(){
     return;
   }
   saveProgress(true);
-  // Final story beat, then the win screen — reunion with Lulu.
-  showDialogue('final', () => showOverOverlay('win'));
+  // Final dialogue → cinematic reunion → win screen.
+  showDialogue('final', () => showCinema(() => showOverOverlay('win')));
 }
 function onGameOver(){
   WG.state = 'dead';
