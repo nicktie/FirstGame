@@ -12276,8 +12276,8 @@ function resetWaneesState(){
 // invested. Suha mode swaps names but keeps the same beats.
 const WN_STORY = {
   intro: [
-    {who:'hero', text:'مرحباً! أنا {hero} 🍄\nأعيش في وادي الفطر الهادي مع أختي الصغيرة لُولُو 👧🏻💕'},
-    {who:'hero', text:'هالصبح صحيت ولُولُو مو في غرفتها… لقيت ورقة مكتوب فيها:\n"خذوها أشرار قلعة الظلام" 😱'},
+    {who:'hero', text:'مرحباً! أنا {hero} 👋\nأعيش في وادي الفطر السحري مع أختي الصغيرة لُولُو 💕'},
+    {who:'hero', text:'هالصبح صحيت ولُولُو مو في غرفتها… لقيت ورقة مكتوب فيها:\n"خذها كعبول لقلعة الظلام" 😱'},
     {who:'hero', text:'ثمانية عوالم سحرية تفصلني عنها 🌍\nمرج، صحراء، ليل نجوم، قلعة، غابة، جليد، بحر، وسحاب 🏰❄️🌊☁️'},
     {who:'hero', text:'هل بتساعدني أرجّع لُولُو لبيتها؟ 💪✨'},
   ],
@@ -12296,8 +12296,8 @@ const WN_STORY = {
   ],
   after4: [
     {who:'villain', text:'هههه… توقّعتُ إنك بتجي يا صغير الوادي 😈\nالقلعة كانت فخّ… ومشيت فيه!'},
-    {who:'villain', text:'أختك؟ يا سلام 🌑\nخبّأتها وراء سبع غابات وسبعة بحور وسبع سحابات!\nاستسلم يا فطر الوادي…'},
-    {who:'hero', text:'أنتَ…! تجرّأت على أختي؟! 😤\nما تعرفني يا ظلام — قلبي أكبر من قلعتك كلها!'},
+    {who:'villain', text:'أختك؟ يا سلام 🌑\nخبّأتها وراء سبع غابات وسبعة بحور وسبع سحابات!\nاستسلم يا صبي الوادي…'},
+    {who:'hero', text:'أنتَ يا كعبول…! تجرّأت على أختي؟! 😤\nما تعرفني — قلبي أكبر من قلعتك كلها!'},
     {who:'villain', text:'جرّب إن استطعتَ 👻\nالغابة، الجليد، البحر، السحاب… كلهم ينتظرونك\nهل ستصمد؟'},
     {who:'hero', text:'أختي فوق كل شيء… 💪\nيلا — المشوار ما انتهى!'},
   ],
@@ -12322,81 +12322,226 @@ const WN_STORY = {
   ]
 };
 function _heroName(){ return WG.suhaMode ? 'سهى' : 'ونيس'; }
-function _heroFace(){ return WG.suhaMode ? '👧🏻' : '🍄'; }
+function _heroFace(){ return WG.suhaMode ? '👧🏻' : '👦'; }
 function _luluFace(){ return '🧒🏻'; }
 // ===== Hand-drawn character portraits (inline SVG) =====
+// Designs based on user reference art: ونيس the cap-wearing boy in overalls,
+// لُولُو the pigtailed girl with a star wand, كعبول the green-skinned ogre.
 const CHAR_SVG = {
+  // Wanees — boy with red cap, orange shirt, blue overalls
   wanees: '<svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">'
-    + '<ellipse cx="50" cy="93" rx="22" ry="3.5" fill="rgba(0,0,0,0.28)"/>'
-    + '<path d="M32 56 Q30 82 39 89 Q50 93 61 89 Q70 82 68 56 Z" fill="#fff3d8" stroke="#7a5520" stroke-width="2"/>'
-    + '<path d="M18 50 Q18 16 50 16 Q82 16 82 50 Q82 60 74 62 L26 62 Q18 60 18 50 Z" fill="#e63030" stroke="#5a000c" stroke-width="2.5"/>'
-    + '<circle cx="30" cy="38" r="6" fill="#fff"/><circle cx="50" cy="26" r="7" fill="#fff"/>'
-    + '<circle cx="68" cy="40" r="5" fill="#fff"/><circle cx="42" cy="50" r="3.5" fill="#fff"/>'
-    + '<ellipse cx="42" cy="73" rx="3.2" ry="3.6" fill="#1a1010"/>'
-    + '<ellipse cx="58" cy="73" rx="3.2" ry="3.6" fill="#1a1010"/>'
-    + '<circle cx="43.2" cy="71.5" r="1.1" fill="#fff"/><circle cx="59.2" cy="71.5" r="1.1" fill="#fff"/>'
-    + '<path d="M44 81 Q50 85 56 81" stroke="#7a3010" stroke-width="2" fill="none" stroke-linecap="round"/>'
-    + '<circle cx="36" cy="79" r="2.5" fill="#ff8888" opacity="0.65"/>'
-    + '<circle cx="64" cy="79" r="2.5" fill="#ff8888" opacity="0.65"/>'
+    + '<ellipse cx="50" cy="95" rx="22" ry="2.5" fill="rgba(0,0,0,0.3)"/>'
+    // boots
+    + '<path d="M36 86 L34 94 L46 94 L46 86 Z" fill="#5a3010" stroke="#1a0a00" stroke-width="1.5"/>'
+    + '<path d="M54 86 L54 94 L66 94 L64 86 Z" fill="#5a3010" stroke="#1a0a00" stroke-width="1.5"/>'
+    // overalls (blue jeans)
+    + '<path d="M30 60 L26 90 L46 90 L46 78 L54 78 L54 90 L74 90 L70 60 Z" fill="#2a66bb" stroke="#0a2a55" stroke-width="2"/>'
+    // overall straps
+    + '<path d="M38 48 L36 64 L42 64 L42 48 Z" fill="#2a66bb" stroke="#0a2a55" stroke-width="1.5"/>'
+    + '<path d="M58 48 L58 64 L64 64 L62 48 Z" fill="#2a66bb" stroke="#0a2a55" stroke-width="1.5"/>'
+    // overall buttons
+    + '<circle cx="39" cy="52" r="1.6" fill="#ffd200" stroke="#7a5500" stroke-width="0.6"/>'
+    + '<circle cx="61" cy="52" r="1.6" fill="#ffd200" stroke="#7a5500" stroke-width="0.6"/>'
+    // overall pocket
+    + '<path d="M42 64 L42 76 L58 76 L58 64 Z" fill="#1a4488" stroke="#0a2a55" stroke-width="1"/>'
+    + '<path d="M46 70 L54 70" stroke="#0a2a55" stroke-width="0.8"/>'
+    // orange shirt
+    + '<path d="M28 48 L26 64 L74 64 L72 48 Z" fill="#ee7820" stroke="#a04408" stroke-width="2"/>'
+    // shirt collar
+    + '<path d="M44 46 L50 52 L56 46 Z" fill="#cc5510" stroke="#7a3000" stroke-width="1"/>'
+    // arms (orange sleeves)
+    + '<ellipse cx="22" cy="56" rx="5.5" ry="9" fill="#ee7820" stroke="#a04408" stroke-width="1.5"/>'
+    + '<ellipse cx="78" cy="56" rx="5.5" ry="9" fill="#ee7820" stroke="#a04408" stroke-width="1.5"/>'
+    // hands
+    + '<circle cx="22" cy="66" r="4" fill="#ffd2a8" stroke="#aa7040" stroke-width="1.2"/>'
+    + '<circle cx="78" cy="66" r="4" fill="#ffd2a8" stroke="#aa7040" stroke-width="1.2"/>'
+    // thumbs up on right hand
+    + '<rect x="76.5" y="60" width="2" height="4" rx="1" fill="#ffd2a8" stroke="#aa7040" stroke-width="0.8"/>'
+    // head
+    + '<ellipse cx="50" cy="32" rx="18" ry="17" fill="#ffd2a8" stroke="#7a4020" stroke-width="2"/>'
+    // brown hair (peeking under cap)
+    + '<path d="M33 36 Q34 28 38 30 M62 30 Q66 28 67 36" stroke="#5a2810" stroke-width="3" fill="none" stroke-linecap="round"/>'
+    + '<path d="M36 22 Q40 16 50 16 Q60 16 64 22 L60 26 Q50 22 40 26 Z" fill="#5a2810"/>'
+    // red cap
+    + '<path d="M32 24 Q34 14 50 12 Q66 14 68 24 L68 28 L32 28 Z" fill="#e02828" stroke="#8a0a0a" stroke-width="2"/>'
+    // cap brim
+    + '<path d="M28 28 Q50 24 72 28 L72 32 Q50 30 28 32 Z" fill="#cc1818" stroke="#8a0a0a" stroke-width="1.5"/>'
+    // cap button
+    + '<circle cx="50" cy="14" r="1.5" fill="#fff" stroke="#aa1010" stroke-width="0.5"/>'
+    // eyes
+    + '<ellipse cx="43" cy="34" rx="2.6" ry="3.2" fill="#1a1010"/>'
+    + '<ellipse cx="57" cy="34" rx="2.6" ry="3.2" fill="#1a1010"/>'
+    + '<circle cx="43.7" cy="33" r="1" fill="#fff"/>'
+    + '<circle cx="57.7" cy="33" r="1" fill="#fff"/>'
+    // eyebrows
+    + '<path d="M40 30 L46 29.5 M54 29.5 L60 30" stroke="#3a1808" stroke-width="1.4" stroke-linecap="round"/>'
+    // smile
+    + '<path d="M45 40 Q50 44 55 40" stroke="#7a3010" stroke-width="1.8" fill="none" stroke-linecap="round"/>'
+    // cheeks
+    + '<circle cx="37" cy="40" r="2.3" fill="#ff8888" opacity="0.6"/>'
+    + '<circle cx="63" cy="40" r="2.3" fill="#ff8888" opacity="0.6"/>'
     + '</svg>',
+  // Suha — pink-dress version of the same girl style (for سهى mode)
   suha: '<svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">'
-    + '<ellipse cx="50" cy="94" rx="22" ry="3" fill="rgba(0,0,0,0.25)"/>'
-    + '<path d="M22 42 Q18 65 24 88 L36 88 Q34 65 34 46 Z" fill="#3a1810"/>'
-    + '<path d="M78 42 Q82 65 76 88 L64 88 Q66 65 66 46 Z" fill="#3a1810"/>'
-    + '<path d="M28 68 L20 90 L80 90 L72 68 Z" fill="#ff70a8" stroke="#aa2070" stroke-width="2"/>'
-    + '<circle cx="35" cy="78" r="1.5" fill="#fff8a0"/><circle cx="50" cy="84" r="1.5" fill="#fff8a0"/>'
-    + '<circle cx="65" cy="78" r="1.5" fill="#fff8a0"/>'
-    + '<circle cx="50" cy="46" r="22" fill="#ffe2c0" stroke="#7a4020" stroke-width="2"/>'
-    + '<path d="M26 42 Q28 16 50 16 Q72 16 74 42 Q70 28 50 26 Q30 28 26 42 Z" fill="#3a1810"/>'
-    + '<path d="M40 16 L50 6 L60 16 L55 18 L50 12 L45 18 Z" fill="#ffd200" stroke="#a07000" stroke-width="1"/>'
-    + '<circle cx="50" cy="12" r="1.8" fill="#ff5577"/>'
-    + '<ellipse cx="42" cy="48" rx="4.5" ry="5.5" fill="#2a1010"/>'
-    + '<ellipse cx="58" cy="48" rx="4.5" ry="5.5" fill="#2a1010"/>'
-    + '<circle cx="43.5" cy="46" r="2" fill="#fff"/><circle cx="59.5" cy="46" r="2" fill="#fff"/>'
-    + '<circle cx="40.5" cy="50.5" r="0.8" fill="#fff"/><circle cx="56.5" cy="50.5" r="0.8" fill="#fff"/>'
-    + '<path d="M44 58 Q50 63 56 58" stroke="#7a3010" stroke-width="1.8" fill="none" stroke-linecap="round"/>'
-    + '<circle cx="35" cy="56" r="3" fill="#ff7799" opacity="0.7"/>'
-    + '<circle cx="65" cy="56" r="3" fill="#ff7799" opacity="0.7"/>'
+    + '<ellipse cx="50" cy="95" rx="22" ry="2.5" fill="rgba(0,0,0,0.3)"/>'
+    // shoes
+    + '<ellipse cx="42" cy="92" rx="5" ry="2.5" fill="#cc1166" stroke="#5a0028" stroke-width="1"/>'
+    + '<ellipse cx="58" cy="92" rx="5" ry="2.5" fill="#cc1166" stroke="#5a0028" stroke-width="1"/>'
+    // legs
+    + '<rect x="40" y="82" width="6" height="10" fill="#ffd2a8" stroke="#aa7040" stroke-width="1"/>'
+    + '<rect x="54" y="82" width="6" height="10" fill="#ffd2a8" stroke="#aa7040" stroke-width="1"/>'
+    // long hair behind body
+    + '<path d="M22 42 Q16 65 22 90 L34 90 Q30 64 32 46 Z" fill="#3a1810" stroke="#1a0808" stroke-width="1.5"/>'
+    + '<path d="M78 42 Q84 65 78 90 L66 90 Q70 64 68 46 Z" fill="#3a1810" stroke="#1a0808" stroke-width="1.5"/>'
+    // pink dress
+    + '<path d="M30 52 L24 82 L76 82 L70 52 Z" fill="#ff5599" stroke="#aa1166" stroke-width="2"/>'
+    // dress sparkles
+    + '<path d="M36 64 L37 66 L39 67 L37 68 L36 70 L35 68 L33 67 L35 66 Z" fill="#fff8a0"/>'
+    + '<path d="M52 72 L53 74 L55 75 L53 76 L52 78 L51 76 L49 75 L51 74 Z" fill="#fff8a0"/>'
+    + '<path d="M62 60 L63 62 L65 63 L63 64 L62 66 L61 64 L59 63 L61 62 Z" fill="#fff8a0"/>'
+    // arms
+    + '<ellipse cx="22" cy="56" rx="5" ry="9" fill="#ffd2a8" stroke="#aa7040" stroke-width="1.4"/>'
+    + '<ellipse cx="78" cy="56" rx="5" ry="9" fill="#ffd2a8" stroke="#aa7040" stroke-width="1.4"/>'
+    // hands
+    + '<circle cx="22" cy="66" r="3.5" fill="#ffd2a8" stroke="#aa7040" stroke-width="1"/>'
+    + '<circle cx="78" cy="66" r="3.5" fill="#ffd2a8" stroke="#aa7040" stroke-width="1"/>'
+    // head
+    + '<ellipse cx="50" cy="32" rx="18" ry="17" fill="#ffd2a8" stroke="#7a4020" stroke-width="2"/>'
+    // hair top
+    + '<path d="M30 28 Q32 14 50 12 Q68 14 70 28 Q66 20 50 20 Q34 20 30 28 Z" fill="#3a1810"/>'
+    // crown / tiara
+    + '<path d="M38 14 L42 10 L46 14 L50 8 L54 14 L58 10 L62 14 L60 18 L40 18 Z" fill="#ffd200" stroke="#a07000" stroke-width="1.4"/>'
+    + '<circle cx="50" cy="12" r="1.6" fill="#ff3377" stroke="#7a0033" stroke-width="0.5"/>'
+    + '<circle cx="42" cy="14" r="1" fill="#33ccff"/>'
+    + '<circle cx="58" cy="14" r="1" fill="#33ccff"/>'
+    // big sparkly eyes
+    + '<ellipse cx="43" cy="34" rx="3.2" ry="4" fill="#2a1010"/>'
+    + '<ellipse cx="57" cy="34" rx="3.2" ry="4" fill="#2a1010"/>'
+    + '<circle cx="44" cy="32.5" r="1.4" fill="#fff"/>'
+    + '<circle cx="58" cy="32.5" r="1.4" fill="#fff"/>'
+    + '<circle cx="41.5" cy="36" r="0.6" fill="#fff"/>'
+    + '<circle cx="55.5" cy="36" r="0.6" fill="#fff"/>'
+    // eyebrows
+    + '<path d="M40 29 L46 29 M54 29 L60 29" stroke="#3a1808" stroke-width="1.2" stroke-linecap="round"/>'
+    // smile
+    + '<path d="M45 41 Q50 45 55 41" stroke="#7a3010" stroke-width="1.7" fill="none" stroke-linecap="round"/>'
+    // cheeks
+    + '<circle cx="37" cy="40" r="2.5" fill="#ff7799" opacity="0.7"/>'
+    + '<circle cx="63" cy="40" r="2.5" fill="#ff7799" opacity="0.7"/>'
     + '</svg>',
+  // Lulu — pigtailed girl with striped pink dress and star wand
   lulu: '<svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">'
-    + '<ellipse cx="50" cy="94" rx="20" ry="3" fill="rgba(0,0,0,0.25)"/>'
-    + '<path d="M30 70 L24 90 L76 90 L70 70 Z" fill="#ff9ec4" stroke="#aa3070" stroke-width="2"/>'
-    + '<path d="M44 80 Q47 76 50 80 Q53 76 56 80 Q53 84 50 86 Q47 84 44 80 Z" fill="#fff" opacity="0.85"/>'
-    + '<circle cx="50" cy="48" r="22" fill="#ffe2c0" stroke="#7a4020" stroke-width="2"/>'
-    + '<path d="M28 42 Q30 22 50 22 Q70 22 72 42 Q68 32 50 30 Q32 32 28 42 Z" fill="#6a3818"/>'
-    + '<circle cx="22" cy="50" r="9" fill="#6a3818" stroke="#3a1808" stroke-width="1"/>'
-    + '<circle cx="78" cy="50" r="9" fill="#6a3818" stroke="#3a1808" stroke-width="1"/>'
-    + '<circle cx="22" cy="40" r="3.5" fill="#ff5588" stroke="#aa1144" stroke-width="0.8"/>'
-    + '<circle cx="78" cy="40" r="3.5" fill="#ff5588" stroke="#aa1144" stroke-width="0.8"/>'
-    + '<ellipse cx="42" cy="48" rx="4.2" ry="5.2" fill="#1a1010"/>'
-    + '<ellipse cx="58" cy="48" rx="4.2" ry="5.2" fill="#1a1010"/>'
-    + '<circle cx="43.2" cy="46" r="1.8" fill="#fff"/><circle cx="59.2" cy="46" r="1.8" fill="#fff"/>'
-    + '<path d="M45 58 Q50 62 55 58" stroke="#7a3010" stroke-width="1.8" fill="none" stroke-linecap="round"/>'
-    + '<circle cx="36" cy="56" r="3" fill="#ff8888" opacity="0.7"/>'
-    + '<circle cx="64" cy="56" r="3" fill="#ff8888" opacity="0.7"/>'
+    + '<ellipse cx="50" cy="95" rx="22" ry="2.5" fill="rgba(0,0,0,0.3)"/>'
+    // shoes
+    + '<ellipse cx="42" cy="92" rx="5" ry="2.5" fill="#ff2266" stroke="#7a0030" stroke-width="1"/>'
+    + '<ellipse cx="58" cy="92" rx="5" ry="2.5" fill="#ff2266" stroke="#7a0030" stroke-width="1"/>'
+    // legs
+    + '<rect x="40" y="82" width="6" height="10" fill="#ffd2a8" stroke="#aa7040" stroke-width="1"/>'
+    + '<rect x="54" y="82" width="6" height="10" fill="#ffd2a8" stroke="#aa7040" stroke-width="1"/>'
+    // pink striped dress
+    + '<path d="M30 52 L24 82 L76 82 L70 52 Z" fill="#ff66aa" stroke="#aa1166" stroke-width="2"/>'
+    // white stripes
+    + '<path d="M27 62 L73 62" stroke="#fff" stroke-width="3.5" opacity="0.95"/>'
+    + '<path d="M26 72 L74 72" stroke="#fff" stroke-width="3.5" opacity="0.95"/>'
+    // arms
+    + '<ellipse cx="22" cy="56" rx="5" ry="9" fill="#ffd2a8" stroke="#aa7040" stroke-width="1.4"/>'
+    + '<ellipse cx="78" cy="56" rx="5" ry="9" fill="#ffd2a8" stroke="#aa7040" stroke-width="1.4"/>'
+    + '<circle cx="22" cy="66" r="3.5" fill="#ffd2a8" stroke="#aa7040" stroke-width="1"/>'
+    + '<circle cx="78" cy="66" r="3.5" fill="#ffd2a8" stroke="#aa7040" stroke-width="1"/>'
+    // wand stick
+    + '<line x1="78" y1="64" x2="92" y2="38" stroke="#aa6010" stroke-width="2.5" stroke-linecap="round"/>'
+    // wand star
+    + '<path d="M92 32 L94 38 L100 38 L95 42 L97 48 L92 44 L87 48 L89 42 L84 38 L90 38 Z" fill="#ffd200" stroke="#a07000" stroke-width="1.5"/>'
+    // sparkles around wand
+    + '<circle cx="98" cy="28" r="1.3" fill="#fff8a0"/>'
+    + '<circle cx="85" cy="30" r="1" fill="#fff8a0"/>'
+    + '<circle cx="96" cy="50" r="1" fill="#fff8a0"/>'
+    // head
+    + '<ellipse cx="50" cy="32" rx="18" ry="17" fill="#ffd2a8" stroke="#7a4020" stroke-width="2"/>'
+    // dark hair bangs
+    + '<path d="M30 26 Q32 12 50 10 Q68 12 70 26 Q66 18 50 18 Q34 18 30 26 Z" fill="#1a0808"/>'
+    + '<path d="M34 28 L36 22 L40 28 M44 26 L46 20 L50 28 L54 20 L56 26 M60 28 L64 22 L66 28" stroke="#1a0808" stroke-width="2" fill="#1a0808" stroke-linejoin="round"/>'
+    // pigtails
+    + '<ellipse cx="18" cy="36" rx="7" ry="11" fill="#1a0808" stroke="#000" stroke-width="1.2"/>'
+    + '<ellipse cx="82" cy="36" rx="7" ry="11" fill="#1a0808" stroke="#000" stroke-width="1.2"/>'
+    // pigtail tips
+    + '<circle cx="18" cy="46" r="3" fill="#1a0808"/>'
+    + '<circle cx="82" cy="46" r="3" fill="#1a0808"/>'
+    // pink bows
+    + '<path d="M14 24 L18 26 L22 24 L20 28 L16 28 Z" fill="#ff3377" stroke="#7a0033" stroke-width="0.8"/>'
+    + '<path d="M86 24 L82 26 L78 24 L80 28 L84 28 Z" fill="#ff3377" stroke="#7a0033" stroke-width="0.8"/>'
+    + '<circle cx="18" cy="26" r="1.2" fill="#aa0044"/>'
+    + '<circle cx="82" cy="26" r="1.2" fill="#aa0044"/>'
+    // big eyes
+    + '<ellipse cx="43" cy="34" rx="3" ry="3.8" fill="#1a1010"/>'
+    + '<ellipse cx="57" cy="34" rx="3" ry="3.8" fill="#1a1010"/>'
+    + '<circle cx="44" cy="32.5" r="1.3" fill="#fff"/>'
+    + '<circle cx="58" cy="32.5" r="1.3" fill="#fff"/>'
+    // smile
+    + '<path d="M45 41 Q50 44 55 41" stroke="#7a3010" stroke-width="1.7" fill="none" stroke-linecap="round"/>'
+    // cheeks
+    + '<circle cx="37" cy="40" r="2.5" fill="#ff8899" opacity="0.7"/>'
+    + '<circle cx="63" cy="40" r="2.5" fill="#ff8899" opacity="0.7"/>'
     + '</svg>',
+  // Kaaboul (كعبول) — green-skinned ogre with horns, dark armor, battle axe
   villain: '<svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">'
     + '<defs><radialGradient id="vAura" cx="50%" cy="50%" r="50%">'
-    + '<stop offset="0%" stop-color="#7a0044" stop-opacity="0.7"/>'
-    + '<stop offset="100%" stop-color="#7a0044" stop-opacity="0"/></radialGradient></defs>'
+    + '<stop offset="0%" stop-color="#660022" stop-opacity="0.55"/>'
+    + '<stop offset="100%" stop-color="#660022" stop-opacity="0"/></radialGradient></defs>'
     + '<circle cx="50" cy="50" r="48" fill="url(#vAura)"/>'
-    + '<ellipse cx="50" cy="92" rx="24" ry="4" fill="rgba(120,0,40,0.5)"/>'
-    + '<path d="M25 52 L18 92 L82 92 L75 52 Z" fill="#1a0018" stroke="#5a0028" stroke-width="2"/>'
-    + '<path d="M22 45 Q18 12 50 10 Q82 12 78 45 Q78 58 50 60 Q22 58 22 45 Z" fill="#0a0010" stroke="#4a002a" stroke-width="2.5"/>'
-    + '<path d="M28 16 L22 2 L34 14 Z" fill="#3a001a"/>'
-    + '<path d="M72 16 L78 2 L66 14 Z" fill="#3a001a"/>'
-    + '<ellipse cx="40" cy="36" rx="5.5" ry="3.6" fill="#ff2244"/>'
-    + '<ellipse cx="60" cy="36" rx="5.5" ry="3.6" fill="#ff2244"/>'
-    + '<ellipse cx="40" cy="36" rx="3" ry="2" fill="#ffaabb"/>'
-    + '<ellipse cx="60" cy="36" rx="3" ry="2" fill="#ffaabb"/>'
-    + '<path d="M36 48 Q50 56 64 48" stroke="#ff2244" stroke-width="2" fill="none"/>'
-    + '<path d="M42 48 L44 55 L46 48 Z" fill="#fff"/>'
-    + '<path d="M54 48 L56 55 L58 48 Z" fill="#fff"/>'
-    + '<path d="M50 60 Q44 66 42 78 M50 60 Q56 66 58 78" stroke="#5a002a" stroke-width="1.5" fill="none" opacity="0.7"/>'
-    + '<circle cx="14" cy="30" r="2" fill="#cc1144" opacity="0.7"/>'
-    + '<circle cx="86" cy="34" r="2" fill="#cc1144" opacity="0.7"/>'
-    + '<circle cx="10" cy="55" r="1.5" fill="#cc1144" opacity="0.55"/>'
-    + '<circle cx="90" cy="58" r="1.5" fill="#cc1144" opacity="0.55"/>'
+    + '<ellipse cx="50" cy="95" rx="28" ry="3" fill="rgba(0,0,0,0.45)"/>'
+    // body / dark armor torso
+    + '<path d="M22 56 L16 92 L84 92 L78 56 Z" fill="#2a3320" stroke="#0a1a08" stroke-width="2"/>'
+    // armor belt
+    + '<rect x="18" y="78" width="64" height="6" fill="#3a2a10" stroke="#1a0a00" stroke-width="1.5"/>'
+    + '<rect x="46" y="76" width="8" height="10" fill="#cc8822" stroke="#5a3010" stroke-width="1"/>'
+    // skull insignia
+    + '<ellipse cx="50" cy="68" rx="6.5" ry="7.5" fill="#e8e0c8" stroke="#1a1010" stroke-width="1.2"/>'
+    + '<ellipse cx="47" cy="68" rx="1.5" ry="2" fill="#1a1010"/>'
+    + '<ellipse cx="53" cy="68" rx="1.5" ry="2" fill="#1a1010"/>'
+    + '<path d="M47 73 L48 75 M50 73 L50 75 M53 73 L52 75" stroke="#1a1010" stroke-width="1" fill="none"/>'
+    // spiked shoulders
+    + '<path d="M18 56 L10 46 L22 50 Z" fill="#0a1a08" stroke="#000" stroke-width="1.5"/>'
+    + '<path d="M16 60 L8 56 L20 58 Z" fill="#0a1a08" stroke="#000" stroke-width="1.2"/>'
+    + '<path d="M82 56 L90 46 L78 50 Z" fill="#0a1a08" stroke="#000" stroke-width="1.5"/>'
+    + '<path d="M84 60 L92 56 L80 58 Z" fill="#0a1a08" stroke="#000" stroke-width="1.2"/>'
+    // green arms
+    + '<ellipse cx="14" cy="68" rx="6" ry="10" fill="#4a8030" stroke="#1a4010" stroke-width="1.5"/>'
+    + '<ellipse cx="86" cy="68" rx="6" ry="10" fill="#4a8030" stroke="#1a4010" stroke-width="1.5"/>'
+    // big green hands / fists
+    + '<circle cx="14" cy="80" r="5" fill="#4a8030" stroke="#1a4010" stroke-width="1.5"/>'
+    + '<circle cx="86" cy="80" r="5" fill="#4a8030" stroke="#1a4010" stroke-width="1.5"/>'
+    // axe handle
+    + '<line x1="12" y1="82" x2="4" y2="46" stroke="#5a3010" stroke-width="3" stroke-linecap="round"/>'
+    // axe blade
+    + '<path d="M4 46 L14 36 L16 48 L8 54 Z" fill="#aaaaaa" stroke="#1a1a1a" stroke-width="1.5"/>'
+    + '<path d="M4 46 L-2 36 L-4 48 L4 54 Z" fill="#888888" stroke="#1a1a1a" stroke-width="1.5"/>'
+    + '<path d="M4 38 L4 54" stroke="#444" stroke-width="0.8"/>'
+    // green head
+    + '<ellipse cx="50" cy="38" rx="22" ry="20" fill="#4a8030" stroke="#1a4010" stroke-width="2.5"/>'
+    // head shading
+    + '<ellipse cx="50" cy="44" rx="20" ry="4" fill="#3a6024" opacity="0.5"/>'
+    // horns
+    + '<path d="M28 22 L20 2 L34 16 Z" fill="#1a0a08" stroke="#000" stroke-width="1.5"/>'
+    + '<path d="M72 22 L80 2 L66 16 Z" fill="#1a0a08" stroke="#000" stroke-width="1.5"/>'
+    // angry brows
+    + '<path d="M30 28 L46 34" stroke="#0a0a04" stroke-width="3" stroke-linecap="round"/>'
+    + '<path d="M70 28 L54 34" stroke="#0a0a04" stroke-width="3" stroke-linecap="round"/>'
+    // glowing red eyes
+    + '<ellipse cx="40" cy="38" rx="5" ry="3.5" fill="#ff0022"/>'
+    + '<ellipse cx="60" cy="38" rx="5" ry="3.5" fill="#ff0022"/>'
+    + '<ellipse cx="40" cy="38" rx="2.5" ry="1.7" fill="#ffaa00"/>'
+    + '<ellipse cx="60" cy="38" rx="2.5" ry="1.7" fill="#ffaa00"/>'
+    // evil grin
+    + '<path d="M34 48 Q50 58 66 48 L62 52 L58 49 L54 53 L50 49 L46 53 L42 49 L38 52 Z" fill="#1a0a08" stroke="#000" stroke-width="1.5"/>'
+    // fangs
+    + '<path d="M42 50 L44 56 L46 50 Z" fill="#fff" stroke="#aa0a0a" stroke-width="0.4"/>'
+    + '<path d="M54 50 L56 56 L58 50 Z" fill="#fff" stroke="#aa0a0a" stroke-width="0.4"/>'
+    // aura wisps
+    + '<circle cx="14" cy="20" r="2" fill="#cc1144" opacity="0.7"/>'
+    + '<circle cx="86" cy="22" r="2" fill="#cc1144" opacity="0.7"/>'
+    + '<circle cx="6" cy="30" r="1.4" fill="#cc1144" opacity="0.6"/>'
+    + '<circle cx="94" cy="30" r="1.4" fill="#cc1144" opacity="0.6"/>'
     + '</svg>',
 };
 function _heroSvg(){ return WG.suhaMode ? CHAR_SVG.suha : CHAR_SVG.wanees; }
@@ -12420,7 +12565,7 @@ function _renderDlg(){
   portrait.innerHTML = isVillain ? CHAR_SVG.villain : (isHero ? _heroSvg() : _luluSvg());
   portrait.className = 'wn-dlg-portrait' + (isVillain ? ' villain-face' : '');
   if (body) body.className = 'wn-dlg-body' + (isVillain ? ' villain-body' : '');
-  nameEl.textContent = isVillain ? 'جذر الظلام' : (isHero ? _heroName() : 'لُولُو');
+  nameEl.textContent = isVillain ? 'كعبول' : (isHero ? _heroName() : 'لُولُو');
   nameEl.className = 'wn-dlg-name' + (isVillain ? ' villain-name' : '');
   if (textEl) textEl.className = 'wn-dlg-text' + (isVillain ? ' villain-text' : '');
   document.getElementById('wnDlgStep').textContent = (_dlgIdx+1) + '/' + _dlgQ.length;
