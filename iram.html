@@ -105,21 +105,41 @@ body{
   background:rgba(0,0,0,0.5); border:1px solid rgba(232,224,208,0.25); color:var(--text); border-radius:10px; width:36px; height:36px; font-size:1rem; cursor:pointer; display:none}
 @media (min-width:700px){ #pauseBtn{display:block} }
 
-/* Touch controls */
-#touchUI{position:absolute; inset:auto 0 0 0; height:150px; z-index:11; display:none; pointer-events:none; padding-bottom:env(safe-area-inset-bottom)}
+/* Touch controls — floating joystick (left half) + action cluster (right) */
+#touchUI{position:absolute; inset:0; z-index:11; display:none; pointer-events:none}
 #touchUI.on{display:block}
+/* Joystick zone covers the entire bottom-left half — touch and drag anywhere */
+#joyZone{position:absolute; left:0; bottom:0; width:50%; height:55%; pointer-events:auto;
+  touch-action:none; -webkit-user-select:none; user-select:none}
+.joy-base{position:absolute; width:128px; height:128px; border-radius:50%;
+  background:rgba(20,14,34,0.42); border:2px dashed rgba(201,168,76,0.55);
+  pointer-events:none; transform:translate(-50%,-50%); display:none; z-index:12;
+  backdrop-filter:blur(3px); -webkit-backdrop-filter:blur(3px)}
+.joy-stick{position:absolute; left:50%; top:50%; width:62px; height:62px; border-radius:50%;
+  background:radial-gradient(circle at 35% 30%,#fff4cc,#c9a84c 55%,#7a5500);
+  border:3px solid #f1deaa; transform:translate(-50%,-50%); pointer-events:none;
+  box-shadow:0 6px 18px rgba(0,0,0,0.55)}
 .tc{position:absolute; pointer-events:auto; border-radius:50%; display:flex; align-items:center; justify-content:center;
   background:rgba(20,14,34,0.55); border:1.5px solid rgba(201,168,76,0.35); color:var(--gold-light); font-weight:900;
-  font-family:'Tajawal',sans-serif; backdrop-filter:blur(3px); -webkit-backdrop-filter:blur(3px); transition:background 0.1s,transform 0.1s}
+  font-family:'Tajawal',sans-serif; backdrop-filter:blur(3px); -webkit-backdrop-filter:blur(3px); transition:background 0.1s,transform 0.1s;
+  bottom:calc(var(--off, 0px) + env(safe-area-inset-bottom))}
 .tc:active,.tc.held{background:rgba(201,168,76,0.3); transform:scale(0.94)}
-#tLeft{left:14px; bottom:26px; width:62px; height:62px; font-size:1.5rem}
-#tRight{left:90px; bottom:26px; width:62px; height:62px; font-size:1.5rem}
-#tJump{right:14px; bottom:74px; width:60px; height:60px; font-size:0.85rem}
-#tAtk{right:84px; bottom:18px; width:66px; height:66px; font-size:1.6rem; border-color:rgba(255,120,80,0.5)}
-#tDash{right:160px; bottom:54px; width:52px; height:52px; font-size:1.2rem; border-color:rgba(106,212,255,0.5)}
-#tHeal{right:14px; bottom:8px; width:48px; height:48px; font-size:1.1rem; border-color:rgba(126,232,160,0.5)}
-#tArrow{right:222px; bottom:14px; width:48px; height:48px; font-size:1.1rem; border-color:rgba(200,140,255,0.55)}
+/* Action cluster — right thumb sits at bottom-right corner */
+#tAtk{right:18px; --off:22px; width:96px; height:96px; font-size:2.2rem; border-color:rgba(255,120,80,0.6); border-width:2.5px}
+#tJump{right:118px; --off:90px; width:80px; height:80px; font-size:1.05rem}
+#tDash{right:128px; --off:14px; width:64px; height:64px; font-size:1.4rem; border-color:rgba(106,212,255,0.55)}
+#tArrow{right:200px; --off:80px; width:58px; height:58px; font-size:1.25rem; border-color:rgba(200,140,255,0.55)}
+#tHeal{right:18px; --off:130px; width:54px; height:54px; font-size:1.1rem; border-color:rgba(126,232,160,0.55)}
 #tDash.hidden,#tArrow.hidden{display:none}
+@media (max-width:380px){
+  #tAtk{width:80px; height:80px; font-size:1.8rem}
+  #tJump{width:68px; height:68px; right:96px; --off:78px}
+  #tDash{width:56px; height:56px; right:108px}
+  #tArrow{width:50px; height:50px; right:170px; --off:70px}
+  #tHeal{width:48px; height:48px; --off:108px}
+  .joy-base{width:108px; height:108px}
+  .joy-stick{width:52px; height:52px}
+}
 
 /* Toast & damage vignette */
 #iToast{position:absolute; top:60px; left:50%; transform:translateX(-50%) translateY(-10px); z-index:30; opacity:0; pointer-events:none;
@@ -166,8 +186,8 @@ body{
 
   <!-- Touch controls -->
   <div id="touchUI">
-    <div class="tc" id="tLeft">◀</div>
-    <div class="tc" id="tRight">▶</div>
+    <div id="joyZone" aria-hidden="true"></div>
+    <div class="joy-base" id="joyBase"><div class="joy-stick" id="joyStick"></div></div>
     <div class="tc" id="tJump">قفز</div>
     <div class="tc" id="tAtk">⚔</div>
     <div class="tc hidden" id="tDash">💨</div>
@@ -629,13 +649,54 @@ function bindTouch(id,down,up){
   const end=e=>{ el.classList.remove('held'); up&&up(); };
   el.addEventListener('pointerup',end); el.addEventListener('pointercancel',end);
 }
-bindTouch('tLeft',()=>INPUT.l=true,()=>INPUT.l=false);
-bindTouch('tRight',()=>INPUT.r=true,()=>INPUT.r=false);
 bindTouch('tJump',()=>{INPUT.jump=true;INPUT.jumpHeld=true;},()=>INPUT.jumpHeld=false);
 bindTouch('tAtk',()=>{INPUT.atk=true;INPUT.atkHeld=true;},()=>INPUT.atkHeld=false);
 bindTouch('tDash',()=>INPUT.dash=true);
 bindTouch('tArrow',()=>INPUT.arrow=true);
 bindTouch('tHeal',()=>INPUT.heal=true);
+
+/* Floating analog joystick on the left half — touch and drag.
+   Maps a 70px deadzone-aware horizontal stick into INPUT.l / INPUT.r so the
+   existing acceleration-based movement code doesn't need to change. */
+(function(){
+  const zone=document.getElementById('joyZone');
+  const base=document.getElementById('joyBase');
+  const stick=document.getElementById('joyStick');
+  if(!zone)return;
+  const RAD=58; // max drag radius in px
+  const DEAD=0.18;
+  let pid=null, cx=0, cy=0;
+  function setDir(nx){
+    if(nx<-DEAD){ INPUT.l=true; INPUT.r=false; }
+    else if(nx>DEAD){ INPUT.r=true; INPUT.l=false; }
+    else { INPUT.l=false; INPUT.r=false; }
+  }
+  zone.addEventListener('pointerdown', e=>{
+    if(pid!==null)return;
+    pid=e.pointerId; cx=e.clientX; cy=e.clientY;
+    base.style.left=cx+'px'; base.style.top=cy+'px';
+    base.style.display='block';
+    stick.style.left='50%'; stick.style.top='50%';
+    try{ zone.setPointerCapture(pid); }catch(err){}
+    e.preventDefault();
+  });
+  zone.addEventListener('pointermove', e=>{
+    if(e.pointerId!==pid)return;
+    let dx=e.clientX-cx, dy=e.clientY-cy;
+    const d=Math.hypot(dx,dy);
+    if(d>RAD){ dx*=RAD/d; dy*=RAD/d; }
+    stick.style.left=(50 + dx/RAD*50)+'%';
+    stick.style.top=(50 + dy/RAD*50)+'%';
+    setDir(dx/RAD);
+  });
+  function end(e){
+    if(e.pointerId!==pid)return;
+    pid=null; base.style.display='none';
+    INPUT.l=false; INPUT.r=false;
+  }
+  zone.addEventListener('pointerup', end);
+  zone.addEventListener('pointercancel', end);
+})();
 
 function togglePause(){
   if(G.state==='play'){ G.state='pause'; showScr('pauseScr'); sfx('ui'); }
