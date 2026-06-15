@@ -11497,7 +11497,7 @@ body.wn-locked .top-nav{display:none !important}
   border:3px solid #ffd200;display:flex;align-items:center;justify-content:center;
   font-size:3.2rem;line-height:1;box-shadow:0 10px 30px rgba(0,0,0,0.55),inset 0 -4px 0 rgba(0,0,0,0.18);
   animation:wnDlgBob 1.8s infinite ease-in-out;overflow:hidden}
-.wn-dlg-portrait svg{width:100%;height:100%;display:block}
+.wn-dlg-portrait svg,.wn-dlg-portrait img{width:100%;height:100%;display:block;object-fit:cover;object-position:center top}
 @keyframes wnDlgBob{0%,100%{transform:translateY(0) rotate(-2deg)}50%{transform:translateY(-4px) rotate(2deg)}}
 .wn-dlg-body{flex:1;background:#fff8e8;color:#2a1810;border:3px solid #c9a84c;border-radius:18px;
   padding:12px 14px 10px;position:relative;box-shadow:0 12px 40px rgba(0,0,0,0.55);
@@ -11525,7 +11525,7 @@ body.wn-locked .top-nav{display:none !important}
   .wn-dlg-portrait{width:72px;height:72px;font-size:2.4rem}
   .wn-dlg-text{font-size:0.95rem;min-height:54px}
   .wn-dlg-name{font-size:0.85rem}
-  .wn-cin-portrait{width:100px;height:100px}
+  .wn-cin-portrait{width:130px;height:175px}
 }
 @media (prefers-reduced-motion:reduce){
   .wn-dlg{animation:none}
@@ -11555,16 +11555,18 @@ body.wn-locked .top-nav{display:none !important}
 .wn-cin-star{position:absolute;border-radius:50%;background:#fff;animation:wnStarTwinkle 1.8s infinite ease-in-out}
 @keyframes wnStarTwinkle{0%,100%{opacity:0.2;transform:scale(0.8)}50%{opacity:1;transform:scale(1.2)}}
 .wn-cin-portraits{display:flex;gap:32px;align-items:flex-end;position:relative;z-index:1}
-.wn-cin-portrait{width:140px;height:140px;line-height:1;
+.wn-cin-portrait{width:170px;height:230px;line-height:1;
   filter:drop-shadow(0 0 18px rgba(255,215,80,0.9));
-  animation:wnCinFloat 2.2s infinite ease-in-out}
-.wn-cin-portrait svg{width:100%;height:100%;display:block}
+  animation:wnCinFloat 2.2s infinite ease-in-out;
+  border-radius:18px;overflow:hidden;border:3px solid rgba(255,210,0,0.6);
+  background:rgba(0,0,0,0.25)}
+.wn-cin-portrait svg,.wn-cin-portrait img{width:100%;height:100%;display:block;object-fit:contain;object-position:center}
 .wn-cin-portrait:nth-child(3){animation-delay:-1.1s}
 .wn-cin-hearts{font-size:2rem;align-self:center;animation:wnCinHeartBeat 1.2s infinite ease-in-out}
 @keyframes wnCinFloat{0%,100%{transform:translateY(0) rotate(-2deg)}50%{transform:translateY(-10px) rotate(2deg)}}
 @keyframes wnCinHeartBeat{0%,100%{transform:scale(1)}50%{transform:scale(1.25)}}
-.wn-cin-walk-char{width:54px;height:54px;display:inline-block;vertical-align:middle}
-.wn-cin-walk-char svg{width:100%;height:100%}
+.wn-cin-walk-char{width:64px;height:80px;display:inline-block;vertical-align:middle;border-radius:10px;overflow:hidden}
+.wn-cin-walk-char svg,.wn-cin-walk-char img{width:100%;height:100%;object-fit:contain}
 .wn-cin-title{font-size:1.6rem;font-weight:900;color:#ffd200;letter-spacing:2px;
   font-family:'Tajawal','Cairo',sans-serif;text-align:center;
   text-shadow:0 0 24px rgba(255,210,0,0.9),0 0 48px rgba(255,160,0,0.5);
@@ -12544,8 +12546,21 @@ const CHAR_SVG = {
     + '<circle cx="94" cy="30" r="1.4" fill="#cc1144" opacity="0.6"/>'
     + '</svg>',
 };
-function _heroSvg(){ return WG.suhaMode ? CHAR_SVG.suha : CHAR_SVG.wanees; }
-function _luluSvg(){ return CHAR_SVG.lulu; }
+// Polished cartoon PNG sprites (rendered by an artist) for the three
+// main characters. Suha mode still uses her SVG since no PNG was
+// commissioned for that variant.
+const CHAR_PNG = {
+  wanees:  'char-wanees.png',
+  lulu:    'char-lulu.png',
+  villain: 'char-kaaboul.png',
+};
+function _imgTag(src, alt){ return '<img src="' + src + '" alt="' + alt + '" draggable="false">'; }
+function _heroSvg(){
+  if (WG.suhaMode) return CHAR_SVG.suha;
+  return _imgTag(CHAR_PNG.wanees, 'ونيس');
+}
+function _luluSvg(){ return _imgTag(CHAR_PNG.lulu, 'لُولُو'); }
+function _villainSvg(){ return _imgTag(CHAR_PNG.villain, 'كعبول'); }
 function _fmt(s){ return s.replace(/\{hero\}/g, _heroName()); }
 let _dlgQ = null, _dlgIdx = 0, _dlgDone = null, _dlgTypeT = 0, _dlgTyping = false;
 function showDialogue(key, onDone){
@@ -12562,7 +12577,7 @@ function _renderDlg(){
   const body = document.getElementById('wnDlgBody');
   const nameEl = document.getElementById('wnDlgName');
   const textEl = document.getElementById('wnDlgText');
-  portrait.innerHTML = isVillain ? CHAR_SVG.villain : (isHero ? _heroSvg() : _luluSvg());
+  portrait.innerHTML = isVillain ? _villainSvg() : (isHero ? _heroSvg() : _luluSvg());
   portrait.className = 'wn-dlg-portrait' + (isVillain ? ' villain-face' : '');
   if (body) body.className = 'wn-dlg-body' + (isVillain ? ' villain-body' : '');
   nameEl.textContent = isVillain ? 'كعبول' : (isHero ? _heroName() : 'لُولُو');
