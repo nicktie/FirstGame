@@ -12337,13 +12337,19 @@ const COOP = {
   hostName: null, hostKind: null,
   guestName: null, guestKind: null,
   off: null, offInput: null, offGuest: null,
-  snapAcc: 0, snapEveryFrames: 6,    // host writes ~10/sec
-  inputAcc: 0, inputEveryFrames: 2,  // guest writes ~30/sec
+  snapAcc: 0, snapEveryFrames: 4,    // host writes ~15/sec (was 10)
+  inputAcc: 0, inputEveryFrames: 1,  // guest writes ~60/sec on change
   lastSnapAt: 0, lastInputAt: 0,
   watchTimer: 0,
   dcRef: null,
-  pendingInputs: null, // queued input writes from guest
-  prevInputSig: '',    // dedup guest writes
+  pendingInputs: null,
+  prevInputSig: '',
+  // Guest-side local prediction: when the guest moves their joystick we
+  // slide P2 visually right away and gently reconcile toward the
+  // authoritative position from each snapshot. Cuts perceived input lag
+  // from a 250 ms round-trip down to a single frame.
+  predictGain: 1.8,     // tiles/sec of visual prediction per joystick unit
+  reconcilePull: 0.35,  // fraction of position diff applied each snap
 };
 // Profile-based identity. Profile name "سهى" plays as Suha, "أسامة" plays as
 // Osama (a recolor/name swap for Wanees), everyone else gets the default
@@ -12413,6 +12419,9 @@ function _wnCoopHostStart(){
   COOP.mode = 'host';
   document.getElementById('waneesCoopWait').style.display = 'none';
   try { showToast && showToast('✨ '+COOP.guestName+' انضم — هيا!', '#3dba7a'); } catch(e){}
+  // iOS Safari throttles background JS hard; grab a wake lock so the screen
+  // stays on and the loop keeps its 60 Hz rhythm during play.
+  try { _wnAcquireWake && _wnAcquireWake(); } catch(e){}
   // Mark the room as started so the guest knows we're going
   COOP.ref.child('started').set(true).catch(()=>{});
   // Subscribe to guest's inputs
@@ -12470,6 +12479,7 @@ function _wnCoopGuestStart(){
   COOP.mode = 'guest';
   WG.coopMode = true;
   WG.coopRole = 'guest';
+  try { _wnAcquireWake && _wnAcquireWake(); } catch(e){}
   WG._p1Kind = COOP.hostKind;
   WG._p2Kind = COOP.guestKind;
   // Prepare world placeholders; the snapshot will fill them in
@@ -12495,25 +12505,39 @@ function _wnCoopGuestStart(){
   cancelAnimationFrame(WG.raf);
   WG.raf = requestAnimationFrame(coopGuestFrame);
 }
-function coopGuestFrame(){
+function coopGuestFrame(t){
   if (COOP.mode !== 'guest') return;
-  // Guest doesn't simulate — it just renders the last received snapshot
+  // Lightweight visual prediction so the partner's character starts moving
+  // the instant the joystick is touched — without simulating physics. The
+  // authoritative position then pulls the prediction back in applyCoopSnap.
+  const now = (typeof t === 'number') ? t : performance.now();
+  const dt = Math.min(2.5, (now - (COOP._prevT || now)) / 16.67); // frames
+  COOP._prevT = now;
+  if (WG.player2 && !WG.player2.ghost){
+    const ix = WG.inputs.analogX || (WG.inputs.left ? -1 : WG.inputs.right ? 1 : 0);
+    if (Math.abs(ix) > 0.05){
+      WG.player2.x += ix * COOP.predictGain * dt * WG.PLAYER_SPEED * 0.5;
+      WG.player2.walkPhase = (WG.player2.walkPhase || 0) + dt * 0.25;
+      WG.player2.dir = ix > 0 ? 1 : -1;
+    }
+  }
   try { drawFrame(); } catch(e){}
-  // Send our inputs as P2
   flushCoopInput();
   WG.raf = requestAnimationFrame(coopGuestFrame);
 }
-function flushCoopInput(){
+function flushCoopInput(force){
   if (COOP.mode !== 'guest' || !COOP.ref) return;
-  COOP.inputAcc = (COOP.inputAcc || 0) + 1;
-  if (COOP.inputAcc < COOP.inputEveryFrames) return;
-  COOP.inputAcc = 0;
+  if (!force){
+    COOP.inputAcc = (COOP.inputAcc || 0) + 1;
+    if (COOP.inputAcc < COOP.inputEveryFrames) return;
+    COOP.inputAcc = 0;
+  }
   // The guest's local touch/keyboard binds to WG.inputs (the only input they
   // have on their device). Forward it as the partner's P2 input.
   const i = WG.inputs;
   const sig = [i.left?1:0, i.right?1:0, i.jumpHeld?1:0, i.jumpJustPressed?1:0,
                 Math.round((i.analogX||0)*100), i.fireTap?1:0].join('|');
-  if (sig === COOP.prevInputSig) return;
+  if (!force && sig === COOP.prevInputSig) return;
   COOP.prevInputSig = sig;
   const payload = {
     l: i.left?1:0, r: i.right?1:0,
@@ -12526,6 +12550,11 @@ function flushCoopInput(){
   // jumpJustPressed is a one-shot — consume locally too so we don't resend
   WG.inputs.jumpJustPressed = false;
   WG.inputs.fireTap = false;
+}
+// Tiny shim so input handlers can immediately push to the network on edges
+// (touchstart, keydown, jump tap) instead of waiting for the next frame.
+function coopFlushNow(){
+  if (COOP.mode === 'guest') flushCoopInput(true);
 }
 function applyCoopInput(v){
   // Host receives guest's input → apply to WG.inputs2 so P2 physics drive
@@ -12579,7 +12608,19 @@ function applyCoopSnap(snap){
   WG.camera.x = snap.cm|0;
   function applyP(pp, src){
     if (!pp || !src) return;
-    pp.x = src.x||0; pp.y = src.y||0;
+    const sx = src.x||0, sy = src.y||0;
+    // Guest's own slot (P2): smooth reconciliation against local prediction
+    // so the joystick feels instant. Big drifts (level transitions, deaths)
+    // still snap. P1 (the host) just hard-snaps — server is canonical.
+    const isOwnSlot = (COOP.mode === 'guest' && pp === WG.player2);
+    if (isOwnSlot && pp.x !== undefined){
+      const dx = sx - pp.x, dy = sy - pp.y;
+      const dist = Math.hypot(dx, dy);
+      if (dist > 32){ pp.x = sx; pp.y = sy; }
+      else { pp.x += dx * COOP.reconcilePull; pp.y += dy * (dy < 0 ? 0.7 : COOP.reconcilePull); }
+    } else {
+      pp.x = sx; pp.y = sy;
+    }
     pp.dir = src.d||1; pp.walkPhase = src.w||0;
     pp.onGround = !!src.og; pp.invincible = src.iv|0; pp.starTimer = src.st|0;
     pp.ghost = !!src.gh; pp.lives = src.lv|0; pp.fireCharges = src.fc|0;
@@ -13846,14 +13887,15 @@ function bindWaneesControls(){
   }
   document.addEventListener('keydown', (e) => {
     if (!isActive()) return;
-    if (e.code === 'ArrowLeft' || e.key === 'ArrowLeft'){ WG.inputs.left = true; e.preventDefault(); }
-    else if (e.code === 'ArrowRight' || e.key === 'ArrowRight'){ WG.inputs.right = true; e.preventDefault(); }
+    let pushed = false;
+    if (e.code === 'ArrowLeft' || e.key === 'ArrowLeft'){ if (!WG.inputs.left) pushed = true; WG.inputs.left = true; e.preventDefault(); }
+    else if (e.code === 'ArrowRight' || e.key === 'ArrowRight'){ if (!WG.inputs.right) pushed = true; WG.inputs.right = true; e.preventDefault(); }
     else if (e.code === 'Space' || e.code === 'ArrowUp' || e.key === 'ArrowUp' || e.key === ' '){
-      if (!WG.inputs.jumpHeld) WG.inputs.jumpJustPressed = true;
+      if (!WG.inputs.jumpHeld){ WG.inputs.jumpJustPressed = true; pushed = true; }
       WG.inputs.jumpHeld = true; WG.inputs.jump = true; e.preventDefault();
     }
-    // P2 keyboard (coop): WASD movement + W/ShiftLeft jump
-    else if (WG.coopMode){
+    // P2 keyboard (coop, local only — online guest uses arrows/space)
+    else if (WG.coopMode && WG.coopRole !== 'guest'){
       if (e.code === 'KeyA'){ WG.inputs2.left = true; e.preventDefault(); }
       else if (e.code === 'KeyD'){ WG.inputs2.right = true; e.preventDefault(); }
       else if (e.code === 'KeyW' || e.code === 'ShiftLeft'){
@@ -13861,19 +13903,22 @@ function bindWaneesControls(){
         WG.inputs2.jumpHeld = true; e.preventDefault();
       }
     }
+    if (pushed) coopFlushNow();
   });
   document.addEventListener('keyup', (e) => {
     if (!isActive()) return;
-    if (e.code === 'ArrowLeft' || e.key === 'ArrowLeft'){ WG.inputs.left = false; e.preventDefault(); }
-    else if (e.code === 'ArrowRight' || e.key === 'ArrowRight'){ WG.inputs.right = false; e.preventDefault(); }
+    let pushed = false;
+    if (e.code === 'ArrowLeft' || e.key === 'ArrowLeft'){ WG.inputs.left = false; e.preventDefault(); pushed = true; }
+    else if (e.code === 'ArrowRight' || e.key === 'ArrowRight'){ WG.inputs.right = false; e.preventDefault(); pushed = true; }
     else if (e.code === 'Space' || e.code === 'ArrowUp' || e.key === 'ArrowUp' || e.key === ' '){
-      WG.inputs.jumpHeld = false; WG.inputs.jump = false; e.preventDefault();
+      WG.inputs.jumpHeld = false; WG.inputs.jump = false; e.preventDefault(); pushed = true;
     }
-    else if (WG.coopMode){
+    else if (WG.coopMode && WG.coopRole !== 'guest'){
       if (e.code === 'KeyA'){ WG.inputs2.left = false; e.preventDefault(); }
       else if (e.code === 'KeyD'){ WG.inputs2.right = false; e.preventDefault(); }
       else if (e.code === 'KeyW' || e.code === 'ShiftLeft'){ WG.inputs2.jumpHeld = false; e.preventDefault(); }
     }
+    if (pushed) coopFlushNow();
   });
   window.addEventListener('blur', () => {
     if (isActive()){ WG.inputs.left = false; WG.inputs.right = false; WG.inputs.jumpHeld = false; WG.inputs.analogX = 0;
@@ -13947,6 +13992,7 @@ function bindWaneesButtons(){
     WG.inputs.jump = true;
     tapR.classList.add('held');
     if (ev) ev.preventDefault();
+    coopFlushNow(); // push press edge to network immediately if guest
   }
   function jumpRelease(id){
     jumpIds.delete(id);
@@ -13954,6 +14000,7 @@ function bindWaneesButtons(){
       WG.inputs.jumpHeld = false;
       WG.inputs.jump = false;
       tapR.classList.remove('held');
+      coopFlushNow();
     }
   }
   // ===== Wire up touch + pointer events on both zones =====
@@ -14135,6 +14182,7 @@ function bindWaneesButtons(){
       ev.stopPropagation();
       fireBtn.classList.add('pressed');
       WG.inputs.fireTap = true;
+      coopFlushNow();
     };
     const fireUp = () => fireBtn.classList.remove('pressed');
     fireBtn.addEventListener('touchstart', fireDown, { passive:false });
