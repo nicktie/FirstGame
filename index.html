@@ -11397,6 +11397,12 @@ body.wn-locked .top-nav{display:none !important}
 .wn-controls{display:flex;justify-content:space-between;align-items:center;padding:6px calc(14px + env(safe-area-inset-right,0px)) calc(24px + env(safe-area-inset-bottom,0px)) calc(14px + env(safe-area-inset-left,0px));gap:8px;flex-shrink:0;direction:ltr;flex-direction:row-reverse}
 .wn-char-label{font-family:'Tajawal',sans-serif;font-weight:700;font-size:0.85rem;color:#e8e0d0;margin:14px 0 8px;letter-spacing:1px;opacity:0.85}
 .wn-char-picker{display:flex;gap:14px;justify-content:center;margin-bottom:14px;flex-wrap:wrap}
+.wn-coop-pick{display:flex;gap:8px;justify-content:center;margin:10px 0 14px;flex-wrap:wrap;max-width:420px}
+.wn-coop-btn{background:rgba(20,20,32,0.7);border:2px solid #3a3a52;border-radius:10px;padding:8px 14px;cursor:pointer;
+  font-family:'Tajawal',sans-serif;font-weight:800;font-size:0.85rem;color:#cfd6e6;transition:all 0.15s}
+.wn-coop-btn:hover{transform:translateY(-1px)}
+.wn-coop-btn.active{border-color:#c9a84c;background:linear-gradient(180deg,rgba(201,168,76,0.28),rgba(122,90,30,0.22));color:#ffd200;box-shadow:0 5px 16px rgba(201,168,76,0.3)}
+.wn-coop-btn[data-coop="1"].active{border-color:#ff5e9c;background:linear-gradient(180deg,rgba(255,94,156,0.28),rgba(170,30,80,0.2));color:#ffb0d2;box-shadow:0 5px 16px rgba(255,94,156,0.3)}
 .wn-char-btn{background:rgba(20,20,32,0.7);border:2px solid #3a3a52;border-radius:14px;padding:10px 14px;cursor:pointer;
   display:flex;flex-direction:column;align-items:center;gap:6px;min-width:88px;transition:transform 0.15s,border-color 0.2s,box-shadow 0.2s}
 .wn-char-btn:hover{transform:translateY(-2px)}
@@ -11465,6 +11471,25 @@ body.wn-locked .top-nav{display:none !important}
 .wn-tap-right{right:0;border-top-left-radius:14px;
   background:linear-gradient(to left,rgba(255,210,0,0.06),transparent 70%)}
 .wn-tap-right.held{background:linear-gradient(to left,rgba(255,210,0,0.18),transparent 70%)}
+/* Coop-only P2 (لُولُو) zones, hidden by default */
+.wn-tap-p2-jump,.wn-tap-p2-joy{display:none;position:absolute;top:48px;bottom:0;width:25%;z-index:3;
+  touch-action:none;user-select:none;-webkit-user-select:none;-webkit-touch-callout:none;
+  pointer-events:auto;align-items:flex-end;justify-content:center}
+.wn-tap-p2-jump{left:50%;border-top-left-radius:14px;border-top-right-radius:14px;
+  background:linear-gradient(to top,rgba(255,94,156,0.10),transparent 70%)}
+.wn-tap-p2-jump.held{background:linear-gradient(to top,rgba(255,94,156,0.28),transparent 70%)}
+.wn-tap-p2-joy{right:0;border-top-left-radius:14px;
+  background:linear-gradient(to left,rgba(255,94,156,0.04),transparent 70%)}
+/* Coop arena layout: split each side into joystick + jump strips */
+.wn-arena.coop .wn-tap-left{width:25%}
+.wn-arena.coop .wn-tap-right{right:auto;left:25%;width:25%;
+  background:linear-gradient(to top,rgba(255,210,0,0.10),transparent 70%)}
+.wn-arena.coop .wn-tap-right.held{background:linear-gradient(to top,rgba(255,210,0,0.28),transparent 70%)}
+.wn-arena.coop .wn-tap-p2-jump,.wn-arena.coop .wn-tap-p2-joy{display:flex}
+/* P2 joystick base uses a pink tint to distinguish from P1's gold */
+#wnJoyBase2 .wn-joy-thumb{background:radial-gradient(circle at 35% 30%,#ffd6e8,#ff5e9c 55%,#aa1166);
+  border-color:#ffc8d8}
+#wnJoyBase2{border-color:rgba(255,94,156,0.6)}
 .wn-tap-hint{color:rgba(255,210,0,0.45);font-family:'Tajawal',sans-serif;font-size:0.78rem;font-weight:700;
   pointer-events:none;letter-spacing:1px;text-align:center;padding-bottom:14px;
   text-shadow:0 1px 3px rgba(0,0,0,0.6);transition:opacity 0.2s;max-width:90%;line-height:1.4}
@@ -11640,15 +11665,24 @@ body.wn-locked .top-nav{display:none !important}
   </div>
   <div class="wn-arena" id="waneesArena">
     <canvas id="waneesCanvas" width="320" height="180"></canvas>
-    <!-- Big touch zones: anywhere on the bottom-left = joystick, bottom-right = jump.
-         Sits above the canvas but below the HUD overlays. -->
+    <!-- Big touch zones. Single-player: left half = joystick, right half = jump.
+         Coop: left strip = P1 joystick, center-left = P1 jump, center-right = P2 jump,
+         right strip = P2 joystick. Sits above the canvas but below the HUD overlays. -->
     <div class="wn-tap-zone wn-tap-left" id="wnTapLeft" aria-hidden="true"></div>
     <div class="wn-tap-zone wn-tap-right" id="wnTapRight" aria-hidden="true">
       <span class="wn-tap-hint">🦘 المس هنا للقفز</span>
     </div>
+    <!-- Coop-only zones for player 2 (Lulu). Hidden unless arena.coop is set. -->
+    <div class="wn-tap-zone wn-tap-p2-jump" id="wnTapP2Jump" aria-hidden="true">
+      <span class="wn-tap-hint">🦘 قفز لُولُو</span>
+    </div>
+    <div class="wn-tap-zone wn-tap-p2-joy" id="wnTapP2Joy" aria-hidden="true"></div>
     <!-- Floating joystick visuals that appear at the touch point -->
     <div class="wn-joy-base wn-joy-floating" id="wnJoyBase">
       <div class="wn-joy-thumb" id="wnJoyThumb"></div>
+    </div>
+    <div class="wn-joy-base wn-joy-floating" id="wnJoyBase2">
+      <div class="wn-joy-thumb" id="wnJoyThumb2"></div>
     </div>
     <div class="wn-tap-hint wn-tap-hint-left" id="wnJoyHintFloating">🕹️ المس واسحب يميناً ويساراً للحركة</div>
     <!-- Story dialogue overlay -->
@@ -11710,6 +11744,10 @@ body.wn-locked .top-nav{display:none !important}
           <span class="wn-char-avatar wn-char-suha" aria-hidden="true"></span>
           <span class="wn-char-name">سهى ❤️</span>
         </button>
+      </div>
+      <div class="wn-coop-pick" id="wnCoopPick">
+        <button class="wn-coop-btn active" data-coop="0" type="button" onclick="setCoopMode(0)">👤 لاعب واحد</button>
+        <button class="wn-coop-btn" data-coop="1" type="button" onclick="setCoopMode(1)">👥 لاعبان (ونيس + لُولُو)</button>
       </div>
       <button class="wn-btn-primary" onclick="waneesStart()">🚀 ابدأ المغامرة</button>
       <div class="wn-spec-actions">
@@ -11899,7 +11937,9 @@ const WG = {
   camera: { x:0 },
   score:0, coinsCollected:0, lives:3, timeLeft:300,
   best:0, stompCombo:0, stompComboTimer:0,
-  inputs: { left:false, right:false, jump:false, jumpHeld:false, jumpJustPressed:false, analogX:0 },
+  inputs: { left:false, right:false, jump:false, jumpHeld:false, jumpJustPressed:false, analogX:0, fireTap:false },
+  inputs2:{ left:false, right:false, jump:false, jumpHeld:false, jumpJustPressed:false, analogX:0, fireTap:false },
+  coopMode:false, player2:null, reviveStars:[],
   raf:0, lastTime:0, timeAccum:0,
   _bound:false, _btnBound:false,
   GRAV:0.34, JUMP_VEL:-6.4, MAX_FALL:6.5, PLAYER_SPEED:2.0,
@@ -12020,16 +12060,47 @@ function loadLevel(){
     WG.level.push(tileRow);
   }
   WG.player = {
+    id: 1, kind: 'wanees',
     x: playerStart.x, y: playerStart.y,
     vx:0, vy:0, w:12, h:14,
     onGround:false, dir:1, invincible:0,
     walkPhase:0, alive:true, starTimer:0,
     jumpBuffer:0, coyote:0, jumpCut:false,
     // Fire-Flower power: persists across levels until player dies/resets.
-    fireCharges: (WG.player && WG.player.fireCharges) || 0, fireCd:0
+    fireCharges: (WG.player && WG.player.fireCharges) || 0, fireCd:0,
+    // Coop-only: per-player hearts and ghost state. Single-player ignores
+    // these and keeps using WG.lives instead.
+    lives: (WG.player && typeof WG.player.lives === 'number') ? WG.player.lives : 3,
+    ghost: false
   };
+  if (WG.coopMode){
+    // Lulu spawns next to Wanees, 16px to the right, looking left toward him.
+    const prev2 = WG.player2;
+    WG.player2 = {
+      id: 2, kind: 'lulu',
+      x: playerStart.x + 18, y: playerStart.y,
+      vx:0, vy:0, w:12, h:14,
+      onGround:false, dir:-1, invincible:0,
+      walkPhase:0, alive:true, starTimer:0,
+      jumpBuffer:0, coyote:0, jumpCut:false,
+      fireCharges: (prev2 && prev2.fireCharges) || 0, fireCd:0,
+      lives: (prev2 && typeof prev2.lives === 'number') ? prev2.lives : 3,
+      ghost: false
+    };
+  } else {
+    WG.player2 = null;
+  }
+  WG.reviveStars = []; // cleared each level; respawned on death
   WG.fireballs = WG.fireballs || [];
   syncFireBtn();
+}
+// Iterate active players (P1 always, P2 only in coop). Ghosts included so
+// their position can still update (they float in place).
+function allPlayers(){
+  return WG.player2 ? [WG.player, WG.player2] : [WG.player];
+}
+function alivePlayers(){
+  return allPlayers().filter(p => !p.ghost);
 }
 function isSuhaPlayer(){
   // Suha mode is gated entirely on the profile name — only the player whose
@@ -12268,15 +12339,34 @@ function resetWaneesState(){
   WG.fireballs = [];
   // Forget the old player so the next loadLevel rebuilds with 0 fire charges
   WG.player = null;
+  WG.player2 = null;
+  WG.reviveStars = [];
   WG.inputs = { left:false, right:false, jump:false, jumpHeld:false, jumpJustPressed:false, analogX:0, fireTap:false };
+  // Second input set — only consumed when WG.coopMode is true. Mirrors WG.inputs.
+  WG.inputs2 = { left:false, right:false, jump:false, jumpHeld:false, jumpJustPressed:false, analogX:0, fireTap:false };
   updateHud();
   syncFireBtn();
 }
+// Two-player coop state — toggled from the start overlay.
+WG.coopMode = false;
+window.setCoopMode = function(v){
+  WG.coopMode = !!v;
+  document.querySelectorAll('.wn-coop-btn').forEach(b => {
+    b.classList.toggle('active', String(b.dataset.coop|0) === String(v|0));
+  });
+  const arena = document.getElementById('waneesArena');
+  if (arena) arena.classList.toggle('coop', WG.coopMode);
+};
 // ===== Story dialogues =====
 // Wanees is on a quest to find his little sister "Lulu". After each level
 // he gets a little closer; a short, encouraging line keeps the player
 // invested. Suha mode swaps names but keeps the same beats.
 const WN_STORY = {
+  coopIntro: [
+    {who:'hero', text:'لُولُو، اليوم رح نلعب مع بعض! 🍄💕\nخلّينا نلحق كعبول قبل ما يهرب…'},
+    {who:'lulu', text:'يلا أخوي {hero}! 🌟\nأنا أقفز عالي وأنت تكسّر الأعداء — معاً ما أحد يوقفنا! 💪'},
+    {who:'hero', text:'لو طاحت قلوبك، تجمع لي ٣ نجوم وترجّعني للحياة 😉\nويمين الشاشة لك، يسار الشاشة لي!'},
+  ],
   intro: [
     {who:'hero', text:'مرحباً! أنا {hero} 👋\nأعيش في وادي الفطر السحري مع أختي الصغيرة لُولُو 💕'},
     {who:'hero', text:'هالصبح صحيت ولُولُو مو في غرفتها… لقيت ورقة مكتوب فيها:\n"خذها كعبول لقلعة الظلام" 😱'},
@@ -12673,6 +12763,9 @@ window.waneesStart = function(){
   document.getElementById('waneesStartOverlay').style.display = 'none';
   document.getElementById('waneesOverOverlay').style.display = 'none';
   resetWaneesState();
+  // Sync arena coop class so the split touch zones become visible
+  const arena = document.getElementById('waneesArena');
+  if (arena) arena.classList.toggle('coop', !!WG.coopMode);
   loadLevel();
   const ctrls = document.querySelector('#waneesScreen .wn-controls');
   if (ctrls) ctrls.classList.toggle('suha-layout', !!WG.suhaMode);
@@ -12683,7 +12776,8 @@ window.waneesStart = function(){
   }
   // Pause the game while the intro story plays, then start the loop.
   WG.state = 'paused';
-  showDialogue('intro', _startGameplayLoop);
+  // Coop has its own shorter intro since Lulu is already with us.
+  showDialogue(WG.coopMode ? 'coopIntro' : 'intro', _startGameplayLoop);
 };
 function waneesStop(){
   cancelAnimationFrame(WG.raf);
@@ -12704,6 +12798,7 @@ function waneesLoop(t){
   drawFrame();
   publishSnapshot(rawDt);
   WG.inputs.jumpJustPressed = false;
+  if (WG.inputs2) WG.inputs2.jumpJustPressed = false;
   WG.raf = requestAnimationFrame(waneesLoop);
 }
 function isSolid(ch){ return ch === '#' || ch === 'b' || ch === '?' || ch === '=' || ch === 'M' || ch === 'u'; }
@@ -12766,17 +12861,23 @@ function updateWanees(dt){
     WG.timeLeft = Math.max(0, WG.timeLeft - 1);
     if (WG.timeLeft === 0){ loseLife('time'); return; }
   }
-  updatePlayer(dt);
+  // Player updates — loop both players in coop, each with its own inputs.
+  updatePlayer(dt, WG.player, WG.inputs);
+  if (WG.player2) updatePlayer(dt, WG.player2, WG.inputs2);
   if (WG.state !== 'running') return;
   WG.enemies.forEach(e => updateEnemy(e, dt));
+  // Enemy collisions per player
+  const livePlayers = alivePlayers();
   for (const e of WG.enemies){
     if (!e.alive) continue;
-    if (rectsOverlap(WG.player, e)){
-      const fromAbove = WG.player.vy > 0 && (WG.player.y + WG.player.h - WG.player.vy * dt) <= e.y + 4;
-      if (fromAbove || WG.player.starTimer > 0){
+    for (const pp of livePlayers){
+      if (!e.alive) break;
+      if (!rectsOverlap(pp, e)) continue;
+      const fromAbove = pp.vy > 0 && (pp.y + pp.h - pp.vy * dt) <= e.y + 4;
+      if (fromAbove || pp.starTimer > 0){
         e.alive = false;
         if (fromAbove) {
-          WG.player.vy = -3.6;
+          pp.vy = -3.6;
           WG.stompCombo++;
           WG.stompComboTimer = 36;
         }
@@ -12785,12 +12886,11 @@ function updateWanees(dt){
         wnSnd('stomp');
         spawnPoof(e.x + e.w/2, e.y);
         if (WG.stompCombo >= 3) spawnSparkle(e.x + e.w/2, e.y - 4);
-        // Game feel: trauma + hit-stop scaling with combo
         if (!WG._gk) WG._gk = { shake: new GameKit.Shake(), stop: new GameKit.HitStop() };
         WG._gk.shake.kick(0.15 + Math.min(0.35, WG.stompCombo * 0.08));
         WG._gk.stop.hit(Math.min(5, 2 + WG.stompCombo));
-      } else if (WG.player.invincible <= 0){
-        loseLife('enemy');
+      } else if (pp.invincible <= 0){
+        loseLife('enemy', pp);
         return;
       }
     }
@@ -12798,28 +12898,35 @@ function updateWanees(dt){
   WG.items.forEach(it => updateItem(it, dt));
   for (const it of WG.items){
     if (!it.alive) continue;
-    if (rectsOverlap(WG.player, it)){
+    for (const pp of livePlayers){
+      if (!it.alive) break;
+      if (!rectsOverlap(pp, it)) continue;
       it.alive = false;
       if (it.kind === 'mushroom'){
-        WG.lives += WG.suhaMode ? 2 : 1;
+        // Extra heart goes to the picking player in coop; in single it
+        // falls back to the shared lives pool.
+        if (WG.coopMode){ pp.lives = Math.min(WG.suhaMode ? 6 : 5, pp.lives + 1); }
+        else { WG.lives += WG.suhaMode ? 2 : 1; }
         WG.score += 200;
         spawnSparkle(it.x + it.w/2, it.y + it.h/2);
         wnSnd('coin');
         updateHud();
       } else if (it.kind === 'star'){
-        WG.player.starTimer = WG.suhaMode ? 600 : 360;
+        pp.starTimer = WG.suhaMode ? 600 : 360;
         WG.score += 300;
         spawnSparkle(it.x + it.w/2, it.y + it.h/2);
         wnSnd('coin');
         updateHud();
       } else if (it.kind === 'fire'){
-        WG.player.fireCharges = Math.min(99, (WG.player.fireCharges||0) + 8);
+        // In coop only P1 has the fire button, so route Lulu's pickup to him.
+        const owner = (WG.coopMode && pp.kind === 'lulu') ? WG.player : pp;
+        owner.fireCharges = Math.min(99, (owner.fireCharges||0) + 8);
         WG.score += 400;
         spawnSparkle(it.x + it.w/2, it.y + it.h/2);
         spawnSparkle(it.x + it.w/2 - 4, it.y + it.h/2 + 2);
         spawnSparkle(it.x + it.w/2 + 4, it.y + it.h/2 + 2);
         wnSnd('coin');
-        try { showToast && showToast('🔥 فطر النار! +8 قذائف','#ff8838'); } catch(e){}
+        try { showToast && showToast('🔥 فطر النار! +٨ قذائف لونيس', '#ff8838'); } catch(e){}
         syncFireBtn();
         updateHud();
       }
@@ -12833,54 +12940,135 @@ function updateWanees(dt){
   for (const c of WG.coins){
     if (c.collected) continue;
     c.phase += dt * 0.18;
-    if (rectsOverlap(WG.player, c)){
-      c.collected = true;
-      WG.coinsCollected++;
-      WG.score += 50;
-      wnSnd('coin');
-      spawnSparkle(c.x + c.w/2, c.y + c.h/2);
+    for (const pp of livePlayers){
+      if (rectsOverlap(pp, c)){
+        c.collected = true;
+        WG.coinsCollected++;
+        WG.score += 50;
+        wnSnd('coin');
+        spawnSparkle(c.x + c.w/2, c.y + c.h/2);
+        break;
+      }
     }
+  }
+  // ===== Revive stars (coop): alive player collects 3 → ghost respawns =====
+  if (WG.coopMode && WG.reviveStars && WG.reviveStars.length){
+    for (const rs of WG.reviveStars){
+      if (rs.taken) continue;
+      rs.phase = (rs.phase || 0) + dt * 0.15;
+      for (const pp of livePlayers){
+        if (rectsOverlap(pp, rs)){
+          rs.taken = true;
+          spawnSparkle(rs.x + rs.w/2, rs.y + rs.h/2);
+          spawnSparkle(rs.x + rs.w/2 - 4, rs.y + rs.h/2 - 4);
+          spawnSparkle(rs.x + rs.w/2 + 4, rs.y + rs.h/2 - 4);
+          wnSnd('coin');
+          // If all stars for this ghost are taken → respawn
+          const ghost = allPlayers().find(q => q.ghost && q.id === rs.forId);
+          const remaining = WG.reviveStars.filter(s => s.forId === rs.forId && !s.taken).length;
+          if (ghost && remaining === 0){
+            respawnGhost(ghost, pp);
+          }
+          break;
+        }
+      }
+    }
+    WG.reviveStars = WG.reviveStars.filter(s => !s.taken);
   }
   WG.particles.forEach(p => { p.x += p.vx * dt; p.y += p.vy * dt; p.vy += 0.18 * dt; p.life -= dt; });
   WG.particles = WG.particles.filter(p => p.life > 0);
-  if (WG.flag && WG.player.x + WG.player.w >= WG.flag.x){
-    onWin();
-    return;
+  // Flag — any alive player reaching it wins
+  if (WG.flag){
+    for (const pp of livePlayers){
+      if (pp.x + pp.w >= WG.flag.x){ onWin(); return; }
+    }
   }
-  if (WG.player.y > LEVEL_H * TILE + 32){
-    loseLife('pit');
-    return;
+  // Pit checks per player (each falls independently)
+  for (const pp of livePlayers){
+    if (pp.y > LEVEL_H * TILE + 32){ loseLife('pit', pp); return; }
   }
-  if (WG.player.invincible > 0) WG.player.invincible -= dt;
-  const targetCam = WG.player.x - WG.W * 0.4;
+  for (const pp of allPlayers()){
+    if (pp.invincible > 0) pp.invincible -= dt;
+  }
+  // Camera — midpoint of alive players, with tether (catch-up when too far)
+  let camAnchor;
+  if (WG.coopMode && WG.player2){
+    const a = WG.player, b = WG.player2;
+    // Tether: if more than 7 tiles apart, drag the trailing player forward
+    const TETHER = 7 * TILE;
+    const dx = b.x - a.x;
+    if (Math.abs(dx) > TETHER){
+      const over = Math.abs(dx) - TETHER;
+      const pull = Math.min(over * 0.04, 1.5);
+      if (dx > 0){ a.x += pull; } else { b.x += pull; }
+    }
+    camAnchor = (a.x + b.x) / 2;
+  } else {
+    camAnchor = WG.player.x;
+  }
+  const targetCam = camAnchor - WG.W * 0.4;
   WG.camera.x += (targetCam - WG.camera.x) * 0.12 * dt;
   const camMax = LEVEL_W * TILE - WG.W;
   WG.camera.x = Math.max(0, Math.min(camMax, WG.camera.x));
 }
+// ===== Ghost / revive helpers =====
+function makeGhost(pp){
+  pp.ghost = true;
+  pp.vx = 0; pp.vy = 0;
+  pp.bob = 0;
+  // Spawn 3 revive stars near the alive partner
+  const alive = allPlayers().find(q => !q.ghost && q !== pp);
+  if (!alive) return; // no one to collect — handled in loseLife
+  const base = alive.x;
+  for (let i = 0; i < 3; i++){
+    const ox = (i - 1) * 32 + (Math.random()*8 - 4);
+    WG.reviveStars.push({
+      x: base + ox, y: alive.y - 24 - i*4,
+      w: 12, h: 12, taken: false, forId: pp.id, phase: i * 0.7
+    });
+  }
+  try { showToast && showToast('⭐ اجمع ٣ نجوم لإحياء ' + (pp.kind==='lulu'?'لُولُو':'ونيس'), '#ffd200'); } catch(e){}
+}
+function respawnGhost(ghost, near){
+  ghost.ghost = false;
+  ghost.lives = 3;
+  ghost.x = near.x + (near.dir > 0 ? -18 : 18);
+  ghost.y = near.y - 8;
+  ghost.vx = 0; ghost.vy = 0;
+  ghost.invincible = 120;
+  spawnSparkle(ghost.x + ghost.w/2, ghost.y + ghost.h/2);
+  spawnSparkle(ghost.x + ghost.w/2 - 6, ghost.y + ghost.h/2 + 2);
+  spawnSparkle(ghost.x + ghost.w/2 + 6, ghost.y + ghost.h/2 + 2);
+  wnSnd('coin');
+  try { showToast && showToast('💕 ' + (ghost.kind==='lulu'?'لُولُو':'ونيس') + ' عادت للحياة!', '#ff66aa'); } catch(e){}
+  updateHud();
+}
 function rectsOverlap(a, b){
   return a.x < b.x + b.w && a.x + a.w > b.x && a.y < b.y + b.h && a.y + a.h > b.y;
 }
-function updatePlayer(dt){
-  const p = WG.player;
+function updatePlayer(dt, p, inputs){
+  p = p || WG.player;
+  inputs = inputs || WG.inputs;
+  if (p.ghost){ // ghost floats with a gentle bob; no input
+    p.bob = (p.bob || 0) + dt * 0.08;
+    p.y += Math.sin(p.bob) * 0.2;
+    return;
+  }
   let targetVx = 0;
   // Keyboard arrows give discrete max-speed input; touch joystick gives
   // analog 0..1 magnitude (dead-zoned in the input handler).
-  if (WG.inputs.left) targetVx = -WG.PLAYER_SPEED;
-  else if (WG.inputs.right) targetVx = WG.PLAYER_SPEED;
-  else if (Math.abs(WG.inputs.analogX) > 0.0001) targetVx = WG.inputs.analogX * WG.PLAYER_SPEED;
+  if (inputs.left) targetVx = -WG.PLAYER_SPEED;
+  else if (inputs.right) targetVx = WG.PLAYER_SPEED;
+  else if (Math.abs(inputs.analogX) > 0.0001) targetVx = inputs.analogX * WG.PLAYER_SPEED;
   p.vx += (targetVx - p.vx) * 0.25 * dt;
   if (Math.abs(p.vx) < 0.05 && targetVx === 0) p.vx = 0;
   if (p.vx > 0.1) p.dir = 1;
   else if (p.vx < -0.1) p.dir = -1;
   // ===== Jump feel: buffer + coyote + soft variable cut =====
-  // Coyote time: keep "jumpable" for ~6 frames after walking off a ledge
-  // so missed timing on edges still launches.
   if (p.onGround) p.coyote = 6; else p.coyote = Math.max(0, p.coyote - dt);
-  // Jump buffer: if pressed up to ~7 frames before landing, the jump fires
-  // the instant we touch down — feels like the press "stuck".
-  if (WG.inputs.jumpJustPressed) p.jumpBuffer = 7;
+  if (inputs.jumpJustPressed) p.jumpBuffer = 7;
   p.jumpBuffer = Math.max(0, p.jumpBuffer - dt);
-  const wantsJump = p.jumpBuffer > 0 || WG.inputs.jumpHeld;
+  const wantsJump = p.jumpBuffer > 0 || inputs.jumpHeld;
   if (wantsJump && (p.onGround || p.coyote > 0)){
     p.vy = WG.JUMP_VEL;
     p.onGround = false;
@@ -12889,10 +13077,7 @@ function updatePlayer(dt){
     p.jumpCut = false;
     wnSnd('jump');
   }
-  // Variable jump height: cut once (not every frame) when the button is
-  // released early. The threshold is loose enough that a normal tap still
-  // lifts you most of the way, but quick flicks make short hops possible.
-  if (!WG.inputs.jumpHeld && p.vy < -2.8 && !p.jumpCut){
+  if (!inputs.jumpHeld && p.vy < -2.8 && !p.jumpCut){
     p.vy *= 0.55;
     p.jumpCut = true;
   }
@@ -12965,8 +13150,8 @@ function updatePlayer(dt){
   if (WG.stompComboTimer > 0) WG.stompComboTimer -= dt;
   // Fire shot
   if (p.fireCd > 0) p.fireCd -= dt;
-  if (WG.inputs.fireTap){
-    WG.inputs.fireTap = false;
+  if (inputs.fireTap){
+    inputs.fireTap = false;
     if (p.fireCharges > 0 && p.fireCd <= 0){
       shootFireball(p);
       p.fireCharges--;
@@ -13155,10 +13340,37 @@ function updateEnemy(e, dt){
   const hY = moveAxis(e, 'y', e.vy * dt);
   if (hY.hit) e.vy = 0;
 }
-function loseLife(reason){
-  WG.lives--;
+function loseLife(reason, who){
   WG.stompCombo = 0; WG.stompComboTimer = 0;
   wnSnd(reason === 'enemy' ? 'hurt' : 'death');
+  // ===== Coop branch: each player has own hearts; ghost on zero =====
+  if (WG.coopMode && who){
+    who.lives = Math.max(0, who.lives - 1);
+    if (who.lives > 0){
+      // Pit damage in coop: respawn at partner instead of reloading the level
+      const partner = allPlayers().find(q => q !== who && !q.ghost);
+      if (reason === 'pit' && partner){
+        who.x = partner.x + (partner.dir > 0 ? -18 : 18);
+        who.y = partner.y - 8;
+        who.vx = 0; who.vy = 0;
+      }
+      who.invincible = WG.suhaMode ? 160 : 80;
+      who.starTimer = 0;
+      updateHud();
+      return;
+    }
+    // Hearts ran out → become a ghost. Other player can revive via stars.
+    makeGhost(who);
+    // If both ghosts (no one to collect stars) → game over
+    if (allPlayers().every(q => q.ghost)){
+      onGameOver();
+      return;
+    }
+    updateHud();
+    return;
+  }
+  // ===== Single-player branch (original behavior) =====
+  WG.lives--;
   updateHud();
   if (WG.lives <= 0){
     onGameOver();
@@ -13188,13 +13400,22 @@ function onWin(){
   if (!isLast){
     WG.currentLevel++;
     // Award a small breather for clearing
-    WG.lives = Math.min(WG.lives + 1, WG.suhaMode ? 9 : 6);
+    if (WG.coopMode && WG.player2){
+      // Top up both players a bit instead of touching the shared pool
+      WG.player.lives  = Math.min(5, WG.player.lives  + 1);
+      WG.player2.lives = Math.min(5, WG.player2.lives + 1);
+    } else {
+      WG.lives = Math.min(WG.lives + 1, WG.suhaMode ? 9 : 6);
+    }
     WG.timeLeft = WG.suhaMode ? 420 : 300;
     try { if (typeof showToast === 'function') showToast('🎉 المرحلة ' + (WG.currentLevel) + ' خلصت! المرحلة ' + (WG.currentLevel + 1) + '/' + TOTAL_LEVELS, '#ffd200'); } catch(e){}
     loadLevel();
     if (WG.suhaMode && WG.player){ WG.player.invincible = 120; WG.player.starTimer = 120; }
     updateHud();
-    // Wanees says a little something between levels, then the loop kicks back on.
+    // The find-Lulu after-level dialogues don't fit when she's already playing
+    // — skip straight to the next level in coop. The cinema scene at the end
+    // still plays as the journey's payoff.
+    if (WG.coopMode) { _startGameplayLoop(); return; }
     showDialogue('after' + (clearedIdx + 1), _startGameplayLoop);
     return;
   }
@@ -13271,6 +13492,15 @@ function bindWaneesControls(){
       if (!WG.inputs.jumpHeld) WG.inputs.jumpJustPressed = true;
       WG.inputs.jumpHeld = true; WG.inputs.jump = true; e.preventDefault();
     }
+    // P2 keyboard (coop): WASD movement + W/ShiftLeft jump
+    else if (WG.coopMode){
+      if (e.code === 'KeyA'){ WG.inputs2.left = true; e.preventDefault(); }
+      else if (e.code === 'KeyD'){ WG.inputs2.right = true; e.preventDefault(); }
+      else if (e.code === 'KeyW' || e.code === 'ShiftLeft'){
+        if (!WG.inputs2.jumpHeld) WG.inputs2.jumpJustPressed = true;
+        WG.inputs2.jumpHeld = true; e.preventDefault();
+      }
+    }
   });
   document.addEventListener('keyup', (e) => {
     if (!isActive()) return;
@@ -13278,6 +13508,11 @@ function bindWaneesControls(){
     else if (e.code === 'ArrowRight' || e.key === 'ArrowRight'){ WG.inputs.right = false; e.preventDefault(); }
     else if (e.code === 'Space' || e.code === 'ArrowUp' || e.key === 'ArrowUp' || e.key === ' '){
       WG.inputs.jumpHeld = false; WG.inputs.jump = false; e.preventDefault();
+    }
+    else if (WG.coopMode){
+      if (e.code === 'KeyA'){ WG.inputs2.left = false; e.preventDefault(); }
+      else if (e.code === 'KeyD'){ WG.inputs2.right = false; e.preventDefault(); }
+      else if (e.code === 'KeyW' || e.code === 'ShiftLeft'){ WG.inputs2.jumpHeld = false; e.preventDefault(); }
     }
   });
   window.addEventListener('blur', () => {
@@ -13411,12 +13646,126 @@ function bindWaneesButtons(){
   tapR.addEventListener('pointerup',     tapRPtrEnd);
   tapR.addEventListener('pointercancel', tapRPtrEnd);
 
+  // ===== Player 2 (لُولُو) joystick + jump — mirrors P1 logic with its own
+  // tap zones, joystick visuals, and input object. Active only when the
+  // arena has the .coop class; the elements themselves are hidden via CSS
+  // outside coop mode so events naturally never fire.
+  const tapJ2 = document.getElementById('wnTapP2Joy');
+  const tapU2 = document.getElementById('wnTapP2Jump');
+  const base2 = document.getElementById('wnJoyBase2');
+  const thumb2= document.getElementById('wnJoyThumb2');
+  if (tapJ2 && tapU2 && base2 && thumb2){
+    let joy2Id = null, joy2Cx = 0, joy2Cy = 0;
+    const jump2Ids = new Set();
+    function setThumb2At(dx, dy){
+      const dist = Math.hypot(dx, dy);
+      const clamped = dist > RADIUS ? RADIUS / dist : 1;
+      const tx = dx * clamped, ty = dy * clamped;
+      thumb2.style.transform = `translate(calc(-50% + ${tx}px), calc(-50% + ${ty}px))`;
+      const nx = tx / RADIUS;
+      const ax = Math.abs(nx);
+      if (ax < DEAD){ WG.inputs2.analogX = 0; return; }
+      WG.inputs2.analogX = (nx < 0 ? -1 : 1) * Math.min(1, (ax - DEAD) / (1 - DEAD));
+    }
+    function joy2Start(p, ev){
+      if (joy2Id !== null) return false;
+      joy2Id = p.identifier != null ? p.identifier : p.pointerId;
+      joy2Cx = p.clientX; joy2Cy = p.clientY;
+      base2.style.left = joy2Cx + 'px'; base2.style.top = joy2Cy + 'px';
+      base2.classList.add('on');
+      thumb2.style.transform = 'translate(-50%,-50%)';
+      if (ev) ev.preventDefault();
+      return true;
+    }
+    function joy2Move(p, ev){
+      if (joy2Id === null) return;
+      setThumb2At(p.clientX - joy2Cx, p.clientY - joy2Cy);
+      if (ev) ev.preventDefault();
+    }
+    function joy2End(){
+      joy2Id = null;
+      WG.inputs2.analogX = 0;
+      base2.classList.remove('on');
+      thumb2.style.transform = 'translate(-50%,-50%)';
+    }
+    function jump2Press(id, ev){
+      const fresh = jump2Ids.size === 0;
+      jump2Ids.add(id);
+      if (fresh) WG.inputs2.jumpJustPressed = true;
+      WG.inputs2.jumpHeld = true;
+      tapU2.classList.add('held');
+      if (ev) ev.preventDefault();
+    }
+    function jump2Release(id){
+      jump2Ids.delete(id);
+      if (jump2Ids.size === 0){
+        WG.inputs2.jumpHeld = false;
+        tapU2.classList.remove('held');
+      }
+    }
+    // Joystick — touch
+    tapJ2.addEventListener('touchstart', ev => {
+      for (const t of ev.changedTouches){ if (joy2Start(t, ev)) break; }
+    }, { passive:false });
+    tapJ2.addEventListener('touchmove', ev => {
+      if (joy2Id === null) return;
+      for (const t of ev.changedTouches){ if (t.identifier === joy2Id){ joy2Move(t, ev); break; } }
+    }, { passive:false });
+    function tapJ2End(ev){
+      if (joy2Id === null) return;
+      for (const t of ev.changedTouches){ if (t.identifier === joy2Id){ joy2End(); break; } }
+    }
+    tapJ2.addEventListener('touchend',    tapJ2End);
+    tapJ2.addEventListener('touchcancel', tapJ2End);
+    // Joystick — pointer (desktop / pen)
+    tapJ2.addEventListener('pointerdown', ev => {
+      if (ev.pointerType === 'touch') return;
+      joy2Start({ identifier:ev.pointerId, clientX:ev.clientX, clientY:ev.clientY, pointerId:ev.pointerId }, ev);
+      try { tapJ2.setPointerCapture(ev.pointerId); } catch(e){}
+    });
+    tapJ2.addEventListener('pointermove', ev => {
+      if (ev.pointerType === 'touch') return;
+      if (joy2Id !== ev.pointerId) return;
+      joy2Move({ clientX:ev.clientX, clientY:ev.clientY }, ev);
+    });
+    function tapJ2PtrEnd(ev){ if (ev.pointerType === 'touch') return; if (joy2Id === ev.pointerId) joy2End(); }
+    tapJ2.addEventListener('pointerup',     tapJ2PtrEnd);
+    tapJ2.addEventListener('pointercancel', tapJ2PtrEnd);
+    // Jump — touch
+    tapU2.addEventListener('touchstart', ev => {
+      for (const t of ev.changedTouches) jump2Press(t.identifier, ev);
+    }, { passive:false });
+    function tapU2End(ev){
+      for (const t of ev.changedTouches) jump2Release(t.identifier);
+    }
+    tapU2.addEventListener('touchend',    tapU2End);
+    tapU2.addEventListener('touchcancel', tapU2End);
+    // Jump — pointer
+    tapU2.addEventListener('pointerdown', ev => {
+      if (ev.pointerType === 'touch') return;
+      jump2Press(ev.pointerId, ev);
+      try { tapU2.setPointerCapture(ev.pointerId); } catch(e){}
+    });
+    function tapU2PtrEnd(ev){ if (ev.pointerType === 'touch') return; jump2Release(ev.pointerId); }
+    tapU2.addEventListener('pointerup',     tapU2PtrEnd);
+    tapU2.addEventListener('pointercancel', tapU2PtrEnd);
+    // Expose so the blur reset can clear P2 state too
+    bindWaneesButtons._joy2End = joy2End;
+    bindWaneesButtons._jump2Clear = () => {
+      jump2Ids.clear();
+      WG.inputs2.jumpHeld = false;
+      tapU2.classList.remove('held');
+    };
+  }
+
   // Safety: lose all tracking if the window loses focus
   window.addEventListener('blur', () => {
     joyEnd();
     jumpIds.clear();
     WG.inputs.jumpHeld = false; WG.inputs.jump = false;
     tapR.classList.remove('held');
+    if (bindWaneesButtons._joy2End) bindWaneesButtons._joy2End();
+    if (bindWaneesButtons._jump2Clear) bindWaneesButtons._jump2Clear();
   });
   // ===== Fire Flower trigger =====
   const fireBtn = document.getElementById('wnFireBtn');
@@ -13626,7 +13975,33 @@ function drawFrame(){
     ctx.fillRect(Math.round(p.x), Math.round(p.y), 2, 2);
   });
   drawFireballs(ctx);
-  drawPlayer(ctx, WG.player);
+  // Revive stars (coop): glowing yellow stars hovering with a bob
+  if (WG.coopMode && WG.reviveStars){
+    for (const rs of WG.reviveStars){
+      if (rs.taken) continue;
+      const bob = Math.sin((rs.phase || 0) * 2 + 0) * 2;
+      const cx = rs.x + rs.w/2, cy = rs.y + rs.h/2 + bob;
+      const r = 6 + Math.sin((rs.phase || 0) * 3) * 1;
+      ctx.fillStyle = 'rgba(255,210,0,0.25)';
+      ctx.beginPath(); ctx.arc(cx, cy, r * 1.8, 0, Math.PI*2); ctx.fill();
+      ctx.fillStyle = '#ffd200';
+      ctx.beginPath();
+      for (let k = 0; k < 5; k++){
+        const a = -Math.PI/2 + k * (Math.PI*2/5);
+        const a2 = a + Math.PI/5;
+        ctx.lineTo(cx + Math.cos(a) * r, cy + Math.sin(a) * r);
+        ctx.lineTo(cx + Math.cos(a2) * r*0.42, cy + Math.sin(a2) * r*0.42);
+      }
+      ctx.closePath(); ctx.fill();
+    }
+  }
+  // Draw players — non-ghost first, ghost last so it overlays.
+  for (const pp of allPlayers()){
+    if (!pp.ghost) drawPlayer(ctx, pp);
+  }
+  for (const pp of allPlayers()){
+    if (pp.ghost) drawGhost(ctx, pp);
+  }
   ctx.restore();
   // Cinematic vignette
   const vg = ctx.createRadialGradient(WG.W/2, WG.H/2, WG.H*0.55, WG.W/2, WG.H/2, WG.H*1.05);
@@ -13808,7 +14183,8 @@ function drawPlayer(ctx, p){
     ctx.fillStyle = glow;
     ctx.fillRect(x - 2, y - 2, p.w + 4, p.h + 4);
   }
-  if (WG.suhaMode) { drawSuhaSprite(ctx, x, y, ph, facingR, p); return; }
+  if (p.kind === 'lulu') { drawLuluSprite(ctx, x, y, ph, facingR, p); return; }
+  if (WG.suhaMode && p.kind !== 'lulu') { drawSuhaSprite(ctx, x, y, ph, facingR, p); return; }
   ctx.fillStyle = '#dd2222';
   ctx.fillRect(x + 1, y, 10, 3);
   ctx.fillRect(facingR ? x + 6 : x, y + 2, 6, 2);
@@ -13943,8 +14319,118 @@ function drawSuhaSprite(ctx, x, y, ph, facingR, p){
     ctx.fillRect(x + 13, y + 3, 1, 3);
   }
 }
+// Lulu sprite — dark-haired girl with two pigtails, pink-bow accents, and
+// a purple-and-white striped dress. Drawn at the same 12×14 grid as Wanees
+// so the world geometry / collision boxes don't change.
+function drawLuluSprite(ctx, x, y, ph, facingR, p){
+  const DRESS  = '#b070cc';   // purple base
+  const STRIPE = '#f6e8ff';   // light stripe / belt
+  const SHOES  = '#ff3366';   // pink shoes
+  const BOW    = '#ff5e9c';   // pink bows
+  const HAIR   = '#1a0a08';   // dark hair
+  const HAIR_HL= '#3a1a18';
+  const SKIN   = '#f4cba0';
+  // Pigtails (two side puffs) — drawn first so the head sits on top
+  ctx.fillStyle = HAIR;
+  ctx.fillRect(x - 1, y + 2, 2, 4); ctx.fillRect(x + 11, y + 2, 2, 4);
+  // Pink bows on pigtail tips
+  ctx.fillStyle = BOW;
+  ctx.fillRect(x - 1, y + 1, 2, 2); ctx.fillRect(x + 11, y + 1, 2, 2);
+  // Hair top + bangs
+  ctx.fillStyle = HAIR;
+  ctx.fillRect(x + 1, y, 10, 3);
+  ctx.fillStyle = HAIR_HL;
+  ctx.fillRect(x + 4, y + 1, 4, 1);
+  // Face
+  ctx.fillStyle = SKIN;
+  ctx.fillRect(x + 1, y + 3, 10, 4);
+  ctx.fillStyle = HAIR;
+  ctx.fillRect(x + 2, y + 3, 2, 1); ctx.fillRect(x + 8, y + 3, 2, 1);
+  // Eyes
+  ctx.fillStyle = '#1a1010';
+  ctx.fillRect(x + 3, y + 4, 1, 2); ctx.fillRect(x + 8, y + 4, 1, 2);
+  // Blush
+  ctx.fillStyle = '#ff9bb8';
+  ctx.fillRect(x + 2, y + 5, 1, 1); ctx.fillRect(x + 9, y + 5, 1, 1);
+  // Smile
+  ctx.fillStyle = '#a83056';
+  ctx.fillRect(x + 5, y + 6, 2, 1);
+  // Striped dress
+  ctx.fillStyle = DRESS;
+  ctx.fillRect(x + 1, y + 7, 10, 4);
+  ctx.fillStyle = STRIPE;
+  ctx.fillRect(x + 1, y + 8, 10, 1);
+  ctx.fillRect(x + 1, y + 10, 10, 1);
+  // Sleeves
+  ctx.fillStyle = DRESS;
+  ctx.fillRect(x, y + 7, 1, 2); ctx.fillRect(x + 11, y + 7, 1, 2);
+  // Legs + pink shoes with walk cycle
+  if (!p.onGround){
+    ctx.fillStyle = SKIN;
+    ctx.fillRect(x + 3, y + 11, 2, 1); ctx.fillRect(x + 7, y + 11, 2, 1);
+    ctx.fillStyle = SHOES;
+    ctx.fillRect(x + 2, y + 12, 3, 2); ctx.fillRect(x + 7, y + 12, 3, 2);
+  } else if (Math.abs(p.vx) > 0.1){
+    ctx.fillStyle = SKIN;
+    if (ph === 0){
+      ctx.fillRect(x + 3, y + 11, 2, 2); ctx.fillRect(x + 7, y + 11, 2, 1);
+      ctx.fillStyle = SHOES;
+      ctx.fillRect(x + 2, y + 13, 3, 1); ctx.fillRect(x + 7, y + 12, 3, 2);
+    } else {
+      ctx.fillRect(x + 3, y + 11, 2, 1); ctx.fillRect(x + 7, y + 11, 2, 2);
+      ctx.fillStyle = SHOES;
+      ctx.fillRect(x + 2, y + 12, 3, 2); ctx.fillRect(x + 7, y + 13, 3, 1);
+    }
+  } else {
+    ctx.fillStyle = SKIN;
+    ctx.fillRect(x + 3, y + 11, 2, 1); ctx.fillRect(x + 7, y + 11, 2, 1);
+    ctx.fillStyle = SHOES;
+    ctx.fillRect(x + 2, y + 12, 3, 2); ctx.fillRect(x + 7, y + 12, 3, 2);
+  }
+}
+// Ghost form — translucent bobbing silhouette in the player's tint color.
+// Marks where a downed coop teammate is waiting to be revived.
+function drawGhost(ctx, p){
+  const x = Math.round(p.x), y = Math.round(p.y);
+  const t = (WG._tick || 0);
+  WG._tick = t + 1;
+  const sway = Math.sin(t * 0.06) * 1.5;
+  const isLulu = p.kind === 'lulu';
+  const tint   = isLulu ? 'rgba(255,140,200,0.85)' : 'rgba(255,210,80,0.85)';
+  const inner  = isLulu ? 'rgba(255,230,240,0.95)' : 'rgba(255,250,200,0.95)';
+  ctx.save();
+  ctx.globalAlpha = 0.85;
+  // Body (rounded teardrop)
+  ctx.fillStyle = tint;
+  ctx.beginPath();
+  ctx.arc(x + 6 + sway, y + 6, 7, Math.PI, 0);
+  ctx.lineTo(x + 13 + sway, y + 13);
+  ctx.lineTo(x + 11 + sway, y + 11);
+  ctx.lineTo(x + 9 + sway,  y + 13);
+  ctx.lineTo(x + 7 + sway,  y + 11);
+  ctx.lineTo(x + 5 + sway,  y + 13);
+  ctx.lineTo(x + 3 + sway,  y + 11);
+  ctx.lineTo(x + 1 + sway,  y + 13);
+  ctx.lineTo(x - 1 + sway,  y + 13);
+  ctx.closePath();
+  ctx.fill();
+  ctx.fillStyle = inner;
+  // Eyes
+  ctx.fillRect(x + 3 + sway, y + 5, 2, 3);
+  ctx.fillRect(x + 8 + sway, y + 5, 2, 3);
+  ctx.restore();
+}
 function updateHud(){
-  document.getElementById('wnLives').textContent = WG.lives;
+  const livesEl = document.getElementById('wnLives');
+  if (WG.coopMode && WG.player2){
+    // Coop shows two hearts: "P1 ❤️3 + P2 💗3" (or 💀 for ghost)
+    const a = WG.player, b = WG.player2;
+    const ic1 = a.ghost ? '💀' : '❤️';
+    const ic2 = b.ghost ? '💀' : '💗';
+    livesEl.innerHTML = ic1 + (a.ghost ? '' : a.lives) + ' <span style="opacity:0.5">+</span> ' + ic2 + (b.ghost ? '' : b.lives);
+  } else {
+    livesEl.textContent = WG.lives;
+  }
   document.getElementById('wnCoins').textContent = WG.coinsCollected;
   document.getElementById('wnScore').textContent = String(Math.floor(WG.score)).padStart(5, '0');
   document.getElementById('wnTime').textContent = WG.timeLeft;
