@@ -11745,12 +11745,10 @@ body.wn-locked .top-nav{display:none !important}
           <span class="wn-char-name">سهى ❤️</span>
         </button>
       </div>
-      <div class="wn-coop-pick" id="wnCoopPick">
-        <button class="wn-coop-btn active" data-coop="0" type="button" onclick="setCoopMode(0)">👤 لاعب واحد</button>
-        <button class="wn-coop-btn" data-coop="1" type="button" onclick="setCoopMode(1)">👥 لاعبان (ونيس + لُولُو)</button>
-      </div>
       <button class="wn-btn-primary" onclick="waneesStart()">🚀 ابدأ المغامرة</button>
       <div class="wn-spec-actions">
+        <button class="wn-btn-spec" onclick="wnCoopCreate()">🌐 إنشاء غرفة شريك أونلاين</button>
+        <button class="wn-btn-spec" onclick="openCoopJoinPrompt()">🔢 دخول بكود شريك</button>
         <button class="wn-btn-spec" onclick="waneesStartBroadcast()">📡 بث مباشر — دع غيرك يتفرّج</button>
         <button class="wn-btn-spec" onclick="openWatchPrompt()">👁️ شاهد لاعباً بالكود</button>
       </div>
@@ -11768,6 +11766,35 @@ body.wn-locked .top-nav{display:none !important}
         <button class="wn-btn-secondary" onclick="closeWatchPrompt()">إلغاء</button>
       </div>
       <div id="wnWatchErr" style="color:#ff6a6a;font-size:0.85rem;margin-top:8px;display:none"></div>
+    </div>
+    <!-- Coop host: waiting room with shareable code -->
+    <div class="wn-overlay" id="waneesCoopWait" style="display:none">
+      <div class="wno-emoji">🌐</div>
+      <div class="wno-title">في انتظار شريكك…</div>
+      <div class="wno-desc">شارك هذا الكود مع شريكك لينضمّ. لُولُو ستبدأ اللعب جنب ونيس فور انضمامه.</div>
+      <div id="wnCoopCode" style="font-family:monospace;font-weight:900;font-size:2.2rem;letter-spacing:10px;
+        color:#ffd200;background:#0a0a16;border:2px solid #c9a84c;border-radius:14px;padding:14px 22px;margin:8px 0 14px;
+        text-align:center;text-shadow:0 0 22px rgba(255,210,0,0.6)">------</div>
+      <div id="wnCoopStatus" style="font-family:'Tajawal',sans-serif;color:#ffd2a8;font-size:0.95rem;margin-bottom:14px">⏳ بانتظار اللاعب الثاني…</div>
+      <div class="wn-btn-row">
+        <button class="wn-btn-secondary" onclick="wnCoopCopy()">📋 نسخ الكود</button>
+        <button class="wn-btn-secondary" onclick="wnCoopCancel()">✕ إلغاء</button>
+      </div>
+    </div>
+    <!-- Coop guest: code entry -->
+    <div class="wn-overlay" id="waneesCoopJoin" style="display:none">
+      <div class="wno-emoji">🔢</div>
+      <div class="wno-title">انضمام لشريك</div>
+      <div class="wno-desc">اكتب الكود الذي شاركك إيّاه شريكك لتنضمّ كلُولُو في مغامرته.</div>
+      <input id="wnCoopJoinCode" placeholder="مثال: A7K9XQ" maxlength="6"
+        style="font-family:monospace;font-weight:900;font-size:1.4rem;text-align:center;letter-spacing:6px;
+        padding:12px 16px;border-radius:12px;border:2px solid #ff5e9c;background:#0e0e16;color:#ffb0d2;
+        text-transform:uppercase;width:200px;margin:8px 0 12px" autocomplete="off">
+      <div class="wn-btn-row">
+        <button class="wn-btn-primary" onclick="confirmCoopJoin()">▶ انضمام</button>
+        <button class="wn-btn-secondary" onclick="closeCoopJoinPrompt()">إلغاء</button>
+      </div>
+      <div id="wnCoopJoinErr" style="color:#ff6a6a;font-size:0.85rem;margin-top:8px;display:none"></div>
     </div>
     <div class="wn-overlay" id="waneesOverOverlay" style="display:none">
       <div class="wno-emoji" id="wnOverEmoji">💀</div>
@@ -12059,8 +12086,12 @@ function loadLevel(){
     }
     WG.level.push(tileRow);
   }
+  // Pick kinds for both player slots. Profile name "سهى" → 'suha',
+  // "أسامة" → 'osama'; otherwise default to wanees (P1) / lulu (P2).
+  const p1Kind = WG._p1Kind || getPlayerKind('host');
+  const p2Kind = WG._p2Kind || getPlayerKind('guest');
   WG.player = {
-    id: 1, kind: 'wanees',
+    id: 1, kind: p1Kind,
     x: playerStart.x, y: playerStart.y,
     vx:0, vy:0, w:12, h:14,
     onGround:false, dir:1, invincible:0,
@@ -12074,10 +12105,10 @@ function loadLevel(){
     ghost: false
   };
   if (WG.coopMode){
-    // Lulu spawns next to Wanees, 16px to the right, looking left toward him.
+    // P2 spawns next to P1, 16px to the right, looking left toward them.
     const prev2 = WG.player2;
     WG.player2 = {
-      id: 2, kind: 'lulu',
+      id: 2, kind: p2Kind,
       x: playerStart.x + 18, y: playerStart.y,
       vx:0, vy:0, w:12, h:14,
       onGround:false, dir:-1, invincible:0,
@@ -12294,6 +12325,309 @@ window.stopSpectate = function(){
   if (SPEC.mode==='broadcast') stopBroadcast();
   else if (SPEC.mode==='view') stopWatching();
 };
+// ===== Online 2-player coop =====
+// Host runs authoritative simulation and broadcasts world snapshots to the
+// guest at 10 Hz; guest sends only their P2 inputs (left/right/jump/fire)
+// at 30 Hz. Both sides use the same Firebase realtime DB namespace as
+// spectate to inherit its write rules.
+const COOP = {
+  mode: null, // 'host' | 'guest'
+  code: null,
+  ref: null,
+  hostName: null, hostKind: null,
+  guestName: null, guestKind: null,
+  off: null, offInput: null, offGuest: null,
+  snapAcc: 0, snapEveryFrames: 6,    // host writes ~10/sec
+  inputAcc: 0, inputEveryFrames: 2,  // guest writes ~30/sec
+  lastSnapAt: 0, lastInputAt: 0,
+  watchTimer: 0,
+  dcRef: null,
+  pendingInputs: null, // queued input writes from guest
+  prevInputSig: '',    // dedup guest writes
+};
+// Profile-based identity. Profile name "سهى" plays as Suha, "أسامة" plays as
+// Osama (a recolor/name swap for Wanees), everyone else gets the default
+// kind for their role (host=ونيس, guest=لُولُو).
+function getProfileName(){
+  try { const p = (typeof loadProfile === 'function') ? loadProfile() : null;
+        return (p && p.name) ? String(p.name).trim() : ''; } catch(e){ return ''; }
+}
+function getPlayerKind(roleHint){
+  const name = getProfileName();
+  if (name === 'سهى') return 'suha';
+  if (name === 'أسامة') return 'osama';
+  return roleHint === 'guest' ? 'lulu' : 'wanees';
+}
+function kindDisplayName(kind){
+  return { wanees:'ونيس', suha:'سهى', osama:'أسامة', lulu:'لُولُو' }[kind] || 'لاعب';
+}
+window.wnCoopCreate = function(){
+  const db = _wnEnsureFb();
+  if (!db){ try { showToast && showToast('يلزم اتصال إنترنت لإنشاء غرفة','#ff6a6a'); } catch(e){} return; }
+  const code = _wnCode();
+  const hostKind = getPlayerKind('host');
+  const hostName = _wnProfileName();
+  COOP.hostKind = hostKind; COOP.hostName = hostName;
+  COOP.code = code;
+  const ref = db.ref('rooms/wnCoop_'+code);
+  COOP.ref = ref;
+  const meta = { hostName, hostKind, startedAt: firebase.database.ServerValue.TIMESTAMP };
+  ref.child('meta').set(meta).then(() => {
+    try { ref.onDisconnect().remove(); COOP.dcRef = ref; } catch(e){}
+    document.getElementById('waneesStartOverlay').style.display = 'none';
+    document.getElementById('wnCoopCode').textContent = code;
+    document.getElementById('wnCoopStatus').textContent = '⏳ بانتظار اللاعب الثاني…';
+    document.getElementById('waneesCoopWait').style.display = 'flex';
+    try { navigator.clipboard && navigator.clipboard.writeText(code).catch(()=>{}); } catch(e){}
+    // Listen for guest to join
+    COOP.offGuest = ref.child('guest').on('value', g => {
+      const v = g.val();
+      if (!v) return;
+      COOP.guestName = v.name || 'لاعب';
+      COOP.guestKind = v.kind || 'lulu';
+      ref.child('guest').off('value', COOP.offGuest); COOP.offGuest = null;
+      _wnCoopHostStart();
+    });
+  }).catch(err => {
+    const msg = (err && err.code === 'PERMISSION_DENIED')
+      ? 'الإنشاء محجوب من قواعد قاعدة البيانات'
+      : ('تعذّر الإنشاء: ' + (err && err.message ? err.message : 'خطأ غير معروف'));
+    try { showToast && showToast(msg, '#ff6a6a'); } catch(e){}
+  });
+};
+window.wnCoopCopy = function(){
+  if (!COOP.code) return;
+  try { navigator.clipboard && navigator.clipboard.writeText(COOP.code).then(() => {
+    try { showToast && showToast('📋 تم نسخ الكود','#3dba7a'); } catch(e){}
+  }); } catch(e){}
+};
+window.wnCoopCancel = function(){
+  if (COOP.offGuest && COOP.ref) try { COOP.ref.child('guest').off('value', COOP.offGuest); } catch(e){}
+  if (COOP.ref) try { COOP.ref.remove(); } catch(e){}
+  if (COOP.dcRef) try { COOP.dcRef.onDisconnect().cancel(); } catch(e){}
+  COOP.mode=null; COOP.code=null; COOP.ref=null; COOP.dcRef=null; COOP.offGuest=null;
+  document.getElementById('waneesCoopWait').style.display = 'none';
+  document.getElementById('waneesStartOverlay').style.display = 'flex';
+};
+function _wnCoopHostStart(){
+  COOP.mode = 'host';
+  document.getElementById('waneesCoopWait').style.display = 'none';
+  try { showToast && showToast('✨ '+COOP.guestName+' انضم — هيا!', '#3dba7a'); } catch(e){}
+  // Mark the room as started so the guest knows we're going
+  COOP.ref.child('started').set(true).catch(()=>{});
+  // Subscribe to guest's inputs
+  COOP.offInput = COOP.ref.child('p2input').on('value', s => {
+    const v = s.val(); if (!v) return;
+    applyCoopInput(v);
+  });
+  WG.coopMode = true;
+  WG.coopRole = 'host';
+  // Stamp kinds onto the player slots so sprite + names follow profiles
+  WG._p1Kind = COOP.hostKind;
+  WG._p2Kind = COOP.guestKind;
+  waneesStart(); // existing flow; loadLevel inside will read WG._p1Kind/_p2Kind
+}
+window.openCoopJoinPrompt = function(){
+  const inp = document.getElementById('wnCoopJoinCode');
+  if (inp){ inp.value=''; inp.focus(); }
+  const err = document.getElementById('wnCoopJoinErr'); if (err) err.style.display='none';
+  document.getElementById('waneesCoopJoin').style.display='flex';
+};
+window.closeCoopJoinPrompt = function(){
+  document.getElementById('waneesCoopJoin').style.display='none';
+};
+window.confirmCoopJoin = function(){
+  const inp = document.getElementById('wnCoopJoinCode');
+  const errEl = document.getElementById('wnCoopJoinErr');
+  function fail(m){ if (errEl){ errEl.textContent=m; errEl.style.display='block'; } }
+  const code = (inp.value||'').trim().toUpperCase();
+  if (!/^[A-Z0-9]{4,8}$/.test(code)) return fail('الكود غير صالح');
+  const db = _wnEnsureFb();
+  if (!db) return fail('يلزم اتصال إنترنت');
+  const ref = db.ref('rooms/wnCoop_'+code);
+  ref.child('meta').once('value').then(s => {
+    if (!s.exists()) return fail('الكود غير صالح أو الغرفة انتهت');
+    const meta = s.val();
+    COOP.code = code; COOP.ref = ref;
+    COOP.hostName = meta.hostName || 'ونيس'; COOP.hostKind = meta.hostKind || 'wanees';
+    COOP.guestKind = getPlayerKind('guest');
+    COOP.guestName = _wnProfileName();
+    // Write our presence so the host starts
+    ref.child('guest').set({ name: COOP.guestName, kind: COOP.guestKind }).then(() => {
+      try { ref.child('guest').onDisconnect().remove(); } catch(e){}
+      closeCoopJoinPrompt();
+      document.getElementById('waneesStartOverlay').style.display='none';
+      _wnCoopGuestStart();
+    }).catch(err => fail('تعذّر الانضمام: '+(err && err.message ? err.message : 'خطأ')));
+  }).catch(err => {
+    const msg = (err && err.code === 'PERMISSION_DENIED')
+      ? 'محجوب من قواعد قاعدة البيانات'
+      : ('تعذّر الوصول: ' + (err && err.message ? err.message : ''));
+    fail(msg);
+  });
+};
+function _wnCoopGuestStart(){
+  COOP.mode = 'guest';
+  WG.coopMode = true;
+  WG.coopRole = 'guest';
+  WG._p1Kind = COOP.hostKind;
+  WG._p2Kind = COOP.guestKind;
+  // Prepare world placeholders; the snapshot will fill them in
+  WG.character = 'wanees'; WG.suhaMode = false;
+  WG.currentLevel = 0; WG.lives = 3; WG.coinsCollected = 0; WG.score = 0; WG.timeLeft = 300;
+  WG.particles = []; WG.camera.x = 0;
+  loadLevel();
+  showSpecBanner('watching', '🌐 شريك مع <b>'+escapeHtml(COOP.hostName)+'</b> — أنت لُولُو');
+  // Subscribe to host snapshots
+  COOP.lastSnapAt = Date.now();
+  COOP.off = COOP.ref.child('snap').on('value', snapSnap => {
+    const snap = snapSnap.val(); if (snap) applyCoopSnap(snap);
+  });
+  // Heartbeat
+  if (COOP.watchTimer) clearInterval(COOP.watchTimer);
+  COOP.watchTimer = setInterval(() => {
+    if (COOP.mode !== 'guest') return;
+    const stale = Date.now() - COOP.lastSnapAt;
+    const el = document.getElementById('wnSpecText');
+    if (el && stale > 4000) el.innerHTML='🌐 بانتظار <b>'+escapeHtml(COOP.hostName)+'</b>… (منذ '+Math.floor(stale/1000)+'ث)';
+  }, 800);
+  WG.state = 'spectating';
+  cancelAnimationFrame(WG.raf);
+  WG.raf = requestAnimationFrame(coopGuestFrame);
+}
+function coopGuestFrame(){
+  if (COOP.mode !== 'guest') return;
+  // Guest doesn't simulate — it just renders the last received snapshot
+  try { drawFrame(); } catch(e){}
+  // Send our inputs as P2
+  flushCoopInput();
+  WG.raf = requestAnimationFrame(coopGuestFrame);
+}
+function flushCoopInput(){
+  if (COOP.mode !== 'guest' || !COOP.ref) return;
+  COOP.inputAcc = (COOP.inputAcc || 0) + 1;
+  if (COOP.inputAcc < COOP.inputEveryFrames) return;
+  COOP.inputAcc = 0;
+  // The guest's local touch/keyboard binds to WG.inputs (the only input they
+  // have on their device). Forward it as the partner's P2 input.
+  const i = WG.inputs;
+  const sig = [i.left?1:0, i.right?1:0, i.jumpHeld?1:0, i.jumpJustPressed?1:0,
+                Math.round((i.analogX||0)*100), i.fireTap?1:0].join('|');
+  if (sig === COOP.prevInputSig) return;
+  COOP.prevInputSig = sig;
+  const payload = {
+    l: i.left?1:0, r: i.right?1:0,
+    j: i.jumpJustPressed?1:0, jh: i.jumpHeld?1:0,
+    ax: Math.round((i.analogX||0)*100)/100,
+    f: i.fireTap?1:0,
+    t: Date.now()
+  };
+  try { COOP.ref.child('p2input').set(payload); } catch(e){}
+  // jumpJustPressed is a one-shot — consume locally too so we don't resend
+  WG.inputs.jumpJustPressed = false;
+  WG.inputs.fireTap = false;
+}
+function applyCoopInput(v){
+  // Host receives guest's input → apply to WG.inputs2 so P2 physics drive
+  if (!v) return;
+  COOP.lastInputAt = Date.now();
+  WG.inputs2.left = !!v.l;
+  WG.inputs2.right = !!v.r;
+  if (v.j) WG.inputs2.jumpJustPressed = true;
+  WG.inputs2.jumpHeld = !!v.jh;
+  WG.inputs2.analogX = typeof v.ax === 'number' ? v.ax : 0;
+  if (v.f) WG.inputs2.fireTap = true;
+}
+function publishCoopSnap(frames){
+  if (COOP.mode !== 'host' || !COOP.ref || !WG.player) return;
+  COOP.snapAcc += frames;
+  if (COOP.snapAcc < COOP.snapEveryFrames) return;
+  COOP.snapAcc = 0;
+  const p = WG.player, q = WG.player2;
+  function dumpP(pp){
+    if (!pp) return null;
+    return { x: Math.round(pp.x*10)/10, y: Math.round(pp.y*10)/10,
+             d: pp.dir, w: pp.walkPhase|0, og: pp.onGround?1:0,
+             iv: pp.invincible|0, st: pp.starTimer|0,
+             gh: pp.ghost?1:0, lv: pp.lives|0, fc: pp.fireCharges|0,
+             k: pp.kind || 'wanees' };
+  }
+  const snap = {
+    t: Date.now(),
+    lv: WG.currentLevel|0,
+    cm: WG.camera.x|0,
+    p1: dumpP(p), p2: dumpP(q),
+    e: (WG.enemies||[]).filter(e=>e.alive).map(e=>[e.x|0,e.y|0,e.kind==='koopa'?(e.shell?2:1):0,e.dir||-1]),
+    c: (WG.coins||[]).filter(c=>!c.collected).map(c=>[c.x|0,c.y|0]),
+    i: (WG.items||[]).filter(it=>it.alive).map(it=>[it.x|0,it.y|0,
+        it.kind==='star'?1:(it.kind==='fire'?2:0)]),
+    rs:(WG.reviveStars||[]).filter(s=>!s.taken).map(s=>[s.x|0,s.y|0,s.forId|0]),
+    fb:(WG.fireballs||[]).map(b=>[b.x|0,b.y|0]),
+    f: WG.flag ? [WG.flag.x|0, WG.flag.y|0] : null,
+    h: { c: WG.coinsCollected, s: WG.score|0, tm: WG.timeLeft|0, cb: WG.stompCombo|0 },
+    s: WG.state
+  };
+  try { COOP.ref.child('snap').set(snap); } catch(e){}
+}
+function applyCoopSnap(snap){
+  if (!snap || COOP.mode !== 'guest') return;
+  COOP.lastSnapAt = Date.now();
+  if ((snap.lv|0) !== WG.currentLevel){
+    WG.currentLevel = snap.lv|0;
+    loadLevel();
+  }
+  WG.camera.x = snap.cm|0;
+  function applyP(pp, src){
+    if (!pp || !src) return;
+    pp.x = src.x||0; pp.y = src.y||0;
+    pp.dir = src.d||1; pp.walkPhase = src.w||0;
+    pp.onGround = !!src.og; pp.invincible = src.iv|0; pp.starTimer = src.st|0;
+    pp.ghost = !!src.gh; pp.lives = src.lv|0; pp.fireCharges = src.fc|0;
+    pp.kind = src.k || pp.kind;
+  }
+  if (!WG.player) WG.player  = { w:12, h:14, vx:0, vy:0, alive:true, jumpBuffer:0, coyote:0 };
+  if (!WG.player2) WG.player2 = { w:12, h:14, vx:0, vy:0, alive:true, jumpBuffer:0, coyote:0 };
+  applyP(WG.player,  snap.p1);
+  applyP(WG.player2, snap.p2);
+  WG.enemies = (snap.e||[]).map(e=>{
+    const koopa = e[2] > 0;
+    return { x:e[0], y:e[1], vx:0, vy:0, w:14, h:koopa?16:14, alive:true,
+             walkPhase:0, dir:e[3]||-1, kind:koopa?'koopa':'goomba',
+             shell:e[2]===2, shellVx:0 };
+  });
+  WG.coins = (snap.c||[]).map(c=>({ x:c[0], y:c[1], w:8, h:8, collected:false, phase:0 }));
+  WG.items = (snap.i||[]).map(it=>({ x:it[0], y:it[1], w:12, h:14, vx:0, vy:0,
+    kind: it[2]===1?'star':(it[2]===2?'fire':'mushroom'), alive:true, onGround:false }));
+  WG.reviveStars = (snap.rs||[]).map(s=>({ x:s[0], y:s[1], w:12, h:12, taken:false, forId:s[2]||1, phase:0 }));
+  WG.fireballs = (snap.fb||[]).map(b=>({ x:b[0], y:b[1], vx:0, vy:0, w:6, h:6, bounces:0, dir:1 }));
+  if (snap.f){ WG.flag = { x:snap.f[0], y:snap.f[1] }; }
+  const h = snap.h || {};
+  WG.coinsCollected = h.c|0; WG.score = h.s|0; WG.timeLeft = h.tm|0;
+  WG.stompCombo = h.cb|0;
+  // Reflect the host's game state so the guest sees over/win overlays too
+  if (snap.s && snap.s !== WG.state){
+    const prev = WG.state;
+    WG.state = snap.s;
+    if (snap.s === 'dead' && prev !== 'dead'){ try { showOverOverlay('lose'); } catch(e){} stopCoop(); }
+    else if (snap.s === 'win' && prev !== 'win'){ try { showOverOverlay('win'); } catch(e){} stopCoop(); }
+  }
+  updateHud();
+}
+function stopCoop(){
+  if (!COOP.mode) return;
+  try { if (COOP.ref){
+    if (COOP.off) COOP.ref.child('snap').off('value', COOP.off);
+    if (COOP.offInput) COOP.ref.child('p2input').off('value', COOP.offInput);
+    if (COOP.mode === 'host') COOP.ref.remove();
+    else COOP.ref.child('guest').remove();
+  }} catch(e){}
+  if (COOP.watchTimer){ clearInterval(COOP.watchTimer); COOP.watchTimer = 0; }
+  if (COOP.dcRef) try { COOP.dcRef.onDisconnect().cancel(); } catch(e){}
+  COOP.mode = null; COOP.code = null; COOP.ref = null; COOP.dcRef = null;
+  COOP.off = null; COOP.offInput = null; COOP.offGuest = null;
+  WG.coopMode = false; WG.coopRole = null;
+  hideSpecBanner();
+}
 function loadWaneesCharacter(){
   try { const v = localStorage.getItem('waneesCharacter'); if (v === 'wanees' || v === 'suha') WG.character = v; } catch(e){}
 }
@@ -12413,8 +12747,22 @@ const WN_STORY = {
     {who:'lulu', text:'شكراً للي ساعد {hero} يوصلني 💞\nأنت البطل الحقيقي!'},
   ]
 };
-function _heroName(){ return WG.suhaMode ? 'سهى' : 'ونيس'; }
-function _heroFace(){ return WG.suhaMode ? '👧🏻' : '👦'; }
+// Hero name + face follow the profile-driven kind in coop, the suhaMode flag
+// in single (legacy). Used by the story-dialogue interpolation ({hero}).
+function _heroName(){
+  if (WG.coopMode){
+    const k = (WG.player && WG.player.kind) || WG._p1Kind || 'wanees';
+    return kindDisplayName(k);
+  }
+  return WG.suhaMode ? 'سهى' : 'ونيس';
+}
+function _heroFace(){
+  if (WG.coopMode){
+    const k = (WG.player && WG.player.kind) || WG._p1Kind || 'wanees';
+    return k === 'suha' || k === 'lulu' ? '👧🏻' : '👦';
+  }
+  return WG.suhaMode ? '👧🏻' : '👦';
+}
 function _luluFace(){ return '🧒🏻'; }
 // ===== Hand-drawn character portraits (inline SVG) =====
 // Designs based on user reference art: ونيس the cap-wearing boy in overalls,
@@ -12670,7 +13018,11 @@ function _renderDlg(){
   portrait.innerHTML = isVillain ? _villainSvg() : (isHero ? _heroSvg() : _luluSvg());
   portrait.className = 'wn-dlg-portrait' + (isVillain ? ' villain-face' : '');
   if (body) body.className = 'wn-dlg-body' + (isVillain ? ' villain-body' : '');
-  nameEl.textContent = isVillain ? 'كعبول' : (isHero ? _heroName() : 'لُولُو');
+  // In coop, the "lulu" speaker is actually the partner — show the partner's
+  // kind-driven name (سهى if their profile maps that way, otherwise لُولُو).
+  const partnerName = (WG.coopMode && (WG._p2Kind || (WG.player2 && WG.player2.kind)))
+    ? kindDisplayName(WG._p2Kind || WG.player2.kind) : 'لُولُو';
+  nameEl.textContent = isVillain ? 'كعبول' : (isHero ? _heroName() : partnerName);
   nameEl.className = 'wn-dlg-name' + (isVillain ? ' villain-name' : '');
   if (textEl) textEl.className = 'wn-dlg-text' + (isVillain ? ' villain-text' : '');
   document.getElementById('wnDlgStep').textContent = (_dlgIdx+1) + '/' + _dlgQ.length;
@@ -12762,10 +13114,15 @@ function _startGameplayLoop(){
 window.waneesStart = function(){
   document.getElementById('waneesStartOverlay').style.display = 'none';
   document.getElementById('waneesOverOverlay').style.display = 'none';
+  // Online coop keeps WG.coopMode + role + kind hints set by the lobby; in
+  // single-player resetWaneesState() flips coopMode back to false.
+  const preserve = WG.coopMode ? { coopMode: WG.coopMode, coopRole: WG.coopRole,
+                                    _p1Kind: WG._p1Kind, _p2Kind: WG._p2Kind } : null;
   resetWaneesState();
-  // Sync arena coop class so the split touch zones become visible
-  const arena = document.getElementById('waneesArena');
-  if (arena) arena.classList.toggle('coop', !!WG.coopMode);
+  if (preserve){
+    WG.coopMode = preserve.coopMode; WG.coopRole = preserve.coopRole;
+    WG._p1Kind = preserve._p1Kind;   WG._p2Kind = preserve._p2Kind;
+  }
   loadLevel();
   const ctrls = document.querySelector('#waneesScreen .wn-controls');
   if (ctrls) ctrls.classList.toggle('suha-layout', !!WG.suhaMode);
@@ -12799,6 +13156,8 @@ function waneesLoop(t){
   publishSnapshot(rawDt);
   WG.inputs.jumpJustPressed = false;
   if (WG.inputs2) WG.inputs2.jumpJustPressed = false;
+  // Host: broadcast world snapshot
+  if (COOP.mode === 'host') publishCoopSnap(rawDt);
   WG.raf = requestAnimationFrame(waneesLoop);
 }
 function isSolid(ch){ return ch === '#' || ch === 'b' || ch === '?' || ch === '=' || ch === 'M' || ch === 'u'; }
@@ -13421,13 +13780,14 @@ function onWin(){
   }
   saveProgress(true);
   // Final dialogue → cinematic reunion → win screen.
-  showDialogue('final', () => showCinema(() => showOverOverlay('win')));
+  showDialogue('final', () => showCinema(() => { showOverOverlay('win'); if (COOP.mode) stopCoop(); }));
 }
 function onGameOver(){
   WG.state = 'dead';
   cancelAnimationFrame(WG.raf);
   saveProgress(false);
   showOverOverlay('lose');
+  if (COOP.mode) stopCoop();
 }
 function saveProgress(won){
   const final = Math.floor(WG.score);
@@ -14184,7 +14544,12 @@ function drawPlayer(ctx, p){
     ctx.fillRect(x - 2, y - 2, p.w + 4, p.h + 4);
   }
   if (p.kind === 'lulu') { drawLuluSprite(ctx, x, y, ph, facingR, p); return; }
-  if (WG.suhaMode && p.kind !== 'lulu') { drawSuhaSprite(ctx, x, y, ph, facingR, p); return; }
+  if (p.kind === 'suha') { drawSuhaSprite(ctx, x, y, ph, facingR, p); return; }
+  // 'osama' falls through to the Wanees sprite (same visual, different name
+  // in dialogues/HUD). Legacy Suha-mode flag still routes to her sprite.
+  if (WG.suhaMode && p.kind !== 'lulu' && p.kind !== 'wanees' && p.kind !== 'osama') {
+    drawSuhaSprite(ctx, x, y, ph, facingR, p); return;
+  }
   ctx.fillStyle = '#dd2222';
   ctx.fillRect(x + 1, y, 10, 3);
   ctx.fillRect(facingR ? x + 6 : x, y + 2, 6, 2);
@@ -14423,10 +14788,13 @@ function drawGhost(ctx, p){
 function updateHud(){
   const livesEl = document.getElementById('wnLives');
   if (WG.coopMode && WG.player2){
-    // Coop shows two hearts: "P1 ❤️3 + P2 💗3" (or 💀 for ghost)
+    // Coop shows two hearts: "P1ـ❤️3 + P2ـ💗3" (or 💀 for ghost). The icon
+    // color follows the player's gender-ish kind: gold heart for the
+    // wanees/osama slot, pink heart for lulu/suha.
     const a = WG.player, b = WG.player2;
-    const ic1 = a.ghost ? '💀' : '❤️';
-    const ic2 = b.ghost ? '💀' : '💗';
+    const isGirl = k => (k === 'lulu' || k === 'suha');
+    const ic1 = a.ghost ? '💀' : (isGirl(a.kind) ? '💗' : '❤️');
+    const ic2 = b.ghost ? '💀' : (isGirl(b.kind) ? '💗' : '❤️');
     livesEl.innerHTML = ic1 + (a.ghost ? '' : a.lives) + ' <span style="opacity:0.5">+</span> ' + ic2 + (b.ghost ? '' : b.lives);
   } else {
     livesEl.textContent = WG.lives;
