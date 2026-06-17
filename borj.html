@@ -1,0 +1,755 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
+<title>بنّاء البرج | Wanees</title>
+<meta name="theme-color" content="#0a1a2e">
+<meta name="description" content="ابنِ أطول برج ممكن — اضغط لإسقاط البلوك في الوقت المناسب. كل تأخير يقلّص البرج، والمحاذاة المثاليّة تضاعف نقاطك.">
+<link rel="manifest" href="manifest.json">
+<link rel="icon" href="icon-192.png">
+<style>
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;padding:0;height:100%;overflow:hidden;background:#0a1a2e;
+  font-family:'Tajawal','Cairo','Segoe UI',sans-serif;user-select:none;-webkit-user-select:none;
+  touch-action:none;overscroll-behavior:none;color:#fff}
+#game{position:fixed;inset:0}
+#cv{position:absolute;inset:0;width:100%;height:100%;display:block}
+
+/* HUD pills */
+#hud{position:absolute;top:calc(8px + env(safe-area-inset-top,0));left:8px;right:8px;
+  display:flex;justify-content:space-between;align-items:center;gap:6px;
+  pointer-events:none;z-index:5;color:#fff;text-shadow:0 2px 4px rgba(0,0,0,0.85);font-weight:800;flex-wrap:wrap}
+.hud-pill{background:rgba(0,0,0,0.55);border:2px solid rgba(255,210,0,0.55);
+  border-radius:50px;padding:5px 14px;font-size:0.95rem;display:flex;gap:5px;align-items:center;
+  backdrop-filter:blur(4px);-webkit-backdrop-filter:blur(4px)}
+.hud-pill.combo{border-color:#ff8838;background:rgba(80,30,0,0.7);animation:comboPulse 0.6s infinite}
+@keyframes comboPulse{0%,100%{transform:scale(1)}50%{transform:scale(1.08)}}
+
+/* Big invisible tap zone covers the whole game */
+#tapZone{position:absolute;inset:0;z-index:3;cursor:pointer;touch-action:none}
+
+/* Drop hint floating above tower */
+#dropHint{position:absolute;bottom:calc(20% + env(safe-area-inset-bottom,0));left:50%;
+  transform:translateX(-50%);z-index:4;background:rgba(0,0,0,0.6);
+  border:2px solid rgba(255,210,0,0.6);border-radius:50px;padding:8px 22px;
+  color:#ffd200;font-weight:900;font-size:1rem;pointer-events:none;
+  animation:hintBob 1.5s infinite ease-in-out;text-shadow:0 0 12px rgba(255,210,0,0.6)}
+@keyframes hintBob{0%,100%{transform:translateX(-50%) translateY(0)}50%{transform:translateX(-50%) translateY(-4px)}}
+.hide-hint #dropHint{display:none}
+
+/* Combo flyout */
+#comboFlash{position:absolute;top:30%;left:50%;transform:translate(-50%,-50%);
+  z-index:6;font-size:2.5rem;font-weight:900;color:#ffd200;
+  text-shadow:0 0 30px rgba(255,210,0,0.9),0 4px 0 #7a4400;
+  opacity:0;pointer-events:none;font-family:'Tajawal',sans-serif}
+#comboFlash.on{animation:flashIn 0.9s ease-out forwards}
+@keyframes flashIn{0%{opacity:0;transform:translate(-50%,-50%) scale(0.5)}30%{opacity:1;transform:translate(-50%,-65%) scale(1.1)}100%{opacity:0;transform:translate(-50%,-100%) scale(1)}}
+
+/* Pause button */
+#pauseBtn{position:absolute;top:calc(8px + env(safe-area-inset-top,0));right:8px;
+  width:40px;height:40px;border-radius:50%;background:rgba(0,0,0,0.55);
+  border:2px solid rgba(255,210,0,0.6);color:#ffd200;font-size:1.1rem;font-weight:900;
+  z-index:7;cursor:pointer;display:none;font-family:inherit}
+.playing #pauseBtn{display:block}
+
+/* Overlays */
+.overlay{position:absolute;inset:0;z-index:20;
+  background:radial-gradient(ellipse at 50% 30%,rgba(40,25,55,0.92),rgba(5,8,18,0.97) 75%);
+  display:flex;flex-direction:column;align-items:center;justify-content:center;
+  padding:24px 18px;text-align:center;color:#fff;animation:ovFade 0.5s ease-out;overflow-y:auto}
+@keyframes ovFade{from{opacity:0;transform:scale(1.05)}to{opacity:1;transform:scale(1)}}
+.ov-title{font-size:2.4rem;font-weight:900;color:#ffd200;margin:0 0 12px;letter-spacing:1px;
+  text-shadow:0 0 24px rgba(255,210,0,0.9),0 4px 0 #7a4400;line-height:1.15}
+.ov-sub{font-size:1rem;color:#ffe2a8;margin:0 0 14px;max-width:420px;line-height:1.55;font-weight:700}
+.ov-btn{background:linear-gradient(180deg,#ffd200,#cc9900);border:3px solid #b48a30;color:#231510;
+  border-radius:50px;padding:14px 36px;font-size:1.05rem;font-weight:900;cursor:pointer;
+  box-shadow:0 5px 0 #8a6a18;font-family:inherit;margin:5px;min-width:220px}
+.ov-btn:active{transform:translateY(3px);box-shadow:0 2px 0 #8a6a18}
+.ov-btn.secondary{background:linear-gradient(180deg,#4488cc,#225599);
+  border-color:#336699;color:#fff;box-shadow:0 5px 0 #112244}
+.ov-btn.secondary:active{box-shadow:0 2px 0 #112244}
+.ov-stats{background:rgba(0,0,0,0.4);border-radius:14px;padding:14px 22px;margin:8px 0 18px;
+  font-size:1.05rem;color:#ffd200;font-weight:800}
+.ov-stats strong{color:#fff;font-size:1.35rem;display:block;margin-top:2px}
+.ov-tips{background:rgba(255,210,0,0.13);border-radius:14px;padding:11px 16px;margin:10px 0 8px;
+  font-size:0.92rem;color:#ffeebb;max-width:380px;line-height:1.7;font-weight:700;text-align:right}
+.preview-tower{display:flex;flex-direction:column;align-items:center;gap:2px;margin:6px 0 12px}
+.preview-tower span{display:block;height:18px;border-radius:3px;border:1.5px solid rgba(0,0,0,0.3)}
+
+@media(max-width:480px){
+  .ov-title{font-size:1.8rem}
+  .hud-pill{font-size:0.8rem;padding:4px 11px}
+  .ov-sub{font-size:0.92rem}
+  .ov-btn{font-size:0.95rem;padding:12px 26px;min-width:180px}
+  #dropHint{font-size:0.9rem;padding:7px 18px}
+}
+</style>
+</head>
+<body>
+<div id="game">
+  <canvas id="cv"></canvas>
+  <div id="tapZone"></div>
+  <div id="dropHint">👆 المس لإسقاط البلوك</div>
+  <div id="comboFlash">مثالي!</div>
+  <div id="hud">
+    <span class="hud-pill" id="hudFloor">🏢 ٠ طوابق</span>
+    <span class="hud-pill" id="hudCombo" style="display:none">🔥 ×1</span>
+    <span class="hud-pill" id="hudScore">⭐ 0</span>
+    <span class="hud-pill" id="hudBest">🏆 0</span>
+  </div>
+  <button id="pauseBtn" type="button" onclick="togglePause()" aria-label="إيقاف">⏸</button>
+
+  <div class="overlay" id="startOv">
+    <h1 class="ov-title">🏗️ بنّاء البرج</h1>
+    <p class="ov-sub">رافعة تتأرجح بأعلى البرج، اضغط لإسقاط البلوك. اللي يطلع زايد ينقطع وبرجك يضيق… والبرج اللي ما يصير عرضه شي يطيح!</p>
+    <div class="preview-tower" aria-hidden="true">
+      <span style="width:46px;background:#ff6b6b"></span>
+      <span style="width:60px;background:#feca57"></span>
+      <span style="width:54px;background:#48dbfb"></span>
+      <span style="width:72px;background:#1dd1a1"></span>
+      <span style="width:84px;background:#5f27cd"></span>
+    </div>
+    <div class="ov-tips">
+      👆 <strong>المس الشاشة</strong> أو <kbd>Space</kbd> لإسقاط البلوك<br>
+      🎯 <strong>محاذاة مثاليّة</strong> (±٣ بكسل) = مكافأة وضعفان<br>
+      🔥 <strong>كومبو</strong>: ٣ محاذاة على التوالي = ×٣ نقاط<br>
+      💀 لو الكتلة ما لمست البرج = نهاية اللعبة
+    </div>
+    <button class="ov-btn" onclick="startGame()">ابدأ البناء ▶</button>
+    <button class="ov-btn secondary" onclick="location.href='index.html'">🏠 الرئيسية</button>
+  </div>
+
+  <div class="overlay" id="pauseOv" style="display:none">
+    <h1 class="ov-title">⏸ إيقاف</h1>
+    <p class="ov-sub">خذ نفسك… برجك ينتظرك!</p>
+    <button class="ov-btn" onclick="resumeGame()">▶ متابعة</button>
+    <button class="ov-btn secondary" onclick="quitGame()">🏠 خروج</button>
+  </div>
+
+  <div class="overlay" id="overOv" style="display:none">
+    <h1 class="ov-title" id="overTitle">💥 برجك سقط!</h1>
+    <p class="ov-sub" id="overSub">حاول إنك تكون أكثر دقّة في التوقيت — البرج بيكبر تحت سيطرتك!</p>
+    <div class="ov-stats">
+      <div>🏢 الطوابق: <strong id="finalFloor">0</strong></div>
+      <div>⭐ النقاط: <strong id="finalScore">0</strong></div>
+      <div>🏆 أفضل نتيجة: <strong id="finalBest">0</strong></div>
+      <div id="finalRecord" style="color:#ff8838;margin-top:4px;display:none">🎉 رقم قياسي جديد!</div>
+    </div>
+    <button class="ov-btn" onclick="startGame()">🔄 ابنِ من جديد</button>
+    <button class="ov-btn secondary" onclick="location.href='index.html'">🏠 الرئيسية</button>
+  </div>
+</div>
+
+<script>
+'use strict';
+// ===== Canvas & DPR setup =====
+const cv = document.getElementById('cv');
+const ctx = cv.getContext('2d');
+let CW = 0, CH = 0;
+function resize(){
+  const dpr = Math.min(window.devicePixelRatio || 1, 2);
+  CW = window.innerWidth;
+  CH = window.innerHeight;
+  cv.width = Math.floor(CW * dpr);
+  cv.height = Math.floor(CH * dpr);
+  cv.style.width = CW + 'px';
+  cv.style.height = CH + 'px';
+  ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+}
+window.addEventListener('resize', resize);
+window.addEventListener('orientationchange', resize);
+resize();
+
+// ===== Game state =====
+const G = {
+  state: 'idle', // idle | swinging | falling | over | paused
+  blocks: [],     // {x, y, w, h, color}  (x,y is bottom-left in world coords; +y is up)
+  current: null,  // {x, y, w, h, vy, color}
+  craneT: 0,      // phase 0..1
+  craneDir: 1,
+  craneSpeed: 0.011,  // increments per frame
+  craneRange: 0,      // computed each frame from canvas width
+  baseSpeed: 0.011,
+  score: 0, combo: 0, perfectStreak: 0, floor: 0,
+  cameraY: 0,         // world Y at bottom of camera view
+  shake: 0,
+  particles: [],
+  chunks: [],         // falling trimmed pieces {x, y, w, h, vx, vy, color, rot, vr}
+  lastT: 0,
+  raf: 0,
+};
+const COLORS = ['#ff6b6b','#feca57','#48dbfb','#1dd1a1','#5f27cd','#ff9ff3','#54a0ff','#ff8838','#a55eea','#26de81'];
+const BASE_BLOCK_W = 90;      // starting block width
+const BLOCK_H = 26;
+const GROUND_GAP = 60;        // pixels from bottom of canvas to top of ground
+const CRANE_GAP = 110;        // pixels above tower top where the crane swings
+const PERFECT_TOL = 3;        // px diff considered "perfect"
+
+// ===== Background + sky =====
+function lerp(a, b, t){ return a + (b - a) * t; }
+function hexToRgb(h){
+  const n = parseInt(h.slice(1), 16);
+  return [(n>>16)&255, (n>>8)&255, n&255];
+}
+function rgbStr(c){ return 'rgb(' + c[0] + ',' + c[1] + ',' + c[2] + ')'; }
+function lerpHex(h1, h2, t){
+  const a = hexToRgb(h1), b = hexToRgb(h2);
+  return [Math.round(lerp(a[0], b[0], t)),
+          Math.round(lerp(a[1], b[1], t)),
+          Math.round(lerp(a[2], b[2], t))];
+}
+const SKY = [
+  // {floor, horizon, top, sun, hasStars}
+  { floor: 0,  horizon: '#ffd9a8', top: '#85ceff', stars: 0 },
+  { floor: 12, horizon: '#ff8854', top: '#5f4280', stars: 0 },
+  { floor: 25, horizon: '#3a2058', top: '#0a0820', stars: 1 },
+  { floor: 50, horizon: '#100020', top: '#000000', stars: 1 },
+  { floor: 80, horizon: '#000010', top: '#000000', stars: 1 },
+];
+function getSky(floor){
+  for (let i = 0; i < SKY.length - 1; i++){
+    const a = SKY[i], b = SKY[i+1];
+    if (floor < b.floor){
+      const t = (floor - a.floor) / (b.floor - a.floor);
+      return {
+        horizon: rgbStr(lerpHex(a.horizon, b.horizon, t)),
+        top: rgbStr(lerpHex(a.top, b.top, t)),
+        stars: t > 0.5 ? b.stars : a.stars,
+      };
+    }
+  }
+  const last = SKY[SKY.length - 1];
+  return { horizon: last.horizon, top: last.top, stars: last.stars };
+}
+
+// ===== Audio =====
+let AC = null;
+function initAudio(){
+  try { AC = new (window.AudioContext || window.webkitAudioContext)(); } catch(e){ AC = null; }
+}
+function beep(freq, dur, delayMs, type){
+  if (!AC) return;
+  const fn = () => {
+    const t = AC.currentTime;
+    const osc = AC.createOscillator();
+    const gain = AC.createGain();
+    osc.type = type || 'square';
+    osc.frequency.value = freq;
+    gain.gain.value = 0.06;
+    gain.gain.exponentialRampToValueAtTime(0.001, t + dur);
+    osc.connect(gain); gain.connect(AC.destination);
+    osc.start(t); osc.stop(t + dur + 0.05);
+  };
+  if (delayMs) setTimeout(fn, delayMs); else fn();
+}
+
+// ===== Input =====
+function handleTap(){
+  if (G.state === 'swinging'){ doDrop(); }
+  else if (G.state === 'idle'){ /* start screen owns its buttons */ }
+}
+document.getElementById('tapZone').addEventListener('pointerdown', e => {
+  e.preventDefault();
+  handleTap();
+});
+window.addEventListener('keydown', e => {
+  if (e.code === 'Space' || e.code === 'Enter'){
+    if (G.state === 'swinging') doDrop();
+    e.preventDefault();
+  } else if (e.code === 'Escape' || e.code === 'KeyP'){
+    togglePause();
+  }
+});
+
+// ===== Helpers =====
+// World coords: +y is up, ground top at worldY = 0. blocks store their
+// bottom-left corner. cameraY shifts the view so growth scrolls up.
+function towerTopY(){
+  if (!G.blocks.length) return 0;
+  const t = G.blocks[G.blocks.length - 1];
+  return t.y + t.h;
+}
+function towerTopBlock(){ return G.blocks[G.blocks.length - 1]; }
+function worldToScreen(wx, wy){
+  return { x: wx, y: CH - GROUND_GAP - (wy - G.cameraY) };
+}
+function blockColor(idx){ return COLORS[idx % COLORS.length]; }
+
+function spawnSwingingBlock(){
+  const top = towerTopBlock();
+  const w = top ? top.w : BASE_BLOCK_W;
+  const y = towerTopY() + CRANE_GAP;
+  G.current = {
+    x: CW / 2 - w / 2, y, w, h: BLOCK_H,
+    vy: 0,
+    color: blockColor(G.blocks.length)
+  };
+  G.craneT = 0;
+  G.craneDir = 1;
+  // Difficulty: faster swing as tower grows, slightly narrower range
+  G.craneSpeed = G.baseSpeed + Math.min(0.025, G.blocks.length * 0.0008);
+  G.state = 'swinging';
+}
+
+function doDrop(){
+  if (!G.current) return;
+  G.current.vy = 0;
+  G.state = 'falling';
+  beep(660, 0.08, 0, 'square');
+  document.body.classList.add('hide-hint');
+}
+
+function landBlock(){
+  const cur = G.current;
+  const top = towerTopBlock();
+  if (!top){
+    // First block — anchor on ground
+    G.blocks.push({ x: cur.x, y: 0, w: cur.w, h: cur.h, color: cur.color });
+    G.score += 10;
+    G.floor++;
+    spawnSparkle(cur.x + cur.w/2, cur.h/2, '#fff8a0', 14);
+    nextRound();
+    return;
+  }
+  const overlapL = Math.max(top.x, cur.x);
+  const overlapR = Math.min(top.x + top.w, cur.x + cur.w);
+  const overlapW = overlapR - overlapL;
+  if (overlapW <= 0){
+    // Total miss → game over
+    G.shake = 16;
+    beep(150, 0.4, 0, 'sawtooth');
+    // The block keeps falling past the tower
+    G.chunks.push({
+      x: cur.x, y: cur.y, w: cur.w, h: cur.h,
+      vx: 0, vy: -2, color: cur.color, rot: 0, vr: (Math.random() - 0.5) * 0.1
+    });
+    G.current = null;
+    gameOver();
+    return;
+  }
+  // Check for perfect landing (no trim)
+  const diff = Math.abs(cur.x - top.x);
+  if (diff <= PERFECT_TOL){
+    // Snap to perfect alignment, no trim, bonus
+    G.perfectStreak++;
+    G.combo = G.perfectStreak;
+    const mult = Math.min(5, 1 + Math.floor(G.perfectStreak / 1));
+    const bonus = 20 * mult;
+    G.score += 10 + bonus;
+    showComboFlash('مثالي!  +' + bonus);
+    beep(880, 0.06, 0, 'sine');
+    beep(1320, 0.06, 60, 'sine');
+    beep(1760, 0.08, 130, 'sine');
+    G.blocks.push({ x: top.x, y: towerTopY(), w: top.w, h: cur.h, color: cur.color });
+    spawnSparkle(top.x + top.w/2, towerTopY() + cur.h/2, '#fff8a0', 18);
+    spawnSparkle(top.x + 6, towerTopY() + cur.h/2, '#ffd200', 8);
+    spawnSparkle(top.x + top.w - 6, towerTopY() + cur.h/2, '#ffd200', 8);
+  } else {
+    // Trim: left or right overhang falls
+    G.perfectStreak = 0; G.combo = 0;
+    if (cur.x < top.x){
+      // Overhang on the LEFT side
+      const leftW = top.x - cur.x;
+      G.chunks.push({ x: cur.x, y: cur.y, w: leftW, h: cur.h,
+        vx: -1, vy: -1, color: cur.color, rot: 0, vr: -0.08 });
+    }
+    if (cur.x + cur.w > top.x + top.w){
+      // Overhang on the RIGHT side
+      const rightX = top.x + top.w;
+      const rightW = (cur.x + cur.w) - rightX;
+      G.chunks.push({ x: rightX, y: cur.y, w: rightW, h: cur.h,
+        vx: 1, vy: -1, color: cur.color, rot: 0, vr: 0.08 });
+    }
+    G.blocks.push({ x: overlapL, y: towerTopY(), w: overlapW, h: cur.h, color: cur.color });
+    G.score += 10;
+    spawnSparkle(overlapL + overlapW/2, towerTopY() + cur.h/2, '#fff', 8);
+    beep(440, 0.06, 0, 'square');
+  }
+  G.floor++;
+  G.shake = 4;
+  nextRound();
+}
+
+function nextRound(){
+  updateHud();
+  // Scroll camera so the new top of the tower stays around 65% down the screen
+  // (leaving room above for the next swinging block + sky).
+  const desiredScreenY = CH * 0.62;
+  const targetCam = towerTopY() - (CH - GROUND_GAP - desiredScreenY);
+  G._camTarget = targetCam;
+  spawnSwingingBlock();
+}
+
+function showComboFlash(text){
+  const el = document.getElementById('comboFlash');
+  el.textContent = text;
+  el.classList.remove('on');
+  void el.offsetWidth; // restart animation
+  el.classList.add('on');
+}
+
+function spawnSparkle(wx, wy, color, n){
+  for (let i = 0; i < n; i++){
+    const a = Math.random() * Math.PI * 2;
+    const s = 1 + Math.random() * 2.5;
+    G.particles.push({
+      x: wx, y: wy,
+      vx: Math.cos(a) * s, vy: Math.sin(a) * s + 1,
+      life: 30 + Math.random() * 20, color
+    });
+  }
+}
+
+// ===== Update =====
+function update(dt){
+  if (G.state === 'over' || G.state === 'paused' || G.state === 'idle') return;
+  // Smooth camera
+  if (G._camTarget !== undefined){
+    G.cameraY += (G._camTarget - G.cameraY) * 0.12 * dt;
+    if (Math.abs(G.cameraY - G._camTarget) < 0.3) G._camTarget = undefined;
+  }
+
+  if (G.state === 'swinging' && G.current){
+    G.craneT += G.craneSpeed * G.craneDir * dt;
+    if (G.craneT > 1){ G.craneT = 1; G.craneDir = -1; }
+    if (G.craneT < 0){ G.craneT = 0; G.craneDir = 1; }
+    // Position: ease so it slows at the edges (smoother than linear sweep)
+    const eased = 0.5 - 0.5 * Math.cos(G.craneT * Math.PI);
+    G.craneRange = Math.max(60, CW * 0.36);
+    const cx = CW / 2 + (eased - 0.5) * 2 * G.craneRange;
+    G.current.x = cx - G.current.w / 2;
+  } else if (G.state === 'falling' && G.current){
+    G.current.vy -= 1.4 * dt; // accelerate downward
+    G.current.y += G.current.vy * dt;
+    const targetY = towerTopY();
+    if (G.current.y <= targetY){
+      G.current.y = targetY;
+      landBlock();
+    }
+  }
+
+  // Chunks (fallen pieces) drift down + spin off-screen
+  for (const c of G.chunks){
+    c.vy -= 0.9 * dt;
+    c.x += c.vx * dt;
+    c.y += c.vy * dt;
+    c.rot += c.vr * dt;
+  }
+  G.chunks = G.chunks.filter(c => (c.y - G.cameraY) > -200);
+
+  // Particles
+  for (const pt of G.particles){
+    pt.x += pt.vx * dt;
+    pt.y += pt.vy * dt;
+    pt.vy -= 0.12 * dt;
+    pt.life -= dt;
+  }
+  G.particles = G.particles.filter(pt => pt.life > 0);
+
+  if (G.shake > 0) G.shake -= 0.5 * dt;
+}
+
+// ===== Render =====
+function render(){
+  const sky = getSky(G.floor);
+  // Sky gradient
+  const sg = ctx.createLinearGradient(0, 0, 0, CH);
+  sg.addColorStop(0, sky.top);
+  sg.addColorStop(1, sky.horizon);
+  ctx.fillStyle = sg;
+  ctx.fillRect(0, 0, CW, CH);
+
+  // Stars (visible at high floors / night)
+  if (sky.stars){
+    const tickKey = Math.floor(G.cameraY * 0.1);
+    for (let i = 0; i < 60; i++){
+      const sx = ((i * 197 + tickKey * 13) % CW);
+      const sy = ((i * 113) % (CH * 0.7));
+      const a = 0.4 + 0.6 * Math.abs(Math.sin(performance.now() * 0.001 + i));
+      ctx.fillStyle = 'rgba(255,255,255,' + a.toFixed(2) + ')';
+      const s = (i % 5 === 0) ? 2 : 1;
+      ctx.fillRect(sx, sy, s, s);
+    }
+  }
+  // Sun / moon — drifts a little with camera parallax
+  const sunX = CW * 0.78;
+  const sunY = CH * 0.18 + (G.cameraY * 0.05) % 30;
+  const sunC = sky.stars ? 'rgba(245,245,255,0.95)' : 'rgba(255,235,140,0.95)';
+  ctx.fillStyle = sunC;
+  ctx.beginPath(); ctx.arc(sunX, sunY, 28, 0, Math.PI*2); ctx.fill();
+  const glow = ctx.createRadialGradient(sunX, sunY, 18, sunX, sunY, 70);
+  glow.addColorStop(0, sky.stars ? 'rgba(220,220,255,0.4)' : 'rgba(255,220,120,0.55)');
+  glow.addColorStop(1, 'rgba(255,255,200,0)');
+  ctx.fillStyle = glow;
+  ctx.beginPath(); ctx.arc(sunX, sunY, 70, 0, Math.PI*2); ctx.fill();
+
+  // Distant city silhouette at horizon
+  ctx.fillStyle = 'rgba(15,8,30,0.55)';
+  const horizonY = CH - GROUND_GAP;
+  ctx.beginPath();
+  ctx.moveTo(0, horizonY);
+  for (let i = 0; i <= 12; i++){
+    const bx = i / 12 * CW;
+    const bh = 30 + Math.sin(i * 1.7) * 22 + ((i*53)%17);
+    ctx.lineTo(bx, horizonY - bh);
+    ctx.lineTo(bx + CW/24, horizonY - bh);
+  }
+  ctx.lineTo(CW, horizonY); ctx.closePath();
+  ctx.fill();
+
+  // Shake the world (not HUD)
+  let ox = 0, oy = 0;
+  if (G.shake > 0){
+    ox = (Math.random() - 0.5) * G.shake;
+    oy = (Math.random() - 0.5) * G.shake;
+  }
+  ctx.save();
+  ctx.translate(ox, oy);
+
+  // Ground / street
+  ctx.fillStyle = '#2a3a4a';
+  ctx.fillRect(0, horizonY, CW, GROUND_GAP);
+  ctx.fillStyle = '#1a2a3a';
+  ctx.fillRect(0, horizonY, CW, 3);
+  // Sidewalk dashes
+  ctx.fillStyle = '#5a6a7a';
+  for (let i = 0; i < CW; i += 28){
+    ctx.fillRect(i, horizonY + 18, 14, 2);
+  }
+  // Street lamps
+  for (let i = 0; i < 3; i++){
+    const lx = 60 + i * (CW - 120) / 2;
+    ctx.fillStyle = '#888';
+    ctx.fillRect(lx - 1, horizonY - 20, 2, 20);
+    ctx.fillStyle = '#ffd200';
+    ctx.beginPath(); ctx.arc(lx, horizonY - 22, 3, 0, Math.PI*2); ctx.fill();
+  }
+
+  // Stacked blocks
+  for (let i = 0; i < G.blocks.length; i++){
+    drawBlock(G.blocks[i], i);
+  }
+  // Falling chunks
+  for (const c of G.chunks){ drawChunk(c); }
+  // Particles
+  for (const pt of G.particles){
+    const p = worldToScreen(pt.x, pt.y);
+    const a = pt.life / 40;
+    ctx.fillStyle = pt.color;
+    ctx.globalAlpha = Math.max(0, Math.min(1, a));
+    ctx.fillRect(p.x, p.y, 2, 2);
+  }
+  ctx.globalAlpha = 1;
+  // Crane + swinging block
+  if (G.state === 'swinging' || G.state === 'falling'){
+    if (G.current){
+      // Crane cable + hook
+      const cb = G.current;
+      const cabBL = worldToScreen(cb.x + cb.w/2, cb.y + cb.h);
+      const cableTop = { x: cabBL.x, y: 0 };
+      ctx.strokeStyle = 'rgba(255,255,255,0.45)';
+      ctx.lineWidth = 1.5;
+      ctx.beginPath();
+      ctx.moveTo(cableTop.x, cableTop.y);
+      ctx.lineTo(cabBL.x, cabBL.y);
+      ctx.stroke();
+      // Hook
+      ctx.fillStyle = '#888';
+      ctx.fillRect(cabBL.x - 4, cabBL.y - 2, 8, 4);
+      // The block
+      drawBlock(cb, G.blocks.length, true);
+      // Drop preview line — only while swinging
+      if (G.state === 'swinging'){
+        const blockTopScreen = worldToScreen(cb.x, cb.y + cb.h);
+        const towerTopScreen = worldToScreen(cb.x, towerTopY());
+        ctx.strokeStyle = 'rgba(255,255,255,0.18)';
+        ctx.setLineDash([4, 6]);
+        ctx.beginPath();
+        ctx.moveTo(blockTopScreen.x + cb.w/2, blockTopScreen.y);
+        ctx.lineTo(towerTopScreen.x + cb.w/2, towerTopScreen.y);
+        ctx.stroke();
+        ctx.setLineDash([]);
+      }
+    }
+  }
+  ctx.restore();
+
+  // High-altitude indicator (small altimeter on the side)
+  if (G.floor >= 5){
+    ctx.fillStyle = 'rgba(0,0,0,0.4)';
+    ctx.fillRect(8, CH/2 - 60, 36, 120);
+    ctx.fillStyle = '#ffd200';
+    ctx.font = 'bold 11px monospace';
+    ctx.textAlign = 'center';
+    ctx.fillText('🏢', 26, CH/2 - 44);
+    ctx.fillText(G.floor + '', 26, CH/2 - 30);
+    ctx.fillStyle = 'rgba(255,255,255,0.2)';
+    ctx.fillRect(24, CH/2 - 18, 4, 70);
+    const fillH = Math.min(70, G.floor * 0.7);
+    ctx.fillStyle = '#ffd200';
+    ctx.fillRect(24, CH/2 + 52 - fillH, 4, fillH);
+  }
+}
+
+function drawBlock(b, idx, isSwinging){
+  const p = worldToScreen(b.x, b.y + b.h);
+  // Drop a shadow beneath swinging block on top of the tower
+  if (isSwinging){
+    const topY = towerTopY();
+    const shadowScreen = worldToScreen(b.x, topY);
+    ctx.fillStyle = 'rgba(0,0,0,0.18)';
+    ctx.fillRect(p.x, shadowScreen.y - 2, b.w, 3);
+  }
+  // Main block
+  ctx.fillStyle = b.color;
+  ctx.fillRect(p.x, p.y, b.w, b.h);
+  // Edge highlights
+  ctx.fillStyle = 'rgba(255,255,255,0.22)';
+  ctx.fillRect(p.x, p.y, b.w, 2);
+  ctx.fillRect(p.x, p.y, 2, b.h);
+  ctx.fillStyle = 'rgba(0,0,0,0.22)';
+  ctx.fillRect(p.x, p.y + b.h - 2, b.w, 2);
+  ctx.fillRect(p.x + b.w - 2, p.y, 2, b.h);
+  // Windows — small pattern based on floor index for variety
+  ctx.fillStyle = 'rgba(255,255,200,0.55)';
+  const winW = 5, winH = 7;
+  const cols = Math.max(1, Math.floor((b.w - 8) / 10));
+  const startX = p.x + (b.w - (cols * 10 - 4)) / 2;
+  const cy = p.y + (b.h - winH) / 2;
+  for (let c = 0; c < cols; c++){
+    const off = ((idx + c) * 7) % 5;
+    if (off > 1) {
+      ctx.fillRect(startX + c * 10, cy, winW, winH);
+    }
+  }
+}
+
+function drawChunk(c){
+  const p = worldToScreen(c.x, c.y + c.h);
+  ctx.save();
+  ctx.translate(p.x + c.w/2, p.y + c.h/2);
+  ctx.rotate(c.rot);
+  ctx.fillStyle = c.color;
+  ctx.fillRect(-c.w/2, -c.h/2, c.w, c.h);
+  ctx.fillStyle = 'rgba(0,0,0,0.3)';
+  ctx.fillRect(-c.w/2, c.h/2 - 2, c.w, 2);
+  ctx.restore();
+}
+
+// ===== HUD =====
+function updateHud(){
+  document.getElementById('hudFloor').textContent = '🏢 ' + G.floor + ' طوابق';
+  document.getElementById('hudScore').textContent = '⭐ ' + Math.floor(G.score);
+  document.getElementById('hudBest').textContent = '🏆 ' + (loadBest());
+  const comboEl = document.getElementById('hudCombo');
+  if (G.combo >= 2){
+    comboEl.style.display = '';
+    comboEl.textContent = '🔥 ×' + G.combo;
+    comboEl.classList.add('combo');
+  } else {
+    comboEl.style.display = 'none';
+  }
+}
+function loadBest(){
+  try { return parseInt(localStorage.getItem('borjBest') || '0', 10); } catch(e){ return 0; }
+}
+function saveBest(v){
+  try { localStorage.setItem('borjBest', String(v)); } catch(e){}
+}
+
+// ===== Loop =====
+function loop(t){
+  if (!G.lastT) G.lastT = t;
+  const dt = Math.min(2.5, (t - G.lastT) / 16.67);
+  G.lastT = t;
+  if (G.state !== 'paused' && G.state !== 'idle'){
+    update(dt);
+    render();
+  }
+  G.raf = requestAnimationFrame(loop);
+}
+
+// ===== Flow =====
+function startGame(){
+  G.state = 'idle';
+  G.blocks = []; G.chunks = []; G.particles = [];
+  G.score = 0; G.combo = 0; G.perfectStreak = 0; G.floor = 0;
+  G.cameraY = 0; G._camTarget = undefined;
+  G.shake = 0;
+  // First block — wide, on the ground, centered
+  G.blocks.push({ x: CW/2 - BASE_BLOCK_W/2, y: 0, w: BASE_BLOCK_W, h: BLOCK_H, color: COLORS[0] });
+  G.floor = 1;
+  document.getElementById('startOv').style.display = 'none';
+  document.getElementById('overOv').style.display = 'none';
+  document.getElementById('pauseOv').style.display = 'none';
+  document.body.classList.remove('hide-hint');
+  document.body.classList.add('playing');
+  if (!AC) initAudio();
+  updateHud();
+  spawnSwingingBlock();
+}
+
+function gameOver(){
+  G.state = 'over';
+  document.body.classList.remove('playing');
+  const score = Math.floor(G.score);
+  const best = loadBest();
+  const isRecord = score > best;
+  if (isRecord) saveBest(score);
+  document.getElementById('finalFloor').textContent = G.floor;
+  document.getElementById('finalScore').textContent = score;
+  document.getElementById('finalBest').textContent = isRecord ? score : best;
+  document.getElementById('finalRecord').style.display = isRecord ? '' : 'none';
+  // Tier-based encouragement
+  let title = '💥 برجك سقط!';
+  let sub = 'حاول إنك تكون أكثر دقّة في التوقيت.';
+  if (G.floor >= 50){ title = '🏆 معماري أسطوري!'; sub = 'برج عملاق! تخطيت ٥٠ طابق — لياقة بنّاء محترف!'; }
+  else if (G.floor >= 30){ title = '🌆 معماري ماهر'; sub = 'برج ضخم وثابت — استمر، الفضاء بانتظارك!'; }
+  else if (G.floor >= 15){ title = '🏢 بنّاء جيّد'; sub = 'وصلت لارتفاع محترم — حاول تحسين التوقيت لمزيد من الطوابق.'; }
+  else if (G.floor >= 5) { title = '🚧 بداية جيّدة'; sub = 'برج صغير… بس تقدر تبنيه أعلى! الكومبو يضاعف نقاطك.'; }
+  document.getElementById('overTitle').textContent = title;
+  document.getElementById('overSub').textContent = sub;
+  document.getElementById('overOv').style.display = 'flex';
+}
+
+function togglePause(){
+  if (G.state === 'swinging' || G.state === 'falling'){
+    G.state = 'paused';
+    document.getElementById('pauseOv').style.display = 'flex';
+  } else if (G.state === 'paused'){
+    resumeGame();
+  }
+}
+function resumeGame(){
+  G.state = G.current ? (G.current.vy < 0 ? 'falling' : 'swinging') : 'swinging';
+  document.getElementById('pauseOv').style.display = 'none';
+}
+function quitGame(){
+  G.state = 'idle';
+  document.body.classList.remove('playing');
+  document.getElementById('pauseOv').style.display = 'none';
+  document.getElementById('startOv').style.display = 'flex';
+}
+window.startGame = startGame;
+window.togglePause = togglePause;
+window.resumeGame = resumeGame;
+window.quitGame = quitGame;
+
+document.addEventListener('visibilitychange', () => {
+  if (document.hidden && (G.state === 'swinging' || G.state === 'falling')) togglePause();
+});
+
+if ('serviceWorker' in navigator){
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('sw.js').catch(()=>{});
+  });
+}
+
+// Boot
+G.raf = requestAnimationFrame(loop);
+// Show best on the start screen
+updateHud();
+</script>
+</body>
+</html>
