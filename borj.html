@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
 <title>بنّاء البرج | Wanees</title>
 <meta name="theme-color" content="#0a1a2e">
-<meta name="description" content="ابنِ أطول برج ممكن — اضغط لإسقاط البلوك في الوقت المناسب. كل تأخير يقلّص البرج، والمحاذاة المثاليّة تضاعف نقاطك.">
+<meta name="description" content="ابنِ مدينة كاملة برجاً برجاً! أنزل الكتل في اللحظة المثاليّة، حافظ على توازن البرج، وافتح أبراجاً جديدة بأجواء وطقس مختلف.">
 <link rel="manifest" href="manifest.json">
 <link rel="icon" href="icon-192.png">
 <style>
@@ -16,21 +16,41 @@ html,body{margin:0;padding:0;height:100%;overflow:hidden;background:#0a1a2e;
 #game{position:fixed;inset:0}
 #cv{position:absolute;inset:0;width:100%;height:100%;display:block}
 
-/* HUD pills */
 #hud{position:absolute;top:calc(8px + env(safe-area-inset-top,0));left:8px;right:8px;
-  display:flex;justify-content:space-between;align-items:center;gap:6px;
+  display:flex;justify-content:space-between;align-items:flex-start;gap:6px;
   pointer-events:none;z-index:5;color:#fff;text-shadow:0 2px 4px rgba(0,0,0,0.85);font-weight:800;flex-wrap:wrap}
+.hud-col{display:flex;flex-direction:column;gap:5px}
+.hud-col.right{align-items:flex-end}
 .hud-pill{background:rgba(0,0,0,0.55);border:2px solid rgba(255,210,0,0.55);
-  border-radius:50px;padding:5px 14px;font-size:0.95rem;display:flex;gap:5px;align-items:center;
-  backdrop-filter:blur(4px);-webkit-backdrop-filter:blur(4px)}
+  border-radius:50px;padding:5px 14px;font-size:0.92rem;display:flex;gap:5px;align-items:center;
+  backdrop-filter:blur(4px);-webkit-backdrop-filter:blur(4px);white-space:nowrap}
 .hud-pill.combo{border-color:#ff8838;background:rgba(80,30,0,0.7);animation:comboPulse 0.6s infinite}
 @keyframes comboPulse{0%,100%{transform:scale(1)}50%{transform:scale(1.08)}}
+/* Floor progress bar */
+#floorBarWrap{position:absolute;left:10px;top:50%;transform:translateY(-50%);
+  width:14px;height:42%;background:rgba(0,0,0,0.4);border:2px solid rgba(255,255,255,0.2);
+  border-radius:8px;z-index:5;overflow:hidden;pointer-events:none}
+#floorBar{position:absolute;left:0;right:0;bottom:0;background:linear-gradient(0deg,#ffd200,#ff8838);
+  border-radius:6px;transition:height 0.3s}
+#floorBarLbl{position:absolute;left:8px;top:calc(50% - 42%/2 - 22px);z-index:5;
+  font-size:0.72rem;font-weight:800;color:#ffd200;text-shadow:0 1px 3px #000;pointer-events:none}
 
-/* Big invisible tap zone covers the whole game */
+/* Balance meter (lean indicator) */
+#balanceWrap{position:absolute;bottom:calc(14px + env(safe-area-inset-bottom,0));left:50%;
+  transform:translateX(-50%);width:46%;max-width:280px;height:10px;
+  background:rgba(0,0,0,0.45);border:2px solid rgba(255,255,255,0.25);border-radius:50px;
+  z-index:5;pointer-events:none;overflow:visible}
+#balanceWrap.warn{border-color:#ff5544;animation:balWarn 0.4s infinite}
+@keyframes balWarn{0%,100%{box-shadow:0 0 0 rgba(255,60,40,0)}50%{box-shadow:0 0 14px rgba(255,60,40,0.8)}}
+#balanceCenter{position:absolute;left:50%;top:-3px;bottom:-3px;width:2px;background:rgba(255,255,255,0.5);transform:translateX(-50%)}
+#balanceDot{position:absolute;top:50%;left:50%;width:18px;height:18px;border-radius:50%;
+  background:radial-gradient(circle at 35% 30%,#fff4cc,#ffd200 60%,#cc9900);
+  border:2px solid #fff;transform:translate(-50%,-50%);transition:left 0.12s,background 0.2s;
+  box-shadow:0 2px 8px rgba(0,0,0,0.5)}
+
 #tapZone{position:absolute;inset:0;z-index:3;cursor:pointer;touch-action:none}
 
-/* Drop hint floating above tower */
-#dropHint{position:absolute;bottom:calc(20% + env(safe-area-inset-bottom,0));left:50%;
+#dropHint{position:absolute;bottom:calc(16% + env(safe-area-inset-bottom,0));left:50%;
   transform:translateX(-50%);z-index:4;background:rgba(0,0,0,0.6);
   border:2px solid rgba(255,210,0,0.6);border-radius:50px;padding:8px 22px;
   color:#ffd200;font-weight:900;font-size:1rem;pointer-events:none;
@@ -38,30 +58,28 @@ html,body{margin:0;padding:0;height:100%;overflow:hidden;background:#0a1a2e;
 @keyframes hintBob{0%,100%{transform:translateX(-50%) translateY(0)}50%{transform:translateX(-50%) translateY(-4px)}}
 .hide-hint #dropHint{display:none}
 
-/* Combo flyout */
-#comboFlash{position:absolute;top:30%;left:50%;transform:translate(-50%,-50%);
-  z-index:6;font-size:2.5rem;font-weight:900;color:#ffd200;
+#comboFlash{position:absolute;top:32%;left:50%;transform:translate(-50%,-50%);
+  z-index:6;font-size:2.2rem;font-weight:900;color:#ffd200;text-align:center;
   text-shadow:0 0 30px rgba(255,210,0,0.9),0 4px 0 #7a4400;
-  opacity:0;pointer-events:none;font-family:'Tajawal',sans-serif}
-#comboFlash.on{animation:flashIn 0.9s ease-out forwards}
-@keyframes flashIn{0%{opacity:0;transform:translate(-50%,-50%) scale(0.5)}30%{opacity:1;transform:translate(-50%,-65%) scale(1.1)}100%{opacity:0;transform:translate(-50%,-100%) scale(1)}}
+  opacity:0;pointer-events:none;font-family:'Tajawal',sans-serif;line-height:1.1}
+#comboFlash.on{animation:flashIn 0.95s ease-out forwards}
+@keyframes flashIn{0%{opacity:0;transform:translate(-50%,-50%) scale(0.5)}25%{opacity:1;transform:translate(-50%,-62%) scale(1.12)}100%{opacity:0;transform:translate(-50%,-100%) scale(1)}}
 
-/* Pause button */
-#pauseBtn{position:absolute;top:calc(8px + env(safe-area-inset-top,0));right:8px;
+#pauseBtn{position:absolute;top:calc(8px + env(safe-area-inset-top,0));right:50%;
+  transform:translateX(calc(50% + 0px));margin-top:36px;
   width:40px;height:40px;border-radius:50%;background:rgba(0,0,0,0.55);
   border:2px solid rgba(255,210,0,0.6);color:#ffd200;font-size:1.1rem;font-weight:900;
   z-index:7;cursor:pointer;display:none;font-family:inherit}
 .playing #pauseBtn{display:block}
 
-/* Overlays */
 .overlay{position:absolute;inset:0;z-index:20;
-  background:radial-gradient(ellipse at 50% 30%,rgba(40,25,55,0.92),rgba(5,8,18,0.97) 75%);
+  background:radial-gradient(ellipse at 50% 28%,rgba(40,28,60,0.94),rgba(5,8,18,0.98) 75%);
   display:flex;flex-direction:column;align-items:center;justify-content:center;
   padding:24px 18px;text-align:center;color:#fff;animation:ovFade 0.5s ease-out;overflow-y:auto}
 @keyframes ovFade{from{opacity:0;transform:scale(1.05)}to{opacity:1;transform:scale(1)}}
-.ov-title{font-size:2.4rem;font-weight:900;color:#ffd200;margin:0 0 12px;letter-spacing:1px;
+.ov-title{font-size:2.2rem;font-weight:900;color:#ffd200;margin:0 0 10px;letter-spacing:1px;
   text-shadow:0 0 24px rgba(255,210,0,0.9),0 4px 0 #7a4400;line-height:1.15}
-.ov-sub{font-size:1rem;color:#ffe2a8;margin:0 0 14px;max-width:420px;line-height:1.55;font-weight:700}
+.ov-sub{font-size:1rem;color:#ffe2a8;margin:0 0 14px;max-width:440px;line-height:1.55;font-weight:700}
 .ov-btn{background:linear-gradient(180deg,#ffd200,#cc9900);border:3px solid #b48a30;color:#231510;
   border-radius:50px;padding:14px 36px;font-size:1.05rem;font-weight:900;cursor:pointer;
   box-shadow:0 5px 0 #8a6a18;font-family:inherit;margin:5px;min-width:220px}
@@ -69,20 +87,36 @@ html,body{margin:0;padding:0;height:100%;overflow:hidden;background:#0a1a2e;
 .ov-btn.secondary{background:linear-gradient(180deg,#4488cc,#225599);
   border-color:#336699;color:#fff;box-shadow:0 5px 0 #112244}
 .ov-btn.secondary:active{box-shadow:0 2px 0 #112244}
-.ov-stats{background:rgba(0,0,0,0.4);border-radius:14px;padding:14px 22px;margin:8px 0 18px;
-  font-size:1.05rem;color:#ffd200;font-weight:800}
-.ov-stats strong{color:#fff;font-size:1.35rem;display:block;margin-top:2px}
-.ov-tips{background:rgba(255,210,0,0.13);border-radius:14px;padding:11px 16px;margin:10px 0 8px;
-  font-size:0.92rem;color:#ffeebb;max-width:380px;line-height:1.7;font-weight:700;text-align:right}
-.preview-tower{display:flex;flex-direction:column;align-items:center;gap:2px;margin:6px 0 12px}
-.preview-tower span{display:block;height:18px;border-radius:3px;border:1.5px solid rgba(0,0,0,0.3)}
+.ov-stats{background:rgba(0,0,0,0.4);border-radius:14px;padding:14px 22px;margin:8px 0 16px;
+  font-size:1.02rem;color:#ffd200;font-weight:800}
+.ov-stats strong{color:#fff;font-size:1.3rem;display:block;margin-top:2px}
+.ov-tips{background:rgba(255,210,0,0.13);border-radius:14px;padding:11px 16px;margin:8px 0;
+  font-size:0.9rem;color:#ffeebb;max-width:400px;line-height:1.7;font-weight:700;text-align:right}
+
+/* City map grid */
+.map-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;max-width:380px;margin:6px 0 16px;width:100%}
+.map-card{background:rgba(0,0,0,0.4);border:2px solid #3a3a52;border-radius:14px;
+  padding:10px 6px 8px;display:flex;flex-direction:column;align-items:center;gap:5px;
+  cursor:pointer;transition:transform 0.15s,border-color 0.2s;position:relative;min-height:96px;justify-content:flex-end}
+.map-card.locked{opacity:0.45;cursor:not-allowed;filter:grayscale(0.7)}
+.map-card.done{border-color:#26de81}
+.map-card.current{border-color:#ffd200;box-shadow:0 0 18px rgba(255,210,0,0.4);animation:curPulse 1.4s infinite}
+@keyframes curPulse{0%,100%{box-shadow:0 0 14px rgba(255,210,0,0.3)}50%{box-shadow:0 0 26px rgba(255,210,0,0.6)}}
+.map-card:not(.locked):hover{transform:translateY(-3px)}
+.map-card canvas{width:54px;height:64px}
+.map-name{font-size:0.74rem;font-weight:800;color:#fff;line-height:1.2}
+.map-meta{font-size:0.66rem;color:#ffcf66;font-weight:700}
+.map-badge{position:absolute;top:4px;left:4px;font-size:0.8rem}
+.map-weather{position:absolute;top:4px;right:6px;font-size:0.85rem}
 
 @media(max-width:480px){
-  .ov-title{font-size:1.8rem}
-  .hud-pill{font-size:0.8rem;padding:4px 11px}
-  .ov-sub{font-size:0.92rem}
+  .ov-title{font-size:1.7rem}
+  .hud-pill{font-size:0.78rem;padding:4px 11px}
+  .ov-sub{font-size:0.9rem}
   .ov-btn{font-size:0.95rem;padding:12px 26px;min-width:180px}
   #dropHint{font-size:0.9rem;padding:7px 18px}
+  .map-grid{gap:8px}
+  .map-card canvas{width:46px;height:56px}
 }
 </style>
 </head>
@@ -90,666 +124,876 @@ html,body{margin:0;padding:0;height:100%;overflow:hidden;background:#0a1a2e;
 <div id="game">
   <canvas id="cv"></canvas>
   <div id="tapZone"></div>
-  <div id="dropHint">👆 المس لإسقاط البلوك</div>
+  <div id="dropHint">👆 المس لإنزال الكتلة</div>
   <div id="comboFlash">مثالي!</div>
+  <div id="floorBarWrap"><div id="floorBar" style="height:0%"></div></div>
+  <div id="floorBarLbl">🏢</div>
+  <div id="balanceWrap"><div id="balanceCenter"></div><div id="balanceDot"></div></div>
   <div id="hud">
-    <span class="hud-pill" id="hudFloor">🏢 ٠ طوابق</span>
-    <span class="hud-pill" id="hudCombo" style="display:none">🔥 ×1</span>
-    <span class="hud-pill" id="hudScore">⭐ 0</span>
-    <span class="hud-pill" id="hudBest">🏆 0</span>
+    <div class="hud-col">
+      <span class="hud-pill" id="hudFloor">🏢 ٠/٦</span>
+      <span class="hud-pill combo" id="hudCombo" style="display:none">🔥 ×1</span>
+    </div>
+    <div class="hud-col right">
+      <span class="hud-pill" id="hudPop">👥 0</span>
+      <span class="hud-pill" id="hudBuilding">🏙️ 1</span>
+    </div>
   </div>
   <button id="pauseBtn" type="button" onclick="togglePause()" aria-label="إيقاف">⏸</button>
 
   <div class="overlay" id="startOv">
     <h1 class="ov-title">🏗️ بنّاء البرج</h1>
-    <p class="ov-sub">رافعة تتأرجح بأعلى البرج، اضغط لإسقاط البلوك. اللي يطلع زايد ينقطع وبرجك يضيق… والبرج اللي ما يصير عرضه شي يطيح!</p>
-    <div class="preview-tower" aria-hidden="true">
-      <span style="width:46px;background:#ff6b6b"></span>
-      <span style="width:60px;background:#feca57"></span>
-      <span style="width:54px;background:#48dbfb"></span>
-      <span style="width:72px;background:#1dd1a1"></span>
-      <span style="width:84px;background:#5f27cd"></span>
-    </div>
+    <p class="ov-sub">ابنِ مدينة كاملة، برجاً برجاً! أنزل الكتلة في اللحظة المثاليّة، وحافظ على توازن البرج قبل أن يميل ويسقط.</p>
     <div class="ov-tips">
-      👆 <strong>المس الشاشة</strong> أو <kbd>Space</kbd> لإسقاط البلوك<br>
-      🎯 <strong>محاذاة مثاليّة</strong> (±٣ بكسل) = مكافأة وضعفان<br>
-      🔥 <strong>كومبو</strong>: ٣ محاذاة على التوالي = ×٣ نقاط<br>
-      💀 لو الكتلة ما لمست البرج = نهاية اللعبة
+      👆 <strong>المس الشاشة</strong> أو <kbd>Space</kbd> لإنزال الكتلة<br>
+      🎯 <strong>محاذاة مثاليّة</strong> = سكّان أكثر وكومبو<br>
+      ⚖️ <strong>الميزان</strong> تحت يبيّن ميل البرج — لا تتركه يصل الحافة!<br>
+      🏙️ كل برج تكمله يفتح برجاً جديداً بطقسٍ وجوٍّ مختلف
     </div>
-    <button class="ov-btn" onclick="startGame()">ابدأ البناء ▶</button>
+    <button class="ov-btn" onclick="openMap()">🏙️ خريطة المدينة</button>
     <button class="ov-btn secondary" onclick="location.href='index.html'">🏠 الرئيسية</button>
+  </div>
+
+  <div class="overlay" id="mapOv" style="display:none">
+    <h1 class="ov-title" id="mapTitle">🏙️ خريطة المدينة</h1>
+    <p class="ov-sub" id="mapSub">اختر برجاً لبنائه. أكمل الأبراج لفتح الأعلى منها.</p>
+    <div class="map-grid" id="mapGrid"></div>
+    <button class="ov-btn" id="mapStartBtn" onclick="startSelected()">ابدأ البناء ▶</button>
+    <button class="ov-btn secondary" onclick="backToStart()">رجوع</button>
+  </div>
+
+  <div class="overlay" id="completeOv" style="display:none">
+    <h1 class="ov-title" id="completeTitle">🎉 اكتمل البرج!</h1>
+    <p class="ov-sub" id="completeSub"></p>
+    <div class="ov-stats">
+      <div>👥 سكّان البرج: <strong id="cmpPop">0</strong></div>
+      <div>⭐ إجمالي المدينة: <strong id="cmpTotal">0</strong></div>
+    </div>
+    <button class="ov-btn" id="cmpNextBtn" onclick="afterComplete()">🏙️ البرج التالي</button>
   </div>
 
   <div class="overlay" id="pauseOv" style="display:none">
     <h1 class="ov-title">⏸ إيقاف</h1>
     <p class="ov-sub">خذ نفسك… برجك ينتظرك!</p>
     <button class="ov-btn" onclick="resumeGame()">▶ متابعة</button>
-    <button class="ov-btn secondary" onclick="quitGame()">🏠 خروج</button>
+    <button class="ov-btn secondary" onclick="quitToMap()">🏙️ الخريطة</button>
   </div>
 
   <div class="overlay" id="overOv" style="display:none">
-    <h1 class="ov-title" id="overTitle">💥 برجك سقط!</h1>
-    <p class="ov-sub" id="overSub">حاول إنك تكون أكثر دقّة في التوقيت — البرج بيكبر تحت سيطرتك!</p>
+    <h1 class="ov-title" id="overTitle">💥 مال البرج وسقط!</h1>
+    <p class="ov-sub" id="overSub"></p>
     <div class="ov-stats">
       <div>🏢 الطوابق: <strong id="finalFloor">0</strong></div>
-      <div>⭐ النقاط: <strong id="finalScore">0</strong></div>
-      <div>🏆 أفضل نتيجة: <strong id="finalBest">0</strong></div>
-      <div id="finalRecord" style="color:#ff8838;margin-top:4px;display:none">🎉 رقم قياسي جديد!</div>
+      <div>👥 السكّان: <strong id="finalPop">0</strong></div>
+      <div>⭐ إجمالي المدينة: <strong id="finalTotal">0</strong></div>
     </div>
-    <button class="ov-btn" onclick="startGame()">🔄 ابنِ من جديد</button>
-    <button class="ov-btn secondary" onclick="location.href='index.html'">🏠 الرئيسية</button>
+    <button class="ov-btn" onclick="retryBuilding()">🔄 أعد المحاولة</button>
+    <button class="ov-btn secondary" onclick="quitToMap()">🏙️ الخريطة</button>
   </div>
 </div>
 
 <script>
 'use strict';
-// ===== Canvas & DPR setup =====
+/* ============================================================
+   بنّاء البرج — Tower-Bloxx style city builder
+   Equal-width blocks stack and LEAN (no shrinking). Misaligned
+   drops tip the tower; the centre of mass leaving the base
+   footprint topples it. Finishing a building's floor target
+   caps it with a roof and unlocks the next plot on the city map.
+   ============================================================ */
 const cv = document.getElementById('cv');
 const ctx = cv.getContext('2d');
-let CW = 0, CH = 0;
+let CW = 0, CH = 0, DPR = 1;
 function resize(){
-  const dpr = Math.min(window.devicePixelRatio || 1, 2);
-  CW = window.innerWidth;
-  CH = window.innerHeight;
-  cv.width = Math.floor(CW * dpr);
-  cv.height = Math.floor(CH * dpr);
-  cv.style.width = CW + 'px';
-  cv.style.height = CH + 'px';
-  ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+  DPR = Math.min(window.devicePixelRatio || 1, 2);
+  CW = window.innerWidth; CH = window.innerHeight;
+  cv.width = Math.floor(CW * DPR); cv.height = Math.floor(CH * DPR);
+  cv.style.width = CW + 'px'; cv.style.height = CH + 'px';
+  ctx.setTransform(DPR, 0, 0, DPR, 0, 0);
 }
 window.addEventListener('resize', resize);
 window.addEventListener('orientationchange', resize);
 resize();
 
-// ===== Game state =====
-const G = {
-  state: 'idle', // idle | swinging | falling | over | paused
-  blocks: [],     // {x, y, w, h, color}  (x,y is bottom-left in world coords; +y is up)
-  current: null,  // {x, y, w, h, vy, color}
-  craneT: 0,      // phase 0..1
-  craneDir: 1,
-  craneSpeed: 0.011,  // increments per frame
-  craneRange: 0,      // computed each frame from canvas width
-  baseSpeed: 0.011,
-  score: 0, combo: 0, perfectStreak: 0, floor: 0,
-  cameraY: 0,         // world Y at bottom of camera view
-  shake: 0,
-  particles: [],
-  chunks: [],         // falling trimmed pieces {x, y, w, h, vx, vy, color, rot, vr}
-  lastT: 0,
-  raf: 0,
-};
-const COLORS = ['#ff6b6b','#feca57','#48dbfb','#1dd1a1','#5f27cd','#ff9ff3','#54a0ff','#ff8838','#a55eea','#26de81'];
-const BASE_BLOCK_W = 90;      // starting block width
-const BLOCK_H = 26;
-const GROUND_GAP = 60;        // pixels from bottom of canvas to top of ground
-const CRANE_GAP = 110;        // pixels above tower top where the crane swings
-const PERFECT_TOL = 3;        // px diff considered "perfect"
-
-// ===== Background + sky =====
-function lerp(a, b, t){ return a + (b - a) * t; }
-function hexToRgb(h){
-  const n = parseInt(h.slice(1), 16);
-  return [(n>>16)&255, (n>>8)&255, n&255];
-}
-function rgbStr(c){ return 'rgb(' + c[0] + ',' + c[1] + ',' + c[2] + ')'; }
-function lerpHex(h1, h2, t){
-  const a = hexToRgb(h1), b = hexToRgb(h2);
-  return [Math.round(lerp(a[0], b[0], t)),
-          Math.round(lerp(a[1], b[1], t)),
-          Math.round(lerp(a[2], b[2], t))];
-}
-const SKY = [
-  // {floor, horizon, top, sun, hasStars}
-  { floor: 0,  horizon: '#ffd9a8', top: '#85ceff', stars: 0 },
-  { floor: 12, horizon: '#ff8854', top: '#5f4280', stars: 0 },
-  { floor: 25, horizon: '#3a2058', top: '#0a0820', stars: 1 },
-  { floor: 50, horizon: '#100020', top: '#000000', stars: 1 },
-  { floor: 80, horizon: '#000010', top: '#000000', stars: 1 },
+/* ===== Buildings (the city) ===== */
+// Each building: a distinct look, floor target, block size, weather, and
+// difficulty knobs that ramp across the city.
+const BUILDINGS = [
+  { name:'برج الوادي',    floors:6,  bw:96, bh:30, c1:'#ff7b6b', c2:'#c0392b', win:'#ffe9a8', weather:'sunny',  swing:0.0110, wind:0    },
+  { name:'برج النخيل',    floors:8,  bw:90, bh:28, c1:'#2bd4a4', c2:'#0f9b7a', win:'#d6fff0', weather:'cloudy', swing:0.0125, wind:0    },
+  { name:'البرج الذهبي',  floors:10, bw:86, bh:28, c1:'#ffce5a', c2:'#e0921a', win:'#fff7d6', weather:'sunny',  swing:0.0140, wind:0    },
+  { name:'برج المحيط',    floors:12, bw:82, bh:26, c1:'#52d6fb', c2:'#0a9bd0', win:'#e6fbff', weather:'rainy',  swing:0.0150, wind:0.18 },
+  { name:'برج الغروب',    floors:14, bw:80, bh:26, c1:'#ff8fb0', c2:'#c64f86', win:'#ffe3ef', weather:'sunset', swing:0.0160, wind:0.10 },
+  { name:'البرج البنفسجي',floors:16, bw:76, bh:25, c1:'#b274ec', c2:'#7a44c0', win:'#f3e9ff', weather:'night',  swing:0.0170, wind:0    },
+  { name:'ناطحة السحاب',  floors:20, bw:72, bh:24, c1:'#7a8aa0', c2:'#2f3a4a', win:'#cfe8ff', weather:'windy',  swing:0.0185, wind:0.34 },
+  { name:'برج الفضاء',    floors:26, bw:68, bh:23, c1:'#9aa6ff', c2:'#4452b0', win:'#e8ecff', weather:'space',  swing:0.0205, wind:0.12 },
 ];
-function getSky(floor){
-  for (let i = 0; i < SKY.length - 1; i++){
-    const a = SKY[i], b = SKY[i+1];
-    if (floor < b.floor){
-      const t = (floor - a.floor) / (b.floor - a.floor);
-      return {
-        horizon: rgbStr(lerpHex(a.horizon, b.horizon, t)),
-        top: rgbStr(lerpHex(a.top, b.top, t)),
-        stars: t > 0.5 ? b.stars : a.stars,
-      };
-    }
-  }
-  const last = SKY[SKY.length - 1];
-  return { horizon: last.horizon, top: last.top, stars: last.stars };
-}
+const WEATHER_ICON = { sunny:'☀️', cloudy:'⛅', rainy:'🌧️', sunset:'🌇', night:'🌙', windy:'🌬️', space:'🚀' };
 
-// ===== Audio =====
+/* ===== State ===== */
+const G = {
+  state: 'idle', // idle | swinging | falling | over | paused | complete
+  bIndex: 0,         // current building index
+  selIndex: 0,       // selected on map
+  B: null,           // active building def
+  blocks: [],        // {offset, color, win, h, roof}
+  current: null,     // swinging/falling block {offset, screenY, vy, color}
+  swingT: 0, swingDir: 1,
+  pop: 0,            // residents in current building
+  cityTotal: 0,      // total across whole run
+  combo: 0, perfectStreak: 0,
+  cameraY: 0, camTarget: undefined,
+  shake: 0, leanVis: 0,    // smoothed visual lean for the dot
+  particles: [], chunks: [], people: [],
+  clouds: [], rain: [], stars: [], birds: [],
+  windPhase: 0,
+  topple: null,      // topple animation state
+  lastT: 0, raf: 0,
+};
+const GROUND_GAP = 64;       // px from canvas bottom to street level
+const CRANE_GAP = 150;       // px the pivot sits above the tower top (screen)
+const PERFECT_TOL = 4;       // px diff considered perfect
+
+/* ===== Persistence ===== */
+function loadProgress(){
+  try { return Math.max(0, parseInt(localStorage.getItem('borjUnlocked')||'0',10)); } catch(e){ return 0; }
+}
+function saveProgress(idx){ try { localStorage.setItem('borjUnlocked', String(idx)); } catch(e){} }
+function loadBestPop(){ try { return parseInt(localStorage.getItem('borjBestPop')||'0',10); } catch(e){ return 0; } }
+function saveBestPop(v){ try { localStorage.setItem('borjBestPop', String(v)); } catch(e){} }
+let UNLOCKED = loadProgress();
+
+/* ===== Audio ===== */
 let AC = null;
-function initAudio(){
-  try { AC = new (window.AudioContext || window.webkitAudioContext)(); } catch(e){ AC = null; }
-}
-function beep(freq, dur, delayMs, type){
+function initAudio(){ try { AC = new (window.AudioContext||window.webkitAudioContext)(); } catch(e){ AC=null; } }
+function tone(freq, dur, delayMs, type, vol){
   if (!AC) return;
-  const fn = () => {
-    const t = AC.currentTime;
-    const osc = AC.createOscillator();
-    const gain = AC.createGain();
-    osc.type = type || 'square';
-    osc.frequency.value = freq;
-    gain.gain.value = 0.06;
-    gain.gain.exponentialRampToValueAtTime(0.001, t + dur);
-    osc.connect(gain); gain.connect(AC.destination);
-    osc.start(t); osc.stop(t + dur + 0.05);
+  const run = () => {
+    const t = AC.currentTime, o = AC.createOscillator(), g = AC.createGain();
+    o.type = type||'square'; o.frequency.value = freq;
+    g.gain.value = vol||0.06; g.gain.exponentialRampToValueAtTime(0.0008, t+dur);
+    o.connect(g); g.connect(AC.destination); o.start(t); o.stop(t+dur+0.05);
   };
-  if (delayMs) setTimeout(fn, delayMs); else fn();
+  if (delayMs) setTimeout(run, delayMs); else run();
 }
+function noiseHit(){
+  if (!AC) return;
+  const t = AC.currentTime, b = AC.createBuffer(1, 1200, AC.sampleRate), d = b.getChannelData(0);
+  for (let i=0;i<d.length;i++) d[i] = (Math.random()*2-1) * (1 - i/d.length);
+  const s = AC.createBufferSource(); s.buffer = b;
+  const g = AC.createGain(); g.gain.value = 0.12; g.gain.exponentialRampToValueAtTime(0.001, t+0.18);
+  const f = AC.createBiquadFilter(); f.type='lowpass'; f.frequency.value=900;
+  s.connect(f); f.connect(g); g.connect(AC.destination); s.start(t);
+}
+function sndDrop(){ tone(180,0.07,0,'square',0.05); }
+function sndLand(){ noiseHit(); tone(120,0.12,0,'sine',0.05); }
+function sndPerfect(){ tone(880,0.06,0,'sine',0.06); tone(1320,0.06,55,'sine',0.06); tone(1760,0.09,120,'sine',0.05); }
+function sndComplete(){ [523,659,784,1046,1318].forEach((f,i)=>tone(f,0.16,i*90,'triangle',0.06)); }
+function sndTopple(){ tone(300,0.5,0,'sawtooth',0.07); tone(150,0.6,80,'sawtooth',0.06); noiseHit(); }
 
-// ===== Input =====
-function handleTap(){
-  if (G.state === 'swinging'){ doDrop(); }
-  else if (G.state === 'idle'){ /* start screen owns its buttons */ }
-}
-document.getElementById('tapZone').addEventListener('pointerdown', e => {
-  e.preventDefault();
-  handleTap();
-});
+/* ===== Input ===== */
+function handleTap(){ if (G.state === 'swinging') doDrop(); }
+document.getElementById('tapZone').addEventListener('pointerdown', e => { e.preventDefault(); handleTap(); });
 window.addEventListener('keydown', e => {
-  if (e.code === 'Space' || e.code === 'Enter'){
-    if (G.state === 'swinging') doDrop();
-    e.preventDefault();
-  } else if (e.code === 'Escape' || e.code === 'KeyP'){
-    togglePause();
-  }
+  if (e.code==='Space' || e.code==='Enter'){ if (G.state==='swinging') doDrop(); e.preventDefault(); }
+  else if (e.code==='Escape' || e.code==='KeyP'){ if (G.state==='swinging'||G.state==='falling') togglePause(); }
 });
 
-// ===== Helpers =====
-// World coords: +y is up, ground top at worldY = 0. blocks store their
-// bottom-left corner. cameraY shifts the view so growth scrolls up.
-function towerTopY(){
+/* ===== Geometry =====
+   World: X is fixed (camera only scrolls Y). Plot centre = CW/2.
+   Floor i bottom worldY = i * bh. Screen Y grows downward. */
+function bh(){ return G.B.bh; }
+function bw(){ return G.B.bw; }
+function floorScreenBottom(i){ return (CH - GROUND_GAP) - (i * bh() - G.cameraY); }
+function towerTopWorld(){ return G.blocks.length * bh(); }
+function centerOfMass(){
   if (!G.blocks.length) return 0;
-  const t = G.blocks[G.blocks.length - 1];
-  return t.y + t.h;
+  let s = 0; for (const b of G.blocks) s += b.offset;
+  return s / G.blocks.length;
 }
-function towerTopBlock(){ return G.blocks[G.blocks.length - 1]; }
-function worldToScreen(wx, wy){
-  return { x: wx, y: CH - GROUND_GAP - (wy - G.cameraY) };
-}
-function blockColor(idx){ return COLORS[idx % COLORS.length]; }
 
+/* ===== Round flow ===== */
 function spawnSwingingBlock(){
-  const top = towerTopBlock();
-  const w = top ? top.w : BASE_BLOCK_W;
-  const y = towerTopY() + CRANE_GAP;
-  G.current = {
-    x: CW / 2 - w / 2, y, w, h: BLOCK_H,
-    vy: 0,
-    color: blockColor(G.blocks.length)
-  };
-  G.craneT = 0;
-  G.craneDir = 1;
-  // Difficulty: faster swing as tower grows, slightly narrower range
-  G.craneSpeed = G.baseSpeed + Math.min(0.025, G.blocks.length * 0.0008);
+  G.current = { offset: 0, screenY: 0, vy: 0, color: null };
+  G.swingT = 0; G.swingDir = 1;
   G.state = 'swinging';
 }
-
+function craneScreenY(){
+  // pivot sits a fixed gap above the current tower top, in screen space
+  return floorScreenBottom(G.blocks.length) - CRANE_GAP;
+}
 function doDrop(){
   if (!G.current) return;
   G.current.vy = 0;
+  // freeze current swing offset; remember where the block visually is
+  G.current.dropScreenY = craneScreenY() + ropeLen();
   G.state = 'falling';
-  beep(660, 0.08, 0, 'square');
+  sndDrop();
   document.body.classList.add('hide-hint');
 }
+function ropeLen(){ return CRANE_GAP - bh() - 6; }
 
 function landBlock(){
-  const cur = G.current;
-  const top = towerTopBlock();
-  if (!top){
-    // First block — anchor on ground
-    G.blocks.push({ x: cur.x, y: 0, w: cur.w, h: cur.h, color: cur.color });
-    G.score += 10;
-    G.floor++;
-    spawnSparkle(cur.x + cur.w/2, cur.h/2, '#fff8a0', 14);
-    nextRound();
-    return;
+  const cur = G.current, B = G.B;
+  const idx = G.blocks.length;
+  const prev = idx > 0 ? G.blocks[idx-1] : null;
+  // Miss check: must overlap the floor below (or the ground for floor 0)
+  if (prev){
+    const gap = Math.abs(cur.offset - prev.offset);
+    if (gap >= B.bw - 4){
+      // slid off — dramatic fall + game over
+      G.chunks.push({ x: CW/2 - B.bw/2 + cur.offset, yb: floorScreenBottom(idx),
+        w: B.bw, h: B.bh, vx: (cur.offset>prev.offset?1:-1)*2, vy: -2,
+        color: B.c1, color2: B.c2, win: B.win, rot:0, vr:(Math.random()-0.5)*0.14 });
+      G.current = null;
+      topple('miss');
+      return;
+    }
   }
-  const overlapL = Math.max(top.x, cur.x);
-  const overlapR = Math.min(top.x + top.w, cur.x + cur.w);
-  const overlapW = overlapR - overlapL;
-  if (overlapW <= 0){
-    // Total miss → game over
-    G.shake = 16;
-    beep(150, 0.4, 0, 'sawtooth');
-    // The block keeps falling past the tower
-    G.chunks.push({
-      x: cur.x, y: cur.y, w: cur.w, h: cur.h,
-      vx: 0, vy: -2, color: cur.color, rot: 0, vr: (Math.random() - 0.5) * 0.1
-    });
-    G.current = null;
-    gameOver();
-    return;
-  }
-  // Check for perfect landing (no trim)
-  const diff = Math.abs(cur.x - top.x);
-  if (diff <= PERFECT_TOL){
-    // Snap to perfect alignment, no trim, bonus
-    G.perfectStreak++;
-    G.combo = G.perfectStreak;
-    const mult = Math.min(5, 1 + Math.floor(G.perfectStreak / 1));
-    const bonus = 20 * mult;
-    G.score += 10 + bonus;
-    showComboFlash('مثالي!  +' + bonus);
-    beep(880, 0.06, 0, 'sine');
-    beep(1320, 0.06, 60, 'sine');
-    beep(1760, 0.08, 130, 'sine');
-    G.blocks.push({ x: top.x, y: towerTopY(), w: top.w, h: cur.h, color: cur.color });
-    spawnSparkle(top.x + top.w/2, towerTopY() + cur.h/2, '#fff8a0', 18);
-    spawnSparkle(top.x + 6, towerTopY() + cur.h/2, '#ffd200', 8);
-    spawnSparkle(top.x + top.w - 6, towerTopY() + cur.h/2, '#ffd200', 8);
+  const diff = prev ? Math.abs(cur.offset - prev.offset) : Math.abs(cur.offset);
+  const perfect = diff <= PERFECT_TOL;
+  if (perfect && prev){ cur.offset = prev.offset; } // snap flush
+  G.blocks.push({ offset: cur.offset, color: B.c1, color2: B.c2, win: B.win, h: B.bh, roof:false });
+  // Scoring: residents per floor + alignment bonus + combo
+  let residents;
+  if (perfect){
+    G.perfectStreak++; G.combo = G.perfectStreak;
+    const mult = Math.min(5, G.perfectStreak);
+    residents = 50 + 30 * mult;
+    showComboFlash(G.perfectStreak >= 2 ? ('مثالي ×'+G.perfectStreak+'!') : 'مثالي!');
+    sndPerfect();
+    spawnSparkleRing(CW/2 + cur.offset, floorScreenBottom(idx) - B.bh/2);
   } else {
-    // Trim: left or right overhang falls
     G.perfectStreak = 0; G.combo = 0;
-    if (cur.x < top.x){
-      // Overhang on the LEFT side
-      const leftW = top.x - cur.x;
-      G.chunks.push({ x: cur.x, y: cur.y, w: leftW, h: cur.h,
-        vx: -1, vy: -1, color: cur.color, rot: 0, vr: -0.08 });
-    }
-    if (cur.x + cur.w > top.x + top.w){
-      // Overhang on the RIGHT side
-      const rightX = top.x + top.w;
-      const rightW = (cur.x + cur.w) - rightX;
-      G.chunks.push({ x: rightX, y: cur.y, w: rightW, h: cur.h,
-        vx: 1, vy: -1, color: cur.color, rot: 0, vr: 0.08 });
-    }
-    G.blocks.push({ x: overlapL, y: towerTopY(), w: overlapW, h: cur.h, color: cur.color });
-    G.score += 10;
-    spawnSparkle(overlapL + overlapW/2, towerTopY() + cur.h/2, '#fff', 8);
-    beep(440, 0.06, 0, 'square');
+    const acc = 1 - Math.min(1, diff / (B.bw*0.7));
+    residents = Math.round(10 + 30 * acc);
+    sndLand();
   }
-  G.floor++;
-  G.shake = 4;
-  nextRound();
-}
-
-function nextRound(){
-  updateHud();
-  // Scroll camera so the new top of the tower stays around 65% down the screen
-  // (leaving room above for the next swinging block + sky).
-  const desiredScreenY = CH * 0.62;
-  const targetCam = towerTopY() - (CH - GROUND_GAP - desiredScreenY);
-  G._camTarget = targetCam;
-  spawnSwingingBlock();
-}
-
-function showComboFlash(text){
-  const el = document.getElementById('comboFlash');
-  el.textContent = text;
-  el.classList.remove('on');
-  void el.offsetWidth; // restart animation
-  el.classList.add('on');
-}
-
-function spawnSparkle(wx, wy, color, n){
-  for (let i = 0; i < n; i++){
-    const a = Math.random() * Math.PI * 2;
-    const s = 1 + Math.random() * 2.5;
-    G.particles.push({
-      x: wx, y: wy,
-      vx: Math.cos(a) * s, vy: Math.sin(a) * s + 1,
-      life: 30 + Math.random() * 20, color
-    });
-  }
-}
-
-// ===== Update =====
-function update(dt){
-  if (G.state === 'over' || G.state === 'paused' || G.state === 'idle') return;
-  // Smooth camera
-  if (G._camTarget !== undefined){
-    G.cameraY += (G._camTarget - G.cameraY) * 0.12 * dt;
-    if (Math.abs(G.cameraY - G._camTarget) < 0.3) G._camTarget = undefined;
-  }
-
-  if (G.state === 'swinging' && G.current){
-    G.craneT += G.craneSpeed * G.craneDir * dt;
-    if (G.craneT > 1){ G.craneT = 1; G.craneDir = -1; }
-    if (G.craneT < 0){ G.craneT = 0; G.craneDir = 1; }
-    // Position: ease so it slows at the edges (smoother than linear sweep)
-    const eased = 0.5 - 0.5 * Math.cos(G.craneT * Math.PI);
-    G.craneRange = Math.max(60, CW * 0.36);
-    const cx = CW / 2 + (eased - 0.5) * 2 * G.craneRange;
-    G.current.x = cx - G.current.w / 2;
-  } else if (G.state === 'falling' && G.current){
-    G.current.vy -= 1.4 * dt; // accelerate downward
-    G.current.y += G.current.vy * dt;
-    const targetY = towerTopY();
-    if (G.current.y <= targetY){
-      G.current.y = targetY;
-      landBlock();
-    }
-  }
-
-  // Chunks (fallen pieces) drift down + spin off-screen
-  for (const c of G.chunks){
-    c.vy -= 0.9 * dt;
-    c.x += c.vx * dt;
-    c.y += c.vy * dt;
-    c.rot += c.vr * dt;
-  }
-  G.chunks = G.chunks.filter(c => (c.y - G.cameraY) > -200);
-
-  // Particles
-  for (const pt of G.particles){
-    pt.x += pt.vx * dt;
-    pt.y += pt.vy * dt;
-    pt.vy -= 0.12 * dt;
-    pt.life -= dt;
-  }
-  G.particles = G.particles.filter(pt => pt.life > 0);
-
-  if (G.shake > 0) G.shake -= 0.5 * dt;
-}
-
-// ===== Render =====
-function render(){
-  const sky = getSky(G.floor);
-  // Sky gradient
-  const sg = ctx.createLinearGradient(0, 0, 0, CH);
-  sg.addColorStop(0, sky.top);
-  sg.addColorStop(1, sky.horizon);
-  ctx.fillStyle = sg;
-  ctx.fillRect(0, 0, CW, CH);
-
-  // Stars (visible at high floors / night)
-  if (sky.stars){
-    const tickKey = Math.floor(G.cameraY * 0.1);
-    for (let i = 0; i < 60; i++){
-      const sx = ((i * 197 + tickKey * 13) % CW);
-      const sy = ((i * 113) % (CH * 0.7));
-      const a = 0.4 + 0.6 * Math.abs(Math.sin(performance.now() * 0.001 + i));
-      ctx.fillStyle = 'rgba(255,255,255,' + a.toFixed(2) + ')';
-      const s = (i % 5 === 0) ? 2 : 1;
-      ctx.fillRect(sx, sy, s, s);
-    }
-  }
-  // Sun / moon — drifts a little with camera parallax
-  const sunX = CW * 0.78;
-  const sunY = CH * 0.18 + (G.cameraY * 0.05) % 30;
-  const sunC = sky.stars ? 'rgba(245,245,255,0.95)' : 'rgba(255,235,140,0.95)';
-  ctx.fillStyle = sunC;
-  ctx.beginPath(); ctx.arc(sunX, sunY, 28, 0, Math.PI*2); ctx.fill();
-  const glow = ctx.createRadialGradient(sunX, sunY, 18, sunX, sunY, 70);
-  glow.addColorStop(0, sky.stars ? 'rgba(220,220,255,0.4)' : 'rgba(255,220,120,0.55)');
-  glow.addColorStop(1, 'rgba(255,255,200,0)');
-  ctx.fillStyle = glow;
-  ctx.beginPath(); ctx.arc(sunX, sunY, 70, 0, Math.PI*2); ctx.fill();
-
-  // Distant city silhouette at horizon
-  ctx.fillStyle = 'rgba(15,8,30,0.55)';
-  const horizonY = CH - GROUND_GAP;
-  ctx.beginPath();
-  ctx.moveTo(0, horizonY);
-  for (let i = 0; i <= 12; i++){
-    const bx = i / 12 * CW;
-    const bh = 30 + Math.sin(i * 1.7) * 22 + ((i*53)%17);
-    ctx.lineTo(bx, horizonY - bh);
-    ctx.lineTo(bx + CW/24, horizonY - bh);
-  }
-  ctx.lineTo(CW, horizonY); ctx.closePath();
-  ctx.fill();
-
-  // Shake the world (not HUD)
-  let ox = 0, oy = 0;
-  if (G.shake > 0){
-    ox = (Math.random() - 0.5) * G.shake;
-    oy = (Math.random() - 0.5) * G.shake;
-  }
-  ctx.save();
-  ctx.translate(ox, oy);
-
-  // Ground / street
-  ctx.fillStyle = '#2a3a4a';
-  ctx.fillRect(0, horizonY, CW, GROUND_GAP);
-  ctx.fillStyle = '#1a2a3a';
-  ctx.fillRect(0, horizonY, CW, 3);
-  // Sidewalk dashes
-  ctx.fillStyle = '#5a6a7a';
-  for (let i = 0; i < CW; i += 28){
-    ctx.fillRect(i, horizonY + 18, 14, 2);
-  }
-  // Street lamps
-  for (let i = 0; i < 3; i++){
-    const lx = 60 + i * (CW - 120) / 2;
-    ctx.fillStyle = '#888';
-    ctx.fillRect(lx - 1, horizonY - 20, 2, 20);
-    ctx.fillStyle = '#ffd200';
-    ctx.beginPath(); ctx.arc(lx, horizonY - 22, 3, 0, Math.PI*2); ctx.fill();
-  }
-
-  // Stacked blocks
-  for (let i = 0; i < G.blocks.length; i++){
-    drawBlock(G.blocks[i], i);
-  }
-  // Falling chunks
-  for (const c of G.chunks){ drawChunk(c); }
-  // Particles
-  for (const pt of G.particles){
-    const p = worldToScreen(pt.x, pt.y);
-    const a = pt.life / 40;
-    ctx.fillStyle = pt.color;
-    ctx.globalAlpha = Math.max(0, Math.min(1, a));
-    ctx.fillRect(p.x, p.y, 2, 2);
-  }
-  ctx.globalAlpha = 1;
-  // Crane + swinging block
-  if (G.state === 'swinging' || G.state === 'falling'){
-    if (G.current){
-      // Crane cable + hook
-      const cb = G.current;
-      const cabBL = worldToScreen(cb.x + cb.w/2, cb.y + cb.h);
-      const cableTop = { x: cabBL.x, y: 0 };
-      ctx.strokeStyle = 'rgba(255,255,255,0.45)';
-      ctx.lineWidth = 1.5;
-      ctx.beginPath();
-      ctx.moveTo(cableTop.x, cableTop.y);
-      ctx.lineTo(cabBL.x, cabBL.y);
-      ctx.stroke();
-      // Hook
-      ctx.fillStyle = '#888';
-      ctx.fillRect(cabBL.x - 4, cabBL.y - 2, 8, 4);
-      // The block
-      drawBlock(cb, G.blocks.length, true);
-      // Drop preview line — only while swinging
-      if (G.state === 'swinging'){
-        const blockTopScreen = worldToScreen(cb.x, cb.y + cb.h);
-        const towerTopScreen = worldToScreen(cb.x, towerTopY());
-        ctx.strokeStyle = 'rgba(255,255,255,0.18)';
-        ctx.setLineDash([4, 6]);
-        ctx.beginPath();
-        ctx.moveTo(blockTopScreen.x + cb.w/2, blockTopScreen.y);
-        ctx.lineTo(towerTopScreen.x + cb.w/2, towerTopScreen.y);
-        ctx.stroke();
-        ctx.setLineDash([]);
-      }
-    }
-  }
-  ctx.restore();
-
-  // High-altitude indicator (small altimeter on the side)
-  if (G.floor >= 5){
-    ctx.fillStyle = 'rgba(0,0,0,0.4)';
-    ctx.fillRect(8, CH/2 - 60, 36, 120);
-    ctx.fillStyle = '#ffd200';
-    ctx.font = 'bold 11px monospace';
-    ctx.textAlign = 'center';
-    ctx.fillText('🏢', 26, CH/2 - 44);
-    ctx.fillText(G.floor + '', 26, CH/2 - 30);
-    ctx.fillStyle = 'rgba(255,255,255,0.2)';
-    ctx.fillRect(24, CH/2 - 18, 4, 70);
-    const fillH = Math.min(70, G.floor * 0.7);
-    ctx.fillStyle = '#ffd200';
-    ctx.fillRect(24, CH/2 + 52 - fillH, 4, fillH);
-  }
-}
-
-function drawBlock(b, idx, isSwinging){
-  const p = worldToScreen(b.x, b.y + b.h);
-  // Drop a shadow beneath swinging block on top of the tower
-  if (isSwinging){
-    const topY = towerTopY();
-    const shadowScreen = worldToScreen(b.x, topY);
-    ctx.fillStyle = 'rgba(0,0,0,0.18)';
-    ctx.fillRect(p.x, shadowScreen.y - 2, b.w, 3);
-  }
-  // Main block
-  ctx.fillStyle = b.color;
-  ctx.fillRect(p.x, p.y, b.w, b.h);
-  // Edge highlights
-  ctx.fillStyle = 'rgba(255,255,255,0.22)';
-  ctx.fillRect(p.x, p.y, b.w, 2);
-  ctx.fillRect(p.x, p.y, 2, b.h);
-  ctx.fillStyle = 'rgba(0,0,0,0.22)';
-  ctx.fillRect(p.x, p.y + b.h - 2, b.w, 2);
-  ctx.fillRect(p.x + b.w - 2, p.y, 2, b.h);
-  // Windows — small pattern based on floor index for variety
-  ctx.fillStyle = 'rgba(255,255,200,0.55)';
-  const winW = 5, winH = 7;
-  const cols = Math.max(1, Math.floor((b.w - 8) / 10));
-  const startX = p.x + (b.w - (cols * 10 - 4)) / 2;
-  const cy = p.y + (b.h - winH) / 2;
-  for (let c = 0; c < cols; c++){
-    const off = ((idx + c) * 7) % 5;
-    if (off > 1) {
-      ctx.fillRect(startX + c * 10, cy, winW, winH);
-    }
-  }
-}
-
-function drawChunk(c){
-  const p = worldToScreen(c.x, c.y + c.h);
-  ctx.save();
-  ctx.translate(p.x + c.w/2, p.y + c.h/2);
-  ctx.rotate(c.rot);
-  ctx.fillStyle = c.color;
-  ctx.fillRect(-c.w/2, -c.h/2, c.w, c.h);
-  ctx.fillStyle = 'rgba(0,0,0,0.3)';
-  ctx.fillRect(-c.w/2, c.h/2 - 2, c.w, 2);
-  ctx.restore();
-}
-
-// ===== HUD =====
-function updateHud(){
-  document.getElementById('hudFloor').textContent = '🏢 ' + G.floor + ' طوابق';
-  document.getElementById('hudScore').textContent = '⭐ ' + Math.floor(G.score);
-  document.getElementById('hudBest').textContent = '🏆 ' + (loadBest());
-  const comboEl = document.getElementById('hudCombo');
-  if (G.combo >= 2){
-    comboEl.style.display = '';
-    comboEl.textContent = '🔥 ×' + G.combo;
-    comboEl.classList.add('combo');
-  } else {
-    comboEl.style.display = 'none';
-  }
-}
-function loadBest(){
-  try { return parseInt(localStorage.getItem('borjBest') || '0', 10); } catch(e){ return 0; }
-}
-function saveBest(v){
-  try { localStorage.setItem('borjBest', String(v)); } catch(e){}
-}
-
-// ===== Loop =====
-function loop(t){
-  if (!G.lastT) G.lastT = t;
-  const dt = Math.min(2.5, (t - G.lastT) / 16.67);
-  G.lastT = t;
-  if (G.state !== 'paused' && G.state !== 'idle'){
-    update(dt);
-    render();
-  }
-  G.raf = requestAnimationFrame(loop);
-}
-
-// ===== Flow =====
-function startGame(){
-  G.state = 'idle';
-  G.blocks = []; G.chunks = []; G.particles = [];
-  G.score = 0; G.combo = 0; G.perfectStreak = 0; G.floor = 0;
-  G.cameraY = 0; G._camTarget = undefined;
-  G.shake = 0;
-  // First block — wide, on the ground, centered
-  G.blocks.push({ x: CW/2 - BASE_BLOCK_W/2, y: 0, w: BASE_BLOCK_W, h: BLOCK_H, color: COLORS[0] });
-  G.floor = 1;
-  document.getElementById('startOv').style.display = 'none';
-  document.getElementById('overOv').style.display = 'none';
-  document.getElementById('pauseOv').style.display = 'none';
-  document.body.classList.remove('hide-hint');
-  document.body.classList.add('playing');
-  if (!AC) initAudio();
+  G.pop += residents;
+  G.cityTotal += residents;
+  spawnPeople(CW/2 + cur.offset, floorScreenBottom(idx) - B.bh/2, residents);
+  spawnPuff(CW/2 + cur.offset, floorScreenBottom(idx), perfect);
+  G.shake = perfect ? 2 : 5;
+  G.current = null;
+  // Topple from leaning too far (centre of mass leaves the base footprint)
+  const com = centerOfMass();
+  if (Math.abs(com) > B.bw * 0.62){ topple('lean'); return; }
+  // Building complete?
+  if (G.blocks.length >= B.floors){ completeBuilding(); return; }
+  // Next floor
+  scrollCamera();
   updateHud();
   spawnSwingingBlock();
 }
 
-function gameOver(){
+function scrollCamera(){
+  const desiredScreenY = CH * 0.60;
+  G.camTarget = towerTopWorld() - (CH - GROUND_GAP - desiredScreenY);
+  if (G.camTarget < 0) G.camTarget = 0;
+}
+
+/* ===== Topple (game over) ===== */
+function topple(kind){
   G.state = 'over';
+  G.shake = 18;
+  sndTopple();
+  const com = centerOfMass();
+  G.topple = { ang: 0, vang: (com >= 0 ? 1 : -1) * 0.012 + (Math.random()*0.004), kind, t: 0 };
+  setTimeout(showGameOver, 1100);
+}
+function showGameOver(){
   document.body.classList.remove('playing');
-  const score = Math.floor(G.score);
-  const best = loadBest();
-  const isRecord = score > best;
-  if (isRecord) saveBest(score);
-  document.getElementById('finalFloor').textContent = G.floor;
-  document.getElementById('finalScore').textContent = score;
-  document.getElementById('finalBest').textContent = isRecord ? score : best;
-  document.getElementById('finalRecord').style.display = isRecord ? '' : 'none';
-  // Tier-based encouragement
-  let title = '💥 برجك سقط!';
-  let sub = 'حاول إنك تكون أكثر دقّة في التوقيت.';
-  if (G.floor >= 50){ title = '🏆 معماري أسطوري!'; sub = 'برج عملاق! تخطيت ٥٠ طابق — لياقة بنّاء محترف!'; }
-  else if (G.floor >= 30){ title = '🌆 معماري ماهر'; sub = 'برج ضخم وثابت — استمر، الفضاء بانتظارك!'; }
-  else if (G.floor >= 15){ title = '🏢 بنّاء جيّد'; sub = 'وصلت لارتفاع محترم — حاول تحسين التوقيت لمزيد من الطوابق.'; }
-  else if (G.floor >= 5) { title = '🚧 بداية جيّدة'; sub = 'برج صغير… بس تقدر تبنيه أعلى! الكومبو يضاعف نقاطك.'; }
-  document.getElementById('overTitle').textContent = title;
-  document.getElementById('overSub').textContent = sub;
+  const best = loadBestPop();
+  if (G.cityTotal > best) saveBestPop(G.cityTotal);
+  document.getElementById('finalFloor').textContent = G.blocks.length;
+  document.getElementById('finalPop').textContent = G.pop;
+  document.getElementById('finalTotal').textContent = G.cityTotal;
+  document.getElementById('overTitle').textContent = G.topple && G.topple.kind === 'lean'
+    ? '🏚️ مال البرج كثيراً وانهار!' : '💥 طاحت الكتلة!';
+  const f = G.blocks.length, need = G.B.floors;
+  document.getElementById('overSub').textContent = f >= need*0.7
+    ? 'كنت قريباً جداً من إكمال ' + G.B.name + '! حاول تثبّت توازنك أكثر.'
+    : 'ركّز على إبقاء النقطة في منتصف الميزان — التوازن أهم من السرعة.';
   document.getElementById('overOv').style.display = 'flex';
 }
 
-function togglePause(){
-  if (G.state === 'swinging' || G.state === 'falling'){
-    G.state = 'paused';
-    document.getElementById('pauseOv').style.display = 'flex';
-  } else if (G.state === 'paused'){
-    resumeGame();
+/* ===== Building complete ===== */
+function completeBuilding(){
+  G.state = 'complete';
+  // Cap with a roof block
+  const com = centerOfMass();
+  G.blocks.push({ offset: com, color: G.B.c2, color2: G.B.c1, win: G.B.win, h: G.B.bh, roof:true });
+  scrollCamera();
+  updateHud();
+  sndComplete();
+  for (let i=0;i<5;i++) spawnSparkleRing(CW/2 + com + (Math.random()*60-30), floorScreenBottom(G.blocks.length) - 20 - i*14);
+  const bonus = 200 + G.bIndex * 100;
+  G.pop += bonus; G.cityTotal += bonus;
+  // Unlock next
+  if (G.bIndex + 1 > UNLOCKED && G.bIndex + 1 < BUILDINGS.length){
+    UNLOCKED = G.bIndex + 1; saveProgress(UNLOCKED);
+  }
+  const best = loadBestPop();
+  if (G.cityTotal > best) saveBestPop(G.cityTotal);
+  setTimeout(() => {
+    document.getElementById('completeTitle').textContent = '🎉 اكتمل ' + G.B.name + '!';
+    document.getElementById('completeSub').textContent =
+      'سكنه ' + G.pop + ' نسمة! (+' + bonus + ' مكافأة إكمال) ' +
+      (G.bIndex+1 < BUILDINGS.length ? 'وفُتح برجٌ جديد على الخريطة 🏙️' : 'أكملت كل أبراج المدينة! 🏆');
+    document.getElementById('cmpPop').textContent = G.pop;
+    document.getElementById('cmpTotal').textContent = G.cityTotal;
+    document.getElementById('cmpNextBtn').textContent =
+      (G.bIndex+1 < BUILDINGS.length) ? '🏙️ البرج التالي' : '🏙️ الخريطة';
+    document.body.classList.remove('playing');
+    document.getElementById('completeOv').style.display = 'flex';
+  }, 900);
+}
+window.afterComplete = function(){
+  document.getElementById('completeOv').style.display = 'none';
+  if (G.bIndex + 1 < BUILDINGS.length){ G.selIndex = G.bIndex + 1; }
+  openMap();
+};
+
+/* ===== Effects ===== */
+function showComboFlash(txt){
+  const el = document.getElementById('comboFlash');
+  el.textContent = txt; el.classList.remove('on'); void el.offsetWidth; el.classList.add('on');
+}
+function spawnPuff(sx, syBottom, perfect){
+  const n = perfect ? 10 : 14;
+  for (let i=0;i<n;i++){
+    const a = Math.PI + Math.random()*Math.PI;
+    const s = 1 + Math.random()*2.2;
+    G.particles.push({ x:sx + (Math.random()*bw()-bw()/2)*0.6, y:syBottom,
+      vx:Math.cos(a)*s, vy:Math.sin(a)*s*0.6, life:18+Math.random()*12,
+      color: perfect ? '#fff8a0' : 'rgba(210,205,190,0.85)', g:0.05 });
   }
 }
-function resumeGame(){
-  G.state = G.current ? (G.current.vy < 0 ? 'falling' : 'swinging') : 'swinging';
-  document.getElementById('pauseOv').style.display = 'none';
+function spawnSparkleRing(sx, sy){
+  for (let i=0;i<16;i++){
+    const a = i/16*Math.PI*2, s = 1.5+Math.random()*1.5;
+    G.particles.push({ x:sx, y:sy, vx:Math.cos(a)*s, vy:Math.sin(a)*s,
+      life:26+Math.random()*10, color: i%2?'#ffd200':'#fff8a0', g:0.02 });
+  }
 }
-function quitGame(){
-  G.state = 'idle';
+function spawnPeople(sx, sy, residents){
+  const n = Math.min(4, 1 + Math.floor(residents/40));
+  for (let i=0;i<n;i++){
+    G.people.push({ x:sx + (Math.random()*40-20), y:sy, vy:-1-Math.random(),
+      life:40, color:['#ffd6a0','#a0d8ff','#ffb0c0','#c0ffb0'][i%4] });
+  }
+}
+
+/* ===== Weather init ===== */
+function initWeather(){
+  G.clouds = []; G.rain = []; G.stars = []; G.birds = [];
+  const w = G.B.weather;
+  if (w==='cloudy'||w==='rainy'||w==='windy'||w==='sunset'){
+    const n = w==='windy'?6:4;
+    for (let i=0;i<n;i++) G.clouds.push({ x:Math.random()*CW, y:40+Math.random()*CH*0.4,
+      s:0.5+Math.random()*0.8, spd:(w==='windy'?1.4:0.35)*(0.6+Math.random()) });
+  }
+  if (w==='rainy'){ for (let i=0;i<90;i++) G.rain.push({ x:Math.random()*CW, y:Math.random()*CH, len:8+Math.random()*8, spd:9+Math.random()*6 }); }
+  if (w==='night'||w==='space'){ for (let i=0;i<70;i++) G.stars.push({ x:Math.random()*CW, y:Math.random()*CH*0.75, r:Math.random()<0.2?2:1, tw:Math.random()*6 }); }
+  if (w==='sunny'||w==='sunset'){ for (let i=0;i<2;i++) G.birds.push({ x:Math.random()*CW, y:60+Math.random()*120, spd:0.5+Math.random()*0.6, ph:Math.random()*6 }); }
+}
+
+/* ===== Update ===== */
+function update(dt){
+  if (G.state==='paused' || G.state==='idle') return;
+  G.windPhase += dt * 0.03;
+  if (G.camTarget !== undefined){
+    G.cameraY += (G.camTarget - G.cameraY) * 0.12 * dt;
+    if (Math.abs(G.cameraY - G.camTarget) < 0.3){ G.cameraY = G.camTarget; G.camTarget = undefined; }
+  }
+  // Smooth lean indicator
+  const com = G.B ? centerOfMass() : 0;
+  G.leanVis += (com - G.leanVis) * 0.15 * dt;
+
+  if (G.state==='swinging' && G.current){
+    G.swingT += G.B.swing * G.swingDir * dt;
+    if (G.swingT > 1){ G.swingT = 1; G.swingDir = -1; }
+    if (G.swingT < 0){ G.swingT = 0; G.swingDir = 1; }
+    const eased = 0.5 - 0.5*Math.cos(G.swingT*Math.PI);
+    // Bound the horizontal swing so the pendulum arc stays valid (offset
+    // must stay < rope length or the sqrt in the cable draw goes imaginary).
+    const range = Math.min(Math.max(60, CW*0.34), ropeLen()*0.9);
+    let off = (eased - 0.5) * 2 * range;
+    if (G.B.wind) off += Math.sin(G.windPhase*2.2) * range * G.B.wind * 0.5;
+    const cap = ropeLen() * 0.95;
+    G.current.offset = Math.max(-cap, Math.min(cap, off));
+  } else if (G.state==='falling' && G.current){
+    G.current.vy += 1.5 * dt;
+    G.current.dropScreenY += G.current.vy * dt;
+    const targetTop = floorScreenBottom(G.blocks.length) - bh();
+    if (G.current.dropScreenY >= targetTop){ landBlock(); }
+  } else if (G.state==='over' && G.topple){
+    G.topple.t += dt; G.topple.vang += 0.0009*dt; G.topple.ang += G.topple.vang*dt;
+  }
+  // Chunks
+  for (const c of G.chunks){ c.vy += 0.9*dt; c.x += c.vx*dt; c.yb += c.vy*dt; c.rot += c.vr*dt; }
+  G.chunks = G.chunks.filter(c => c.yb < CH + 240);
+  // Particles
+  for (const p of G.particles){ p.x += p.vx*dt; p.y += p.vy*dt; p.vy += (p.g||0.05)*dt*6; p.life -= dt; }
+  G.particles = G.particles.filter(p => p.life > 0);
+  // People fly-up
+  for (const pe of G.people){ pe.y += pe.vy*dt; pe.life -= dt; }
+  G.people = G.people.filter(pe => pe.life > 0);
+  // Weather motion
+  for (const cl of G.clouds){ cl.x += cl.spd*dt; if (cl.x > CW+80) cl.x = -80; }
+  for (const r of G.rain){ r.y += r.spd*dt; r.x -= r.spd*0.3*dt; if (r.y > CH){ r.y = -10; r.x = Math.random()*CW; } }
+  for (const b of G.birds){ b.x += b.spd*dt; b.ph += 0.1*dt; if (b.x > CW+30) b.x = -30; }
+  if (G.shake > 0) G.shake -= 0.6*dt;
+  updateBalanceDot();
+}
+
+function updateBalanceDot(){
+  const wrap = document.getElementById('balanceWrap');
+  const dot = document.getElementById('balanceDot');
+  if (!G.B){ return; }
+  const limit = G.B.bw * 0.62;
+  const norm = Math.max(-1, Math.min(1, G.leanVis / limit));
+  dot.style.left = (50 + norm * 48) + '%';
+  const danger = Math.abs(norm) > 0.72;
+  wrap.classList.toggle('warn', danger);
+  dot.style.background = danger
+    ? 'radial-gradient(circle at 35% 30%,#ffd0c0,#ff4422 60%,#aa1100)'
+    : 'radial-gradient(circle at 35% 30%,#fff4cc,#ffd200 60%,#cc9900)';
+}
+
+/* ===== Render ===== */
+function getSkyColors(w){
+  switch(w){
+    case 'sunny':  return ['#7ec8ff','#cdeeff','#fff4d0'];
+    case 'cloudy': return ['#9bb0c4','#c4d2de','#dde6ee'];
+    case 'rainy':  return ['#4a5a6a','#5e6e7e','#6e7e8c'];
+    case 'sunset': return ['#3a2a6a','#ff7a52','#ffcf8a'];
+    case 'night':  return ['#0a0a28','#1a1a44','#2a2a55'];
+    case 'windy':  return ['#8a9aaa','#aebccb','#cdd8e2'];
+    case 'space':  return ['#02010a','#0a0820','#140a30'];
+    default: return ['#7ec8ff','#cdeeff','#fff4d0'];
+  }
+}
+function render(){
+  const B = G.B; if (!B) return;
+  const sky = getSkyColors(B.weather);
+  const sg = ctx.createLinearGradient(0,0,0,CH);
+  sg.addColorStop(0, sky[0]); sg.addColorStop(0.55, sky[1]); sg.addColorStop(1, sky[2]);
+  ctx.fillStyle = sg; ctx.fillRect(0,0,CW,CH);
+
+  const horizonY = CH - GROUND_GAP;
+  drawWeatherBack(B.weather);
+  drawSkyline(horizonY);
+
+  let ox=0, oy=0;
+  if (G.shake > 0){ ox=(Math.random()-0.5)*G.shake; oy=(Math.random()-0.5)*G.shake; }
+  ctx.save(); ctx.translate(ox, oy);
+
+  // Street / ground
+  ctx.fillStyle = B.weather==='space' ? '#1a1230' : '#33414f';
+  ctx.fillRect(0, horizonY, CW, GROUND_GAP);
+  ctx.fillStyle = 'rgba(0,0,0,0.3)'; ctx.fillRect(0, horizonY, CW, 3);
+  ctx.fillStyle = 'rgba(255,255,255,0.12)';
+  for (let i=0;i<CW;i+=30) ctx.fillRect(i, horizonY+20, 16, 2);
+  // Plot footprint marker
+  ctx.fillStyle = 'rgba(255,210,0,0.18)';
+  ctx.fillRect(CW/2 - B.bw/2 - 4, horizonY-2, B.bw+8, 4);
+
+  // Tower (with topple transform if falling)
+  ctx.save();
+  if (G.state==='over' && G.topple){
+    const baseY = floorScreenBottom(0);
+    ctx.translate(CW/2, baseY);
+    ctx.rotate(G.topple.ang);
+    ctx.translate(-CW/2, -baseY);
+  }
+  for (let i=0;i<G.blocks.length;i++) drawFloor(G.blocks[i], i);
+  ctx.restore();
+
+  // Falling chunks
+  for (const c of G.chunks) drawChunk(c);
+  // Particles
+  for (const p of G.particles){
+    const a = Math.max(0, Math.min(1, p.life/30));
+    ctx.globalAlpha = a; ctx.fillStyle = p.color;
+    ctx.fillRect(p.x, p.y, 3, 3);
+  }
+  // People fly-up
+  for (const pe of G.people){
+    ctx.globalAlpha = Math.max(0, pe.life/40);
+    ctx.fillStyle = pe.color;
+    ctx.fillRect(pe.x-1.5, pe.y-3, 3, 4); // body
+    ctx.fillStyle = '#3a2a1a'; ctx.fillRect(pe.x-1.5, pe.y-5, 3, 2); // head
+  }
+  ctx.globalAlpha = 1;
+
+  // Crane + swinging/falling block
+  if ((G.state==='swinging' || G.state==='falling') && G.current){
+    drawCraneAndBlock();
+  }
+  ctx.restore();
+
+  // Foreground rain (in front of everything)
+  if (B.weather==='rainy') drawRain(true);
+}
+
+function drawWeatherBack(w){
+  const horizonY = CH - GROUND_GAP;
+  // Sun / moon
+  if (w==='sunny' || w==='sunset' || w==='windy' || w==='cloudy'){
+    const sx = CW*0.74, sy = CH*0.20;
+    const sunC = w==='sunset' ? '#ffdd55' : '#fff2b0';
+    // rays
+    if (w==='sunny' || w==='sunset'){
+      ctx.save(); ctx.translate(sx, sy); ctx.rotate(G.windPhase*0.3);
+      ctx.strokeStyle = w==='sunset' ? 'rgba(255,180,80,0.5)' : 'rgba(255,240,160,0.45)';
+      ctx.lineWidth = 3;
+      for (let i=0;i<12;i++){ const a=i/12*Math.PI*2; ctx.beginPath();
+        ctx.moveTo(Math.cos(a)*40, Math.sin(a)*40); ctx.lineTo(Math.cos(a)*60, Math.sin(a)*60); ctx.stroke(); }
+      ctx.restore();
+    }
+    const glow = ctx.createRadialGradient(sx,sy,16,sx,sy,90);
+    glow.addColorStop(0, w==='sunset'?'rgba(255,180,90,0.6)':'rgba(255,240,170,0.55)');
+    glow.addColorStop(1,'rgba(255,255,200,0)');
+    ctx.fillStyle = glow; ctx.beginPath(); ctx.arc(sx,sy,90,0,Math.PI*2); ctx.fill();
+    ctx.fillStyle = sunC; ctx.beginPath(); ctx.arc(sx,sy,30,0,Math.PI*2); ctx.fill();
+  }
+  if (w==='night'){
+    const mx=CW*0.76, my=CH*0.18;
+    ctx.fillStyle='rgba(230,235,255,0.95)'; ctx.beginPath(); ctx.arc(mx,my,26,0,Math.PI*2); ctx.fill();
+    ctx.fillStyle=getSkyColors('night')[0]; ctx.beginPath(); ctx.arc(mx+9,my-6,22,0,Math.PI*2); ctx.fill();
+  }
+  // Stars
+  if (w==='night' || w==='space'){
+    for (const s of G.stars){
+      const a = 0.4 + 0.6*Math.abs(Math.sin(performance.now()*0.001 + s.tw));
+      ctx.fillStyle = 'rgba(255,255,255,'+a.toFixed(2)+')';
+      ctx.fillRect(s.x, s.y, s.r, s.r);
+    }
+    if (w==='space'){
+      // distant planet
+      const px=CW*0.22, py=CH*0.16;
+      ctx.fillStyle='#c87a55'; ctx.beginPath(); ctx.arc(px,py,20,0,Math.PI*2); ctx.fill();
+      ctx.strokeStyle='rgba(255,210,150,0.6)'; ctx.lineWidth=3;
+      ctx.beginPath(); ctx.ellipse(px,py,32,9,0.5,0,Math.PI*2); ctx.stroke();
+    }
+  }
+  // Clouds
+  for (const cl of G.clouds) drawCloud(cl.x, cl.y, cl.s, w==='rainy'||w==='windy');
+  // Birds
+  for (const b of G.birds){
+    ctx.strokeStyle='rgba(40,40,60,0.5)'; ctx.lineWidth=2;
+    const f = Math.sin(b.ph)*4;
+    ctx.beginPath(); ctx.moveTo(b.x-5,b.y); ctx.lineTo(b.x,b.y-f); ctx.lineTo(b.x+5,b.y); ctx.stroke();
+  }
+  // Back rain
+  if (w==='rainy') drawRain(false);
+}
+function drawCloud(x,y,s,grey){
+  ctx.fillStyle = grey ? 'rgba(120,130,145,0.85)' : 'rgba(255,255,255,0.8)';
+  ctx.beginPath();
+  ctx.arc(x, y, 18*s, 0, Math.PI*2);
+  ctx.arc(x+20*s, y+4*s, 14*s, 0, Math.PI*2);
+  ctx.arc(x-20*s, y+5*s, 13*s, 0, Math.PI*2);
+  ctx.arc(x+4*s, y-8*s, 13*s, 0, Math.PI*2);
+  ctx.fill();
+}
+function drawRain(front){
+  ctx.strokeStyle = front ? 'rgba(180,210,235,0.35)' : 'rgba(150,180,210,0.25)';
+  ctx.lineWidth = front ? 1.6 : 1;
+  for (let i = (front?0:1); i < G.rain.length; i += 2){
+    const r = G.rain[i];
+    ctx.beginPath(); ctx.moveTo(r.x, r.y); ctx.lineTo(r.x - 3, r.y + r.len); ctx.stroke();
+  }
+}
+function drawSkyline(horizonY){
+  // two parallax layers of distant buildings
+  ctx.fillStyle = 'rgba(20,20,40,0.35)';
+  drawSkylineLayer(horizonY, 0.30, 46, 13);
+  ctx.fillStyle = 'rgba(15,15,32,0.5)';
+  drawSkylineLayer(horizonY, 0.16, 70, 9);
+}
+function drawSkylineLayer(horizonY, parallax, maxH, seedStep){
+  const off = (G.cameraY * parallax) % (seedStep*8);
+  ctx.beginPath(); ctx.moveTo(0, horizonY);
+  let x = -off;
+  let i = 0;
+  while (x < CW + 40){
+    const h = 18 + (Math.sin(i*1.7+seedStep)*0.5+0.5)*maxH + ((i*53)%19);
+    const w = 22 + ((i*37)%18);
+    ctx.lineTo(x, horizonY - h);
+    ctx.lineTo(x + w, horizonY - h);
+    x += w + 4; i++;
+  }
+  ctx.lineTo(CW+40, horizonY); ctx.closePath(); ctx.fill();
+}
+
+function drawFloor(b, i){
+  const w = bw(), h = b.h;
+  const x = CW/2 - w/2 + b.offset;
+  const yb = floorScreenBottom(i);
+  const yt = yb - h;
+  if (yt > CH + 40 || yb < -40) return; // cull off-screen
+  if (b.roof){ drawRoof(b, x, yt, w, h); return; }
+  // Body gradient
+  const g = ctx.createLinearGradient(x, 0, x+w, 0);
+  g.addColorStop(0, b.color); g.addColorStop(1, b.color2);
+  ctx.fillStyle = g; ctx.fillRect(x, yt, w, h);
+  // top + left light, bottom + right shade
+  ctx.fillStyle='rgba(255,255,255,0.22)'; ctx.fillRect(x, yt, w, 2); ctx.fillRect(x, yt, 2, h);
+  ctx.fillStyle='rgba(0,0,0,0.28)'; ctx.fillRect(x, yb-2, w, 2); ctx.fillRect(x+w-2, yt, 2, h);
+  // Windows — lit at night/rainy/space
+  const lit = (G.B.weather==='night'||G.B.weather==='space'||G.B.weather==='rainy');
+  const cols = Math.max(2, Math.floor((w-10)/16));
+  const ww=8, wh=Math.min(11, h-8);
+  const startX = x + (w - (cols*16 - 8))/2;
+  const wy = yt + (h - wh)/2;
+  for (let c=0;c<cols;c++){
+    const on = ((i*3 + c*7) % 5) > 1;
+    ctx.fillStyle = on ? (lit ? '#fff2a0' : b.win) : 'rgba(0,0,0,0.22)';
+    ctx.fillRect(startX + c*16, wy, ww, wh);
+    if (on){ ctx.fillStyle='rgba(255,255,255,0.4)'; ctx.fillRect(startX + c*16, wy, ww, 2); }
+  }
+  // Ground floor gets a door + awning
+  if (i === 0){
+    const dx = x + w/2 - 7;
+    ctx.fillStyle = '#3a2418'; ctx.fillRect(dx, yb-16, 14, 16);
+    ctx.fillStyle = '#ffd200'; ctx.fillRect(dx+5, yb-9, 3, 6);
+    ctx.fillStyle = b.color2; ctx.fillRect(dx-4, yb-20, 22, 4);
+  }
+}
+function drawRoof(b, x, yt, w, h){
+  // Slanted roof slab + parapet + antenna with blinking light
+  const g = ctx.createLinearGradient(x,0,x+w,0);
+  g.addColorStop(0,b.color); g.addColorStop(1,b.color2);
+  ctx.fillStyle = g; ctx.fillRect(x, yt+4, w, h-4);
+  ctx.fillStyle='rgba(0,0,0,0.25)'; ctx.fillRect(x, yt+h-2, w, 2);
+  // parapet
+  ctx.fillStyle = b.color2;
+  ctx.beginPath();
+  ctx.moveTo(x-3, yt+6); ctx.lineTo(x+w+3, yt+6);
+  ctx.lineTo(x+w-6, yt-2); ctx.lineTo(x+6, yt-2); ctx.closePath(); ctx.fill();
+  ctx.fillStyle='rgba(255,255,255,0.25)'; ctx.fillRect(x+6, yt-2, w-12, 2);
+  // antenna
+  const ax = x + w/2;
+  ctx.strokeStyle='#888'; ctx.lineWidth=2;
+  ctx.beginPath(); ctx.moveTo(ax, yt-2); ctx.lineTo(ax, yt-18); ctx.stroke();
+  const blink = Math.floor(performance.now()/400)%2===0;
+  ctx.fillStyle = blink ? '#ff3030' : '#661010';
+  ctx.beginPath(); ctx.arc(ax, yt-20, 3, 0, Math.PI*2); ctx.fill();
+  if (blink){
+    const gl = ctx.createRadialGradient(ax,yt-20,1,ax,yt-20,10);
+    gl.addColorStop(0,'rgba(255,60,60,0.6)'); gl.addColorStop(1,'rgba(255,60,60,0)');
+    ctx.fillStyle=gl; ctx.beginPath(); ctx.arc(ax,yt-20,10,0,Math.PI*2); ctx.fill();
+  }
+  // little flag
+  ctx.fillStyle='#ffd200'; ctx.fillRect(ax, yt-18, 8, 5);
+}
+function drawChunk(c){
+  ctx.save();
+  ctx.translate(c.x + c.w/2, c.yb - c.h/2);
+  ctx.rotate(c.rot);
+  const g = ctx.createLinearGradient(-c.w/2,0,c.w/2,0);
+  g.addColorStop(0,c.color); g.addColorStop(1,c.color2);
+  ctx.fillStyle=g; ctx.fillRect(-c.w/2,-c.h/2,c.w,c.h);
+  ctx.fillStyle='rgba(0,0,0,0.3)'; ctx.fillRect(-c.w/2,c.h/2-2,c.w,2);
+  ctx.restore();
+}
+function drawCraneAndBlock(){
+  const B = G.B, w = B.bw, h = B.bh;
+  const pivotX = CW/2, pivotY = craneScreenY();
+  // Crane mast + arm (anchored to screen top, above pivot)
+  ctx.strokeStyle = '#d8a020'; ctx.lineWidth = 5;
+  ctx.beginPath(); ctx.moveTo(pivotX, pivotY); ctx.lineTo(pivotX, Math.max(8, pivotY-70)); ctx.stroke();
+  ctx.lineWidth = 4;
+  ctx.beginPath(); ctx.moveTo(pivotX-CW*0.30, Math.max(8,pivotY-70)); ctx.lineTo(pivotX+CW*0.20, Math.max(8,pivotY-70)); ctx.stroke();
+  // counterweight
+  ctx.fillStyle='#b07818'; ctx.fillRect(pivotX-CW*0.30-6, Math.max(8,pivotY-70)-6, 16, 14);
+
+  let bx, by;
+  if (G.state==='swinging'){
+    // pendulum from pivot
+    const rope = ropeLen();
+    bx = pivotX + G.current.offset;
+    by = pivotY + Math.sqrt(Math.max(1, rope*rope - G.current.offset*G.current.offset));
+    // cable
+    ctx.strokeStyle='rgba(40,40,40,0.7)'; ctx.lineWidth=2;
+    ctx.beginPath(); ctx.moveTo(pivotX, Math.max(8,pivotY-70)); ctx.lineTo(bx, by - h); ctx.stroke();
+    // hook
+    ctx.fillStyle='#666'; ctx.fillRect(bx-5, by-h-3, 10, 4);
+  } else {
+    bx = pivotX + G.current.offset;
+    by = G.current.dropScreenY + h;
+    // guide line to landing
+    const tx = pivotX + G.current.offset;
+    ctx.strokeStyle='rgba(255,255,255,0.15)'; ctx.setLineDash([4,6]);
+    ctx.beginPath(); ctx.moveTo(tx, by); ctx.lineTo(tx, floorScreenBottom(G.blocks.length)); ctx.stroke();
+    ctx.setLineDash([]);
+  }
+  // The block itself
+  const x = bx - w/2, yt = by - h;
+  // shadow on tower top while swinging
+  if (G.state==='swinging'){
+    const topY = floorScreenBottom(G.blocks.length);
+    ctx.fillStyle='rgba(0,0,0,0.18)'; ctx.fillRect(x, topY-2, w, 3);
+  }
+  const g = ctx.createLinearGradient(x,0,x+w,0);
+  g.addColorStop(0,B.c1); g.addColorStop(1,B.c2);
+  ctx.fillStyle=g; ctx.fillRect(x, yt, w, h);
+  ctx.fillStyle='rgba(255,255,255,0.25)'; ctx.fillRect(x, yt, w, 2); ctx.fillRect(x, yt, 2, h);
+  ctx.fillStyle='rgba(0,0,0,0.28)'; ctx.fillRect(x, yt+h-2, w, 2); ctx.fillRect(x+w-2, yt, 2, h);
+  // alignment helper: tint edge green when near-perfect with the block below
+  if (G.state==='swinging' && G.blocks.length){
+    const diff = Math.abs(G.current.offset - G.blocks[G.blocks.length-1].offset);
+    if (diff <= PERFECT_TOL){
+      ctx.strokeStyle='rgba(80,255,120,0.9)'; ctx.lineWidth=2;
+      ctx.strokeRect(x-1, yt-1, w+2, h+2);
+    }
+  }
+}
+
+/* ===== HUD ===== */
+function updateHud(){
+  const B = G.B;
+  document.getElementById('hudFloor').textContent = '🏢 ' + G.blocks.length + '/' + (B?B.floors:'-');
+  document.getElementById('hudPop').textContent = '👥 ' + G.pop;
+  document.getElementById('hudBuilding').textContent = '🏙️ ' + (G.bIndex+1) + '/' + BUILDINGS.length;
+  const comboEl = document.getElementById('hudCombo');
+  if (G.combo >= 2){ comboEl.style.display=''; comboEl.textContent='🔥 ×'+G.combo; }
+  else comboEl.style.display='none';
+  // floor progress bar
+  const bar = document.getElementById('floorBar');
+  if (B){ bar.style.height = Math.min(100, (G.blocks.length / B.floors)*100) + '%'; }
+}
+
+/* ===== Loop ===== */
+function loop(t){
+  if (!G.lastT) G.lastT = t;
+  const dt = Math.min(2.5, (t - G.lastT)/16.67);
+  G.lastT = t;
+  if (G.state!=='paused' && G.state!=='idle'){ update(dt); render(); }
+  G.raf = requestAnimationFrame(loop);
+}
+
+/* ===== City map ===== */
+function drawMiniTower(canvas, b, idx){
+  const c = canvas.getContext('2d');
+  const W = canvas.width = 54*2, H = canvas.height = 64*2;
+  c.scale(2,2); const w2=54,h2=64;
+  const sky = getSkyColors(b.weather);
+  const g = c.createLinearGradient(0,0,0,h2);
+  g.addColorStop(0,sky[0]); g.addColorStop(1,sky[1]); c.fillStyle=g; c.fillRect(0,0,w2,h2);
+  // sun/moon dot
+  c.fillStyle = b.weather==='night'||b.weather==='space' ? 'rgba(230,235,255,0.9)' : 'rgba(255,240,170,0.9)';
+  c.beginPath(); c.arc(w2-12, 12, 6, 0, Math.PI*2); c.fill();
+  // mini tower
+  const floors = Math.min(7, Math.round(b.floors/3));
+  const bw2 = 22, bh2 = 5;
+  for (let i=0;i<floors;i++){
+    const off = (Math.sin(i*1.3)*4);
+    const x = w2/2 - bw2/2 + off, y = h2-8 - (i+1)*bh2;
+    const gg = c.createLinearGradient(x,0,x+bw2,0); gg.addColorStop(0,b.c1); gg.addColorStop(1,b.c2);
+    c.fillStyle=gg; c.fillRect(x,y,bw2,bh2);
+    c.fillStyle='rgba(0,0,0,0.2)'; c.fillRect(x,y+bh2-1,bw2,1);
+  }
+  // roof
+  const ry = h2-8-(floors+1)*bh2;
+  c.fillStyle=b.c2; c.fillRect(w2/2-9, ry, 18, bh2);
+  c.strokeStyle='#888'; c.lineWidth=1; c.beginPath(); c.moveTo(w2/2,ry); c.lineTo(w2/2,ry-6); c.stroke();
+  c.fillStyle='#ff3030'; c.fillRect(w2/2-1,ry-8,2,2);
+  // ground
+  c.fillStyle='rgba(0,0,0,0.35)'; c.fillRect(0,h2-8,w2,8);
+}
+window.openMap = function(){
+  document.getElementById('startOv').style.display='none';
+  document.getElementById('completeOv').style.display='none';
+  document.getElementById('overOv').style.display='none';
+  const grid = document.getElementById('mapGrid');
+  grid.innerHTML = '';
+  BUILDINGS.forEach((b, idx) => {
+    const card = document.createElement('div');
+    card.className = 'map-card';
+    const locked = idx > UNLOCKED;
+    const done = idx < UNLOCKED;
+    if (locked) card.classList.add('locked');
+    if (done) card.classList.add('done');
+    if (idx === G.selIndex && !locked) card.classList.add('current');
+    const cvm = document.createElement('canvas');
+    card.appendChild(cvm);
+    const nm = document.createElement('div'); nm.className='map-name'; nm.textContent=b.name; card.appendChild(nm);
+    const mt = document.createElement('div'); mt.className='map-meta'; mt.textContent='🏢 '+b.floors+' طوابق'; card.appendChild(mt);
+    const wb = document.createElement('div'); wb.className='map-weather'; wb.textContent=WEATHER_ICON[b.weather]||''; card.appendChild(wb);
+    if (locked){ const lk=document.createElement('div'); lk.className='map-badge'; lk.textContent='🔒'; card.appendChild(lk); }
+    else if (done){ const dn=document.createElement('div'); dn.className='map-badge'; dn.textContent='✅'; card.appendChild(dn); }
+    if (!locked) card.onclick = () => { G.selIndex = idx; openMap(); };
+    grid.appendChild(card);
+    drawMiniTower(cvm, b, idx);
+  });
+  document.getElementById('mapSub').textContent =
+    'البرج المختار: ' + BUILDINGS[G.selIndex].name + ' ' + (WEATHER_ICON[BUILDINGS[G.selIndex].weather]||'') +
+    ' — ' + BUILDINGS[G.selIndex].floors + ' طوابق';
+  document.getElementById('mapOv').style.display='flex';
+};
+window.startSelected = function(){ startBuilding(G.selIndex); };
+window.backToStart = function(){
+  document.getElementById('mapOv').style.display='none';
+  document.getElementById('startOv').style.display='flex';
+};
+
+/* ===== Start / flow ===== */
+function startBuilding(idx){
+  if (!AC) initAudio();
+  G.bIndex = idx; G.selIndex = idx; G.B = BUILDINGS[idx];
+  G.blocks = []; G.chunks = []; G.particles = []; G.people = [];
+  G.pop = 0; G.combo = 0; G.perfectStreak = 0;
+  G.cameraY = 0; G.camTarget = undefined; G.shake = 0; G.leanVis = 0;
+  G.topple = null; G.windPhase = 0;
+  initWeather();
+  // First floor sits on the ground, perfectly centred
+  G.blocks.push({ offset:0, color:G.B.c1, color2:G.B.c2, win:G.B.win, h:G.B.bh, roof:false });
+  document.getElementById('mapOv').style.display='none';
+  document.getElementById('overOv').style.display='none';
+  document.getElementById('completeOv').style.display='none';
+  document.getElementById('pauseOv').style.display='none';
+  document.body.classList.remove('hide-hint');
+  document.body.classList.add('playing');
+  scrollCamera();
+  updateHud();
+  spawnSwingingBlock();
+}
+window.retryBuilding = function(){
+  document.getElementById('overOv').style.display='none';
+  // keep cityTotal across retries within a session? reset per building try:
+  startBuilding(G.bIndex);
+};
+window.togglePause = function(){
+  if (G.state==='swinging' || G.state==='falling'){
+    G._prePause = G.state; G.state='paused';
+    document.getElementById('pauseOv').style.display='flex';
+  } else if (G.state==='paused'){ resumeGame(); }
+};
+window.resumeGame = function(){
+  document.getElementById('pauseOv').style.display='none';
+  G.state = G._prePause || 'swinging';
+};
+window.quitToMap = function(){
+  G.state='idle';
   document.body.classList.remove('playing');
-  document.getElementById('pauseOv').style.display = 'none';
-  document.getElementById('startOv').style.display = 'flex';
-}
-window.startGame = startGame;
-window.togglePause = togglePause;
-window.resumeGame = resumeGame;
-window.quitGame = quitGame;
+  document.getElementById('pauseOv').style.display='none';
+  document.getElementById('overOv').style.display='none';
+  openMap();
+};
 
 document.addEventListener('visibilitychange', () => {
-  if (document.hidden && (G.state === 'swinging' || G.state === 'falling')) togglePause();
+  if (document.hidden && (G.state==='swinging'||G.state==='falling')) togglePause();
 });
-
 if ('serviceWorker' in navigator){
-  window.addEventListener('load', () => {
-    navigator.serviceWorker.register('sw.js').catch(()=>{});
-  });
+  window.addEventListener('load', () => navigator.serviceWorker.register('sw.js').catch(()=>{}));
 }
 
 // Boot
+G.B = BUILDINGS[0];
 G.raf = requestAnimationFrame(loop);
-// Show best on the start screen
-updateHud();
 </script>
 </body>
 </html>
