@@ -244,10 +244,14 @@ const G = {
   combo: 0, perfectStreak: 0,
   cameraY: 0, camTarget: undefined,
   shake: 0, leanVis: 0,    // smoothed visual lean for the dot
-  particles: [], chunks: [], people: [],
+  particles: [], chunks: [], people: [], scorePops: [],
   clouds: [], rain: [], stars: [], birds: [],
-  windPhase: 0,
+  windPhase: 0, time: 0,
   topple: null,      // topple animation state
+  lightning: 0,      // white flash timer (frames remaining)
+  lastTier: 0,       // last difficulty tier crossed (for "SPEED UP!" cue)
+  zoom: 1,           // camera zoom (shrinks as tower grows so it stays visible)
+  zoomTarget: 1,
   lastT: 0, raf: 0,
 };
 const GROUND_GAP = 64;       // px from canvas bottom to street level
@@ -354,27 +358,47 @@ function landBlock(){
   const perfect = diff <= PERFECT_TOL;
   if (perfect && prev){ cur.offset = prev.offset; } // snap flush
   G.blocks.push({ offset: cur.offset, color: B.c1, color2: B.c2, win: B.win, h: B.bh, roof:false });
-  // Scoring: residents per floor + alignment bonus + combo
+  // Compounding streak scoring — each consecutive perfect pays MORE than
+  // the last (25, 50, 75, 100, …). This is the chase mechanic that turns
+  // a one-tap timing game into something addictive.
   let residents;
   if (perfect){
     G.perfectStreak++; G.combo = G.perfectStreak;
-    const mult = Math.min(5, G.perfectStreak);
-    residents = 50 + 30 * mult;
+    residents = 25 * G.perfectStreak;
     showComboFlash(G.perfectStreak >= 2 ? ('مثالي ×'+G.perfectStreak+'!') : 'مثالي!');
     sndPerfect();
     spawnSparkleRing(CW/2 + cur.offset, floorScreenBottom(idx) - B.bh/2);
   } else {
     G.perfectStreak = 0; G.combo = 0;
     const acc = 1 - Math.min(1, diff / (B.bw*0.7));
-    residents = Math.round(10 + 30 * acc);
+    residents = Math.round(8 + 20 * acc);
     sndLand();
   }
   G.pop += residents;
   G.cityTotal += residents;
+  // Floating "+N" score-pop on the block — readable feedback that pairs
+  // with the audio so the player feels each individual reward.
+  G.scorePops.push({
+    x: CW/2 + cur.offset, y: floorScreenBottom(idx) - B.bh,
+    vy: -1.4, life: 50, text: '+' + residents, color: perfect ? '#ffd200' : '#ffffff',
+    big: perfect
+  });
   spawnPeople(CW/2 + cur.offset, floorScreenBottom(idx) - B.bh/2, residents);
   spawnPuff(CW/2 + cur.offset, floorScreenBottom(idx), perfect);
   G.shake = perfect ? 2 : 5;
   G.current = null;
+  // Milestone fireworks: at 5/10/20/30 floors flash the screen, banner
+  // a "speed up" cue, and bump the zoom-out target. Keeps long runs
+  // punctuated with payoff moments instead of one long grind.
+  const n = G.blocks.length;
+  if (n === 5 || n === 10 || n === 20 || n === 30){
+    G.lightning = 28;
+    G.shake = Math.max(G.shake, 8);
+    sndPerfect();
+    showComboFlash('🚀 ' + n + ' طوابق!\nمستوى أعلى!');
+  }
+  // Zoom out smoothly so the whole tower stays framed
+  G.zoomTarget = Math.max(0.55, 1 - Math.max(0, n - 6) * 0.018);
   // Topple from leaning too far (centre of mass leaves the base footprint)
   const com = centerOfMass();
   if (Math.abs(com) > B.bw * 0.62){ topple('lean'); return; }
@@ -501,23 +525,33 @@ function initWeather(){
 /* ===== Update ===== */
 function update(dt){
   if (G.state==='paused' || G.state==='idle') return;
+  G.time += dt;
   G.windPhase += dt * 0.03;
+  if (G.lightning > 0) G.lightning -= dt;
   if (G.camTarget !== undefined){
     G.cameraY += (G.camTarget - G.cameraY) * 0.12 * dt;
     if (Math.abs(G.cameraY - G.camTarget) < 0.3){ G.cameraY = G.camTarget; G.camTarget = undefined; }
   }
+  // Zoom out so the whole tower stays visible on screen as it grows
+  G.zoom += (G.zoomTarget - G.zoom) * 0.06 * dt;
+  // Score-pop floaters
+  for (const sp of G.scorePops){ sp.y += sp.vy*dt; sp.vy *= Math.pow(0.96, dt); sp.life -= dt; }
+  G.scorePops = G.scorePops.filter(sp => sp.life > 0);
   // Smooth lean indicator
   const com = G.B ? centerOfMass() : 0;
   G.leanVis += (com - G.leanVis) * 0.15 * dt;
 
   if (G.state==='swinging' && G.current){
-    G.swingT += G.B.swing * G.swingDir * dt;
+    // Discrete difficulty tiers — speed and arc step up at milestones so
+    // the player FEELS the game level up at 5/10/20/30 floors.
+    const n = G.blocks.length;
+    const tierMul = n < 5 ? 1.0 : n < 10 ? 1.35 : n < 20 ? 1.7 : n < 30 ? 2.0 : 2.3;
+    const tierRange = n < 10 ? 0.50 : n < 20 ? 0.75 : 1.0; // % of usable range
+    G.swingT += G.B.swing * tierMul * G.swingDir * dt;
     if (G.swingT > 1){ G.swingT = 1; G.swingDir = -1; }
     if (G.swingT < 0){ G.swingT = 0; G.swingDir = 1; }
     const eased = 0.5 - 0.5*Math.cos(G.swingT*Math.PI);
-    // Bound the horizontal swing so the pendulum arc stays valid (offset
-    // must stay < rope length or the sqrt in the cable draw goes imaginary).
-    const range = Math.min(Math.max(60, CW*0.34), ropeLen()*0.9);
+    const range = Math.min(Math.max(60, CW*0.34), ropeLen()*0.9) * tierRange;
     let off = (eased - 0.5) * 2 * range;
     if (G.B.wind) off += Math.sin(G.windPhase*2.2) * range * G.B.wind * 0.5;
     const cap = ropeLen() * 0.95;
@@ -587,7 +621,16 @@ function render(){
 
   let ox=0, oy=0;
   if (G.shake > 0){ ox=(Math.random()-0.5)*G.shake; oy=(Math.random()-0.5)*G.shake; }
-  ctx.save(); ctx.translate(ox, oy);
+  ctx.save();
+  // Zoom out around the centre of the plot so the whole tower stays visible
+  // as it grows. Subtle (1.0 → 0.55) but it sells altitude.
+  if (G.zoom !== 1){
+    const cx = CW/2, cy = horizonY;
+    ctx.translate(cx, cy);
+    ctx.scale(G.zoom, G.zoom);
+    ctx.translate(-cx, -cy);
+  }
+  ctx.translate(ox, oy);
 
   // Street / ground
   ctx.fillStyle = B.weather==='space' ? '#1a1230' : '#33414f';
@@ -631,10 +674,31 @@ function render(){
   if ((G.state==='swinging' || G.state==='falling') && G.current){
     drawCraneAndBlock();
   }
+  // Floating "+N" score numbers — drawn inside the world transform so they
+  // sit on the block they came from
+  ctx.font = 'bold 20px Tajawal, sans-serif';
+  ctx.textAlign = 'center';
+  for (const sp of G.scorePops){
+    const a = Math.max(0, Math.min(1, sp.life/40));
+    ctx.globalAlpha = a;
+    ctx.fillStyle = 'rgba(0,0,0,0.5)'; ctx.fillText(sp.text, sp.x+1, sp.y+1);
+    ctx.fillStyle = sp.color;
+    ctx.font = (sp.big?'bold 24px':'bold 18px') + ' Tajawal, sans-serif';
+    ctx.fillText(sp.text, sp.x, sp.y);
+  }
+  ctx.globalAlpha = 1; ctx.font = 'bold 18px Tajawal, sans-serif';
   ctx.restore();
 
   // Foreground rain (in front of everything)
   if (B.weather==='rainy') drawRain(true);
+
+  // Lightning flash — full-screen white pulse on milestones. Triggers a
+  // "you nailed it!" dopamine hit bigger than any particle burst.
+  if (G.lightning > 0){
+    const a = Math.min(0.7, G.lightning / 30);
+    ctx.fillStyle = 'rgba(255,255,255,' + a.toFixed(3) + ')';
+    ctx.fillRect(0, 0, CW, CH);
+  }
 }
 
 function drawWeatherBack(w){
@@ -730,7 +794,18 @@ function drawSkylineLayer(horizonY, parallax, maxH, seedStep){
 
 function drawFloor(b, i){
   const w = bw(), h = b.h;
-  const x = CW/2 - w/2 + b.offset;
+  // Tower sway — kicks in past floor 4, grows with height, and compounds
+  // up the stack so the higher you build the more the top of the tower
+  // visibly wobbles. This is the single biggest feel upgrade vs a static
+  // stack — it sells "this thing is REAL and you're high up."
+  const total = G.blocks.length;
+  let sway = 0;
+  if (total > 4){
+    const heightFactor = (i + 1) / total;             // 0 at base, 1 at top
+    const swayAmp = Math.min(14, (total - 4) * 0.65); // grows with floors
+    sway = Math.sin(G.time*0.04 + i*0.35) * swayAmp * heightFactor * heightFactor;
+  }
+  const x = CW/2 - w/2 + b.offset + sway;
   const yb = floorScreenBottom(i);
   const yt = yb - h;
   if (yt > CH + 40 || yb < -40) return; // cull off-screen
@@ -801,7 +876,15 @@ function drawChunk(c){
 }
 function drawCraneAndBlock(){
   const B = G.B, w = B.bw, h = B.bh;
-  const pivotX = CW/2, pivotY = craneScreenY();
+  // Crane pivot drifts with the top-of-tower sway so the cable feels
+  // attached to the building, not floating in space.
+  const total = G.blocks.length;
+  let topSway = 0;
+  if (total > 4){
+    const amp = Math.min(14, (total - 4) * 0.65);
+    topSway = Math.sin(G.time*0.04 + (total - 1)*0.35) * amp;
+  }
+  const pivotX = CW/2 + topSway, pivotY = craneScreenY();
   // Crane mast + arm (anchored to screen top, above pivot)
   ctx.strokeStyle = '#d8a020'; ctx.lineWidth = 5;
   ctx.beginPath(); ctx.moveTo(pivotX, pivotY); ctx.lineTo(pivotX, Math.max(8, pivotY-70)); ctx.stroke();
@@ -947,7 +1030,10 @@ function startBuilding(idx){
   G.blocks = []; G.chunks = []; G.particles = []; G.people = [];
   G.pop = 0; G.combo = 0; G.perfectStreak = 0;
   G.cameraY = 0; G.camTarget = undefined; G.shake = 0; G.leanVis = 0;
-  G.topple = null; G.windPhase = 0;
+  G.topple = null; G.windPhase = 0; G.time = 0;
+  G.lightning = 0; G.lastTier = 0;
+  G.zoom = 1; G.zoomTarget = 1;
+  G.scorePops = [];
   initWeather();
   // First floor sits on the ground, perfectly centred
   G.blocks.push({ offset:0, color:G.B.c1, color2:G.B.c2, win:G.B.win, h:G.B.bh, roof:false });
