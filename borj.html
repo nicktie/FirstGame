@@ -303,16 +303,24 @@ resize();
 // dynamicWeather=true — its weather morphs by altitude (clouds → night →
 // space) instead of using a single fixed look.
 const BUILDINGS = [
-  { name:'برج الوادي',      floors:6,  bw:96, bh:30, c1:'#ff7b6b', c2:'#c0392b', win:'#ffe9a8', weather:'sunny',  swing:0.0125, wind:0    },
-  { name:'برج النخيل',      floors:8,  bw:90, bh:28, c1:'#2bd4a4', c2:'#0f9b7a', win:'#d6fff0', weather:'cloudy', swing:0.0140, wind:0    },
-  { name:'البرج الذهبي',    floors:10, bw:86, bh:28, c1:'#ffce5a', c2:'#e0921a', win:'#fff7d6', weather:'sunny',  swing:0.0155, wind:0.06 },
-  { name:'برج المحيط',      floors:12, bw:82, bh:26, c1:'#52d6fb', c2:'#0a9bd0', win:'#e6fbff', weather:'rainy',  swing:0.0170, wind:0.22 },
-  { name:'برج الغروب',      floors:14, bw:80, bh:26, c1:'#ff8fb0', c2:'#c64f86', win:'#ffe3ef', weather:'sunset', swing:0.0185, wind:0.15 },
-  { name:'البرج البنفسجي',  floors:16, bw:76, bh:25, c1:'#b274ec', c2:'#7a44c0', win:'#f3e9ff', weather:'night',  swing:0.0200, wind:0.05 },
-  { name:'ناطحة السحاب',    floors:20, bw:72, bh:24, c1:'#7a8aa0', c2:'#2f3a4a', win:'#cfe8ff', weather:'windy',  swing:0.0220, wind:0.40 },
-  { name:'برج الفضاء',      floors:26, bw:68, bh:23, c1:'#9aa6ff', c2:'#4452b0', win:'#e8ecff', weather:'space',  swing:0.0240, wind:0.18 },
-  { name:'برج السماء العظيم',floors:80, bw:74, bh:24, c1:'#ffd07a', c2:'#9a6510', win:'#fff7d6',
-    weather:'sunny', dynamicWeather:true, swing:0.0140, wind:0.10 },
+  { name:'برج الوادي',      floors:6,  bw:96, bh:30, c1:'#e6b677', c2:'#8a5520', win:'#fff2a8', weather:'sunny',
+    swing:0.0110, wind:0,    style:'arabian',  trim:'columns', winPattern:'arch',     balconyEvery:0 },
+  { name:'برج النخيل',      floors:8,  bw:90, bh:28, c1:'#2bd4a4', c2:'#0f6b50', win:'#d6fff0', weather:'cloudy',
+    swing:0.0125, wind:0,    style:'tropical', trim:'frame',   winPattern:'grid',     balconyEvery:2 },
+  { name:'البرج الذهبي',    floors:10, bw:86, bh:28, c1:'#ffce5a', c2:'#aa6810', win:'#fff7d6', weather:'sunny',
+    swing:0.0140, wind:0.04, style:'gold',     trim:'columns', winPattern:'wide',     balconyEvery:0 },
+  { name:'برج المحيط',      floors:12, bw:82, bh:26, c1:'#52d6fb', c2:'#0a4a80', win:'#e6fbff', weather:'rainy',
+    swing:0.0152, wind:0.18, style:'ocean',    trim:'frame',   winPattern:'porthole', balconyEvery:3 },
+  { name:'برج الغروب',      floors:14, bw:80, bh:26, c1:'#ff8fb0', c2:'#9c2f6a', win:'#ffe3ef', weather:'sunset',
+    swing:0.0165, wind:0.12, style:'sunset',   trim:'columns', winPattern:'arch',     balconyEvery:2 },
+  { name:'البرج البنفسجي',  floors:16, bw:76, bh:25, c1:'#b274ec', c2:'#4a2080', win:'#f3e9ff', weather:'night',
+    swing:0.0178, wind:0.05, style:'deco',     trim:'columns', winPattern:'grid',     balconyEvery:3 },
+  { name:'ناطحة السحاب',    floors:20, bw:72, bh:24, c1:'#a8b6c8', c2:'#1f2a3a', win:'#cfe8ff', weather:'windy',
+    swing:0.0195, wind:0.34, style:'modern',   trim:'frame',   winPattern:'wide',     balconyEvery:0 },
+  { name:'برج الفضاء',      floors:26, bw:68, bh:23, c1:'#9aa6ff', c2:'#2a307a', win:'#e8ecff', weather:'space',
+    swing:0.0215, wind:0.15, style:'space',    trim:'none',    winPattern:'square',   balconyEvery:0 },
+  { name:'برج السماء العظيم',floors:80, bw:74, bh:24, c1:'#dcc890', c2:'#6a4810', win:'#fff7d6', weather:'sunny',
+    swing:0.0128, wind:0.08, style:'modern',   trim:'frame',   winPattern:'wide',     balconyEvery:5, dynamicWeather:true },
 ];
 const WEATHER_ICON = { sunny:'☀️', cloudy:'⛅', rainy:'🌧️', sunset:'🌇', night:'🌙', windy:'🌬️', space:'🚀' };
 
@@ -413,7 +421,7 @@ function spawnSwingingBlock(){
   // can no longer just tap on the same beat over and over.
   G.current = {
     offset: 0, screenY: 0, vy: 0, color: null,
-    swingMul:    0.85 + Math.random() * 0.45,   // tempo jitter ±25%
+    swingMul:    0.90 + Math.random() * 0.25,   // tempo jitter ~±13%
     windPhase:   Math.random() * Math.PI * 2,
     jitterPhase: Math.random() * Math.PI * 2,
   };
@@ -656,25 +664,22 @@ function update(dt){
   G.leanVis += (com - G.leanVis) * 0.15 * dt;
 
   if (G.state==='swinging' && G.current){
-    // Discrete difficulty tiers — speed and arc step up at milestones so
-    // the player FEELS the game level up at 3/8/16/28/45/65 floors. The
-    // per-block speed jitter (`current.swingMul`) prevents the rhythmic
-    // spam exploit by changing each block's swing tempo slightly.
+    // Difficulty tiers — gentler curve than before (was 1.0→3.8). Players
+    // reported the previous ramp got punishing too fast.
     const n = G.blocks.length;
-    const tierMul = n < 3 ? 1.0 : n < 8 ? 1.40 : n < 16 ? 1.85 : n < 28 ? 2.35 : n < 45 ? 2.85 : n < 65 ? 3.30 : 3.80;
-    const tierRange = n < 6 ? 0.60 : n < 14 ? 0.85 : 1.0;
+    const tierMul = n < 5 ? 1.0 : n < 12 ? 1.20 : n < 22 ? 1.45 : n < 35 ? 1.75 : n < 50 ? 2.05 : n < 70 ? 2.35 : 2.65;
+    const tierRange = n < 8 ? 0.55 : n < 18 ? 0.80 : 1.0;
     G.swingT += G.B.swing * tierMul * (G.current.swingMul||1) * G.swingDir * dt;
     if (G.swingT > 1){ G.swingT = 1; G.swingDir = -1; }
     if (G.swingT < 0){ G.swingT = 0; G.swingDir = 1; }
     const eased = 0.5 - 0.5*Math.cos(G.swingT*Math.PI);
     const range = Math.min(Math.max(60, CW*0.34), ropeLen()*0.9) * tierRange;
     let off = (eased - 0.5) * 2 * range;
-    // Wind kicks in earlier and grows with altitude — adds drift that
-    // breaks any "tap at centre" rhythm.
-    const windBase = (G.B.wind || 0) + Math.min(0.45, n * 0.012);
-    off += Math.sin(G.windPhase*2.2 + (G.current.windPhase||0)) * range * windBase * 0.55;
-    // Secondary high-frequency jitter on every block past floor 5
-    if (n >= 5) off += Math.sin(G.windPhase*7.3 + (G.current.jitterPhase||0)) * (range * 0.04);
+    // Wind kicks in mid-tower; the random per-block phase still prevents
+    // a rhythmic spam exploit even though the overall difficulty is lower.
+    const windBase = (G.B.wind || 0) + Math.min(0.30, Math.max(0, n - 6) * 0.010);
+    off += Math.sin(G.windPhase*2.2 + (G.current.windPhase||0)) * range * windBase * 0.45;
+    if (n >= 8) off += Math.sin(G.windPhase*7.3 + (G.current.jitterPhase||0)) * (range * 0.025);
     const cap = ropeLen() * 0.95;
     G.current.offset = Math.max(-cap, Math.min(cap, off));
   } else if (G.state==='falling' && G.current){
@@ -937,50 +942,348 @@ function drawSkylineLayer(horizonY, parallax, maxH, seedStep){
   ctx.lineTo(CW+40, horizonY); ctx.closePath(); ctx.fill();
 }
 
+/* ===== Color helpers ===== */
+function hexToRGBArr(h){
+  const n = parseInt(h.slice(1), 16);
+  return [(n>>16)&255, (n>>8)&255, n&255];
+}
+function darken(hex, amt){
+  if (hex[0] !== '#') return hex;
+  const a = hexToRGBArr(hex);
+  return 'rgb('+Math.floor(a[0]*(1-amt))+','+Math.floor(a[1]*(1-amt))+','+Math.floor(a[2]*(1-amt))+')';
+}
+function lighten(hex, amt){
+  if (hex[0] !== '#') return hex;
+  const a = hexToRGBArr(hex);
+  return 'rgb('+Math.min(255,Math.floor(a[0]+(255-a[0])*amt))+','
+              +Math.min(255,Math.floor(a[1]+(255-a[1])*amt))+','
+              +Math.min(255,Math.floor(a[2]+(255-a[2])*amt))+')';
+}
+
+/* ===== Floor drawing — rich per-style detail =====
+   Each building gets style/trim/winPattern flags that drive the look:
+   pilasters, arched windows, glass strip windows, portholes, balconies
+   at intervals, plus a styled ground-floor with door, awning and signage.
+   All drawn with primitives so it scales to any block size and palette. */
 function drawFloor(b, i){
   const w = bw(), h = b.h;
-  // Tower sway — kicks in past floor 4, grows with height, and compounds
-  // up the stack so the higher you build the more the top of the tower
-  // visibly wobbles. This is the single biggest feel upgrade vs a static
-  // stack — it sells "this thing is REAL and you're high up."
   const total = G.blocks.length;
   let sway = 0;
   if (total > 4){
-    const heightFactor = (i + 1) / total;             // 0 at base, 1 at top
-    const swayAmp = Math.min(14, (total - 4) * 0.65); // grows with floors
+    const heightFactor = (i + 1) / total;
+    const swayAmp = Math.min(14, (total - 4) * 0.65);
     sway = Math.sin(G.time*0.04 + i*0.35) * swayAmp * heightFactor * heightFactor;
   }
   const x = CW/2 - w/2 + b.offset + sway;
   const yb = floorScreenBottom(i);
   const yt = yb - h;
-  if (yt > CH + 40 || yb < -40) return; // cull off-screen
+  if (yt > CH + 40 || yb < -40) return;
   if (b.roof){ drawRoof(b, x, yt, w, h); return; }
-  // Body gradient
-  const g = ctx.createLinearGradient(x, 0, x+w, 0);
-  g.addColorStop(0, b.color); g.addColorStop(1, b.color2);
+
+  const B = G.B;
+  const style = B.style || 'modern';
+
+  // ----- Body: vertical 3-stop gradient + subtle horizontal sheen -----
+  const g = ctx.createLinearGradient(x, 0, x + w, 0);
+  g.addColorStop(0, lighten(b.color, 0.05));
+  g.addColorStop(0.55, b.color);
+  g.addColorStop(1, darken(b.color2, 0.05));
   ctx.fillStyle = g; ctx.fillRect(x, yt, w, h);
-  // top + left light, bottom + right shade
-  ctx.fillStyle='rgba(255,255,255,0.22)'; ctx.fillRect(x, yt, w, 2); ctx.fillRect(x, yt, 2, h);
-  ctx.fillStyle='rgba(0,0,0,0.28)'; ctx.fillRect(x, yb-2, w, 2); ctx.fillRect(x+w-2, yt, 2, h);
-  // Windows — lit at night/rainy/space
+  // diagonal sheen band for glass-feel
+  if (style==='modern' || style==='gold' || style==='ocean' || style==='deco' || style==='sunset'){
+    const sh = ctx.createLinearGradient(x, yt, x+w, yb);
+    sh.addColorStop(0, 'rgba(255,255,255,0)');
+    sh.addColorStop(0.45, 'rgba(255,255,255,0.10)');
+    sh.addColorStop(0.55, 'rgba(255,255,255,0)');
+    ctx.fillStyle = sh; ctx.fillRect(x, yt, w, h);
+  }
+
+  // ----- Side trim (columns / horizontal frame / nothing) -----
+  drawTrim(B.trim || 'none', x, yt, yb, w, h, b.color2);
+
+  // ----- Edge highlights / shadows for crisp blocks -----
+  ctx.fillStyle='rgba(255,255,255,0.20)';
+  ctx.fillRect(x, yt, w, 2); ctx.fillRect(x, yt, 2, h);
+  ctx.fillStyle='rgba(0,0,0,0.30)';
+  ctx.fillRect(x, yb-2, w, 2); ctx.fillRect(x+w-2, yt, 2, h);
+
+  // ----- Cornice/divider between floors so they read as distinct -----
+  ctx.fillStyle = darken(b.color2, 0.35);
+  ctx.fillRect(x+1, yb-3, w-2, 1);
+  ctx.fillStyle = 'rgba(255,255,255,0.12)';
+  ctx.fillRect(x+1, yb-4, w-2, 1);
+
+  // ----- Windows -----
+  drawWindows(B.winPattern || 'grid', i, x, yt, yb, w, h, b.win, b.color2);
+
+  // ----- Balcony every N floors -----
+  const be = B.balconyEvery || 0;
+  if (be && i > 0 && i % be === 0){
+    drawBalcony(x, yb, w, b.color2);
+  }
+
+  // ----- Small wall details (AC units, pipes) on a deterministic schedule -----
+  if ((i % 4) === 2 && style !== 'space'){
+    ctx.fillStyle = darken(b.color2, 0.4);
+    ctx.fillRect(x + 3, yt + h - 9, 5, 4);
+    ctx.fillStyle = '#aaa'; ctx.fillRect(x + 4, yt + h - 8, 3, 1);
+  }
+
+  // ----- Ground floor styled per building -----
+  if (i === 0) drawGroundFloor(style, x, yb, w, h, b);
+}
+
+function drawTrim(trim, x, yt, yb, w, h, color){
+  if (trim === 'columns'){
+    // Vertical pilasters at the edges with a stone-grey gradient
+    ctx.fillStyle = darken(color, 0.30);
+    ctx.fillRect(x+3, yt+2, 4, h-4);
+    ctx.fillRect(x+w-7, yt+2, 4, h-4);
+    ctx.fillStyle = 'rgba(255,255,255,0.18)';
+    ctx.fillRect(x+3, yt+2, 1, h-4);
+    ctx.fillRect(x+w-7, yt+2, 1, h-4);
+    // capitals
+    ctx.fillStyle = darken(color, 0.45);
+    ctx.fillRect(x+2, yt+1, 6, 2);
+    ctx.fillRect(x+w-8, yt+1, 6, 2);
+    ctx.fillRect(x+2, yb-3, 6, 2);
+    ctx.fillRect(x+w-8, yb-3, 6, 2);
+  } else if (trim === 'frame'){
+    // Slim horizontal band at top + bottom (modern cladding look)
+    ctx.fillStyle = darken(color, 0.25);
+    ctx.fillRect(x, yt+1, w, 2);
+    ctx.fillRect(x, yb-4, w, 2);
+  }
+}
+
+function drawWindows(pattern, i, x, yt, yb, w, h, winColor, frameColor){
   const ew = effectiveWeather();
   const lit = (ew==='night'||ew==='space'||ew==='rainy');
-  const cols = Math.max(2, Math.floor((w-10)/16));
-  const ww=8, wh=Math.min(11, h-8);
-  const startX = x + (w - (cols*16 - 8))/2;
-  const wy = yt + (h - wh)/2;
-  for (let c=0;c<cols;c++){
-    const on = ((i*3 + c*7) % 5) > 1;
-    ctx.fillStyle = on ? (lit ? '#fff2a0' : b.win) : 'rgba(0,0,0,0.22)';
-    ctx.fillRect(startX + c*16, wy, ww, wh);
-    if (on){ ctx.fillStyle='rgba(255,255,255,0.4)'; ctx.fillRect(startX + c*16, wy, ww, 2); }
+  if (pattern === 'arch'){
+    // Arched-top windows (Arabian + Sunset style)
+    const cols = Math.max(2, Math.floor((w-14)/18));
+    const ww = 10, wh = Math.min(13, h-10);
+    const startX = x + (w - cols*18 + 8)/2;
+    const wy = yt + Math.max(3, (h - wh - 4)/2);
+    for (let c=0;c<cols;c++){
+      const wx = startX + c*18;
+      const on = ((i*3 + c*7) % 5) > 1;
+      const fill = on ? (lit ? '#fff2a0' : winColor) : darken(frameColor, 0.55);
+      // arch top
+      ctx.fillStyle = fill;
+      ctx.beginPath();
+      ctx.moveTo(wx, wy+4);
+      ctx.arc(wx + ww/2, wy+4, ww/2, Math.PI, 0);
+      ctx.lineTo(wx + ww, wy + wh);
+      ctx.lineTo(wx, wy + wh);
+      ctx.closePath(); ctx.fill();
+      // frame outline
+      ctx.strokeStyle = darken(frameColor, 0.5);
+      ctx.lineWidth = 1.2; ctx.stroke();
+      // mullion
+      if (on){
+        ctx.fillStyle = darken(frameColor, 0.55);
+        ctx.fillRect(wx + ww/2 - 0.5, wy+4, 1, wh-4);
+        // sill highlight
+        ctx.fillStyle = 'rgba(255,255,255,0.35)';
+        ctx.fillRect(wx, wy+4, ww, 1);
+      }
+    }
+  } else if (pattern === 'wide'){
+    // Horizontal glass strip windows (Modern / Gold high-rises)
+    const stripeH = Math.max(4, Math.floor((h - 8) / 3));
+    const innerPad = 5;
+    for (let s = 0; s < 2; s++){
+      const sy = yt + 5 + s*(stripeH + 2);
+      if (sy + stripeH > yb - 5) break;
+      // dark frame backdrop
+      ctx.fillStyle = darken(frameColor, 0.5);
+      ctx.fillRect(x + innerPad - 1, sy - 1, w - (innerPad*2 - 2), stripeH + 2);
+      // glass: vertical gradient + subtle on/off variation
+      const on = ((i*5 + s) % 3) > 0;
+      const top = on ? (lit ? '#fff2a0' : lighten(winColor, 0.10)) : '#2a3540';
+      const mid = on ? (lit ? '#ffd060' : winColor) : '#1a232c';
+      const bot = on ? (lit ? '#aa6800' : darken(winColor, 0.18)) : '#0e161e';
+      const gw = ctx.createLinearGradient(0, sy, 0, sy+stripeH);
+      gw.addColorStop(0, top); gw.addColorStop(0.55, mid); gw.addColorStop(1, bot);
+      ctx.fillStyle = gw;
+      ctx.fillRect(x + innerPad, sy, w - innerPad*2, stripeH);
+      // dividers between panes
+      ctx.fillStyle = darken(frameColor, 0.5);
+      const divs = Math.max(2, Math.floor((w - innerPad*2) / 14));
+      for (let d = 1; d < divs; d++){
+        const dx = x + innerPad + d * (w - innerPad*2) / divs;
+        ctx.fillRect(dx - 0.5, sy, 1, stripeH);
+      }
+      // top reflection line
+      if (on){
+        ctx.fillStyle = 'rgba(255,255,255,0.25)';
+        ctx.fillRect(x + innerPad, sy, w - innerPad*2, 1);
+      }
+    }
+  } else if (pattern === 'porthole'){
+    // Circular windows (Ocean tower)
+    const cols = Math.max(2, Math.floor((w-12)/14));
+    const r = Math.min(4, (h-8)/3);
+    const cy = yt + h/2;
+    const startX = x + (w - cols*14 + 6)/2;
+    for (let c=0;c<cols;c++){
+      const cx = startX + c*14;
+      const on = ((i*4 + c*5) % 3) > 0;
+      // outer ring (frame)
+      ctx.fillStyle = darken(frameColor, 0.5);
+      ctx.beginPath(); ctx.arc(cx, cy, r+1.5, 0, Math.PI*2); ctx.fill();
+      // glass
+      const gw = ctx.createRadialGradient(cx - r*0.4, cy - r*0.4, 0.3, cx, cy, r);
+      const c1 = on ? (lit ? '#fff2a0' : lighten(winColor, 0.15)) : '#0a141e';
+      const c2 = on ? (lit ? '#cc8000' : darken(winColor, 0.2))   : '#06090e';
+      gw.addColorStop(0, c1); gw.addColorStop(1, c2);
+      ctx.fillStyle = gw;
+      ctx.beginPath(); ctx.arc(cx, cy, r, 0, Math.PI*2); ctx.fill();
+      if (on){
+        ctx.fillStyle = 'rgba(255,255,255,0.45)';
+        ctx.beginPath(); ctx.arc(cx - r*0.35, cy - r*0.35, r*0.35, 0, Math.PI*2); ctx.fill();
+      }
+    }
+  } else if (pattern === 'square'){
+    // Dense small squares (Space)
+    const ww = 4, wh = 4, step = 7;
+    const cols = Math.max(3, Math.floor((w - 8) / step));
+    const startX = x + (w - cols*step + (step - ww))/2;
+    const ys = [yt + 4, yt + h - wh - 4];
+    if (ys[1] - ys[0] > wh + 2) ys.splice(1, 0, yt + h/2 - wh/2);
+    for (const wy of ys){
+      for (let c=0;c<cols;c++){
+        const on = ((i*7 + c*3 + (wy|0)) % 5) > 1;
+        ctx.fillStyle = on ? (lit ? '#a0e8ff' : winColor) : '#06080e';
+        ctx.fillRect(startX + c*step, wy, ww, wh);
+        if (on){
+          ctx.fillStyle = 'rgba(255,255,255,0.35)';
+          ctx.fillRect(startX + c*step, wy, ww, 1);
+        }
+      }
+    }
+  } else {
+    // 'grid' — tidy aligned rectangles (Tropical / Deco / default)
+    const cols = Math.max(2, Math.floor((w-14)/16));
+    const ww = 9, wh = Math.min(12, h-10);
+    const startX = x + (w - cols*16 + 7)/2;
+    const wy = yt + Math.max(3, (h - wh - 3)/2);
+    for (let c=0;c<cols;c++){
+      const on = ((i*3 + c*7) % 5) > 1;
+      // recessed frame
+      ctx.fillStyle = darken(frameColor, 0.45);
+      ctx.fillRect(startX + c*16 - 1, wy - 1, ww + 2, wh + 2);
+      // glass
+      ctx.fillStyle = on ? (lit ? '#fff2a0' : winColor) : '#0e1218';
+      ctx.fillRect(startX + c*16, wy, ww, wh);
+      if (on){
+        ctx.fillStyle='rgba(255,255,255,0.35)';
+        ctx.fillRect(startX + c*16, wy, ww, 2);
+        // mullion cross
+        ctx.fillStyle = darken(frameColor, 0.55);
+        ctx.fillRect(startX + c*16 + ww/2 - 0.5, wy, 1, wh);
+        ctx.fillRect(startX + c*16, wy + wh/2 - 0.5, ww, 1);
+      }
+    }
   }
-  // Ground floor gets a door + awning
-  if (i === 0){
-    const dx = x + w/2 - 7;
-    ctx.fillStyle = '#3a2418'; ctx.fillRect(dx, yb-16, 14, 16);
-    ctx.fillStyle = '#ffd200'; ctx.fillRect(dx+5, yb-9, 3, 6);
-    ctx.fillStyle = b.color2; ctx.fillRect(dx-4, yb-20, 22, 4);
+}
+
+function drawBalcony(x, yb, w, color){
+  // Decorative balcony along the bottom of this floor
+  const balW = w * 0.78, balH = 4;
+  const bx = x + (w - balW)/2;
+  // Slab
+  ctx.fillStyle = darken(color, 0.25);
+  ctx.fillRect(bx - 2, yb - balH - 1, balW + 4, balH);
+  ctx.fillStyle = 'rgba(255,255,255,0.18)';
+  ctx.fillRect(bx - 2, yb - balH - 1, balW + 4, 1);
+  // Railing posts
+  ctx.fillStyle = darken(color, 0.55);
+  ctx.fillRect(bx, yb - balH - 4, balW, 2);
+  // Vertical bars
+  ctx.fillStyle = darken(color, 0.4);
+  const bars = Math.max(6, Math.floor(balW / 4));
+  for (let i = 0; i < bars; i++){
+    ctx.fillRect(bx + i * balW / bars, yb - balH - 2, 1, balH - 1);
+  }
+}
+
+function drawGroundFloor(style, x, yb, w, h, b){
+  const yt = yb - h;
+  // Pavement glow under the entrance
+  if (effectiveWeather()==='night' || effectiveWeather()==='rainy' || effectiveWeather()==='space'){
+    const gl = ctx.createRadialGradient(x + w/2, yb, 4, x + w/2, yb, w*0.5);
+    gl.addColorStop(0, 'rgba(255,210,90,0.35)');
+    gl.addColorStop(1, 'rgba(255,210,90,0)');
+    ctx.fillStyle = gl; ctx.fillRect(x - 6, yb - 2, w + 12, 12);
+  }
+  // Door frame
+  const dw = 18, dh = Math.min(18, h - 6);
+  const dx = x + w/2 - dw/2;
+  const dy = yb - dh;
+  // doorway recess
+  ctx.fillStyle = darken(b.color2, 0.6);
+  ctx.fillRect(dx - 2, dy, dw + 4, dh);
+  // door panel
+  if (style === 'arabian' || style === 'sunset'){
+    // Arched door
+    ctx.fillStyle = '#3a1f10';
+    ctx.beginPath();
+    ctx.moveTo(dx, dy + dh*0.4);
+    ctx.arc(dx + dw/2, dy + dh*0.4, dw/2, Math.PI, 0);
+    ctx.lineTo(dx + dw, yb);
+    ctx.lineTo(dx, yb);
+    ctx.closePath(); ctx.fill();
+    // ornate gold trim
+    ctx.strokeStyle = '#e0b040'; ctx.lineWidth = 1.5; ctx.stroke();
+    // door knob
+    ctx.fillStyle = '#ffd200';
+    ctx.beginPath(); ctx.arc(dx + dw*0.7, yb - dh*0.35, 1.5, 0, Math.PI*2); ctx.fill();
+  } else if (style === 'space' || style === 'modern'){
+    // Sleek vertical glass entry
+    const gd = ctx.createLinearGradient(dx, dy, dx, yb);
+    gd.addColorStop(0, '#506880'); gd.addColorStop(1, '#1a2434');
+    ctx.fillStyle = gd; ctx.fillRect(dx, dy, dw, dh);
+    ctx.fillStyle = 'rgba(255,255,255,0.4)';
+    ctx.fillRect(dx + 2, dy, 1, dh);
+    ctx.fillStyle = darken(b.color2, 0.4);
+    ctx.fillRect(dx + dw/2 - 0.5, dy, 1, dh);
+  } else {
+    // Rectangular wooden door
+    ctx.fillStyle = '#3a2418'; ctx.fillRect(dx, dy, dw, dh);
+    ctx.fillStyle = '#5a3a20';
+    ctx.fillRect(dx + 1, dy + 1, dw - 2, dh - 2);
+    ctx.fillStyle = '#ffd200';
+    ctx.beginPath(); ctx.arc(dx + dw*0.78, yb - dh*0.45, 1.5, 0, Math.PI*2); ctx.fill();
+  }
+  // Awning (skip on modern/space)
+  if (style !== 'modern' && style !== 'space'){
+    ctx.fillStyle = b.color2;
+    ctx.beginPath();
+    ctx.moveTo(dx - 6, dy - 1);
+    ctx.lineTo(dx + dw + 6, dy - 1);
+    ctx.lineTo(dx + dw + 2, dy - 5);
+    ctx.lineTo(dx - 2, dy - 5);
+    ctx.closePath(); ctx.fill();
+    // awning stripes
+    ctx.fillStyle = lighten(b.color2, 0.2);
+    for (let s = 0; s < 4; s++){
+      ctx.fillRect(dx - 5 + s*7, dy - 5, 3, 4);
+    }
+    ctx.fillStyle = darken(b.color2, 0.4);
+    ctx.fillRect(dx - 6, dy - 1, dw + 12, 1);
+  }
+  // Signage band above the awning
+  const sigy = (style !== 'modern' && style !== 'space') ? dy - 9 : dy - 6;
+  if (sigy > yt + 4){
+    ctx.fillStyle = darken(b.color2, 0.55);
+    ctx.fillRect(x + 4, sigy - 1, w - 8, 5);
+    ctx.fillStyle = '#ffd200';
+    // Tiny dot pattern as faux letters (3 letters)
+    for (let s = 0; s < 3; s++){
+      ctx.fillRect(x + w/2 - 8 + s*6, sigy, 4, 3);
+    }
   }
 }
 function drawRoof(b, x, yt, w, h){
