@@ -1007,11 +1007,8 @@ function drawFloor(b, i){
   ctx.fillStyle='rgba(0,0,0,0.30)';
   ctx.fillRect(x, yb-2, w, 2); ctx.fillRect(x+w-2, yt, 2, h);
 
-  // ----- Cornice/divider between floors so they read as distinct -----
-  ctx.fillStyle = darken(b.color2, 0.35);
-  ctx.fillRect(x+1, yb-3, w-2, 1);
-  ctx.fillStyle = 'rgba(255,255,255,0.12)';
-  ctx.fillRect(x+1, yb-4, w-2, 1);
+  // ----- Cornice/divider between floors with per-style flair -----
+  drawCornice(style, x, yt, yb, w, h, b);
 
   // ----- Windows -----
   drawWindows(B.winPattern || 'grid', i, x, yt, yb, w, h, b.win, b.color2);
@@ -1053,6 +1050,123 @@ function drawTrim(trim, x, yt, yb, w, h, color){
     ctx.fillStyle = darken(color, 0.25);
     ctx.fillRect(x, yt+1, w, 2);
     ctx.fillRect(x, yb-4, w, 2);
+  }
+}
+
+// Floor-divider cornice with per-style flair (dental band, palm leaves,
+// wave pattern, neon line, etc). Replaces the plain 1-px shadow line so
+// every building reads as its own architecture.
+function drawCornice(style, x, yt, yb, w, h, b){
+  switch (style){
+    case 'arabian': {
+      // Dental band: alternating small light/dark squares
+      ctx.fillStyle = darken(b.color2, 0.45);
+      ctx.fillRect(x + 1, yb - 4, w - 2, 1);
+      ctx.fillStyle = '#e0b040';
+      ctx.fillRect(x + 1, yb - 6, w - 2, 1);
+      const teeth = Math.max(4, Math.floor((w - 4) / 5));
+      for (let t = 0; t < teeth; t++){
+        const tx = x + 2 + t * (w - 4) / teeth;
+        ctx.fillStyle = (t % 2) ? '#fff5c4' : '#7a5520';
+        ctx.fillRect(tx, yb - 5, Math.max(2, (w - 4) / teeth - 1), 1);
+      }
+      break;
+    }
+    case 'tropical': {
+      // Green band + tiny leaf-tip pattern
+      ctx.fillStyle = '#0e6b50';
+      ctx.fillRect(x + 1, yb - 4, w - 2, 2);
+      ctx.fillStyle = '#2bd470';
+      for (let t = 0; t < Math.floor(w / 8); t++){
+        const tx = x + 3 + t * 8;
+        ctx.beginPath();
+        ctx.moveTo(tx, yb - 4); ctx.lineTo(tx + 2, yb - 2); ctx.lineTo(tx + 4, yb - 4);
+        ctx.closePath(); ctx.fill();
+      }
+      break;
+    }
+    case 'gold': {
+      // Gold band with embossed line
+      ctx.fillStyle = '#aa6810';
+      ctx.fillRect(x + 1, yb - 5, w - 2, 3);
+      ctx.fillStyle = '#fff5c4';
+      ctx.fillRect(x + 2, yb - 5, w - 4, 1);
+      ctx.fillStyle = '#7a4810';
+      ctx.fillRect(x + 2, yb - 3, w - 4, 1);
+      break;
+    }
+    case 'ocean': {
+      // Wavy "water-line" divider
+      ctx.strokeStyle = '#0a4a80'; ctx.lineWidth = 2;
+      ctx.beginPath();
+      for (let t = 0; t <= w; t += 2){
+        const yy = yb - 4 + Math.sin((t + i * 3) * 0.4) * 1.2;
+        if (t === 0) ctx.moveTo(x + t, yy);
+        else ctx.lineTo(x + t, yy);
+      }
+      ctx.stroke();
+      ctx.strokeStyle = 'rgba(255,255,255,0.3)';
+      ctx.beginPath();
+      for (let t = 0; t <= w; t += 2){
+        const yy = yb - 6 + Math.sin((t + i * 3) * 0.4) * 1.2;
+        if (t === 0) ctx.moveTo(x + t, yy);
+        else ctx.lineTo(x + t, yy);
+      }
+      ctx.stroke();
+      break;
+    }
+    case 'sunset': {
+      // Ornate scroll-pattern band
+      ctx.fillStyle = darken(b.color2, 0.35);
+      ctx.fillRect(x + 1, yb - 4, w - 2, 2);
+      ctx.fillStyle = '#e0b040';
+      for (let t = 0; t < Math.floor(w / 10); t++){
+        const tx = x + 5 + t * 10;
+        ctx.beginPath();
+        ctx.arc(tx, yb - 3, 1.5, 0, Math.PI * 2); ctx.fill();
+        ctx.fillRect(tx - 3, yb - 4, 6, 1);
+      }
+      break;
+    }
+    case 'deco': {
+      // Zigzag art-deco frieze
+      ctx.fillStyle = '#3a2070';
+      ctx.fillRect(x + 1, yb - 4, w - 2, 2);
+      ctx.strokeStyle = '#e0b040'; ctx.lineWidth = 1.2;
+      ctx.beginPath();
+      let zx = x + 2;
+      let up = true;
+      while (zx < x + w - 2){
+        ctx.lineTo(zx, yb - 6); ctx.lineTo(zx + 3, yb - 3);
+        zx += 6;
+      }
+      ctx.stroke();
+      break;
+    }
+    case 'space': {
+      // Neon glow stripe
+      ctx.fillStyle = '#0a0a20';
+      ctx.fillRect(x + 1, yb - 4, w - 2, 2);
+      const neonOn = (Math.floor(performance.now() / 600 + i) % 2) === 0;
+      ctx.fillStyle = neonOn ? '#62fff0' : '#0a4a40';
+      ctx.fillRect(x + 4, yb - 3, w - 8, 1);
+      if (neonOn){
+        const gl = ctx.createLinearGradient(0, yb - 5, 0, yb);
+        gl.addColorStop(0, 'rgba(98,255,240,0)');
+        gl.addColorStop(1, 'rgba(98,255,240,0.35)');
+        ctx.fillStyle = gl; ctx.fillRect(x + 1, yb - 5, w - 2, 5);
+      }
+      break;
+    }
+    case 'modern':
+    case 'sky':
+    default: {
+      // Slim two-tone cornice
+      ctx.fillStyle = darken(b.color2, 0.4);
+      ctx.fillRect(x + 1, yb - 3, w - 2, 1);
+      ctx.fillStyle = 'rgba(255,255,255,0.18)';
+      ctx.fillRect(x + 1, yb - 4, w - 2, 1);
+    }
   }
 }
 
@@ -1287,31 +1401,237 @@ function drawGroundFloor(style, x, yb, w, h, b){
   }
 }
 function drawRoof(b, x, yt, w, h){
-  // Slanted roof slab + parapet + antenna with blinking light
-  const g = ctx.createLinearGradient(x,0,x+w,0);
-  g.addColorStop(0,b.color); g.addColorStop(1,b.color2);
-  ctx.fillStyle = g; ctx.fillRect(x, yt+4, w, h-4);
-  ctx.fillStyle='rgba(0,0,0,0.25)'; ctx.fillRect(x, yt+h-2, w, 2);
-  // parapet
+  const B = G.B, style = (B && B.style) || 'modern';
+  // Common: parapet slab on top of the body, base for whatever crown
+  const g = ctx.createLinearGradient(x, 0, x + w, 0);
+  g.addColorStop(0, lighten(b.color, 0.05));
+  g.addColorStop(1, darken(b.color2, 0.05));
+  ctx.fillStyle = g; ctx.fillRect(x, yt + 4, w, h - 4);
+  ctx.fillStyle = 'rgba(0,0,0,0.25)'; ctx.fillRect(x, yt + h - 2, w, 2);
+
+  // Parapet step
   ctx.fillStyle = b.color2;
   ctx.beginPath();
-  ctx.moveTo(x-3, yt+6); ctx.lineTo(x+w+3, yt+6);
-  ctx.lineTo(x+w-6, yt-2); ctx.lineTo(x+6, yt-2); ctx.closePath(); ctx.fill();
-  ctx.fillStyle='rgba(255,255,255,0.25)'; ctx.fillRect(x+6, yt-2, w-12, 2);
-  // antenna
-  const ax = x + w/2;
-  ctx.strokeStyle='#888'; ctx.lineWidth=2;
-  ctx.beginPath(); ctx.moveTo(ax, yt-2); ctx.lineTo(ax, yt-18); ctx.stroke();
-  const blink = Math.floor(performance.now()/400)%2===0;
-  ctx.fillStyle = blink ? '#ff3030' : '#661010';
-  ctx.beginPath(); ctx.arc(ax, yt-20, 3, 0, Math.PI*2); ctx.fill();
-  if (blink){
-    const gl = ctx.createRadialGradient(ax,yt-20,1,ax,yt-20,10);
-    gl.addColorStop(0,'rgba(255,60,60,0.6)'); gl.addColorStop(1,'rgba(255,60,60,0)');
-    ctx.fillStyle=gl; ctx.beginPath(); ctx.arc(ax,yt-20,10,0,Math.PI*2); ctx.fill();
+  ctx.moveTo(x - 3, yt + 6); ctx.lineTo(x + w + 3, yt + 6);
+  ctx.lineTo(x + w - 5, yt - 1); ctx.lineTo(x + 5, yt - 1); ctx.closePath(); ctx.fill();
+  ctx.fillStyle = 'rgba(255,255,255,0.20)'; ctx.fillRect(x + 5, yt - 1, w - 10, 2);
+
+  const cx = x + w / 2;
+  const blink = Math.floor(performance.now() / 400) % 2 === 0;
+
+  switch (style){
+    case 'arabian': {
+      // Onion-dome with crescent on top — turquoise + gold trim
+      const dr = Math.min(w * 0.18, 12);
+      const dy = yt - dr * 0.4;
+      // gold drum below dome
+      ctx.fillStyle = '#e0b040';
+      ctx.fillRect(cx - dr * 0.6, yt - 4, dr * 1.2, 4);
+      // dome
+      const gd = ctx.createRadialGradient(cx - dr * 0.3, dy - dr * 0.3, 1, cx, dy, dr);
+      gd.addColorStop(0, '#7ec8ff'); gd.addColorStop(1, '#1a5a9c');
+      ctx.fillStyle = gd;
+      ctx.beginPath();
+      ctx.arc(cx, dy, dr, 0, Math.PI * 2); ctx.fill();
+      // dome highlight
+      ctx.fillStyle = 'rgba(255,255,255,0.35)';
+      ctx.beginPath(); ctx.arc(cx - dr * 0.3, dy - dr * 0.3, dr * 0.4, 0, Math.PI * 2); ctx.fill();
+      // spire + crescent
+      ctx.strokeStyle = '#e0b040'; ctx.lineWidth = 2;
+      ctx.beginPath(); ctx.moveTo(cx, dy - dr); ctx.lineTo(cx, dy - dr - 8); ctx.stroke();
+      ctx.fillStyle = '#ffd200';
+      ctx.beginPath(); ctx.arc(cx, dy - dr - 11, 3, 0.3, Math.PI * 2 - 0.3); ctx.fill();
+      ctx.fillStyle = B.weather === 'night' ? '#1a1a44' : getSkyColors(effectiveWeather())[0];
+      ctx.beginPath(); ctx.arc(cx + 1, dy - dr - 11, 2.5, 0, Math.PI * 2); ctx.fill();
+      // Decorative miniature side spires
+      for (const sx of [x + 5, x + w - 5]){
+        ctx.fillStyle = '#e0b040'; ctx.fillRect(sx - 1, yt - 7, 2, 7);
+        ctx.fillStyle = '#ffd200';
+        ctx.beginPath(); ctx.arc(sx, yt - 9, 2, 0, Math.PI * 2); ctx.fill();
+      }
+      break;
+    }
+    case 'tropical': {
+      // Thatched roof + palm fronds in pots at corners
+      const ry = yt + 1;
+      ctx.fillStyle = '#8a5a20';
+      ctx.beginPath();
+      ctx.moveTo(x - 4, ry); ctx.lineTo(x + w + 4, ry);
+      ctx.lineTo(x + w - 8, ry - 8); ctx.lineTo(x + 8, ry - 8);
+      ctx.closePath(); ctx.fill();
+      // straw streaks
+      ctx.strokeStyle = '#c89438'; ctx.lineWidth = 1;
+      for (let i = 0; i < 8; i++){
+        const sx = x + 8 + i * (w - 16) / 7;
+        ctx.beginPath(); ctx.moveTo(sx, ry); ctx.lineTo(sx + 1, ry - 7); ctx.stroke();
+      }
+      // pot
+      ctx.fillStyle = '#6a4020'; ctx.fillRect(cx - 4, yt - 14, 8, 5);
+      // palm fronds (gold-green strokes)
+      ctx.strokeStyle = '#2bd470'; ctx.lineWidth = 2;
+      for (let a = -0.6; a <= 0.6; a += 0.2){
+        ctx.beginPath();
+        ctx.moveTo(cx, yt - 14);
+        ctx.quadraticCurveTo(cx + Math.sin(a) * 4, yt - 21, cx + Math.sin(a) * 10, yt - 23 - Math.cos(a) * 3);
+        ctx.stroke();
+      }
+      ctx.fillStyle = '#ffd83a';
+      ctx.beginPath(); ctx.arc(cx, yt - 14, 1.5, 0, Math.PI * 2); ctx.fill();
+      break;
+    }
+    case 'gold': {
+      // Art-deco crown with stepped gold fins + central spike
+      ctx.fillStyle = '#ffce5a';
+      // three stepped tiers
+      ctx.fillRect(x + 4, yt - 3, w - 8, 4);
+      ctx.fillRect(x + 8, yt - 7, w - 16, 4);
+      ctx.fillRect(x + 12, yt - 11, w - 24, 4);
+      // gold highlight
+      ctx.fillStyle = '#fff0a0';
+      ctx.fillRect(x + 4, yt - 3, w - 8, 1);
+      ctx.fillRect(x + 8, yt - 7, w - 16, 1);
+      ctx.fillRect(x + 12, yt - 11, w - 24, 1);
+      // central spire
+      ctx.fillStyle = '#aa6810';
+      ctx.fillRect(cx - 1, yt - 22, 2, 11);
+      ctx.fillStyle = '#ffd200';
+      ctx.beginPath(); ctx.moveTo(cx - 4, yt - 22); ctx.lineTo(cx + 4, yt - 22); ctx.lineTo(cx, yt - 28); ctx.closePath(); ctx.fill();
+      break;
+    }
+    case 'ocean': {
+      // Lighthouse: white tower + red top + revolving beacon glow
+      const tw = 10;
+      // tower body
+      ctx.fillStyle = '#ffffff'; ctx.fillRect(cx - tw/2, yt - 14, tw, 14);
+      ctx.fillStyle = '#cc1818'; ctx.fillRect(cx - tw/2, yt - 14, tw, 3);
+      ctx.fillRect(cx - tw/2, yt - 8, tw, 2);
+      // observation deck
+      ctx.fillStyle = '#1a3a5a'; ctx.fillRect(cx - tw/2 - 2, yt - 18, tw + 4, 4);
+      // beacon
+      const beaconOn = (Math.floor(performance.now() / 700) % 2) === 0;
+      ctx.fillStyle = beaconOn ? '#fff0a0' : '#aa7000';
+      ctx.fillRect(cx - 2, yt - 22, 4, 4);
+      if (beaconOn){
+        // beacon cone
+        ctx.fillStyle = 'rgba(255,240,160,0.35)';
+        ctx.beginPath();
+        ctx.moveTo(cx, yt - 20);
+        ctx.lineTo(cx + 40, yt - 30);
+        ctx.lineTo(cx + 40, yt - 10);
+        ctx.closePath(); ctx.fill();
+      }
+      // little spire on top
+      ctx.fillStyle = '#cc1818'; ctx.fillRect(cx - 1, yt - 27, 2, 5);
+      break;
+    }
+    case 'sunset': {
+      // Mansard-style ornate roof with central dormer + scroll ornaments
+      ctx.fillStyle = '#7c1f48';
+      ctx.beginPath();
+      ctx.moveTo(x + 2, yt - 1); ctx.lineTo(x + w - 2, yt - 1);
+      ctx.lineTo(x + w - 8, yt - 9); ctx.lineTo(x + 8, yt - 9);
+      ctx.closePath(); ctx.fill();
+      // slate texture
+      ctx.fillStyle = 'rgba(255,255,255,0.10)';
+      for (let i = 0; i < 5; i++) ctx.fillRect(x + 10 + i * (w-20)/4, yt - 7, 1, 5);
+      // dormer
+      ctx.fillStyle = '#c64f86'; ctx.fillRect(cx - 5, yt - 13, 10, 5);
+      ctx.fillStyle = '#ffe3ef'; ctx.fillRect(cx - 3, yt - 12, 6, 3);
+      // weathervane
+      ctx.strokeStyle = '#e0b040'; ctx.lineWidth = 1.5;
+      ctx.beginPath(); ctx.moveTo(cx, yt - 13); ctx.lineTo(cx, yt - 23); ctx.stroke();
+      ctx.fillStyle = '#e0b040';
+      ctx.beginPath(); ctx.moveTo(cx, yt - 24); ctx.lineTo(cx + 5, yt - 22); ctx.lineTo(cx + 1, yt - 21); ctx.closePath(); ctx.fill();
+      // Scroll ornaments at corners
+      for (const sx of [x + 4, x + w - 4]){
+        ctx.fillStyle = '#e0b040';
+        ctx.beginPath(); ctx.arc(sx, yt - 4, 2, 0, Math.PI * 2); ctx.fill();
+      }
+      break;
+    }
+    case 'deco': {
+      // Chrysler-style stepped chrome crown with sunburst lines
+      const tiers = 4;
+      for (let t = 0; t < tiers; t++){
+        const tw = w - 6 - t * 4, ty = yt - 3 - t * 4;
+        const inset = (w - tw) / 2;
+        // metallic body
+        const gm = ctx.createLinearGradient(x + inset, 0, x + inset + tw, 0);
+        gm.addColorStop(0, '#d8d2f0'); gm.addColorStop(0.5, '#fff'); gm.addColorStop(1, '#7a6aa0');
+        ctx.fillStyle = gm;
+        ctx.fillRect(x + inset, ty, tw, 4);
+        ctx.fillStyle = '#3a2070';
+        ctx.fillRect(x + inset, ty + 3, tw, 1);
+      }
+      // sunburst rays from the top tier
+      ctx.strokeStyle = '#e0b040'; ctx.lineWidth = 1;
+      for (let i = -3; i <= 3; i++){
+        ctx.beginPath();
+        ctx.moveTo(cx, yt - 16);
+        ctx.lineTo(cx + i * 3, yt - 25);
+        ctx.stroke();
+      }
+      // top spire
+      ctx.fillStyle = '#ffd200';
+      ctx.beginPath();
+      ctx.moveTo(cx - 2, yt - 19); ctx.lineTo(cx + 2, yt - 19); ctx.lineTo(cx, yt - 28); ctx.closePath();
+      ctx.fill();
+      break;
+    }
+    case 'space': {
+      // Futuristic glass observation deck + tall antenna with neon ring
+      const od = 10;
+      // deck
+      const gd = ctx.createLinearGradient(0, yt - 14, 0, yt - 4);
+      gd.addColorStop(0, '#4a5cc0'); gd.addColorStop(1, '#1a224a');
+      ctx.fillStyle = gd;
+      ctx.fillRect(cx - od, yt - 14, od * 2, 10);
+      // window strip
+      ctx.fillStyle = blink ? '#a0e8ff' : '#0a1a2a';
+      for (let i = 0; i < 5; i++){
+        ctx.fillRect(cx - od + 1 + i * (od * 2 - 2) / 5, yt - 12, (od * 2 - 4) / 5 - 1, 4);
+      }
+      // antenna
+      ctx.fillStyle = '#888'; ctx.fillRect(cx - 1, yt - 32, 2, 18);
+      // neon ring + blinking light
+      const neonOn = (Math.floor(performance.now() / 350) % 2) === 0;
+      ctx.fillStyle = neonOn ? '#62fff0' : '#0a4a40';
+      ctx.fillRect(cx - 4, yt - 30, 8, 2);
+      ctx.beginPath(); ctx.arc(cx, yt - 32, 2, 0, Math.PI * 2); ctx.fill();
+      if (neonOn){
+        const gl = ctx.createRadialGradient(cx, yt - 32, 1, cx, yt - 32, 14);
+        gl.addColorStop(0, 'rgba(98,255,240,0.55)'); gl.addColorStop(1, 'rgba(98,255,240,0)');
+        ctx.fillStyle = gl;
+        ctx.beginPath(); ctx.arc(cx, yt - 32, 14, 0, Math.PI * 2); ctx.fill();
+      }
+      break;
+    }
+    case 'modern':
+    case 'sky':
+    default: {
+      // Clean parapet + thin chimney/antenna with red blink (city skyline)
+      ctx.fillStyle = '#888'; ctx.lineWidth = 2;
+      ctx.fillRect(cx - 1, yt - 18, 2, 16);
+      ctx.fillStyle = blink ? '#ff3030' : '#661010';
+      ctx.beginPath(); ctx.arc(cx, yt - 20, 3, 0, Math.PI * 2); ctx.fill();
+      if (blink){
+        const gl = ctx.createRadialGradient(cx, yt - 20, 1, cx, yt - 20, 10);
+        gl.addColorStop(0, 'rgba(255,60,60,0.6)'); gl.addColorStop(1, 'rgba(255,60,60,0)');
+        ctx.fillStyle = gl;
+        ctx.beginPath(); ctx.arc(cx, yt - 20, 10, 0, Math.PI * 2); ctx.fill();
+      }
+      // little flag
+      ctx.fillStyle = '#ffd200'; ctx.fillRect(cx, yt - 18, 8, 5);
+      // sat dishes
+      ctx.fillStyle = '#aaa';
+      ctx.beginPath(); ctx.arc(x + 8, yt - 2, 3, Math.PI, 0); ctx.fill();
+      ctx.fillStyle = '#666';
+      ctx.fillRect(x + 7, yt - 3, 2, 1);
+      // HVAC box
+      ctx.fillStyle = '#666'; ctx.fillRect(x + w - 14, yt - 5, 8, 5);
+      ctx.fillStyle = '#444'; ctx.fillRect(x + w - 13, yt - 4, 6, 1);
+    }
   }
-  // little flag
-  ctx.fillStyle='#ffd200'; ctx.fillRect(ax, yt-18, 8, 5);
 }
 function drawChunk(c){
   ctx.save();
