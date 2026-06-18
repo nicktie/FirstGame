@@ -201,6 +201,7 @@ kbd{background:rgba(255,255,255,0.12);border:1px solid rgba(255,255,255,0.2);bor
     </div>
     <div class="hud-col right">
       <span class="hud-pill" id="hudPop">👥 0</span>
+      <span class="hud-pill" id="hudCity">🌆 0</span>
       <span class="hud-pill" id="hudBuilding">🏙️ 1</span>
     </div>
   </div>
@@ -215,6 +216,10 @@ kbd{background:rgba(255,255,255,0.12);border:1px solid rgba(255,255,255,0.2);bor
       🎯 <strong>محاذاة مثاليّة</strong> = سكّان أكثر وكومبو<br>
       ⚖️ <strong>الميزان</strong> تحت يبيّن ميل البرج — لا تتركه يصل الحافة!<br>
       🏙️ كل برج تكمله يفتح برجاً جديداً بطقسٍ وجوٍّ مختلف
+    </div>
+    <div class="ov-stats" id="startStats" style="display:none">
+      <div>🌆 إجمالي سكّان مدينتك: <strong id="startCityTotal">0</strong></div>
+      <div>🏆 أعلى رقم وصلته: <strong id="startBest">0</strong></div>
     </div>
     <button class="ov-btn" onclick="openMap()">🏙️ خريطة المدينة</button>
     <button class="ov-btn secondary" onclick="location.href='index.html'">🏠 الرئيسية</button>
@@ -237,7 +242,8 @@ kbd{background:rgba(255,255,255,0.12);border:1px solid rgba(255,255,255,0.2);bor
     <p class="ov-sub" id="completeSub"></p>
     <div class="ov-stats">
       <div>👥 سكّان البرج: <strong id="cmpPop">0</strong></div>
-      <div>⭐ إجمالي المدينة: <strong id="cmpTotal">0</strong></div>
+      <div>⭐ إجمالي هذه الجولة: <strong id="cmpTotal">0</strong></div>
+      <div>🌆 إجمالي مدينتك: <strong id="cmpCity">0</strong></div>
     </div>
     <button class="ov-btn" id="cmpNextBtn" onclick="afterComplete()">🏙️ البرج التالي</button>
    </div>
@@ -259,7 +265,8 @@ kbd{background:rgba(255,255,255,0.12);border:1px solid rgba(255,255,255,0.2);bor
     <div class="ov-stats">
       <div>🏢 الطوابق: <strong id="finalFloor">0</strong></div>
       <div>👥 السكّان: <strong id="finalPop">0</strong></div>
-      <div>⭐ إجمالي المدينة: <strong id="finalTotal">0</strong></div>
+      <div>⭐ إجمالي هذه الجولة: <strong id="finalTotal">0</strong></div>
+      <div>🌆 إجمالي مدينتك: <strong id="finalCity">0</strong></div>
     </div>
     <button class="ov-btn" onclick="retryBuilding()">🔄 أعد المحاولة</button>
     <button class="ov-btn secondary" onclick="quitToMap()">🏙️ الخريطة</button>
@@ -292,16 +299,20 @@ resize();
 
 /* ===== Buildings (the city) ===== */
 // Each building: a distinct look, floor target, block size, weather, and
-// difficulty knobs that ramp across the city.
+// difficulty knobs that ramp across the city. The last entry has
+// dynamicWeather=true — its weather morphs by altitude (clouds → night →
+// space) instead of using a single fixed look.
 const BUILDINGS = [
-  { name:'برج الوادي',    floors:6,  bw:96, bh:30, c1:'#ff7b6b', c2:'#c0392b', win:'#ffe9a8', weather:'sunny',  swing:0.0110, wind:0    },
-  { name:'برج النخيل',    floors:8,  bw:90, bh:28, c1:'#2bd4a4', c2:'#0f9b7a', win:'#d6fff0', weather:'cloudy', swing:0.0125, wind:0    },
-  { name:'البرج الذهبي',  floors:10, bw:86, bh:28, c1:'#ffce5a', c2:'#e0921a', win:'#fff7d6', weather:'sunny',  swing:0.0140, wind:0    },
-  { name:'برج المحيط',    floors:12, bw:82, bh:26, c1:'#52d6fb', c2:'#0a9bd0', win:'#e6fbff', weather:'rainy',  swing:0.0150, wind:0.18 },
-  { name:'برج الغروب',    floors:14, bw:80, bh:26, c1:'#ff8fb0', c2:'#c64f86', win:'#ffe3ef', weather:'sunset', swing:0.0160, wind:0.10 },
-  { name:'البرج البنفسجي',floors:16, bw:76, bh:25, c1:'#b274ec', c2:'#7a44c0', win:'#f3e9ff', weather:'night',  swing:0.0170, wind:0    },
-  { name:'ناطحة السحاب',  floors:20, bw:72, bh:24, c1:'#7a8aa0', c2:'#2f3a4a', win:'#cfe8ff', weather:'windy',  swing:0.0185, wind:0.34 },
-  { name:'برج الفضاء',    floors:26, bw:68, bh:23, c1:'#9aa6ff', c2:'#4452b0', win:'#e8ecff', weather:'space',  swing:0.0205, wind:0.12 },
+  { name:'برج الوادي',      floors:6,  bw:96, bh:30, c1:'#ff7b6b', c2:'#c0392b', win:'#ffe9a8', weather:'sunny',  swing:0.0125, wind:0    },
+  { name:'برج النخيل',      floors:8,  bw:90, bh:28, c1:'#2bd4a4', c2:'#0f9b7a', win:'#d6fff0', weather:'cloudy', swing:0.0140, wind:0    },
+  { name:'البرج الذهبي',    floors:10, bw:86, bh:28, c1:'#ffce5a', c2:'#e0921a', win:'#fff7d6', weather:'sunny',  swing:0.0155, wind:0.06 },
+  { name:'برج المحيط',      floors:12, bw:82, bh:26, c1:'#52d6fb', c2:'#0a9bd0', win:'#e6fbff', weather:'rainy',  swing:0.0170, wind:0.22 },
+  { name:'برج الغروب',      floors:14, bw:80, bh:26, c1:'#ff8fb0', c2:'#c64f86', win:'#ffe3ef', weather:'sunset', swing:0.0185, wind:0.15 },
+  { name:'البرج البنفسجي',  floors:16, bw:76, bh:25, c1:'#b274ec', c2:'#7a44c0', win:'#f3e9ff', weather:'night',  swing:0.0200, wind:0.05 },
+  { name:'ناطحة السحاب',    floors:20, bw:72, bh:24, c1:'#7a8aa0', c2:'#2f3a4a', win:'#cfe8ff', weather:'windy',  swing:0.0220, wind:0.40 },
+  { name:'برج الفضاء',      floors:26, bw:68, bh:23, c1:'#9aa6ff', c2:'#4452b0', win:'#e8ecff', weather:'space',  swing:0.0240, wind:0.18 },
+  { name:'برج السماء العظيم',floors:80, bw:74, bh:24, c1:'#ffd07a', c2:'#9a6510', win:'#fff7d6',
+    weather:'sunny', dynamicWeather:true, swing:0.0140, wind:0.10 },
 ];
 const WEATHER_ICON = { sunny:'☀️', cloudy:'⛅', rainy:'🌧️', sunset:'🌇', night:'🌙', windy:'🌬️', space:'🚀' };
 
@@ -340,6 +351,10 @@ function loadProgress(){
 function saveProgress(idx){ try { localStorage.setItem('borjUnlocked', String(idx)); } catch(e){} }
 function loadBestPop(){ try { return parseInt(localStorage.getItem('borjBestPop')||'0',10); } catch(e){ return 0; } }
 function saveBestPop(v){ try { localStorage.setItem('borjBestPop', String(v)); } catch(e){} }
+// Lifetime cumulative population — accumulates across every run and never
+// resets, so the player has a long-term progress number to chase.
+function loadLifeCity(){ try { return parseInt(localStorage.getItem('borjLifeCity')||'0',10); } catch(e){ return 0; } }
+function addLifeCity(delta){ const v = loadLifeCity()+Math.max(0,delta|0); try{ localStorage.setItem('borjLifeCity', String(v)); }catch(e){} return v; }
 let UNLOCKED = loadProgress();
 
 /* ===== Audio ===== */
@@ -393,9 +408,27 @@ function centerOfMass(){
 
 /* ===== Round flow ===== */
 function spawnSwingingBlock(){
-  G.current = { offset: 0, screenY: 0, vy: 0, color: null };
-  G.swingT = 0; G.swingDir = 1;
+  // Randomize starting phase + per-block tempo + wind drift phase so each
+  // drop has its own rhythm. This is the spam-exploit killer — the player
+  // can no longer just tap on the same beat over and over.
+  G.current = {
+    offset: 0, screenY: 0, vy: 0, color: null,
+    swingMul:    0.85 + Math.random() * 0.45,   // tempo jitter ±25%
+    windPhase:   Math.random() * Math.PI * 2,
+    jitterPhase: Math.random() * Math.PI * 2,
+  };
+  G.swingT = Math.random();                      // start anywhere in the arc
+  G.swingDir = Math.random() < 0.5 ? -1 : 1;
   G.state = 'swinging';
+}
+// Perfect-tolerance tightens as the tower grows so the player can't camp on
+// a flat ±4 px window forever. 4 → 3 → 2 (1 from floor 40+).
+function perfectTol(){
+  const n = G.blocks.length;
+  if (n < 8) return 4;
+  if (n < 20) return 3;
+  if (n < 40) return 2;
+  return 1.5;
 }
 function craneScreenY(){
   // pivot sits a fixed gap above the current tower top, in screen space
@@ -430,7 +463,7 @@ function landBlock(){
     }
   }
   const diff = prev ? Math.abs(cur.offset - prev.offset) : Math.abs(cur.offset);
-  const perfect = diff <= PERFECT_TOL;
+  const perfect = diff <= perfectTol();
   if (perfect && prev){ cur.offset = prev.offset; } // snap flush
   G.blocks.push({ offset: cur.offset, color: B.c1, color2: B.c2, win: B.win, h: B.bh, roof:false });
   // Compounding streak scoring — each consecutive perfect pays MORE than
@@ -504,9 +537,13 @@ function showGameOver(){
   document.body.classList.remove('playing');
   const best = loadBestPop();
   if (G.cityTotal > best) saveBestPop(G.cityTotal);
+  // Bank only this incomplete building's residents (completed ones were
+  // already banked individually in completeBuilding — avoids double-count)
+  const life = addLifeCity(G.pop);
   document.getElementById('finalFloor').textContent = G.blocks.length;
   document.getElementById('finalPop').textContent = G.pop;
   document.getElementById('finalTotal').textContent = G.cityTotal;
+  document.getElementById('finalCity').textContent = life;
   document.getElementById('overTitle').textContent = G.topple && G.topple.kind === 'lean'
     ? '🏚️ مال البرج كثيراً وانهار!' : '💥 طاحت الكتلة!';
   const f = G.blocks.length, need = G.B.floors;
@@ -541,6 +578,8 @@ function completeBuilding(){
       (G.bIndex+1 < BUILDINGS.length ? 'وفُتح برجٌ جديد على الخريطة 🏙️' : 'أكملت كل أبراج المدينة! 🏆');
     document.getElementById('cmpPop').textContent = G.pop;
     document.getElementById('cmpTotal').textContent = G.cityTotal;
+    // Bank this building's residents into the lifetime city total
+    document.getElementById('cmpCity').textContent = addLifeCity(G.pop);
     document.getElementById('cmpNextBtn').textContent =
       (G.bIndex+1 < BUILDINGS.length) ? '🏙️ البرج التالي' : '🏙️ الخريطة';
     document.body.classList.remove('playing');
@@ -584,9 +623,9 @@ function spawnPeople(sx, sy, residents){
 }
 
 /* ===== Weather init ===== */
-function initWeather(){
+function initWeather(forced){
   G.clouds = []; G.rain = []; G.stars = []; G.birds = [];
-  const w = G.B.weather;
+  const w = forced || (G.B && G.B.weather) || 'sunny';
   if (w==='cloudy'||w==='rainy'||w==='windy'||w==='sunset'){
     const n = w==='windy'?6:4;
     for (let i=0;i<n;i++) G.clouds.push({ x:Math.random()*CW, y:40+Math.random()*CH*0.4,
@@ -618,17 +657,24 @@ function update(dt){
 
   if (G.state==='swinging' && G.current){
     // Discrete difficulty tiers — speed and arc step up at milestones so
-    // the player FEELS the game level up at 5/10/20/30 floors.
+    // the player FEELS the game level up at 3/8/16/28/45/65 floors. The
+    // per-block speed jitter (`current.swingMul`) prevents the rhythmic
+    // spam exploit by changing each block's swing tempo slightly.
     const n = G.blocks.length;
-    const tierMul = n < 5 ? 1.0 : n < 10 ? 1.35 : n < 20 ? 1.7 : n < 30 ? 2.0 : 2.3;
-    const tierRange = n < 10 ? 0.50 : n < 20 ? 0.75 : 1.0; // % of usable range
-    G.swingT += G.B.swing * tierMul * G.swingDir * dt;
+    const tierMul = n < 3 ? 1.0 : n < 8 ? 1.40 : n < 16 ? 1.85 : n < 28 ? 2.35 : n < 45 ? 2.85 : n < 65 ? 3.30 : 3.80;
+    const tierRange = n < 6 ? 0.60 : n < 14 ? 0.85 : 1.0;
+    G.swingT += G.B.swing * tierMul * (G.current.swingMul||1) * G.swingDir * dt;
     if (G.swingT > 1){ G.swingT = 1; G.swingDir = -1; }
     if (G.swingT < 0){ G.swingT = 0; G.swingDir = 1; }
     const eased = 0.5 - 0.5*Math.cos(G.swingT*Math.PI);
     const range = Math.min(Math.max(60, CW*0.34), ropeLen()*0.9) * tierRange;
     let off = (eased - 0.5) * 2 * range;
-    if (G.B.wind) off += Math.sin(G.windPhase*2.2) * range * G.B.wind * 0.5;
+    // Wind kicks in earlier and grows with altitude — adds drift that
+    // breaks any "tap at centre" rhythm.
+    const windBase = (G.B.wind || 0) + Math.min(0.45, n * 0.012);
+    off += Math.sin(G.windPhase*2.2 + (G.current.windPhase||0)) * range * windBase * 0.55;
+    // Secondary high-frequency jitter on every block past floor 5
+    if (n >= 5) off += Math.sin(G.windPhase*7.3 + (G.current.jitterPhase||0)) * (range * 0.04);
     const cap = ropeLen() * 0.95;
     G.current.offset = Math.max(-cap, Math.min(cap, off));
   } else if (G.state==='falling' && G.current){
@@ -683,15 +729,39 @@ function getSkyColors(w){
     default: return ['#7ec8ff','#cdeeff','#fff4d0'];
   }
 }
+// Altitude-driven weather morph for buildings flagged dynamicWeather. Every
+// climb threshold swaps the sky + effects: ground sunny → high clouds →
+// sunset → night with stars → outer space. Buildings without the flag just
+// use their static weather.
+const ALT_TABLE = [
+  {floor: 0,  w:'sunny'},
+  {floor: 12, w:'cloudy'},
+  {floor: 24, w:'windy'},
+  {floor: 38, w:'sunset'},
+  {floor: 52, w:'night'},
+  {floor: 68, w:'space'},
+];
+function effectiveWeather(){
+  if (!G.B) return 'sunny';
+  if (!G.B.dynamicWeather) return G.B.weather;
+  const n = G.blocks.length;
+  let cur = ALT_TABLE[0].w;
+  for (const t of ALT_TABLE){ if (n >= t.floor) cur = t.w; else break; }
+  return cur;
+}
 function render(){
   const B = G.B; if (!B) return;
-  const sky = getSkyColors(B.weather);
+  const w = effectiveWeather();
+  // Re-init cloud/rain/star arrays when the dynamic weather flips bands so
+  // every altitude band looks distinct (e.g. clouds appear, then stars).
+  if (G._lastFxWeather !== w){ G._lastFxWeather = w; initWeather(w); }
+  const sky = getSkyColors(w);
   const sg = ctx.createLinearGradient(0,0,0,CH);
   sg.addColorStop(0, sky[0]); sg.addColorStop(0.55, sky[1]); sg.addColorStop(1, sky[2]);
   ctx.fillStyle = sg; ctx.fillRect(0,0,CW,CH);
 
   const horizonY = CH - GROUND_GAP;
-  drawWeatherBack(B.weather);
+  drawWeatherBack(w);
   drawSkyline(horizonY);
 
   let ox=0, oy=0;
@@ -708,7 +778,7 @@ function render(){
   ctx.translate(ox, oy);
 
   // Street / ground
-  ctx.fillStyle = B.weather==='space' ? '#1a1230' : '#33414f';
+  ctx.fillStyle = w==='space' ? '#1a1230' : '#33414f';
   ctx.fillRect(0, horizonY, CW, GROUND_GAP);
   ctx.fillStyle = 'rgba(0,0,0,0.3)'; ctx.fillRect(0, horizonY, CW, 3);
   ctx.fillStyle = 'rgba(255,255,255,0.12)';
@@ -765,7 +835,7 @@ function render(){
   ctx.restore();
 
   // Foreground rain (in front of everything)
-  if (B.weather==='rainy') drawRain(true);
+  if (w==='rainy') drawRain(true);
 
   // Lightning flash — full-screen white pulse on milestones. Triggers a
   // "you nailed it!" dopamine hit bigger than any particle burst.
@@ -893,7 +963,8 @@ function drawFloor(b, i){
   ctx.fillStyle='rgba(255,255,255,0.22)'; ctx.fillRect(x, yt, w, 2); ctx.fillRect(x, yt, 2, h);
   ctx.fillStyle='rgba(0,0,0,0.28)'; ctx.fillRect(x, yb-2, w, 2); ctx.fillRect(x+w-2, yt, 2, h);
   // Windows — lit at night/rainy/space
-  const lit = (G.B.weather==='night'||G.B.weather==='space'||G.B.weather==='rainy');
+  const ew = effectiveWeather();
+  const lit = (ew==='night'||ew==='space'||ew==='rainy');
   const cols = Math.max(2, Math.floor((w-10)/16));
   const ww=8, wh=Math.min(11, h-8);
   const startX = x + (w - (cols*16 - 8))/2;
@@ -1003,7 +1074,7 @@ function drawCraneAndBlock(){
   // alignment helper: tint edge green when near-perfect with the block below
   if (G.state==='swinging' && G.blocks.length){
     const diff = Math.abs(G.current.offset - G.blocks[G.blocks.length-1].offset);
-    if (diff <= PERFECT_TOL){
+    if (diff <= perfectTol()){
       ctx.strokeStyle='rgba(80,255,120,0.9)'; ctx.lineWidth=2;
       ctx.strokeRect(x-1, yt-1, w+2, h+2);
     }
@@ -1013,15 +1084,32 @@ function drawCraneAndBlock(){
 /* ===== HUD ===== */
 function updateHud(){
   const B = G.B;
-  document.getElementById('hudFloor').textContent = '🏢 ' + G.blocks.length + '/' + (B?B.floors:'-');
+  const floorTxt = B && B.floors > 90 ? '🏢 ' + G.blocks.length + '+'
+                                      : '🏢 ' + G.blocks.length + '/' + (B?B.floors:'-');
+  document.getElementById('hudFloor').textContent = floorTxt;
   document.getElementById('hudPop').textContent = '👥 ' + G.pop;
+  document.getElementById('hudCity').textContent = '🌆 ' + (loadLifeCity() + G.cityTotal);
   document.getElementById('hudBuilding').textContent = '🏙️ ' + (G.bIndex+1) + '/' + BUILDINGS.length;
   const comboEl = document.getElementById('hudCombo');
   if (G.combo >= 2){ comboEl.style.display=''; comboEl.textContent='🔥 ×'+G.combo; }
   else comboEl.style.display='none';
-  // floor progress bar
+  // floor progress bar — for finite buildings; sky-tower shows altitude
   const bar = document.getElementById('floorBar');
-  if (B){ bar.style.height = Math.min(100, (G.blocks.length / B.floors)*100) + '%'; }
+  if (B){
+    const pct = B.floors > 90 ? Math.min(100, (G.blocks.length / 80) * 100)
+                              : Math.min(100, (G.blocks.length / B.floors) * 100);
+    bar.style.height = pct + '%';
+  }
+}
+function refreshStartStats(){
+  const lc = loadLifeCity(), bp = loadBestPop();
+  const st = document.getElementById('startStats');
+  if (!st) return;
+  if (lc > 0 || bp > 0){
+    st.style.display = '';
+    document.getElementById('startCityTotal').textContent = lc;
+    document.getElementById('startBest').textContent = bp;
+  } else st.style.display = 'none';
 }
 
 /* ===== Loop ===== */
@@ -1096,6 +1184,7 @@ window.startSelected = function(){ startBuilding(G.selIndex); };
 window.backToStart = function(){
   document.getElementById('mapOv').style.display='none';
   document.getElementById('startOv').style.display='flex';
+  refreshStartStats();
 };
 
 /* ===== Start / flow ===== */
@@ -1109,7 +1198,8 @@ function startBuilding(idx){
   G.lightning = 0; G.lastTier = 0;
   G.zoom = 1; G.zoomTarget = 1;
   G.scorePops = [];
-  initWeather();
+  G._lastFxWeather = null;
+  initWeather(effectiveWeather());
   // First floor sits on the ground, perfectly centred
   G.blocks.push({ offset:0, color:G.B.c1, color2:G.B.c2, win:G.B.win, h:G.B.bh, roof:false });
   document.getElementById('mapOv').style.display='none';
@@ -1155,6 +1245,7 @@ if ('serviceWorker' in navigator){
 // Boot
 G.B = BUILDINGS[0];
 G.raf = requestAnimationFrame(loop);
+refreshStartStats();
 </script>
 </body>
 </html>
