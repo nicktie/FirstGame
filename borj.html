@@ -29,15 +29,47 @@ html,body{margin:0;padding:0;height:100%;overflow:hidden;background:#0a1a2e;
 .hud-pill.combo{border-color:rgba(255,136,56,0.7);
   background:linear-gradient(165deg,rgba(70,30,8,0.85),rgba(40,16,4,0.8));animation:comboPulse 0.6s infinite}
 @keyframes comboPulse{0%,100%{transform:scale(1)}50%{transform:scale(1.08)}}
-/* Floor progress bar */
-#floorBarWrap{position:absolute;left:10px;top:50%;transform:translateY(-50%);
-  width:14px;height:42%;background:rgba(8,8,14,0.5);border:1px solid rgba(201,168,76,0.35);
-  border-radius:8px;z-index:5;overflow:hidden;pointer-events:none;
-  box-shadow:inset 0 2px 6px rgba(0,0,0,0.5)}
-#floorBar{position:absolute;left:0;right:0;bottom:0;background:linear-gradient(0deg,#9c7c2e,var(--gold) 50%,var(--gold-light));
-  border-radius:6px;transition:height 0.3s;box-shadow:0 0 12px rgba(201,168,76,0.5)}
-#floorBarLbl{position:absolute;left:8px;top:calc(50% - 42%/2 - 22px);z-index:5;
-  font-size:0.72rem;font-weight:800;color:var(--gold-light);text-shadow:0 1px 3px #000;pointer-events:none}
+/* Battery-style floor counter on the left edge */
+#batteryWrap{position:absolute;left:12px;top:50%;transform:translateY(-50%);
+  width:34px;display:flex;flex-direction:column;align-items:center;z-index:5;pointer-events:none;
+  filter:drop-shadow(0 4px 10px rgba(0,0,0,0.5))}
+#batteryCap{width:14px;height:5px;background:linear-gradient(180deg,#3a3a4a,#1a1a26);
+  border:1px solid rgba(201,168,76,0.45);border-bottom:0;border-radius:3px 3px 0 0}
+#batteryTarget{width:30px;height:30px;border-radius:50%;
+  background:radial-gradient(circle at 35% 30%,#7ec0ff,#2a78c0 65%,#0e3a78);
+  border:2px solid #cfe6ff;display:flex;align-items:center;justify-content:center;
+  color:#fff;font-weight:900;font-size:0.95rem;font-family:'Tajawal',sans-serif;
+  box-shadow:0 3px 0 #0a2a55,0 0 14px rgba(126,192,255,0.4),inset 0 1px 0 rgba(255,255,255,0.45);
+  margin:-2px 0 4px}
+#batteryBody{width:22px;flex-grow:0;height:42vh;max-height:300px;
+  background:linear-gradient(180deg,#1a1a26,#0a0a14);
+  border:2px solid rgba(201,168,76,0.55);border-radius:5px;
+  box-shadow:inset 0 2px 6px rgba(0,0,0,0.7);position:relative;overflow:hidden;padding:2px}
+#batterySegs{position:absolute;left:2px;right:2px;bottom:2px;top:2px;
+  display:flex;flex-direction:column-reverse;gap:2px}
+.bat-seg{flex:1;border-radius:2px;background:rgba(255,255,255,0.05)}
+.bat-seg.on{background:linear-gradient(90deg,#ffce5a 0%,#ffe48a 40%,#aa6810 100%);
+  box-shadow:inset 0 1px 0 rgba(255,255,255,0.5),0 0 6px rgba(255,206,90,0.4)}
+.bat-seg.peak{background:linear-gradient(90deg,#ff8030 0%,#ffd060 40%,#aa3000 100%)}
+@media (max-width:480px){#batteryWrap{left:8px}#batteryTarget{width:26px;height:26px;font-size:0.85rem}#batteryBody{width:18px;max-height:240px}}
+
+/* Population counter on the bottom-right */
+#popCounter{position:absolute;right:12px;
+  bottom:calc(12px + env(safe-area-inset-bottom,0));z-index:5;pointer-events:none;
+  display:flex;align-items:center;gap:8px;
+  background:linear-gradient(165deg,rgba(20,20,28,0.85),rgba(8,8,14,0.85));
+  border:1px solid rgba(201,168,76,0.55);
+  border-radius:12px;padding:6px 12px;backdrop-filter:blur(6px);
+  -webkit-backdrop-filter:blur(6px);
+  box-shadow:0 6px 18px rgba(0,0,0,0.5),inset 0 1px 0 rgba(255,255,255,0.06)}
+#popFig{width:18px;height:24px;display:block;filter:drop-shadow(0 1px 0 rgba(0,0,0,0.6))}
+#popNum{font-family:'Courier New','Tajawal',monospace;font-weight:900;font-size:1.4rem;
+  letter-spacing:2px;color:#fff;text-shadow:0 0 14px rgba(255,210,0,0.6),0 2px 0 #000;
+  font-variant-numeric:tabular-nums;
+  background:linear-gradient(180deg,#ffffff 0%,#fff2a8 60%,#cc9a30 100%);
+  -webkit-background-clip:text;background-clip:text;color:transparent;
+  filter:drop-shadow(0 1px 0 rgba(0,0,0,0.6))}
+@media (max-width:480px){#popNum{font-size:1.15rem}#popFig{width:16px;height:20px}}
 
 /* Balance meter (lean indicator) */
 #balanceWrap{position:absolute;bottom:calc(14px + env(safe-area-inset-bottom,0));left:50%;
@@ -191,16 +223,30 @@ kbd{background:rgba(255,255,255,0.12);border:1px solid rgba(255,255,255,0.2);bor
   <div id="tapZone"></div>
   <div id="dropHint">👆 المس لإنزال الكتلة</div>
   <div id="comboFlash">مثالي!</div>
-  <div id="floorBarWrap"><div id="floorBar" style="height:0%"></div></div>
-  <div id="floorBarLbl">🏢</div>
+  <!-- Battery-style floor counter on the left -->
+  <div id="batteryWrap" aria-hidden="true">
+    <div id="batteryCap"></div>
+    <div id="batteryTarget"><span id="batTargetTxt">6</span></div>
+    <div id="batteryBody">
+      <div id="batterySegs"></div>
+    </div>
+  </div>
   <div id="balanceWrap"><div id="balanceCenter"></div><div id="balanceDot"></div></div>
+  <!-- Population counter at the bottom-right (figure + 5-digit number) -->
+  <div id="popCounter" aria-hidden="true">
+    <svg viewBox="0 0 12 16" id="popFig">
+      <circle cx="6" cy="3" r="2.4" fill="#e89a30"/>
+      <rect x="3.5" y="5.5" width="5" height="6.5" rx="1" fill="#e89a30"/>
+      <rect x="3.5" y="11" width="2" height="4.5" fill="#c87420"/>
+      <rect x="6.5" y="11" width="2" height="4.5" fill="#c87420"/>
+    </svg>
+    <span id="popNum">00000</span>
+  </div>
   <div id="hud">
     <div class="hud-col">
-      <span class="hud-pill" id="hudFloor">🏢 ٠/٦</span>
       <span class="hud-pill combo" id="hudCombo" style="display:none">🔥 ×1</span>
     </div>
     <div class="hud-col right">
-      <span class="hud-pill" id="hudPop">👥 0</span>
       <span class="hud-pill" id="hudCity">🌆 0</span>
       <span class="hud-pill" id="hudBuilding">🏙️ 1</span>
     </div>
@@ -303,24 +349,24 @@ resize();
 // dynamicWeather=true — its weather morphs by altitude (clouds → night →
 // space) instead of using a single fixed look.
 const BUILDINGS = [
-  { name:'برج الوادي',      floors:6,  bw:96, bh:30, c1:'#e6b677', c2:'#8a5520', win:'#fff2a8', weather:'sunny',
-    swing:0.0110, wind:0,    style:'arabian',  trim:'columns', winPattern:'arch',     balconyEvery:0 },
-  { name:'برج النخيل',      floors:8,  bw:90, bh:28, c1:'#2bd4a4', c2:'#0f6b50', win:'#d6fff0', weather:'cloudy',
-    swing:0.0125, wind:0,    style:'tropical', trim:'frame',   winPattern:'grid',     balconyEvery:2 },
-  { name:'البرج الذهبي',    floors:10, bw:86, bh:28, c1:'#ffce5a', c2:'#aa6810', win:'#fff7d6', weather:'sunny',
-    swing:0.0140, wind:0.04, style:'gold',     trim:'columns', winPattern:'wide',     balconyEvery:0 },
-  { name:'برج المحيط',      floors:12, bw:82, bh:26, c1:'#52d6fb', c2:'#0a4a80', win:'#e6fbff', weather:'rainy',
-    swing:0.0152, wind:0.18, style:'ocean',    trim:'frame',   winPattern:'porthole', balconyEvery:3 },
-  { name:'برج الغروب',      floors:14, bw:80, bh:26, c1:'#ff8fb0', c2:'#9c2f6a', win:'#ffe3ef', weather:'sunset',
-    swing:0.0165, wind:0.12, style:'sunset',   trim:'columns', winPattern:'arch',     balconyEvery:2 },
-  { name:'البرج البنفسجي',  floors:16, bw:76, bh:25, c1:'#b274ec', c2:'#4a2080', win:'#f3e9ff', weather:'night',
-    swing:0.0178, wind:0.05, style:'deco',     trim:'columns', winPattern:'grid',     balconyEvery:3 },
-  { name:'ناطحة السحاب',    floors:20, bw:72, bh:24, c1:'#a8b6c8', c2:'#1f2a3a', win:'#cfe8ff', weather:'windy',
-    swing:0.0195, wind:0.34, style:'modern',   trim:'frame',   winPattern:'wide',     balconyEvery:0 },
-  { name:'برج الفضاء',      floors:26, bw:68, bh:23, c1:'#9aa6ff', c2:'#2a307a', win:'#e8ecff', weather:'space',
-    swing:0.0215, wind:0.15, style:'space',    trim:'none',    winPattern:'square',   balconyEvery:0 },
-  { name:'برج السماء العظيم',floors:80, bw:74, bh:24, c1:'#dcc890', c2:'#6a4810', win:'#fff7d6', weather:'sunny',
-    swing:0.0128, wind:0.08, style:'modern',   trim:'frame',   winPattern:'wide',     balconyEvery:5, dynamicWeather:true },
+  { name:'برج الوادي',      floors:6,  bw:68, bh:46, c1:'#5fb0d4', c2:'#1f5c80', win:'#a0d8f0', weather:'sunny',
+    swing:0.0110, wind:0,    style:'arabian',  trim:'columns', winPattern:'cube', balconyEvery:0, frame:'#e0b040' },
+  { name:'برج النخيل',      floors:8,  bw:66, bh:44, c1:'#3bd0a4', c2:'#0e6b50', win:'#aef0d8', weather:'cloudy',
+    swing:0.0125, wind:0,    style:'tropical', trim:'frame',   winPattern:'cube', balconyEvery:0, frame:'#f5d860' },
+  { name:'البرج الذهبي',    floors:10, bw:64, bh:44, c1:'#f4b948', c2:'#aa6810', win:'#fff0c8', weather:'sunny',
+    swing:0.0140, wind:0.04, style:'gold',     trim:'columns', winPattern:'cube', balconyEvery:0, frame:'#fff2a0' },
+  { name:'برج المحيط',      floors:12, bw:62, bh:42, c1:'#4cc4f0', c2:'#0a4a80', win:'#c8eaf8', weather:'rainy',
+    swing:0.0152, wind:0.18, style:'ocean',    trim:'frame',   winPattern:'cube', balconyEvery:0, frame:'#e0b040' },
+  { name:'برج الغروب',      floors:14, bw:60, bh:42, c1:'#f08aa8', c2:'#9c2f6a', win:'#fad0e0', weather:'sunset',
+    swing:0.0165, wind:0.12, style:'sunset',   trim:'columns', winPattern:'cube', balconyEvery:0, frame:'#ffd060' },
+  { name:'البرج البنفسجي',  floors:16, bw:58, bh:40, c1:'#a070d8', c2:'#4a2080', win:'#dac4f0', weather:'night',
+    swing:0.0178, wind:0.05, style:'deco',     trim:'columns', winPattern:'cube', balconyEvery:0, frame:'#ffd060' },
+  { name:'ناطحة السحاب',    floors:20, bw:58, bh:40, c1:'#9aa8bc', c2:'#1f2a3a', win:'#c8d8e8', weather:'windy',
+    swing:0.0195, wind:0.34, style:'modern',   trim:'frame',   winPattern:'cube', balconyEvery:0, frame:'#d0d0d0' },
+  { name:'برج الفضاء',      floors:26, bw:56, bh:38, c1:'#8c98ec', c2:'#2a307a', win:'#d8dcf0', weather:'space',
+    swing:0.0215, wind:0.15, style:'space',    trim:'none',    winPattern:'cube', balconyEvery:0, frame:'#80f0e0' },
+  { name:'برج السماء العظيم',floors:80, bw:60, bh:40, c1:'#dcc890', c2:'#6a4810', win:'#fff0c8', weather:'sunny',
+    swing:0.0128, wind:0.08, style:'modern',   trim:'frame',   winPattern:'cube', balconyEvery:0, frame:'#e0b040', dynamicWeather:true },
 ];
 const WEATHER_ICON = { sunny:'☀️', cloudy:'⛅', rainy:'🌧️', sunset:'🌇', night:'🌙', windy:'🌬️', space:'🚀' };
 
@@ -514,7 +560,9 @@ function landBlock(){
     showComboFlash('🚀 ' + n + ' طوابق!\nمستوى أعلى!');
   }
   // Zoom out smoothly so the whole tower stays framed
-  G.zoomTarget = Math.max(0.55, 1 - Math.max(0, n - 6) * 0.018);
+  // Allow more zoom-out since blocks are now cubic (bigger) and towers reach
+  // higher proportional heights — keeps the full silhouette in frame.
+  G.zoomTarget = Math.max(0.40, 1 - Math.max(0, n - 4) * 0.022);
   // Topple from leaning too far (centre of mass leaves the base footprint)
   const com = centerOfMass();
   if (Math.abs(com) > B.bw * 0.62){ topple('lean'); return; }
@@ -792,6 +840,11 @@ function render(){
   ctx.fillStyle = 'rgba(255,210,0,0.18)';
   ctx.fillRect(CW/2 - B.bw/2 - 4, horizonY-2, B.bw+8, 4);
 
+  // ===== Construction site furniture =====
+  // Chain-link fence + tree at the left, traffic cones + wooden barrier at
+  // the right. Sits on the street at the base of the build plot.
+  drawConstructionSite(horizonY);
+
   // Tower (with topple transform if falling)
   ctx.save();
   if (G.state==='over' && G.topple){
@@ -927,6 +980,90 @@ function drawSkyline(horizonY){
   ctx.fillStyle = 'rgba(15,15,32,0.5)';
   drawSkylineLayer(horizonY, 0.16, 70, 9);
 }
+function drawConstructionSite(horizonY){
+  const B = G.B; if (!B) return;
+  const plotL = CW/2 - B.bw/2 - 4;
+  const plotR = CW/2 + B.bw/2 + 4;
+  // ----- LEFT: chain-link fence + tree -----
+  const fL = Math.max(8, plotL - 90);
+  const fR = plotL - 8;
+  if (fR > fL + 30){
+    drawChainFence(fL, fR, horizonY);
+    drawTree(fL + 8, horizonY);
+  }
+  // ----- RIGHT: wooden barrier + traffic cone -----
+  const bL = plotR + 8;
+  const bR = Math.min(CW - 8, plotR + 100);
+  if (bR > bL + 30){
+    drawWoodBarrier(bL, bR, horizonY);
+    drawCone(bR - 18, horizonY);
+    drawCone(bL + 6, horizonY);
+  }
+}
+function drawChainFence(x1, x2, baseY){
+  const fy = baseY - 22;
+  // posts
+  ctx.fillStyle = '#3a3a4a';
+  for (let px = x1; px <= x2; px += 28){ ctx.fillRect(px, fy - 4, 2, 26); }
+  ctx.fillRect(x2, fy - 4, 2, 26);
+  // top + bottom rails
+  ctx.fillStyle = '#4a4a5a';
+  ctx.fillRect(x1, fy - 3, x2 - x1 + 2, 2);
+  ctx.fillRect(x1, fy + 20, x2 - x1 + 2, 2);
+  // mesh (criss-cross)
+  ctx.strokeStyle = 'rgba(190,200,215,0.55)';
+  ctx.lineWidth = 1;
+  for (let i = 0; i < (x2 - x1) + 24; i += 6){
+    ctx.beginPath(); ctx.moveTo(x1 + i, fy);     ctx.lineTo(x1 + i - 22, fy + 22); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(x1 + i, fy);     ctx.lineTo(x1 + i + 22, fy + 22); ctx.stroke();
+  }
+}
+function drawTree(x, baseY){
+  // trunk
+  ctx.fillStyle = '#6a3a18';
+  ctx.fillRect(x - 2, baseY - 14, 5, 14);
+  ctx.fillStyle = '#4a2810'; ctx.fillRect(x + 1, baseY - 13, 1, 12);
+  // canopy — three overlapping circles, mid-greens
+  ctx.fillStyle = '#2a8038';
+  ctx.beginPath(); ctx.arc(x, baseY - 22, 14, 0, Math.PI*2); ctx.fill();
+  ctx.fillStyle = '#3aa050';
+  ctx.beginPath(); ctx.arc(x - 7, baseY - 26, 10, 0, Math.PI*2); ctx.fill();
+  ctx.beginPath(); ctx.arc(x + 8, baseY - 24, 11, 0, Math.PI*2); ctx.fill();
+  // top highlight
+  ctx.fillStyle = '#5cc070';
+  ctx.beginPath(); ctx.arc(x - 2, baseY - 32, 6, 0, Math.PI*2); ctx.fill();
+}
+function drawWoodBarrier(x1, x2, baseY){
+  const top = baseY - 22, bot = baseY;
+  // back panel
+  ctx.fillStyle = '#a07a3a'; ctx.fillRect(x1, top, x2 - x1, bot - top);
+  // vertical plank lines
+  ctx.fillStyle = '#7a5520';
+  for (let px = x1 + 6; px < x2; px += 7) ctx.fillRect(px, top, 1, bot - top);
+  // top + bottom rails
+  ctx.fillStyle = '#c89438'; ctx.fillRect(x1, top, x2 - x1, 2);
+  ctx.fillStyle = '#5a3818'; ctx.fillRect(x1, bot - 2, x2 - x1, 2);
+  // little warning sign in the middle
+  const mx = (x1 + x2)/2 - 8;
+  ctx.fillStyle = '#1a1a1a'; ctx.fillRect(mx, top + 7, 16, 8);
+  ctx.fillStyle = '#ffd200'; ctx.fillRect(mx + 2, top + 9, 12, 1);
+  ctx.fillRect(mx + 2, top + 12, 12, 1);
+}
+function drawCone(x, baseY){
+  const cy = baseY;
+  // body
+  ctx.fillStyle = '#ff7a30';
+  ctx.beginPath();
+  ctx.moveTo(x, cy - 18); ctx.lineTo(x + 7, cy - 2); ctx.lineTo(x - 7, cy - 2);
+  ctx.closePath(); ctx.fill();
+  // white stripes
+  ctx.fillStyle = '#ffffff';
+  ctx.fillRect(x - 5, cy - 11, 10, 2);
+  ctx.fillRect(x - 6, cy - 5, 12, 2);
+  // base
+  ctx.fillStyle = '#3a2810';
+  ctx.fillRect(x - 9, cy - 2, 18, 2);
+}
 function drawSkylineLayer(horizonY, parallax, maxH, seedStep){
   const off = (G.cameraY * parallax) % (seedStep*8);
   ctx.beginPath(); ctx.moveTo(0, horizonY);
@@ -965,6 +1102,10 @@ function lighten(hex, amt){
    pilasters, arched windows, glass strip windows, portholes, balconies
    at intervals, plus a styled ground-floor with door, awning and signage.
    All drawn with primitives so it scales to any block size and palette. */
+/* ===== Floor drawing — clean Tower-Bloxx cube =====
+   Each floor is a chunky cube with two gold-framed windows and a thin
+   trim line at the top and bottom edges. No per-floor ornament — keeps
+   the silhouette crisp and readable as the tower grows. */
 function drawFloor(b, i){
   const w = bw(), h = b.h;
   const total = G.blocks.length;
@@ -981,656 +1122,184 @@ function drawFloor(b, i){
   if (b.roof){ drawRoof(b, x, yt, w, h); return; }
 
   const B = G.B;
-  const style = B.style || 'modern';
+  const frameColor = B.frame || '#e0b040';
 
-  // ----- Body: vertical 3-stop gradient + subtle horizontal sheen -----
-  const g = ctx.createLinearGradient(x, 0, x + w, 0);
-  g.addColorStop(0, lighten(b.color, 0.05));
-  g.addColorStop(0.55, b.color);
-  g.addColorStop(1, darken(b.color2, 0.05));
+  // ----- Body: solid colour with a soft vertical gradient -----
+  const g = ctx.createLinearGradient(x, yt, x, yb);
+  g.addColorStop(0, lighten(b.color, 0.10));
+  g.addColorStop(0.6, b.color);
+  g.addColorStop(1, darken(b.color, 0.10));
   ctx.fillStyle = g; ctx.fillRect(x, yt, w, h);
-  // diagonal sheen band for glass-feel
-  if (style==='modern' || style==='gold' || style==='ocean' || style==='deco' || style==='sunset'){
-    const sh = ctx.createLinearGradient(x, yt, x+w, yb);
-    sh.addColorStop(0, 'rgba(255,255,255,0)');
-    sh.addColorStop(0.45, 'rgba(255,255,255,0.10)');
-    sh.addColorStop(0.55, 'rgba(255,255,255,0)');
-    ctx.fillStyle = sh; ctx.fillRect(x, yt, w, h);
-  }
 
-  // ----- Side trim (columns / horizontal frame / nothing) -----
-  drawTrim(B.trim || 'none', x, yt, yb, w, h, b.color2);
-
-  // ----- Edge highlights / shadows for crisp blocks -----
-  ctx.fillStyle='rgba(255,255,255,0.20)';
+  // ----- Crisp pixel edges (top/left light, bottom/right shade) -----
+  ctx.fillStyle = 'rgba(255,255,255,0.22)';
   ctx.fillRect(x, yt, w, 2); ctx.fillRect(x, yt, 2, h);
-  ctx.fillStyle='rgba(0,0,0,0.30)';
-  ctx.fillRect(x, yb-2, w, 2); ctx.fillRect(x+w-2, yt, 2, h);
+  ctx.fillStyle = 'rgba(0,0,0,0.30)';
+  ctx.fillRect(x, yb - 2, w, 2); ctx.fillRect(x + w - 2, yt, 2, h);
 
-  // ----- Cornice/divider between floors with per-style flair -----
-  drawCornice(style, x, yt, yb, w, h, b);
+  // ----- Top + bottom trim lines (frame colour) -----
+  ctx.fillStyle = frameColor;
+  ctx.fillRect(x + 2, yt + 2, w - 4, 2);
+  ctx.fillRect(x + 2, yb - 4, w - 4, 2);
+  ctx.fillStyle = darken(frameColor, 0.35);
+  ctx.fillRect(x + 2, yt + 4, w - 4, 1);
+  ctx.fillRect(x + 2, yb - 5, w - 4, 1);
 
-  // ----- Windows -----
-  drawWindows(B.winPattern || 'grid', i, x, yt, yb, w, h, b.win, b.color2);
-
-  // ----- Balcony every N floors -----
-  const be = B.balconyEvery || 0;
-  if (be && i > 0 && i % be === 0){
-    drawBalcony(x, yb, w, b.color2);
-  }
-
-  // ----- Small wall details (AC units, pipes) on a deterministic schedule -----
-  if ((i % 4) === 2 && style !== 'space'){
-    ctx.fillStyle = darken(b.color2, 0.4);
-    ctx.fillRect(x + 3, yt + h - 9, 5, 4);
-    ctx.fillStyle = '#aaa'; ctx.fillRect(x + 4, yt + h - 8, 3, 1);
-  }
-
-  // ----- Ground floor styled per building -----
-  if (i === 0) drawGroundFloor(style, x, yb, w, h, b);
+  // ----- The chunky 2-window pair -----
+  if (i === 0) drawGroundCube(x, yb, w, h, b, frameColor);
+  else drawCubeWindows(x, yt, yb, w, h, b, frameColor, i);
 }
 
-function drawTrim(trim, x, yt, yb, w, h, color){
-  if (trim === 'columns'){
-    // Vertical pilasters at the edges with a stone-grey gradient
-    ctx.fillStyle = darken(color, 0.30);
-    ctx.fillRect(x+3, yt+2, 4, h-4);
-    ctx.fillRect(x+w-7, yt+2, 4, h-4);
-    ctx.fillStyle = 'rgba(255,255,255,0.18)';
-    ctx.fillRect(x+3, yt+2, 1, h-4);
-    ctx.fillRect(x+w-7, yt+2, 1, h-4);
-    // capitals
-    ctx.fillStyle = darken(color, 0.45);
-    ctx.fillRect(x+2, yt+1, 6, 2);
-    ctx.fillRect(x+w-8, yt+1, 6, 2);
-    ctx.fillRect(x+2, yb-3, 6, 2);
-    ctx.fillRect(x+w-8, yb-3, 6, 2);
-  } else if (trim === 'frame'){
-    // Slim horizontal band at top + bottom (modern cladding look)
-    ctx.fillStyle = darken(color, 0.25);
-    ctx.fillRect(x, yt+1, w, 2);
-    ctx.fillRect(x, yb-4, w, 2);
-  }
-}
-
-// Floor-divider cornice with per-style flair (dental band, palm leaves,
-// wave pattern, neon line, etc). Replaces the plain 1-px shadow line so
-// every building reads as its own architecture.
-function drawCornice(style, x, yt, yb, w, h, b){
-  switch (style){
-    case 'arabian': {
-      // Dental band: alternating small light/dark squares
-      ctx.fillStyle = darken(b.color2, 0.45);
-      ctx.fillRect(x + 1, yb - 4, w - 2, 1);
-      ctx.fillStyle = '#e0b040';
-      ctx.fillRect(x + 1, yb - 6, w - 2, 1);
-      const teeth = Math.max(4, Math.floor((w - 4) / 5));
-      for (let t = 0; t < teeth; t++){
-        const tx = x + 2 + t * (w - 4) / teeth;
-        ctx.fillStyle = (t % 2) ? '#fff5c4' : '#7a5520';
-        ctx.fillRect(tx, yb - 5, Math.max(2, (w - 4) / teeth - 1), 1);
-      }
-      break;
-    }
-    case 'tropical': {
-      // Green band + tiny leaf-tip pattern
-      ctx.fillStyle = '#0e6b50';
-      ctx.fillRect(x + 1, yb - 4, w - 2, 2);
-      ctx.fillStyle = '#2bd470';
-      for (let t = 0; t < Math.floor(w / 8); t++){
-        const tx = x + 3 + t * 8;
-        ctx.beginPath();
-        ctx.moveTo(tx, yb - 4); ctx.lineTo(tx + 2, yb - 2); ctx.lineTo(tx + 4, yb - 4);
-        ctx.closePath(); ctx.fill();
-      }
-      break;
-    }
-    case 'gold': {
-      // Gold band with embossed line
-      ctx.fillStyle = '#aa6810';
-      ctx.fillRect(x + 1, yb - 5, w - 2, 3);
-      ctx.fillStyle = '#fff5c4';
-      ctx.fillRect(x + 2, yb - 5, w - 4, 1);
-      ctx.fillStyle = '#7a4810';
-      ctx.fillRect(x + 2, yb - 3, w - 4, 1);
-      break;
-    }
-    case 'ocean': {
-      // Wavy "water-line" divider
-      ctx.strokeStyle = '#0a4a80'; ctx.lineWidth = 2;
-      ctx.beginPath();
-      for (let t = 0; t <= w; t += 2){
-        const yy = yb - 4 + Math.sin((t + i * 3) * 0.4) * 1.2;
-        if (t === 0) ctx.moveTo(x + t, yy);
-        else ctx.lineTo(x + t, yy);
-      }
-      ctx.stroke();
-      ctx.strokeStyle = 'rgba(255,255,255,0.3)';
-      ctx.beginPath();
-      for (let t = 0; t <= w; t += 2){
-        const yy = yb - 6 + Math.sin((t + i * 3) * 0.4) * 1.2;
-        if (t === 0) ctx.moveTo(x + t, yy);
-        else ctx.lineTo(x + t, yy);
-      }
-      ctx.stroke();
-      break;
-    }
-    case 'sunset': {
-      // Ornate scroll-pattern band
-      ctx.fillStyle = darken(b.color2, 0.35);
-      ctx.fillRect(x + 1, yb - 4, w - 2, 2);
-      ctx.fillStyle = '#e0b040';
-      for (let t = 0; t < Math.floor(w / 10); t++){
-        const tx = x + 5 + t * 10;
-        ctx.beginPath();
-        ctx.arc(tx, yb - 3, 1.5, 0, Math.PI * 2); ctx.fill();
-        ctx.fillRect(tx - 3, yb - 4, 6, 1);
-      }
-      break;
-    }
-    case 'deco': {
-      // Zigzag art-deco frieze
-      ctx.fillStyle = '#3a2070';
-      ctx.fillRect(x + 1, yb - 4, w - 2, 2);
-      ctx.strokeStyle = '#e0b040'; ctx.lineWidth = 1.2;
-      ctx.beginPath();
-      let zx = x + 2;
-      let up = true;
-      while (zx < x + w - 2){
-        ctx.lineTo(zx, yb - 6); ctx.lineTo(zx + 3, yb - 3);
-        zx += 6;
-      }
-      ctx.stroke();
-      break;
-    }
-    case 'space': {
-      // Neon glow stripe
-      ctx.fillStyle = '#0a0a20';
-      ctx.fillRect(x + 1, yb - 4, w - 2, 2);
-      const neonOn = (Math.floor(performance.now() / 600 + i) % 2) === 0;
-      ctx.fillStyle = neonOn ? '#62fff0' : '#0a4a40';
-      ctx.fillRect(x + 4, yb - 3, w - 8, 1);
-      if (neonOn){
-        const gl = ctx.createLinearGradient(0, yb - 5, 0, yb);
-        gl.addColorStop(0, 'rgba(98,255,240,0)');
-        gl.addColorStop(1, 'rgba(98,255,240,0.35)');
-        ctx.fillStyle = gl; ctx.fillRect(x + 1, yb - 5, w - 2, 5);
-      }
-      break;
-    }
-    case 'modern':
-    case 'sky':
-    default: {
-      // Slim two-tone cornice
-      ctx.fillStyle = darken(b.color2, 0.4);
-      ctx.fillRect(x + 1, yb - 3, w - 2, 1);
-      ctx.fillStyle = 'rgba(255,255,255,0.18)';
-      ctx.fillRect(x + 1, yb - 4, w - 2, 1);
-    }
-  }
-}
-
-function drawWindows(pattern, i, x, yt, yb, w, h, winColor, frameColor){
+// Two big windows side-by-side, each with a vertical mullion making them
+// look like Mario / Tower-Bloxx panes. Gold frame; tinted glass that lights
+// up on night/space/rainy weather.
+function drawCubeWindows(x, yt, yb, w, h, b, frameColor, i){
   const ew = effectiveWeather();
-  const lit = (ew==='night'||ew==='space'||ew==='rainy');
-  if (pattern === 'arch'){
-    // Arched-top windows (Arabian + Sunset style)
-    const cols = Math.max(2, Math.floor((w-14)/18));
-    const ww = 10, wh = Math.min(13, h-10);
-    const startX = x + (w - cols*18 + 8)/2;
-    const wy = yt + Math.max(3, (h - wh - 4)/2);
-    for (let c=0;c<cols;c++){
-      const wx = startX + c*18;
-      const on = ((i*3 + c*7) % 5) > 1;
-      const fill = on ? (lit ? '#fff2a0' : winColor) : darken(frameColor, 0.55);
-      // arch top
-      ctx.fillStyle = fill;
-      ctx.beginPath();
-      ctx.moveTo(wx, wy+4);
-      ctx.arc(wx + ww/2, wy+4, ww/2, Math.PI, 0);
-      ctx.lineTo(wx + ww, wy + wh);
-      ctx.lineTo(wx, wy + wh);
-      ctx.closePath(); ctx.fill();
-      // frame outline
-      ctx.strokeStyle = darken(frameColor, 0.5);
-      ctx.lineWidth = 1.2; ctx.stroke();
-      // mullion
-      if (on){
-        ctx.fillStyle = darken(frameColor, 0.55);
-        ctx.fillRect(wx + ww/2 - 0.5, wy+4, 1, wh-4);
-        // sill highlight
-        ctx.fillStyle = 'rgba(255,255,255,0.35)';
-        ctx.fillRect(wx, wy+4, ww, 1);
-      }
-    }
-  } else if (pattern === 'wide'){
-    // Horizontal glass strip windows (Modern / Gold high-rises)
-    const stripeH = Math.max(4, Math.floor((h - 8) / 3));
-    const innerPad = 5;
-    for (let s = 0; s < 2; s++){
-      const sy = yt + 5 + s*(stripeH + 2);
-      if (sy + stripeH > yb - 5) break;
-      // dark frame backdrop
-      ctx.fillStyle = darken(frameColor, 0.5);
-      ctx.fillRect(x + innerPad - 1, sy - 1, w - (innerPad*2 - 2), stripeH + 2);
-      // glass: vertical gradient + subtle on/off variation
-      const on = ((i*5 + s) % 3) > 0;
-      const top = on ? (lit ? '#fff2a0' : lighten(winColor, 0.10)) : '#2a3540';
-      const mid = on ? (lit ? '#ffd060' : winColor) : '#1a232c';
-      const bot = on ? (lit ? '#aa6800' : darken(winColor, 0.18)) : '#0e161e';
-      const gw = ctx.createLinearGradient(0, sy, 0, sy+stripeH);
-      gw.addColorStop(0, top); gw.addColorStop(0.55, mid); gw.addColorStop(1, bot);
-      ctx.fillStyle = gw;
-      ctx.fillRect(x + innerPad, sy, w - innerPad*2, stripeH);
-      // dividers between panes
-      ctx.fillStyle = darken(frameColor, 0.5);
-      const divs = Math.max(2, Math.floor((w - innerPad*2) / 14));
-      for (let d = 1; d < divs; d++){
-        const dx = x + innerPad + d * (w - innerPad*2) / divs;
-        ctx.fillRect(dx - 0.5, sy, 1, stripeH);
-      }
-      // top reflection line
-      if (on){
-        ctx.fillStyle = 'rgba(255,255,255,0.25)';
-        ctx.fillRect(x + innerPad, sy, w - innerPad*2, 1);
-      }
-    }
-  } else if (pattern === 'porthole'){
-    // Circular windows (Ocean tower)
-    const cols = Math.max(2, Math.floor((w-12)/14));
-    const r = Math.min(4, (h-8)/3);
-    const cy = yt + h/2;
-    const startX = x + (w - cols*14 + 6)/2;
-    for (let c=0;c<cols;c++){
-      const cx = startX + c*14;
-      const on = ((i*4 + c*5) % 3) > 0;
-      // outer ring (frame)
-      ctx.fillStyle = darken(frameColor, 0.5);
-      ctx.beginPath(); ctx.arc(cx, cy, r+1.5, 0, Math.PI*2); ctx.fill();
-      // glass
-      const gw = ctx.createRadialGradient(cx - r*0.4, cy - r*0.4, 0.3, cx, cy, r);
-      const c1 = on ? (lit ? '#fff2a0' : lighten(winColor, 0.15)) : '#0a141e';
-      const c2 = on ? (lit ? '#cc8000' : darken(winColor, 0.2))   : '#06090e';
-      gw.addColorStop(0, c1); gw.addColorStop(1, c2);
-      ctx.fillStyle = gw;
-      ctx.beginPath(); ctx.arc(cx, cy, r, 0, Math.PI*2); ctx.fill();
-      if (on){
-        ctx.fillStyle = 'rgba(255,255,255,0.45)';
-        ctx.beginPath(); ctx.arc(cx - r*0.35, cy - r*0.35, r*0.35, 0, Math.PI*2); ctx.fill();
-      }
-    }
-  } else if (pattern === 'square'){
-    // Dense small squares (Space)
-    const ww = 4, wh = 4, step = 7;
-    const cols = Math.max(3, Math.floor((w - 8) / step));
-    const startX = x + (w - cols*step + (step - ww))/2;
-    const ys = [yt + 4, yt + h - wh - 4];
-    if (ys[1] - ys[0] > wh + 2) ys.splice(1, 0, yt + h/2 - wh/2);
-    for (const wy of ys){
-      for (let c=0;c<cols;c++){
-        const on = ((i*7 + c*3 + (wy|0)) % 5) > 1;
-        ctx.fillStyle = on ? (lit ? '#a0e8ff' : winColor) : '#06080e';
-        ctx.fillRect(startX + c*step, wy, ww, wh);
-        if (on){
-          ctx.fillStyle = 'rgba(255,255,255,0.35)';
-          ctx.fillRect(startX + c*step, wy, ww, 1);
-        }
-      }
-    }
-  } else {
-    // 'grid' — tidy aligned rectangles (Tropical / Deco / default)
-    const cols = Math.max(2, Math.floor((w-14)/16));
-    const ww = 9, wh = Math.min(12, h-10);
-    const startX = x + (w - cols*16 + 7)/2;
-    const wy = yt + Math.max(3, (h - wh - 3)/2);
-    for (let c=0;c<cols;c++){
-      const on = ((i*3 + c*7) % 5) > 1;
-      // recessed frame
-      ctx.fillStyle = darken(frameColor, 0.45);
-      ctx.fillRect(startX + c*16 - 1, wy - 1, ww + 2, wh + 2);
-      // glass
-      ctx.fillStyle = on ? (lit ? '#fff2a0' : winColor) : '#0e1218';
-      ctx.fillRect(startX + c*16, wy, ww, wh);
-      if (on){
-        ctx.fillStyle='rgba(255,255,255,0.35)';
-        ctx.fillRect(startX + c*16, wy, ww, 2);
-        // mullion cross
-        ctx.fillStyle = darken(frameColor, 0.55);
-        ctx.fillRect(startX + c*16 + ww/2 - 0.5, wy, 1, wh);
-        ctx.fillRect(startX + c*16, wy + wh/2 - 0.5, ww, 1);
-      }
-    }
+  const lit = (ew === 'night' || ew === 'space' || ew === 'rainy');
+  // Window area sits between the top/bottom trim
+  const padX = Math.max(7, w * 0.13);
+  const padY = Math.max(7, h * 0.18);
+  const winY = yt + padY;
+  const winH = h - padY * 2;
+  const innerW = w - padX * 2;
+  // Outer gold frame around the whole window pair
+  ctx.fillStyle = frameColor;
+  ctx.fillRect(x + padX, winY, innerW, winH);
+  // Inner shadow under the gold (depth)
+  ctx.fillStyle = darken(frameColor, 0.55);
+  ctx.fillRect(x + padX + 1, winY + 1, innerW - 2, winH - 2);
+  // Two glass panes
+  const glassPad = 3;
+  const gW = (innerW - glassPad * 3) / 2;
+  const gH = winH - glassPad * 2;
+  const onA = ((i * 7) % 3) !== 0;
+  const onB = ((i * 5 + 1) % 4) !== 1;
+  drawGlass(x + padX + glassPad, winY + glassPad, gW, gH, b.win, lit, onA);
+  drawGlass(x + padX + glassPad * 2 + gW, winY + glassPad, gW, gH, b.win, lit, onB);
+  // Centre mullion between the panes (gold)
+  ctx.fillStyle = frameColor;
+  ctx.fillRect(x + padX + glassPad + gW, winY + 2, glassPad, winH - 4);
+  ctx.fillStyle = lighten(frameColor, 0.35);
+  ctx.fillRect(x + padX + glassPad + gW, winY + 2, 1, winH - 4);
+}
+
+// One window pane with a tinted glass gradient + a corner highlight + the
+// horizontal/vertical mullion cross (matches the reference image).
+function drawGlass(x, y, w, h, winColor, lit, on){
+  const g = ctx.createLinearGradient(0, y, 0, y + h);
+  const top = on ? (lit ? '#fff2a0' : lighten(winColor, 0.15)) : '#1a242e';
+  const bot = on ? (lit ? '#cc8000' : darken(winColor, 0.30))   : '#0a1018';
+  g.addColorStop(0, top); g.addColorStop(0.55, on ? winColor : '#10171f');
+  g.addColorStop(1, bot);
+  ctx.fillStyle = g; ctx.fillRect(x, y, w, h);
+  if (on){
+    // top-edge gloss
+    ctx.fillStyle = 'rgba(255,255,255,0.35)';
+    ctx.fillRect(x, y, w, 1);
+    // little corner shine
+    ctx.fillStyle = 'rgba(255,255,255,0.18)';
+    ctx.fillRect(x + 1, y + 1, Math.max(2, w * 0.25), 1);
+    ctx.fillRect(x + 1, y + 1, 1, Math.max(2, h * 0.30));
   }
 }
 
-function drawBalcony(x, yb, w, color){
-  // Decorative balcony along the bottom of this floor
-  const balW = w * 0.78, balH = 4;
-  const bx = x + (w - balW)/2;
-  // Slab
-  ctx.fillStyle = darken(color, 0.25);
-  ctx.fillRect(bx - 2, yb - balH - 1, balW + 4, balH);
-  ctx.fillStyle = 'rgba(255,255,255,0.18)';
-  ctx.fillRect(bx - 2, yb - balH - 1, balW + 4, 1);
-  // Railing posts
-  ctx.fillStyle = darken(color, 0.55);
-  ctx.fillRect(bx, yb - balH - 4, balW, 2);
-  // Vertical bars
-  ctx.fillStyle = darken(color, 0.4);
-  const bars = Math.max(6, Math.floor(balW / 4));
-  for (let i = 0; i < bars; i++){
-    ctx.fillRect(bx + i * balW / bars, yb - balH - 2, 1, balH - 1);
-  }
-}
-
-function drawGroundFloor(style, x, yb, w, h, b){
+// Ground floor: oversized arched/rectangular door, sign band, awning
+function drawGroundCube(x, yb, w, h, b, frameColor){
   const yt = yb - h;
-  // Pavement glow under the entrance
-  if (effectiveWeather()==='night' || effectiveWeather()==='rainy' || effectiveWeather()==='space'){
-    const gl = ctx.createRadialGradient(x + w/2, yb, 4, x + w/2, yb, w*0.5);
-    gl.addColorStop(0, 'rgba(255,210,90,0.35)');
-    gl.addColorStop(1, 'rgba(255,210,90,0)');
-    ctx.fillStyle = gl; ctx.fillRect(x - 6, yb - 2, w + 12, 12);
-  }
-  // Door frame
-  const dw = 18, dh = Math.min(18, h - 6);
+  const style = G.B.style || 'modern';
+  // Door area
+  const dw = Math.max(18, w * 0.36), dh = Math.min(h - 8, w * 0.42);
   const dx = x + w/2 - dw/2;
-  const dy = yb - dh;
-  // doorway recess
-  ctx.fillStyle = darken(b.color2, 0.6);
-  ctx.fillRect(dx - 2, dy, dw + 4, dh);
-  // door panel
+  const dy = yb - dh - 2;
+  // Door frame (gold)
+  ctx.fillStyle = frameColor;
+  ctx.fillRect(dx - 3, dy - 2, dw + 6, dh + 2);
+  ctx.fillStyle = darken(frameColor, 0.4);
+  ctx.fillRect(dx - 2, dy - 1, dw + 4, dh + 1);
+  // Door panel
   if (style === 'arabian' || style === 'sunset'){
-    // Arched door
-    ctx.fillStyle = '#3a1f10';
+    // arched door
+    ctx.fillStyle = '#5a8a3a';
     ctx.beginPath();
-    ctx.moveTo(dx, dy + dh*0.4);
-    ctx.arc(dx + dw/2, dy + dh*0.4, dw/2, Math.PI, 0);
+    ctx.moveTo(dx, dy + dh * 0.35);
+    ctx.arc(dx + dw/2, dy + dh * 0.35, dw/2, Math.PI, 0);
     ctx.lineTo(dx + dw, yb);
     ctx.lineTo(dx, yb);
     ctx.closePath(); ctx.fill();
-    // ornate gold trim
-    ctx.strokeStyle = '#e0b040'; ctx.lineWidth = 1.5; ctx.stroke();
-    // door knob
-    ctx.fillStyle = '#ffd200';
-    ctx.beginPath(); ctx.arc(dx + dw*0.7, yb - dh*0.35, 1.5, 0, Math.PI*2); ctx.fill();
-  } else if (style === 'space' || style === 'modern'){
-    // Sleek vertical glass entry
-    const gd = ctx.createLinearGradient(dx, dy, dx, yb);
-    gd.addColorStop(0, '#506880'); gd.addColorStop(1, '#1a2434');
-    ctx.fillStyle = gd; ctx.fillRect(dx, dy, dw, dh);
-    ctx.fillStyle = 'rgba(255,255,255,0.4)';
-    ctx.fillRect(dx + 2, dy, 1, dh);
-    ctx.fillStyle = darken(b.color2, 0.4);
-    ctx.fillRect(dx + dw/2 - 0.5, dy, 1, dh);
+    ctx.strokeStyle = darken('#5a8a3a', 0.4); ctx.lineWidth = 1;
+    ctx.stroke();
   } else {
-    // Rectangular wooden door
-    ctx.fillStyle = '#3a2418'; ctx.fillRect(dx, dy, dw, dh);
-    ctx.fillStyle = '#5a3a20';
-    ctx.fillRect(dx + 1, dy + 1, dw - 2, dh - 2);
-    ctx.fillStyle = '#ffd200';
-    ctx.beginPath(); ctx.arc(dx + dw*0.78, yb - dh*0.45, 1.5, 0, Math.PI*2); ctx.fill();
+    // rectangular door (matches the reference)
+    ctx.fillStyle = '#5a8a3a';
+    ctx.fillRect(dx, dy, dw, dh);
+    ctx.fillStyle = lighten('#5a8a3a', 0.20);
+    ctx.fillRect(dx, dy, dw, 2);
+    ctx.fillStyle = darken('#5a8a3a', 0.30);
+    ctx.fillRect(dx, dy + dh - 2, dw, 2);
+    // recessed inner panel
+    ctx.strokeStyle = darken('#5a8a3a', 0.45); ctx.lineWidth = 1;
+    ctx.strokeRect(dx + 3, dy + 4, dw - 6, dh - 7);
   }
-  // Awning (skip on modern/space)
-  if (style !== 'modern' && style !== 'space'){
-    ctx.fillStyle = b.color2;
-    ctx.beginPath();
-    ctx.moveTo(dx - 6, dy - 1);
-    ctx.lineTo(dx + dw + 6, dy - 1);
-    ctx.lineTo(dx + dw + 2, dy - 5);
-    ctx.lineTo(dx - 2, dy - 5);
-    ctx.closePath(); ctx.fill();
-    // awning stripes
-    ctx.fillStyle = lighten(b.color2, 0.2);
-    for (let s = 0; s < 4; s++){
-      ctx.fillRect(dx - 5 + s*7, dy - 5, 3, 4);
-    }
-    ctx.fillStyle = darken(b.color2, 0.4);
-    ctx.fillRect(dx - 6, dy - 1, dw + 12, 1);
-  }
-  // Signage band above the awning
-  const sigy = (style !== 'modern' && style !== 'space') ? dy - 9 : dy - 6;
+  // Door knob
+  ctx.fillStyle = '#ffd200';
+  ctx.beginPath(); ctx.arc(dx + dw * 0.78, yb - dh * 0.45, 1.6, 0, Math.PI * 2); ctx.fill();
+  // Sign band above the door
+  const sigy = dy - 6;
   if (sigy > yt + 4){
-    ctx.fillStyle = darken(b.color2, 0.55);
-    ctx.fillRect(x + 4, sigy - 1, w - 8, 5);
-    ctx.fillStyle = '#ffd200';
-    // Tiny dot pattern as faux letters (3 letters)
+    ctx.fillStyle = darken(frameColor, 0.2);
+    ctx.fillRect(x + 5, sigy, w - 10, 4);
+    ctx.fillStyle = '#3a2a10';
     for (let s = 0; s < 3; s++){
-      ctx.fillRect(x + w/2 - 8 + s*6, sigy, 4, 3);
+      ctx.fillRect(x + w/2 - 7 + s * 5, sigy + 1, 3, 2);
     }
   }
 }
+
+// Roof — a thinner block that sits on the last floor as a cap, with a tiny
+// antenna + blinking aviation light + style-dependent crown (kept small so
+// the tower silhouette stays cube-stack-ish).
 function drawRoof(b, x, yt, w, h){
   const B = G.B, style = (B && B.style) || 'modern';
-  // Common: parapet slab on top of the body, base for whatever crown
-  const g = ctx.createLinearGradient(x, 0, x + w, 0);
-  g.addColorStop(0, lighten(b.color, 0.05));
-  g.addColorStop(1, darken(b.color2, 0.05));
-  ctx.fillStyle = g; ctx.fillRect(x, yt + 4, w, h - 4);
-  ctx.fillStyle = 'rgba(0,0,0,0.25)'; ctx.fillRect(x, yt + h - 2, w, 2);
-
-  // Parapet step
-  ctx.fillStyle = b.color2;
-  ctx.beginPath();
-  ctx.moveTo(x - 3, yt + 6); ctx.lineTo(x + w + 3, yt + 6);
-  ctx.lineTo(x + w - 5, yt - 1); ctx.lineTo(x + 5, yt - 1); ctx.closePath(); ctx.fill();
-  ctx.fillStyle = 'rgba(255,255,255,0.20)'; ctx.fillRect(x + 5, yt - 1, w - 10, 2);
-
-  const cx = x + w / 2;
+  const frameColor = B && B.frame || '#e0b040';
+  // Slab a touch narrower than the floor below it, sitting on its top
+  const slabW = w - 4, slabH = h - 6;
+  const sx = x + 2, sy = yt + 4;
+  // Slab body
+  const gr = ctx.createLinearGradient(sx, sy, sx, sy + slabH);
+  gr.addColorStop(0, lighten(b.color, 0.10));
+  gr.addColorStop(1, darken(b.color, 0.20));
+  ctx.fillStyle = gr; ctx.fillRect(sx, sy, slabW, slabH);
+  ctx.fillStyle = 'rgba(255,255,255,0.2)'; ctx.fillRect(sx, sy, slabW, 2);
+  ctx.fillStyle = 'rgba(0,0,0,0.35)'; ctx.fillRect(sx, sy + slabH - 2, slabW, 2);
+  // Edge gold trim
+  ctx.fillStyle = frameColor;
+  ctx.fillRect(sx + 2, sy + 2, slabW - 4, 2);
+  // Parapet step in front
+  ctx.fillStyle = darken(b.color, 0.30);
+  ctx.fillRect(x - 1, sy - 2, w + 2, 3);
+  ctx.fillStyle = 'rgba(255,255,255,0.18)'; ctx.fillRect(x - 1, sy - 2, w + 2, 1);
+  // Antenna + aviation light
+  const cx = x + w/2;
   const blink = Math.floor(performance.now() / 400) % 2 === 0;
-
-  switch (style){
-    case 'arabian': {
-      // Onion-dome with crescent on top — turquoise + gold trim
-      const dr = Math.min(w * 0.18, 12);
-      const dy = yt - dr * 0.4;
-      // gold drum below dome
-      ctx.fillStyle = '#e0b040';
-      ctx.fillRect(cx - dr * 0.6, yt - 4, dr * 1.2, 4);
-      // dome
-      const gd = ctx.createRadialGradient(cx - dr * 0.3, dy - dr * 0.3, 1, cx, dy, dr);
-      gd.addColorStop(0, '#7ec8ff'); gd.addColorStop(1, '#1a5a9c');
-      ctx.fillStyle = gd;
-      ctx.beginPath();
-      ctx.arc(cx, dy, dr, 0, Math.PI * 2); ctx.fill();
-      // dome highlight
-      ctx.fillStyle = 'rgba(255,255,255,0.35)';
-      ctx.beginPath(); ctx.arc(cx - dr * 0.3, dy - dr * 0.3, dr * 0.4, 0, Math.PI * 2); ctx.fill();
-      // spire + crescent
-      ctx.strokeStyle = '#e0b040'; ctx.lineWidth = 2;
-      ctx.beginPath(); ctx.moveTo(cx, dy - dr); ctx.lineTo(cx, dy - dr - 8); ctx.stroke();
-      ctx.fillStyle = '#ffd200';
-      ctx.beginPath(); ctx.arc(cx, dy - dr - 11, 3, 0.3, Math.PI * 2 - 0.3); ctx.fill();
-      ctx.fillStyle = B.weather === 'night' ? '#1a1a44' : getSkyColors(effectiveWeather())[0];
-      ctx.beginPath(); ctx.arc(cx + 1, dy - dr - 11, 2.5, 0, Math.PI * 2); ctx.fill();
-      // Decorative miniature side spires
-      for (const sx of [x + 5, x + w - 5]){
-        ctx.fillStyle = '#e0b040'; ctx.fillRect(sx - 1, yt - 7, 2, 7);
-        ctx.fillStyle = '#ffd200';
-        ctx.beginPath(); ctx.arc(sx, yt - 9, 2, 0, Math.PI * 2); ctx.fill();
-      }
-      break;
-    }
-    case 'tropical': {
-      // Thatched roof + palm fronds in pots at corners
-      const ry = yt + 1;
-      ctx.fillStyle = '#8a5a20';
-      ctx.beginPath();
-      ctx.moveTo(x - 4, ry); ctx.lineTo(x + w + 4, ry);
-      ctx.lineTo(x + w - 8, ry - 8); ctx.lineTo(x + 8, ry - 8);
-      ctx.closePath(); ctx.fill();
-      // straw streaks
-      ctx.strokeStyle = '#c89438'; ctx.lineWidth = 1;
-      for (let i = 0; i < 8; i++){
-        const sx = x + 8 + i * (w - 16) / 7;
-        ctx.beginPath(); ctx.moveTo(sx, ry); ctx.lineTo(sx + 1, ry - 7); ctx.stroke();
-      }
-      // pot
-      ctx.fillStyle = '#6a4020'; ctx.fillRect(cx - 4, yt - 14, 8, 5);
-      // palm fronds (gold-green strokes)
-      ctx.strokeStyle = '#2bd470'; ctx.lineWidth = 2;
-      for (let a = -0.6; a <= 0.6; a += 0.2){
-        ctx.beginPath();
-        ctx.moveTo(cx, yt - 14);
-        ctx.quadraticCurveTo(cx + Math.sin(a) * 4, yt - 21, cx + Math.sin(a) * 10, yt - 23 - Math.cos(a) * 3);
-        ctx.stroke();
-      }
-      ctx.fillStyle = '#ffd83a';
-      ctx.beginPath(); ctx.arc(cx, yt - 14, 1.5, 0, Math.PI * 2); ctx.fill();
-      break;
-    }
-    case 'gold': {
-      // Art-deco crown with stepped gold fins + central spike
-      ctx.fillStyle = '#ffce5a';
-      // three stepped tiers
-      ctx.fillRect(x + 4, yt - 3, w - 8, 4);
-      ctx.fillRect(x + 8, yt - 7, w - 16, 4);
-      ctx.fillRect(x + 12, yt - 11, w - 24, 4);
-      // gold highlight
-      ctx.fillStyle = '#fff0a0';
-      ctx.fillRect(x + 4, yt - 3, w - 8, 1);
-      ctx.fillRect(x + 8, yt - 7, w - 16, 1);
-      ctx.fillRect(x + 12, yt - 11, w - 24, 1);
-      // central spire
-      ctx.fillStyle = '#aa6810';
-      ctx.fillRect(cx - 1, yt - 22, 2, 11);
-      ctx.fillStyle = '#ffd200';
-      ctx.beginPath(); ctx.moveTo(cx - 4, yt - 22); ctx.lineTo(cx + 4, yt - 22); ctx.lineTo(cx, yt - 28); ctx.closePath(); ctx.fill();
-      break;
-    }
-    case 'ocean': {
-      // Lighthouse: white tower + red top + revolving beacon glow
-      const tw = 10;
-      // tower body
-      ctx.fillStyle = '#ffffff'; ctx.fillRect(cx - tw/2, yt - 14, tw, 14);
-      ctx.fillStyle = '#cc1818'; ctx.fillRect(cx - tw/2, yt - 14, tw, 3);
-      ctx.fillRect(cx - tw/2, yt - 8, tw, 2);
-      // observation deck
-      ctx.fillStyle = '#1a3a5a'; ctx.fillRect(cx - tw/2 - 2, yt - 18, tw + 4, 4);
-      // beacon
-      const beaconOn = (Math.floor(performance.now() / 700) % 2) === 0;
-      ctx.fillStyle = beaconOn ? '#fff0a0' : '#aa7000';
-      ctx.fillRect(cx - 2, yt - 22, 4, 4);
-      if (beaconOn){
-        // beacon cone
-        ctx.fillStyle = 'rgba(255,240,160,0.35)';
-        ctx.beginPath();
-        ctx.moveTo(cx, yt - 20);
-        ctx.lineTo(cx + 40, yt - 30);
-        ctx.lineTo(cx + 40, yt - 10);
-        ctx.closePath(); ctx.fill();
-      }
-      // little spire on top
-      ctx.fillStyle = '#cc1818'; ctx.fillRect(cx - 1, yt - 27, 2, 5);
-      break;
-    }
-    case 'sunset': {
-      // Mansard-style ornate roof with central dormer + scroll ornaments
-      ctx.fillStyle = '#7c1f48';
-      ctx.beginPath();
-      ctx.moveTo(x + 2, yt - 1); ctx.lineTo(x + w - 2, yt - 1);
-      ctx.lineTo(x + w - 8, yt - 9); ctx.lineTo(x + 8, yt - 9);
-      ctx.closePath(); ctx.fill();
-      // slate texture
-      ctx.fillStyle = 'rgba(255,255,255,0.10)';
-      for (let i = 0; i < 5; i++) ctx.fillRect(x + 10 + i * (w-20)/4, yt - 7, 1, 5);
-      // dormer
-      ctx.fillStyle = '#c64f86'; ctx.fillRect(cx - 5, yt - 13, 10, 5);
-      ctx.fillStyle = '#ffe3ef'; ctx.fillRect(cx - 3, yt - 12, 6, 3);
-      // weathervane
-      ctx.strokeStyle = '#e0b040'; ctx.lineWidth = 1.5;
-      ctx.beginPath(); ctx.moveTo(cx, yt - 13); ctx.lineTo(cx, yt - 23); ctx.stroke();
-      ctx.fillStyle = '#e0b040';
-      ctx.beginPath(); ctx.moveTo(cx, yt - 24); ctx.lineTo(cx + 5, yt - 22); ctx.lineTo(cx + 1, yt - 21); ctx.closePath(); ctx.fill();
-      // Scroll ornaments at corners
-      for (const sx of [x + 4, x + w - 4]){
-        ctx.fillStyle = '#e0b040';
-        ctx.beginPath(); ctx.arc(sx, yt - 4, 2, 0, Math.PI * 2); ctx.fill();
-      }
-      break;
-    }
-    case 'deco': {
-      // Chrysler-style stepped chrome crown with sunburst lines
-      const tiers = 4;
-      for (let t = 0; t < tiers; t++){
-        const tw = w - 6 - t * 4, ty = yt - 3 - t * 4;
-        const inset = (w - tw) / 2;
-        // metallic body
-        const gm = ctx.createLinearGradient(x + inset, 0, x + inset + tw, 0);
-        gm.addColorStop(0, '#d8d2f0'); gm.addColorStop(0.5, '#fff'); gm.addColorStop(1, '#7a6aa0');
-        ctx.fillStyle = gm;
-        ctx.fillRect(x + inset, ty, tw, 4);
-        ctx.fillStyle = '#3a2070';
-        ctx.fillRect(x + inset, ty + 3, tw, 1);
-      }
-      // sunburst rays from the top tier
-      ctx.strokeStyle = '#e0b040'; ctx.lineWidth = 1;
-      for (let i = -3; i <= 3; i++){
-        ctx.beginPath();
-        ctx.moveTo(cx, yt - 16);
-        ctx.lineTo(cx + i * 3, yt - 25);
-        ctx.stroke();
-      }
-      // top spire
-      ctx.fillStyle = '#ffd200';
-      ctx.beginPath();
-      ctx.moveTo(cx - 2, yt - 19); ctx.lineTo(cx + 2, yt - 19); ctx.lineTo(cx, yt - 28); ctx.closePath();
-      ctx.fill();
-      break;
-    }
-    case 'space': {
-      // Futuristic glass observation deck + tall antenna with neon ring
-      const od = 10;
-      // deck
-      const gd = ctx.createLinearGradient(0, yt - 14, 0, yt - 4);
-      gd.addColorStop(0, '#4a5cc0'); gd.addColorStop(1, '#1a224a');
-      ctx.fillStyle = gd;
-      ctx.fillRect(cx - od, yt - 14, od * 2, 10);
-      // window strip
-      ctx.fillStyle = blink ? '#a0e8ff' : '#0a1a2a';
-      for (let i = 0; i < 5; i++){
-        ctx.fillRect(cx - od + 1 + i * (od * 2 - 2) / 5, yt - 12, (od * 2 - 4) / 5 - 1, 4);
-      }
-      // antenna
-      ctx.fillStyle = '#888'; ctx.fillRect(cx - 1, yt - 32, 2, 18);
-      // neon ring + blinking light
-      const neonOn = (Math.floor(performance.now() / 350) % 2) === 0;
-      ctx.fillStyle = neonOn ? '#62fff0' : '#0a4a40';
-      ctx.fillRect(cx - 4, yt - 30, 8, 2);
-      ctx.beginPath(); ctx.arc(cx, yt - 32, 2, 0, Math.PI * 2); ctx.fill();
-      if (neonOn){
-        const gl = ctx.createRadialGradient(cx, yt - 32, 1, cx, yt - 32, 14);
-        gl.addColorStop(0, 'rgba(98,255,240,0.55)'); gl.addColorStop(1, 'rgba(98,255,240,0)');
-        ctx.fillStyle = gl;
-        ctx.beginPath(); ctx.arc(cx, yt - 32, 14, 0, Math.PI * 2); ctx.fill();
-      }
-      break;
-    }
-    case 'modern':
-    case 'sky':
-    default: {
-      // Clean parapet + thin chimney/antenna with red blink (city skyline)
-      ctx.fillStyle = '#888'; ctx.lineWidth = 2;
-      ctx.fillRect(cx - 1, yt - 18, 2, 16);
-      ctx.fillStyle = blink ? '#ff3030' : '#661010';
-      ctx.beginPath(); ctx.arc(cx, yt - 20, 3, 0, Math.PI * 2); ctx.fill();
-      if (blink){
-        const gl = ctx.createRadialGradient(cx, yt - 20, 1, cx, yt - 20, 10);
-        gl.addColorStop(0, 'rgba(255,60,60,0.6)'); gl.addColorStop(1, 'rgba(255,60,60,0)');
-        ctx.fillStyle = gl;
-        ctx.beginPath(); ctx.arc(cx, yt - 20, 10, 0, Math.PI * 2); ctx.fill();
-      }
-      // little flag
-      ctx.fillStyle = '#ffd200'; ctx.fillRect(cx, yt - 18, 8, 5);
-      // sat dishes
-      ctx.fillStyle = '#aaa';
-      ctx.beginPath(); ctx.arc(x + 8, yt - 2, 3, Math.PI, 0); ctx.fill();
-      ctx.fillStyle = '#666';
-      ctx.fillRect(x + 7, yt - 3, 2, 1);
-      // HVAC box
-      ctx.fillStyle = '#666'; ctx.fillRect(x + w - 14, yt - 5, 8, 5);
-      ctx.fillStyle = '#444'; ctx.fillRect(x + w - 13, yt - 4, 6, 1);
-    }
+  ctx.fillStyle = '#444'; ctx.fillRect(cx - 1, yt - 12, 2, 12);
+  ctx.fillStyle = blink ? '#ff3030' : '#661010';
+  ctx.beginPath(); ctx.arc(cx, yt - 14, 2.5, 0, Math.PI * 2); ctx.fill();
+  if (blink){
+    const gl = ctx.createRadialGradient(cx, yt - 14, 1, cx, yt - 14, 10);
+    gl.addColorStop(0, 'rgba(255,60,60,0.55)'); gl.addColorStop(1, 'rgba(255,60,60,0)');
+    ctx.fillStyle = gl;
+    ctx.beginPath(); ctx.arc(cx, yt - 14, 10, 0, Math.PI * 2); ctx.fill();
+  }
+  // Optional tiny style accent (small dome for arabian, neon ring for space)
+  if (style === 'arabian'){
+    ctx.fillStyle = '#5fb0d4';
+    ctx.beginPath(); ctx.arc(cx, sy - 1, 5, Math.PI, 0); ctx.fill();
+    ctx.fillStyle = '#e0b040';
+    ctx.beginPath(); ctx.moveTo(cx - 5, sy); ctx.lineTo(cx + 5, sy); ctx.lineTo(cx + 5, sy + 2); ctx.lineTo(cx - 5, sy + 2); ctx.closePath(); ctx.fill();
+  } else if (style === 'space'){
+    const neon = (Math.floor(performance.now() / 350) % 2) === 0;
+    ctx.fillStyle = neon ? '#62fff0' : '#0a4a40';
+    ctx.fillRect(cx - 5, yt - 8, 10, 1);
   }
 }
 function drawChunk(c){
@@ -1707,21 +1376,47 @@ function drawCraneAndBlock(){
 /* ===== HUD ===== */
 function updateHud(){
   const B = G.B;
-  const floorTxt = B && B.floors > 90 ? '🏢 ' + G.blocks.length + '+'
-                                      : '🏢 ' + G.blocks.length + '/' + (B?B.floors:'-');
-  document.getElementById('hudFloor').textContent = floorTxt;
-  document.getElementById('hudPop').textContent = '👥 ' + G.pop;
   document.getElementById('hudCity').textContent = '🌆 ' + (loadLifeCity() + G.cityTotal);
   document.getElementById('hudBuilding').textContent = '🏙️ ' + (G.bIndex+1) + '/' + BUILDINGS.length;
   const comboEl = document.getElementById('hudCombo');
   if (G.combo >= 2){ comboEl.style.display=''; comboEl.textContent='🔥 ×'+G.combo; }
   else comboEl.style.display='none';
-  // floor progress bar — for finite buildings; sky-tower shows altitude
-  const bar = document.getElementById('floorBar');
+  // Battery counter on the left — target number + segment fill from bottom
   if (B){
-    const pct = B.floors > 90 ? Math.min(100, (G.blocks.length / 80) * 100)
-                              : Math.min(100, (G.blocks.length / B.floors) * 100);
-    bar.style.height = pct + '%';
+    const cap = B.floors > 90 ? 80 : B.floors;
+    document.getElementById('batTargetTxt').textContent = (B.floors > 90 ? '∞' : B.floors);
+    const segsEl = document.getElementById('batterySegs');
+    // Rebuild segments if the count changed (e.g. switched buildings)
+    if (segsEl.dataset.cap !== String(cap)){
+      segsEl.dataset.cap = cap;
+      const segCount = Math.min(cap, 22); // visual cap so very tall towers don't get hairline segments
+      segsEl.innerHTML = '';
+      for (let s = 0; s < segCount; s++){
+        const d = document.createElement('div'); d.className = 'bat-seg'; segsEl.appendChild(d);
+      }
+    }
+    const segCount = segsEl.children.length;
+    const lit = Math.min(segCount, Math.round(G.blocks.length / cap * segCount));
+    for (let s = 0; s < segCount; s++){
+      const el = segsEl.children[s];
+      el.classList.toggle('on', s < lit);
+      el.classList.toggle('peak', s < lit && s >= segCount - 3);
+    }
+  }
+  // Population odometer (5 digits, left-pad with zeros)
+  const popEl = document.getElementById('popNum');
+  if (popEl){
+    const total = loadLifeCity() + G.cityTotal;
+    const padded = String(total).padStart(5, '0');
+    if (popEl.textContent !== padded){
+      popEl.textContent = padded;
+      popEl.animate(
+        [{ transform:'scale(1)', filter:'brightness(1)' },
+         { transform:'scale(1.18)', filter:'brightness(1.6)' },
+         { transform:'scale(1)', filter:'brightness(1)' }],
+        { duration: 280, easing: 'ease-out' }
+      );
+    }
   }
 }
 function refreshStartStats(){
