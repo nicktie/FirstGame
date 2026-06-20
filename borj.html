@@ -546,10 +546,10 @@ function landBlock(){
     sndPerfect();
     showComboFlash('🚀 ' + n + ' طوابق!\nمستوى أعلى!');
   }
-  // Zoom out smoothly so the whole tower stays framed
-  // Allow more zoom-out since blocks are now cubic (bigger) and towers reach
-  // higher proportional heights — keeps the full silhouette in frame.
-  G.zoomTarget = Math.max(0.40, 1 - Math.max(0, n - 4) * 0.022);
+  // No more zoom-out: the camera follows the tower top so the player
+  // always sees the active build zone at full size. Lower floors scroll
+  // off the bottom of the screen — exactly how Tower Bloxx plays.
+  G.zoomTarget = 1;
   // Topple from leaning too far (centre of mass leaves the base footprint)
   const com = centerOfMass();
   if (Math.abs(com) > B.bw * 0.62){ topple('lean'); return; }
@@ -792,14 +792,6 @@ function render(){
   let ox=0, oy=0;
   if (G.shake > 0){ ox=(Math.random()-0.5)*G.shake; oy=(Math.random()-0.5)*G.shake; }
   ctx.save();
-  // Zoom out around the centre of the plot so the whole tower stays visible
-  // as it grows. Subtle (1.0 → 0.55) but it sells altitude.
-  if (G.zoom !== 1){
-    const cx = CW/2, cy = horizonY;
-    ctx.translate(cx, cy);
-    ctx.scale(G.zoom, G.zoom);
-    ctx.translate(-cx, -cy);
-  }
   ctx.translate(ox, oy);
 
   // Street / ground
