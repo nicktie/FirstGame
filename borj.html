@@ -439,6 +439,13 @@ window.addEventListener('keydown', e => {
 function bh(){ return G.B.bh; }
 function bw(){ return G.B.bw; }
 function floorScreenBottom(i){ return (CH - GROUND_GAP) - (i * bh() - G.cameraY); }
+// Map an arbitrary world height (0 = ground/base, +Y up) to a screen Y.
+// Everything that should "stay in the world" (ground, skyline, clouds,
+// birds) uses this so it scrolls down and out of view as the camera rises.
+function worldYToScreen(wy){ return (CH - GROUND_GAP) - (wy - G.cameraY); }
+// World-Y at the very top / bottom edges of the current viewport.
+function viewTopWorld(){ return G.cameraY + (CH - GROUND_GAP); }
+function viewBottomWorld(){ return G.cameraY - GROUND_GAP; }
 function towerTopWorld(){ return G.blocks.length * bh(); }
 function centerOfMass(){
   if (!G.blocks.length) return 0;
@@ -666,18 +673,44 @@ function spawnPeople(sx, sy, residents){
   }
 }
 
-/* ===== Weather init ===== */
+/* ===== Weather init =====
+   Clouds and birds now live in WORLD space (each has a `wy` altitude in
+   world units) so they stream downward past the player as the camera
+   climbs — instead of being glued to the screen. They recycle to the top
+   of the view when they scroll off the bottom, so the sky stays alive at
+   any height. */
 function initWeather(forced){
   G.clouds = []; G.rain = []; G.stars = []; G.birds = [];
   const w = forced || (G.B && G.B.weather) || 'sunny';
-  if (w==='cloudy'||w==='rainy'||w==='windy'||w==='sunset'){
-    const n = w==='windy'?6:4;
-    for (let i=0;i<n;i++) G.clouds.push({ x:Math.random()*CW, y:40+Math.random()*CH*0.4,
-      s:0.5+Math.random()*0.8, spd:(w==='windy'?1.4:0.35)*(0.6+Math.random()) });
+  // Clouds: present in every weather except clear space. Density varies.
+  // Spread them across a tall world band so there's always more above you.
+  let cloudN = 0;
+  if (w==='windy') cloudN = 9;
+  else if (w==='cloudy' || w==='rainy') cloudN = 8;
+  else if (w==='sunny' || w==='sunset' || w==='night') cloudN = 5;
+  // Start clouds up in the sky (above ~35% screen height) and stacked higher,
+  // so they never overlap the street and there's always more coming.
+  const cloudFloor = viewBottomWorld() + CH*0.35;
+  const span = CH * 2.0;
+  for (let i=0;i<cloudN;i++){
+    G.clouds.push({
+      x: Math.random()*CW,
+      wy: cloudFloor + Math.random()*span,
+      s: 0.55 + Math.random()*0.85,
+      spd: (w==='windy'?1.4:0.35)*(0.6+Math.random()),
+      grey: (w==='rainy' || w==='windy' || w==='night')
+    });
   }
   if (w==='rainy'){ for (let i=0;i<90;i++) G.rain.push({ x:Math.random()*CW, y:Math.random()*CH, len:8+Math.random()*8, spd:9+Math.random()*6 }); }
   if (w==='night'||w==='space'){ for (let i=0;i<70;i++) G.stars.push({ x:Math.random()*CW, y:Math.random()*CH*0.75, r:Math.random()<0.2?2:1, tw:Math.random()*6 }); }
-  if (w==='sunny'||w==='sunset'){ for (let i=0;i<2;i++) G.birds.push({ x:Math.random()*CW, y:60+Math.random()*120, spd:0.5+Math.random()*0.6, ph:Math.random()*6 }); }
+  // Birds: low-to-mid altitude flocks for daytime skies (not night/space).
+  if (w==='sunny'||w==='sunset'||w==='cloudy'||w==='windy'){
+    for (let i=0;i<3;i++) G.birds.push({
+      x: Math.random()*CW,
+      wy: viewBottomWorld() + CH*0.4 + Math.random()*(CH*1.4),
+      spd: 0.5+Math.random()*0.7, ph: Math.random()*6
+    });
+  }
 }
 
 /* ===== Update ===== */
@@ -751,10 +784,28 @@ function update(dt){
   // People fly-up
   for (const pe of G.people){ pe.y += pe.vy*dt; pe.life -= dt; }
   G.people = G.people.filter(pe => pe.life > 0);
-  // Weather motion
-  for (const cl of G.clouds){ cl.x += cl.spd*dt; if (cl.x > CW+80) cl.x = -80; }
+  // Weather motion — clouds/birds drift horizontally AND recycle vertically
+  // in world space so they keep streaming past as the camera climbs.
+  const topW = viewTopWorld();
+  for (const cl of G.clouds){
+    cl.x += cl.spd*dt;
+    if (cl.x > CW+80) cl.x = -80;
+    // If it has scrolled below the bottom of the view, respawn above the top
+    if (worldYToScreen(cl.wy) > CH + 80){
+      cl.wy = topW + 30 + Math.random()*220;
+      cl.x = Math.random()*CW;
+      cl.s = 0.55 + Math.random()*0.85;
+    }
+  }
   for (const r of G.rain){ r.y += r.spd*dt; r.x -= r.spd*0.3*dt; if (r.y > CH){ r.y = -10; r.x = Math.random()*CW; } }
-  for (const b of G.birds){ b.x += b.spd*dt; b.ph += 0.1*dt; if (b.x > CW+30) b.x = -30; }
+  for (const b of G.birds){
+    b.x += b.spd*dt; b.ph += 0.1*dt;
+    if (b.x > CW+30) b.x = -30;
+    if (worldYToScreen(b.wy) > CH + 60){
+      b.wy = topW + 20 + Math.random()*180;
+      b.x = Math.random()*CW;
+    }
+  }
   if (G.shake > 0) G.shake -= 0.6*dt;
 }
 
@@ -802,29 +853,35 @@ function render(){
   sg.addColorStop(0, sky[0]); sg.addColorStop(0.55, sky[1]); sg.addColorStop(1, sky[2]);
   ctx.fillStyle = sg; ctx.fillRect(0,0,CW,CH);
 
-  const horizonY = CH - GROUND_GAP;
+  // Ground level in screen space — anchored to WORLD Y=0, so it scrolls
+  // down and disappears below as the camera climbs (you rise above the city).
+  const groundY = worldYToScreen(0);
   drawWeatherBack(w);
-  drawSkyline(horizonY);
+  // Only draw the city skyline + ground while they're still near the view.
+  const groundVisible = groundY < CH + 220;
+  if (groundVisible) drawSkyline(groundY);
 
   let ox=0, oy=0;
   if (G.shake > 0){ ox=(Math.random()-0.5)*G.shake; oy=(Math.random()-0.5)*G.shake; }
   ctx.save();
   ctx.translate(ox, oy);
 
-  // Street / ground
-  ctx.fillStyle = w==='space' ? '#1a1230' : '#33414f';
-  ctx.fillRect(0, horizonY, CW, GROUND_GAP);
-  ctx.fillStyle = 'rgba(0,0,0,0.3)'; ctx.fillRect(0, horizonY, CW, 3);
-  ctx.fillStyle = 'rgba(255,255,255,0.12)';
-  for (let i=0;i<CW;i+=30) ctx.fillRect(i, horizonY+20, 16, 2);
-  // Plot footprint marker
-  ctx.fillStyle = 'rgba(255,210,0,0.18)';
-  ctx.fillRect(CW/2 - B.bw/2 - 4, horizonY-2, B.bw+8, 4);
+  if (groundVisible){
+    // Street / ground
+    ctx.fillStyle = w==='space' ? '#1a1230' : '#33414f';
+    ctx.fillRect(0, groundY, CW, GROUND_GAP + 400);
+    ctx.fillStyle = 'rgba(0,0,0,0.3)'; ctx.fillRect(0, groundY, CW, 3);
+    ctx.fillStyle = 'rgba(255,255,255,0.12)';
+    for (let i=0;i<CW;i+=30) ctx.fillRect(i, groundY+20, 16, 2);
+    // Plot footprint marker
+    ctx.fillStyle = 'rgba(255,210,0,0.18)';
+    ctx.fillRect(CW/2 - B.bw/2 - 4, groundY-2, B.bw+8, 4);
 
-  // ===== Construction site furniture =====
-  // Chain-link fence + tree at the left, traffic cones + wooden barrier at
-  // the right. Sits on the street at the base of the build plot.
-  drawConstructionSite(horizonY);
+    // ===== Construction site furniture =====
+    // Chain-link fence + tree at the left, traffic cones + wooden barrier at
+    // the right. Sits on the street at the base of the build plot.
+    drawConstructionSite(groundY);
+  }
 
   // Tower (with topple transform if falling)
   ctx.save();
@@ -926,13 +983,19 @@ function drawWeatherBack(w){
       ctx.beginPath(); ctx.ellipse(px,py,32,9,0.5,0,Math.PI*2); ctx.stroke();
     }
   }
-  // Clouds
-  for (const cl of G.clouds) drawCloud(cl.x, cl.y, cl.s, w==='rainy'||w==='windy');
-  // Birds
+  // Clouds — positioned by world altitude so they scroll past as you climb
+  for (const cl of G.clouds){
+    const cy = worldYToScreen(cl.wy);
+    if (cy < -40 || cy > CH + 60) continue;
+    drawCloud(cl.x, cy, cl.s, cl.grey);
+  }
+  // Birds — also world-anchored; flap as they drift
   for (const b of G.birds){
+    const by = worldYToScreen(b.wy);
+    if (by < -20 || by > CH + 40) continue;
     ctx.strokeStyle='rgba(40,40,60,0.5)'; ctx.lineWidth=2;
     const f = Math.sin(b.ph)*4;
-    ctx.beginPath(); ctx.moveTo(b.x-5,b.y); ctx.lineTo(b.x,b.y-f); ctx.lineTo(b.x+5,b.y); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(b.x-5,by); ctx.lineTo(b.x,by-f); ctx.lineTo(b.x+5,by); ctx.stroke();
   }
   // Back rain
   if (w==='rainy') drawRain(false);
