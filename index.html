@@ -4654,9 +4654,15 @@ function xoEnterBattle(state) {
   }
   const boardEl = document.getElementById('xoBoard'); boardEl.innerHTML = '';
   const winLine = xoFindWin(board);
-  // If a cell was just erased by the endless rule, flash it briefly so
-  // both players can see what disappeared.
-  const erasedIdx = (typeof state.lastErased === 'number') ? state.lastErased : -1;
+  // If cells were just erased by the endless rule, flash them so both
+  // players can see what disappeared. lastErased may be a single index,
+  // a comma list, or an array depending on writer; we handle all three.
+  const lastErased = state.lastErased;
+  const erasedSet = new Set(
+    Array.isArray(lastErased) ? lastErased.map(Number)
+      : (typeof lastErased === 'string' ? lastErased.split(',').filter(s=>s!=='').map(Number)
+      : (typeof lastErased === 'number' && lastErased >= 0 ? [lastErased] : []))
+  );
   for (let i=0; i<9; i++) {
     const c = document.createElement('div'); c.className = 'xo-cell'; c.dataset.idx = i;
     if (board[i] === 'X') { c.classList.add('x','filled'); c.textContent = 'X'; }
@@ -4664,8 +4670,13 @@ function xoEnterBattle(state) {
     else if (myTurn) { c.onclick = () => xoPickCell(i); }
     else { c.classList.add('disabled'); }
     if (winLine && winLine.includes(i)) c.classList.add('win');
-    if (i === erasedIdx && !board[i]) c.classList.add('erased');
+    if (erasedSet.has(i) && !board[i]) c.classList.add('erased');
     boardEl.appendChild(c);
+  }
+  // Mid-game endless toast: tell the player what just happened
+  if (erasedSet.size && state.phase === 'battle' && xo._lastErasedKey !== (lastErased+'')){
+    xo._lastErasedKey = (lastErased+'');
+    try { showToast('♾️ تم مسح ' + erasedSet.size + ' علامة عشوائيّة من الخصم — اللعب يستمرّ!', 'var(--p3)'); } catch(e){}
   }
 }
 
@@ -4700,16 +4711,13 @@ async function xoPickCell(i) {
     updates['players/'+xo.role+'/score'] = (me.score||0) + 1;
   } else if (xoBoardFull(board)) {
     if (st.endless || xo.endless){
-      // Endless mode: instead of declaring a draw, erase one random
-      // opponent mark and pass the turn to them.
-      const oppMark = mark === 'X' ? 'O' : 'X';
-      const oppCells = [];
-      for (let k = 0; k < 9; k++) if (board[k] === oppMark) oppCells.push(k);
-      if (oppCells.length){
-        const erased = oppCells[Math.floor(Math.random() * oppCells.length)];
-        board[erased] = '';
+      // Endless mode: erase 2 random opponent marks (gives them a real
+      // choice next turn instead of being forced into the single empty
+      // cell) and pass the turn over.
+      const erased = xoEraseRandomOpponent(board, mark, 2);
+      if (erased.length){
         updates['state/board'] = board;
-        updates['state/lastErased'] = erased; // for the visual cue on clients
+        updates['state/lastErased'] = erased.join(',');
         updates['state/turn'] = (xo.role==='p0') ? 'p1' : 'p0';
       } else {
         // Edge case: opponent has no marks at all — fall back to draw
@@ -4792,17 +4800,23 @@ function startXoBotGame(endless) {
   xoEnterBattle(xo.localState);
 }
 
-// Endless-mode helper: erases a random opponent mark from the board so the
-// game keeps going past what would normally be a draw. Returns true if
-// something was erased, false if the opponent had nothing on the board.
-function xoEraseRandomOpponent(board, myMark){
+// Endless-mode helper: erases up to `count` random opponent marks (default 2)
+// so the game keeps going past what would normally be a draw. Returns the
+// list of erased cell indices for the visual flash on clients.
+function xoEraseRandomOpponent(board, myMark, count){
+  count = count || 2;
   const oppMark = myMark === 'X' ? 'O' : 'X';
   const cells = [];
   for (let k = 0; k < 9; k++) if (board[k] === oppMark) cells.push(k);
-  if (!cells.length) return -1;
-  const idx = cells[Math.floor(Math.random() * cells.length)];
-  board[idx] = '';
-  return idx;
+  if (!cells.length) return [];
+  // Fisher-Yates shuffle so each subset of size `count` is equally likely
+  for (let i = cells.length - 1; i > 0; i--){
+    const j = Math.floor(Math.random() * (i + 1));
+    [cells[i], cells[j]] = [cells[j], cells[i]];
+  }
+  const toErase = cells.slice(0, Math.min(count, cells.length));
+  for (const idx of toErase) board[idx] = '';
+  return toErase;
 }
 
 function xoBotPlayerPick(i) {
@@ -4821,12 +4835,12 @@ function xoBotPlayerPick(i) {
   }
   if (xoBoardFull(st.board)) {
     if (xo.endless){
-      const erased = xoEraseRandomOpponent(st.board, 'X');
-      if (erased >= 0){
-        st.lastErased = erased;
+      const erased = xoEraseRandomOpponent(st.board, 'X', 2);
+      if (erased.length){
+        st.lastErased = erased.join(',');
         st.turn = 'p1';
         xoEnterBattle(st);
-        setTimeout(()=>xoBotTakeTurn(), 600);
+        setTimeout(()=>xoBotTakeTurn(), 700);
         return;
       }
     }
@@ -4855,9 +4869,9 @@ function xoBotTakeTurn() {
   }
   if (xoBoardFull(st.board)) {
     if (xo.endless){
-      const erased = xoEraseRandomOpponent(st.board, 'O');
-      if (erased >= 0){
-        st.lastErased = erased;
+      const erased = xoEraseRandomOpponent(st.board, 'O', 2);
+      if (erased.length){
+        st.lastErased = erased.join(',');
         st.turn = 'p0';
         xoEnterBattle(st);
         return;
