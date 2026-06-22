@@ -4602,7 +4602,13 @@ function xoRenderPlayers(players) {
 async function xoStart() {
   if (xo.role !== 'p0') return;
   const startTurn = xo.startingTurn || 'p0';
-  await fb.db.ref('rooms/x'+xo.code+'/state').set({ phase:'battle', turn:startTurn, board:Array(9).fill(''), round:1 });
+  // Preserve the room's endless rule when transitioning lobby → battle.
+  // Without this, the .set() wipes state.endless and the round can end
+  // in a draw even though the host originally enabled the no-draw mode.
+  await fb.db.ref('rooms/x'+xo.code+'/state').set({
+    phase:'battle', turn:startTurn, board:Array(9).fill(''), round:1,
+    endless: !!xo.endless, lastErased: null
+  });
   await fb.db.ref('rooms/x'+xo.code+'/meta/status').set('active');
 }
 
