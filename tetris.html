@@ -96,54 +96,24 @@ body::after{content:'';position:fixed;inset:0;z-index:-1;pointer-events:none;
 @keyframes dangerPulse{from{box-shadow:0 0 40px rgba(255,40,40,0.6),inset 0 0 24px rgba(255,40,40,0.3)}
   to{box-shadow:0 0 70px rgba(255,40,40,1),inset 0 0 40px rgba(255,40,40,0.5)}}
 
-/* ===== Touch controls ===== */
-#ctrls{display:grid;gap:7px;margin-top:8px;flex-shrink:0;
-  grid-template-columns:repeat(3,1fr);grid-template-areas:
-    "hold rotL  rotR"
-    "left drop  right"
-    "soft soft  soft"}
-.btn{font-family:inherit;cursor:pointer;border:none;
-  background:linear-gradient(180deg,rgba(38,44,68,0.92),rgba(20,24,40,0.88));
-  border:1px solid rgba(120,150,210,0.35);color:#fff;
-  border-radius:18px;padding:14px 0;font-size:1.7rem;font-weight:900;
-  display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;
-  backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);
-  box-shadow:
-    0 6px 0 rgba(0,0,0,0.5),
-    0 8px 22px rgba(0,0,0,0.45),
-    inset 0 2px 0 rgba(255,255,255,0.12),
-    inset 0 -2px 6px rgba(0,0,0,0.3);
-  position:relative;overflow:hidden;text-shadow:0 0 12px rgba(120,150,210,0.4);
-  transition:transform 0.05s,box-shadow 0.05s}
-.btn::before{content:'';position:absolute;inset:0;background:linear-gradient(135deg,transparent 40%,rgba(255,255,255,0.10) 50%,transparent 60%);pointer-events:none;border-radius:18px}
-.btn:active,.btn.pressed{transform:translateY(4px);
-  box-shadow:0 2px 0 rgba(0,0,0,0.5),inset 0 2px 0 rgba(255,255,255,0.12)}
-.btn .lbl{font-size:0.55rem;color:rgba(255,255,255,0.5);font-weight:700;letter-spacing:1.2px;line-height:1;margin-top:2px}
-.btn.gold{background:linear-gradient(180deg,#f5d488,var(--gold) 55%,#9c7c2e);
-  border-color:rgba(255,236,170,0.6);color:#1a1206;text-shadow:0 1px 0 rgba(255,255,255,0.4);
-  box-shadow:
-    0 6px 0 #8a6a18,
-    0 8px 22px rgba(201,168,76,0.4),
-    inset 0 2px 0 rgba(255,255,255,0.55),
-    inset 0 -2px 8px rgba(140,100,30,0.4)}
-.btn.gold .lbl{color:rgba(40,20,0,0.55)}
-.btn.gold:active{box-shadow:0 2px 0 #8a6a18,inset 0 2px 0 rgba(255,255,255,0.5)}
-.btn.cyan{background:linear-gradient(180deg,#80edff,#3aaee0 55%,#1670a0);
-  border-color:rgba(180,235,255,0.55);text-shadow:0 1px 4px rgba(0,80,120,0.5);
-  box-shadow:0 6px 0 #0a4a6e,0 8px 22px rgba(93,217,255,0.4),inset 0 2px 0 rgba(255,255,255,0.4)}
-.btn.cyan:active{box-shadow:0 2px 0 #0a4a6e,inset 0 2px 0 rgba(255,255,255,0.4)}
-.btn.violet{background:linear-gradient(180deg,#d8a8f0,#a060d0 55%,#5e2890);
-  border-color:rgba(220,180,250,0.55);text-shadow:0 1px 4px rgba(60,0,90,0.5);
-  box-shadow:0 6px 0 #3a1060,0 8px 22px rgba(181,115,232,0.4),inset 0 2px 0 rgba(255,255,255,0.4)}
-.btn.violet:active{box-shadow:0 2px 0 #3a1060,inset 0 2px 0 rgba(255,255,255,0.4)}
-#btnHold{grid-area:hold;font-size:1.3rem}
-#btnRotL{grid-area:rotL}
-#btnRotR{grid-area:rotR}
-#btnLeft{grid-area:left}
-#btnRight{grid-area:right}
-#btnDrop{grid-area:drop}
-#btnSoft{grid-area:soft;font-size:1.05rem;padding:10px 0}
-#btnSoft .row{display:flex;align-items:center;gap:8px}
+/* ===== Hold preview is now tappable as the fallback hold trigger ===== */
+#holdCard{cursor:pointer;transition:transform 0.1s,box-shadow 0.15s,background 0.15s}
+#holdCard:active{transform:scale(0.94)}
+#holdCard.flash{animation:holdFlash 0.55s ease-out}
+@keyframes holdFlash{
+  0%{box-shadow:0 0 0 rgba(181,115,232,0)}
+  35%{box-shadow:0 0 22px rgba(181,115,232,0.9),inset 0 0 18px rgba(181,115,232,0.5)}
+  100%{box-shadow:0 8px 22px rgba(0,0,0,0.4),inset 0 1px 0 rgba(255,255,255,0.07)}
+}
+
+/* Gesture cheat-sheet strip below the board */
+#gestureHint{margin-top:8px;padding:8px 10px;text-align:center;font-size:0.72rem;
+  color:rgba(220,225,240,0.7);font-weight:700;letter-spacing:0.3px;line-height:1.6;
+  background:linear-gradient(165deg,rgba(20,22,38,0.65),rgba(10,12,22,0.55));
+  border:1px solid rgba(255,255,255,0.06);border-radius:12px;
+  backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);flex-shrink:0}
+#gestureHint .ghk{display:inline-block;color:var(--gold-light);font-weight:900;
+  text-shadow:0 0 8px rgba(240,208,128,0.55);margin:0 1px}
 
 /* ===== Score-pop floaters ===== */
 .score-pop{position:absolute;font-weight:900;font-size:1.4rem;pointer-events:none;
@@ -232,9 +202,7 @@ body::after{content:'';position:fixed;inset:0;z-index:-1;pointer-events:none;
 @media (max-height:680px){
   #playArea{grid-template-columns:54px 1fr 54px}
   .side-canvas{width:42px;height:42px}
-  .btn{padding:10px 0;font-size:1.35rem}
-  .btn .lbl{font-size:0.5rem}
-  #btnSoft{padding:7px 0;font-size:0.9rem}
+  #gestureHint{font-size:0.66rem;padding:5px 8px}
 }
 @media (max-width:340px){
   #playArea{grid-template-columns:50px 1fr 50px;gap:5px}
@@ -284,16 +252,15 @@ body::after{content:'';position:fixed;inset:0;z-index:-1;pointer-events:none;
     </div>
   </div>
 
-  <div id="ctrls">
-    <button class="btn violet" id="btnHold" type="button"><div>📦</div><div class="lbl">HOLD</div></button>
-    <button class="btn" id="btnRotL" type="button"><div>↺</div><div class="lbl">دوران</div></button>
-    <button class="btn" id="btnRotR" type="button"><div>↻</div><div class="lbl">دوران</div></button>
-
-    <button class="btn cyan" id="btnLeft" type="button"><div>←</div><div class="lbl">يسار</div></button>
-    <button class="btn gold" id="btnDrop" type="button"><div>⤓</div><div class="lbl">إنزال</div></button>
-    <button class="btn cyan" id="btnRight" type="button"><div>→</div><div class="lbl">يمين</div></button>
-
-    <button class="btn" id="btnSoft" type="button"><div class="row"><span>⬇</span><span style="font-size:1rem">سقوط ناعم — استمر بالضغط</span></div></button>
+  <!-- Gesture-only controls: tap = rotate, drag L/R = move, drag down = soft
+       drop, swipe up = hard drop, long-press = hold. The Hold preview is
+       also tappable as a fallback for the hold action. -->
+  <div id="gestureHint" aria-hidden="true">
+    <span class="ghk">👆</span> دوران &nbsp;·&nbsp;
+    <span class="ghk">↔</span> حركة &nbsp;·&nbsp;
+    <span class="ghk">↓</span> سقوط ناعم &nbsp;·&nbsp;
+    <span class="ghk">↑</span> سقوط حادّ &nbsp;·&nbsp;
+    <span class="ghk">⏳</span> Hold
   </div>
 </div>
 
@@ -311,8 +278,11 @@ body::after{content:'';position:fixed;inset:0;z-index:-1;pointer-events:none;
       <span class="cell" style="background:linear-gradient(180deg,#ffc080,#ff9438,#aa4800)"></span>
     </div>
     <div class="tips">
-      📱 <b>الأزرار:</b> ٣ صفوف للسهولة — Hold ودوران فوق، حركة وإنزال في المنتصف، سقوط ناعم تحت<br>
-      👉 <b>إيماءات اللوحة:</b> اسحب يميناً/يساراً = حركة، اسحب لأسفل = إنزال سريع، انقر = دوران<br>
+      👆 <b>انقر</b> على اللوحة = دوران<br>
+      ↔ <b>اسحب يميناً/يساراً</b> = حركة (كل خانة سحب = عمود)<br>
+      ↓ <b>اسحب للأسفل</b> = سقوط ناعم متواصل<br>
+      ↑ <b>اسحب سريعاً للأعلى</b> = سقوط حادّ فوريّ<br>
+      ⏳ <b>اضغط مطوّلاً</b> (أو انقر على بطاقة Hold) = استبدال القطعة<br>
       🏆 ٤ سطور دفعة وحدة = <b>١٢٠٠ × المستوى</b>!
     </div>
     <button class="ov-btn" onclick="startGame()">▶ ابدأ اللعب</button>
@@ -765,35 +735,20 @@ function sndClear(n){
 function sndLevelUp(){ [659,784,988,1318,1568].forEach((f,i)=>tone(f,0.14,i*70,'sine',0.06)); }
 function sndOver(){ tone(220,0.3,0,'sawtooth',0.06); tone(165,0.4,150,'sawtooth',0.05); }
 
-/* ===== Input — buttons + board swipes ===== */
+/* ===== Input — board gestures (touch) + keyboard (desktop) ===== */
 function bindInput(){
-  function bindBtn(id, on, hold){
-    const el = document.getElementById(id); if (!el) return;
-    let downTimer = null;
-    const onDown = (e) => {
+  // Tap on the Hold preview to swap — replaces the removed Hold button
+  const holdCard = document.getElementById('holdCard');
+  if (holdCard){
+    holdCard.addEventListener('pointerup', e => {
       e.preventDefault();
       if (G.state !== 'playing') return;
-      on();
-      if (hold) downTimer = setInterval(on, 90);
-      el.classList.add('pressed');
-    };
-    const onUp = () => {
-      if (downTimer){ clearInterval(downTimer); downTimer = null; }
-      el.classList.remove('pressed');
-      if (id === 'btnSoft') G.softDrop = false;
-    };
-    el.addEventListener('pointerdown', onDown);
-    el.addEventListener('pointerup', onUp);
-    el.addEventListener('pointercancel', onUp);
-    el.addEventListener('pointerleave', onUp);
+      holdSwap();
+      holdCard.classList.remove('flash');
+      void holdCard.offsetWidth;
+      holdCard.classList.add('flash');
+    });
   }
-  bindBtn('btnLeft',  () => { if (tryMove(0,-1)) sndMove(); }, true);
-  bindBtn('btnRight', () => { if (tryMove(0,+1)) sndMove(); }, true);
-  bindBtn('btnRotL',  () => { if (tryRotate(-1)) sndRot(); });
-  bindBtn('btnRotR',  () => { if (tryRotate(+1)) sndRot(); });
-  bindBtn('btnDrop',  () => hardDrop());
-  bindBtn('btnHold',  () => holdSwap());
-  bindBtn('btnSoft',  () => { G.softDrop = true; softDropOne(); }, true);
 
   // Keyboard (still nice for desktop users)
   window.addEventListener('keydown', e => {
@@ -818,40 +773,52 @@ function bindInput(){
     if (e.code === 'ArrowDown' || e.code === 'KeyS') G.softDrop = false;
   });
 
-  // Board swipe / tap
-  let touchStart = null, lastMoveCol = 0, lastSoftRow = 0;
+  // ===== Board gestures (this is the entire mobile control surface) =====
+  // tap = rotate CW · drag L/R = move (1 col per CELL of drag) · drag down =
+  // repeated soft drop · quick swipe up = hard drop · long-press (no move,
+  // 320 ms) = hold piece swap.
+  let touchStart = null, lastMoveCol = 0, lastSoftRow = 0, holdTimer = null;
+  function cancelHoldTimer(){ if (holdTimer){ clearTimeout(holdTimer); holdTimer = null; } }
   boardCv.addEventListener('pointerdown', e => {
     if (G.state !== 'playing') return;
-    touchStart = { x: e.clientX, y: e.clientY, t: performance.now(), moved: false };
+    touchStart = { x: e.clientX, y: e.clientY, t: performance.now(), moved: false, didHold: false };
     lastMoveCol = 0; lastSoftRow = 0;
+    cancelHoldTimer();
+    holdTimer = setTimeout(() => {
+      if (touchStart && !touchStart.moved){
+        touchStart.didHold = true;
+        holdSwap();
+        const hc = document.getElementById('holdCard');
+        if (hc){ hc.classList.remove('flash'); void hc.offsetWidth; hc.classList.add('flash'); }
+      }
+    }, 320);
     try { boardCv.setPointerCapture(e.pointerId); } catch(err){}
   });
   boardCv.addEventListener('pointermove', e => {
     if (!touchStart || G.state !== 'playing') return;
     const dx = e.clientX - touchStart.x, dy = e.clientY - touchStart.y;
-    // Horizontal: every CELL pixels = 1 column
+    if (Math.hypot(dx, dy) > 6) cancelHoldTimer();
     const colsTraveled = Math.round(dx / CELL);
     while (colsTraveled > lastMoveCol){ if (tryMove(0,+1)) sndMove(); lastMoveCol++; touchStart.moved = true; }
     while (colsTraveled < lastMoveCol){ if (tryMove(0,-1)) sndMove(); lastMoveCol--; touchStart.moved = true; }
-    // Vertical: dragging down soft-drops
     const rowsTraveled = Math.round(dy / CELL);
     while (rowsTraveled > lastSoftRow){ softDropOne(); lastSoftRow++; touchStart.moved = true; }
   });
   boardCv.addEventListener('pointerup', e => {
-    if (!touchStart || G.state !== 'playing') return;
+    cancelHoldTimer();
+    if (!touchStart || G.state !== 'playing'){ touchStart = null; return; }
+    if (touchStart.didHold){ touchStart = null; return; }
     const dt = performance.now() - touchStart.t;
     const dx = e.clientX - touchStart.x, dy = e.clientY - touchStart.y;
     const dist = Math.hypot(dx, dy);
-    // Hard drop = quick swipe up
     if (dt < 250 && dy < -40 && Math.abs(dy) > Math.abs(dx)){
       hardDrop();
     } else if (!touchStart.moved && dist < 12 && dt < 250){
-      // Tap to rotate
       if (tryRotate(+1)) sndRot();
     }
     touchStart = null;
   });
-  boardCv.addEventListener('pointercancel', () => { touchStart = null; });
+  boardCv.addEventListener('pointercancel', () => { cancelHoldTimer(); touchStart = null; });
 }
 
 /* ===== Loop ===== */
