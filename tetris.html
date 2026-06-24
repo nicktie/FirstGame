@@ -77,7 +77,9 @@ body::after{content:'';position:fixed;inset:0;z-index:-1;pointer-events:none;
 }
 
 /* ===== Big board fills the remaining vertical space ===== */
-#boardWrap{position:relative;flex:1;display:flex;align-items:center;justify-content:center;min-height:0;width:100%}
+#boardWrap{position:relative;flex:1;display:flex;flex-direction:row;align-items:center;justify-content:center;
+  min-height:0;width:100%;gap:6px}
+#boardStage{position:relative;display:flex;align-items:center;justify-content:center}
 #board{display:block;
   background:linear-gradient(180deg,#04060d,#0a0d1a);
   border:2px solid rgba(201,168,76,0.3);border-radius:14px;
@@ -98,6 +100,31 @@ body::after{content:'';position:fixed;inset:0;z-index:-1;pointer-events:none;
   animation:dangerPulse 0.6s ease-in-out infinite alternate}
 @keyframes dangerPulse{from{box-shadow:0 0 40px rgba(255,40,40,0.6),inset 0 0 24px rgba(255,40,40,0.3)}
   to{box-shadow:0 0 70px rgba(255,40,40,1),inset 0 0 40px rgba(255,40,40,0.5)}}
+
+/* ===== Drop bar (right of board) — drag down for soft drop, fast swipe = hard drop ===== */
+#dropBar{flex-shrink:0;width:44px;align-self:stretch;
+  background:linear-gradient(180deg,rgba(40,52,82,0.55),rgba(18,28,52,0.85));
+  border:1px solid rgba(93,217,255,0.32);border-radius:14px;
+  box-shadow:inset 0 0 22px rgba(93,217,255,0.10),0 4px 14px rgba(0,0,0,0.5),
+    inset 0 1px 0 rgba(255,255,255,0.08);
+  display:flex;flex-direction:column;align-items:center;justify-content:space-between;
+  padding:14px 0;color:#9ad5ff;font-weight:900;
+  touch-action:none;user-select:none;-webkit-user-select:none;cursor:pointer;
+  transition:background 0.15s, box-shadow 0.15s, border-color 0.15s;position:relative;overflow:hidden}
+#dropBar::before{content:'';position:absolute;left:0;right:0;top:0;height:50%;
+  background:linear-gradient(180deg,rgba(255,255,255,0.06),transparent);pointer-events:none}
+#dropBar .arr{font-size:1.5rem;line-height:1;
+  text-shadow:0 0 14px rgba(93,217,255,0.7),0 2px 0 rgba(0,0,0,0.5);
+  animation:dropArr 1.6s ease-in-out infinite}
+#dropBar .arr:nth-child(3){animation-delay:0.8s}
+#dropBar .lbl{writing-mode:vertical-rl;text-orientation:mixed;letter-spacing:5px;font-size:0.7rem;
+  color:var(--gold-light);text-shadow:0 0 10px rgba(240,208,128,0.5);opacity:0.85}
+#dropBar.active{background:linear-gradient(180deg,rgba(90,200,255,0.5),rgba(40,140,220,0.75));
+  border-color:rgba(180,240,255,0.7);box-shadow:0 0 28px rgba(93,217,255,0.55),inset 0 0 30px rgba(255,255,255,0.10)}
+#dropBar.active .arr{animation-duration:0.4s;color:#fff}
+#dropBar.hard{background:linear-gradient(180deg,rgba(255,210,80,0.6),rgba(255,140,40,0.85));
+  border-color:rgba(255,236,170,0.9);box-shadow:0 0 36px rgba(255,210,80,0.85)}
+@keyframes dropArr{0%,100%{transform:translateY(-3px);opacity:0.55}50%{transform:translateY(5px);opacity:1}}
 
 /* ===== Score-pop floaters ===== */
 .score-pop{position:absolute;font-weight:900;font-size:1.4rem;pointer-events:none;
@@ -209,11 +236,18 @@ body::after{content:'';position:fixed;inset:0;z-index:-1;pointer-events:none;
   </div>
 
   <div id="boardWrap">
-    <canvas id="board" width="300" height="600"></canvas>
-    <div id="boardGlow"></div>
-    <div id="flash"></div>
-    <div id="comboFx"></div>
-    <div id="levelUp"><div class="lt">LEVEL UP!</div><div class="lv" id="lvlNum">2</div></div>
+    <div id="boardStage">
+      <canvas id="board" width="300" height="600"></canvas>
+      <div id="boardGlow"></div>
+      <div id="flash"></div>
+      <div id="comboFx"></div>
+      <div id="levelUp"><div class="lt">LEVEL UP!</div><div class="lv" id="lvlNum">2</div></div>
+    </div>
+    <div id="dropBar" aria-label="اسحب للأسفل لإنزال القطعة">
+      <div class="arr">▾</div>
+      <div class="lbl">سحب ↓</div>
+      <div class="arr">▾</div>
+    </div>
   </div>
 </div>
 
@@ -232,10 +266,10 @@ body::after{content:'';position:fixed;inset:0;z-index:-1;pointer-events:none;
     </div>
     <div class="tips">
       👆 <b>انقر</b> على اللوحة = دوران<br>
-      ↔ <b>اسحب يميناً/يساراً</b> = حركة (كل خانة سحب = عمود)<br>
-      ↓ <b>اسحب للأسفل</b> = سقوط ناعم متواصل<br>
-      ↑ <b>اسحب سريعاً للأعلى</b> = سقوط حادّ فوريّ<br>
-      ⏳ <b>اضغط مطوّلاً</b> (أو انقر على بطاقة Hold) = استبدال القطعة<br>
+      ↔ <b>اسحب يميناً/يساراً</b> على اللوحة = حركة<br>
+      ▾ <b>اسحب للأسفل</b> على الشريط الأزرق يمين اللوحة = سقوط ناعم<br>
+      ⚡ <b>سحبة سريعة وطويلة للأسفل</b> على الشريط = سقوط حادّ فوريّ<br>
+      📦 انقر على بطاقة <b>Hold</b> في الأعلى = استبدال القطعة<br>
       🏆 ٤ سطور دفعة وحدة = <b>١٢٠٠ × المستوى</b>!
     </div>
     <button class="ov-btn" onclick="startGame()">▶ ابدأ اللعب</button>
@@ -333,7 +367,9 @@ function fitBoard(){
   const game = document.getElementById('game');
   const dpr = Math.min(window.devicePixelRatio || 1, 2);
 
-  const availW = Math.max(120, game.clientWidth - 4);
+  // Reserve room for the right-side drop bar + gap
+  const DROP_BAR_W = 44, GAP = 6;
+  const availW = Math.max(120, game.clientWidth - DROP_BAR_W - GAP - 4);
   const availH = Math.max(240, wrap.clientHeight - 4);
   const cellByW = Math.floor(availW / COLS);
   const cellByH = Math.floor(availH / ROWS);
@@ -722,52 +758,79 @@ function bindInput(){
     if (e.code === 'ArrowDown' || e.code === 'KeyS') G.softDrop = false;
   });
 
-  // ===== Board gestures (this is the entire mobile control surface) =====
-  // tap = rotate CW · drag L/R = move (1 col per CELL of drag) · drag down =
-  // repeated soft drop · quick swipe up = hard drop · long-press (no move,
-  // 320 ms) = hold piece swap.
-  let touchStart = null, lastMoveCol = 0, lastSoftRow = 0, holdTimer = null;
-  function cancelHoldTimer(){ if (holdTimer){ clearTimeout(holdTimer); holdTimer = null; } }
+  // ===== Board gestures =====
+  // tap = rotate CW · drag L/R = move (1 col per CELL of drag).
+  // No down-drop here — that lives on the right-side drop bar.
+  let touchStart = null, lastMoveCol = 0;
   boardCv.addEventListener('pointerdown', e => {
     if (G.state !== 'playing') return;
-    touchStart = { x: e.clientX, y: e.clientY, t: performance.now(), moved: false, didHold: false };
-    lastMoveCol = 0; lastSoftRow = 0;
-    cancelHoldTimer();
-    holdTimer = setTimeout(() => {
-      if (touchStart && !touchStart.moved){
-        touchStart.didHold = true;
-        holdSwap();
-        const hc = document.getElementById('holdCard');
-        if (hc){ hc.classList.remove('flash'); void hc.offsetWidth; hc.classList.add('flash'); }
-      }
-    }, 320);
+    touchStart = { x: e.clientX, y: e.clientY, t: performance.now(), moved: false };
+    lastMoveCol = 0;
     try { boardCv.setPointerCapture(e.pointerId); } catch(err){}
   });
   boardCv.addEventListener('pointermove', e => {
     if (!touchStart || G.state !== 'playing') return;
-    const dx = e.clientX - touchStart.x, dy = e.clientY - touchStart.y;
-    if (Math.hypot(dx, dy) > 6) cancelHoldTimer();
+    const dx = e.clientX - touchStart.x;
     const colsTraveled = Math.round(dx / CELL);
     while (colsTraveled > lastMoveCol){ if (tryMove(0,+1)) sndMove(); lastMoveCol++; touchStart.moved = true; }
     while (colsTraveled < lastMoveCol){ if (tryMove(0,-1)) sndMove(); lastMoveCol--; touchStart.moved = true; }
-    const rowsTraveled = Math.round(dy / CELL);
-    while (rowsTraveled > lastSoftRow){ softDropOne(); lastSoftRow++; touchStart.moved = true; }
   });
   boardCv.addEventListener('pointerup', e => {
-    cancelHoldTimer();
     if (!touchStart || G.state !== 'playing'){ touchStart = null; return; }
-    if (touchStart.didHold){ touchStart = null; return; }
     const dt = performance.now() - touchStart.t;
     const dx = e.clientX - touchStart.x, dy = e.clientY - touchStart.y;
     const dist = Math.hypot(dx, dy);
-    if (dt < 250 && dy < -40 && Math.abs(dy) > Math.abs(dx)){
-      hardDrop();
-    } else if (!touchStart.moved && dist < 12 && dt < 250){
+    if (!touchStart.moved && dist < 12 && dt < 280){
       if (tryRotate(+1)) sndRot();
     }
     touchStart = null;
   });
-  boardCv.addEventListener('pointercancel', () => { cancelHoldTimer(); touchStart = null; });
+  boardCv.addEventListener('pointercancel', () => { touchStart = null; });
+
+  // ===== Drop bar =====
+  // drag down = soft drop (one row per ~half-cell of drag) · fast & long swipe
+  // down = hard drop · tap = single soft-drop step.
+  const dropBar = document.getElementById('dropBar');
+  if (dropBar){
+    let dStart = null, lastDropRow = 0;
+    dropBar.addEventListener('pointerdown', e => {
+      if (G.state !== 'playing') return;
+      e.preventDefault();
+      dStart = { y: e.clientY, t: performance.now(), moved: false };
+      lastDropRow = 0;
+      dropBar.classList.add('active');
+      try { dropBar.setPointerCapture(e.pointerId); } catch(err){}
+    });
+    dropBar.addEventListener('pointermove', e => {
+      if (!dStart || G.state !== 'playing') return;
+      const dy = e.clientY - dStart.y;
+      if (dy > 4) dStart.moved = true;
+      const step = Math.max(10, CELL * 0.55);
+      const rows = Math.floor(dy / step);
+      while (rows > lastDropRow){ softDropOne(); lastDropRow++; }
+    });
+    dropBar.addEventListener('pointerup', e => {
+      if (!dStart || G.state !== 'playing'){
+        dropBar.classList.remove('active','hard'); dStart = null; return;
+      }
+      const dt = performance.now() - dStart.t;
+      const dy = e.clientY - dStart.y;
+      // Fast & long swipe → hard drop
+      if (dt < 320 && dy > 80){
+        dropBar.classList.add('hard');
+        hardDrop();
+        setTimeout(() => dropBar.classList.remove('hard'), 220);
+      } else if (!dStart.moved && dt < 260){
+        // Tap = single row down
+        softDropOne();
+      }
+      dropBar.classList.remove('active');
+      dStart = null;
+    });
+    dropBar.addEventListener('pointercancel', () => {
+      dropBar.classList.remove('active','hard'); dStart = null;
+    });
+  }
 }
 
 /* ===== Loop ===== */
