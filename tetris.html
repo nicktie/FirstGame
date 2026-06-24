@@ -40,41 +40,44 @@ body::after{content:'';position:fixed;inset:0;z-index:-1;pointer-events:none;
 @media (prefers-reduced-motion:reduce){body::before{animation:none}}
 
 #game{position:fixed;inset:0;display:flex;flex-direction:column;
-  padding:calc(8px + env(safe-area-inset-top,0)) 10px calc(10px + env(safe-area-inset-bottom,0));
-  max-width:560px;margin:0 auto}
+  padding:calc(6px + env(safe-area-inset-top,0)) 6px calc(6px + env(safe-area-inset-bottom,0));
+  margin:0 auto;gap:6px}
 
 /* ===== HUD pills row ===== */
-#topRow{display:flex;justify-content:space-between;align-items:center;gap:6px;margin-bottom:8px;flex-wrap:wrap}
+#topRow{display:flex;justify-content:center;align-items:center;gap:5px;flex-wrap:wrap;flex-shrink:0}
 .pill{background:linear-gradient(165deg,rgba(20,22,38,0.92),rgba(10,12,22,0.85));
   border:1px solid rgba(255,255,255,0.10);
-  border-radius:16px;padding:6px 12px;font-size:0.78rem;font-weight:800;
+  border-radius:14px;padding:5px 10px;font-size:0.76rem;font-weight:800;
   backdrop-filter:blur(14px) saturate(140%);-webkit-backdrop-filter:blur(14px) saturate(140%);
-  box-shadow:0 6px 16px rgba(0,0,0,0.4),inset 0 1px 0 rgba(255,255,255,0.08);
-  display:flex;gap:6px;align-items:center;line-height:1.2;position:relative;overflow:hidden}
+  box-shadow:0 4px 14px rgba(0,0,0,0.4),inset 0 1px 0 rgba(255,255,255,0.08);
+  display:flex;gap:5px;align-items:center;line-height:1.2;position:relative;overflow:hidden}
 .pill::before{content:'';position:absolute;left:0;top:0;width:2px;height:100%;background:linear-gradient(180deg,var(--gold),transparent);opacity:0.7}
 .pill .lbl{color:#9aa3b8;font-weight:700;font-size:0.78em}
 .pill .val{color:#fff;font-family:'Courier New',monospace;font-variant-numeric:tabular-nums;
   text-shadow:0 0 12px rgba(240,208,128,0.5);font-size:1.05em}
-.pill.score .val{color:var(--gold-light);font-size:1.18em}
-.pill.icon{cursor:pointer;width:36px;height:36px;padding:0;justify-content:center;font-size:1rem}
+.pill.score .val{color:var(--gold-light);font-size:1.15em}
+.pill.icon{cursor:pointer;width:34px;height:34px;padding:0;justify-content:center;font-size:0.95rem}
 .pill.icon:active{transform:scale(0.92)}
 .pill.pulse-up{animation:pulseUp 0.45s ease-out}
 @keyframes pulseUp{0%{transform:scale(1)}50%{transform:scale(1.15);box-shadow:0 0 24px rgba(255,210,80,0.8)}100%{transform:scale(1)}}
 
-/* ===== Play area (Hold | Board | Next) ===== */
-#playArea{flex:1;display:grid;grid-template-columns:70px 1fr 70px;gap:8px;align-items:start;min-height:0}
-.side{display:flex;flex-direction:column;gap:8px}
-.side-card{background:linear-gradient(165deg,rgba(22,25,40,0.88),rgba(10,12,22,0.80));
-  border:1px solid rgba(255,255,255,0.08);border-radius:14px;padding:6px;
-  backdrop-filter:blur(16px) saturate(140%);-webkit-backdrop-filter:blur(16px) saturate(140%);
-  box-shadow:0 8px 22px rgba(0,0,0,0.4),inset 0 1px 0 rgba(255,255,255,0.07);
-  display:flex;flex-direction:column;align-items:center;gap:4px;position:relative;overflow:hidden}
-.side-card::before{content:'';position:absolute;inset:0;background:linear-gradient(135deg,transparent 40%,rgba(255,255,255,0.04) 50%,transparent 60%);pointer-events:none}
-.side-card.holdLocked{opacity:0.5;filter:grayscale(0.4)}
-.side-title{font-size:0.62rem;color:#9aa3b8;font-weight:800;letter-spacing:1.5px;text-transform:uppercase}
-.side-canvas{width:56px;height:56px;display:block;filter:drop-shadow(0 2px 8px rgba(255,255,255,0.08))}
+/* Hold / Next previews live as tiny chips inside the HUD row */
+.pill.tile{padding:3px 8px 3px 4px;gap:6px}
+.pill.tile .tile-cv{width:38px;height:38px;display:block;
+  filter:drop-shadow(0 2px 6px rgba(255,255,255,0.08));border-radius:6px;background:rgba(0,0,0,0.3)}
+.pill.tile .tile-lbl{font-size:0.62rem;color:#9aa3b8;font-weight:800;letter-spacing:1px;text-transform:uppercase;line-height:1}
+#holdCard{cursor:pointer;transition:transform 0.1s}
+#holdCard:active{transform:scale(0.94)}
+#holdCard.holdLocked{opacity:0.5;filter:grayscale(0.5)}
+#holdCard.flash{animation:holdFlash 0.55s ease-out}
+@keyframes holdFlash{
+  0%{box-shadow:0 4px 14px rgba(0,0,0,0.4),inset 0 1px 0 rgba(255,255,255,0.08)}
+  35%{box-shadow:0 0 22px rgba(181,115,232,0.95),inset 0 0 20px rgba(181,115,232,0.55)}
+  100%{box-shadow:0 4px 14px rgba(0,0,0,0.4),inset 0 1px 0 rgba(255,255,255,0.08)}
+}
 
-#boardWrap{position:relative;justify-self:center;width:100%;max-width:300px;height:100%;display:flex;align-items:flex-start;justify-content:center}
+/* ===== Big board fills the remaining vertical space ===== */
+#boardWrap{position:relative;flex:1;display:flex;align-items:center;justify-content:center;min-height:0;width:100%}
 #board{display:block;
   background:linear-gradient(180deg,#04060d,#0a0d1a);
   border:2px solid rgba(201,168,76,0.3);border-radius:14px;
@@ -95,25 +98,6 @@ body::after{content:'';position:fixed;inset:0;z-index:-1;pointer-events:none;
   animation:dangerPulse 0.6s ease-in-out infinite alternate}
 @keyframes dangerPulse{from{box-shadow:0 0 40px rgba(255,40,40,0.6),inset 0 0 24px rgba(255,40,40,0.3)}
   to{box-shadow:0 0 70px rgba(255,40,40,1),inset 0 0 40px rgba(255,40,40,0.5)}}
-
-/* ===== Hold preview is now tappable as the fallback hold trigger ===== */
-#holdCard{cursor:pointer;transition:transform 0.1s,box-shadow 0.15s,background 0.15s}
-#holdCard:active{transform:scale(0.94)}
-#holdCard.flash{animation:holdFlash 0.55s ease-out}
-@keyframes holdFlash{
-  0%{box-shadow:0 0 0 rgba(181,115,232,0)}
-  35%{box-shadow:0 0 22px rgba(181,115,232,0.9),inset 0 0 18px rgba(181,115,232,0.5)}
-  100%{box-shadow:0 8px 22px rgba(0,0,0,0.4),inset 0 1px 0 rgba(255,255,255,0.07)}
-}
-
-/* Gesture cheat-sheet strip below the board */
-#gestureHint{margin-top:8px;padding:8px 10px;text-align:center;font-size:0.72rem;
-  color:rgba(220,225,240,0.7);font-weight:700;letter-spacing:0.3px;line-height:1.6;
-  background:linear-gradient(165deg,rgba(20,22,38,0.65),rgba(10,12,22,0.55));
-  border:1px solid rgba(255,255,255,0.06);border-radius:12px;
-  backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);flex-shrink:0}
-#gestureHint .ghk{display:inline-block;color:var(--gold-light);font-weight:900;
-  text-shadow:0 0 8px rgba(240,208,128,0.55);margin:0 1px}
 
 /* ===== Score-pop floaters ===== */
 .score-pop{position:absolute;font-weight:900;font-size:1.4rem;pointer-events:none;
@@ -200,67 +184,36 @@ body::after{content:'';position:fixed;inset:0;z-index:-1;pointer-events:none;
 .preview-row .cell{width:18px;height:18px;border-radius:4px;box-shadow:inset 0 1px 0 rgba(255,255,255,0.3),inset 0 -1px 4px rgba(0,0,0,0.3)}
 
 @media (max-height:680px){
-  #playArea{grid-template-columns:54px 1fr 54px}
-  .side-canvas{width:42px;height:42px}
-  #gestureHint{font-size:0.66rem;padding:5px 8px}
+  .pill{padding:4px 8px;font-size:0.72rem}
+  .pill.tile .tile-cv{width:32px;height:32px}
+  .pill.icon{width:30px;height:30px}
 }
 @media (max-width:340px){
-  #playArea{grid-template-columns:50px 1fr 50px;gap:5px}
-  .side-canvas{width:40px;height:40px}
+  .pill{padding:4px 6px}
+  .pill.tile .tile-cv{width:30px;height:30px}
 }
 </style>
 </head>
 <body>
 <div id="game">
   <div id="topRow">
+    <span class="pill icon" onclick="location.href='index.html'" aria-label="الرئيسية">🏠</span>
+    <span class="pill icon" id="pauseBtn" onclick="togglePause()" aria-label="إيقاف">⏸</span>
     <span class="pill score"><span class="lbl">⭐</span><span class="val" id="hudScore">0</span></span>
     <span class="pill"><span class="lbl">📊</span><span class="val" id="hudLevel">1</span></span>
     <span class="pill"><span class="lbl">📏</span><span class="val" id="hudLines">0</span></span>
-    <span class="pill icon" id="pauseBtn" onclick="togglePause()" aria-label="إيقاف">⏸</span>
-    <span class="pill icon" onclick="location.href='index.html'">🏠</span>
+    <span class="pill"><span class="lbl">🏆</span><span class="val" id="hudBest">0</span></span>
+    <span class="pill"><span class="lbl">🔥</span><span class="val" id="hudCombo">×0</span></span>
+    <span class="pill tile" id="holdCard" aria-label="Hold"><span class="tile-lbl">📦</span><canvas id="holdCv" class="tile-cv" width="76" height="76"></canvas></span>
+    <span class="pill tile" aria-label="Next"><span class="tile-lbl">⏭</span><canvas id="nextCv" class="tile-cv" width="76" height="76"></canvas></span>
   </div>
 
-  <div id="playArea">
-    <div class="side">
-      <div class="side-card" id="holdCard">
-        <div class="side-title">احتفظ</div>
-        <canvas id="holdCv" class="side-canvas" width="112" height="112"></canvas>
-      </div>
-      <div class="side-card">
-        <div class="side-title">🏆</div>
-        <div style="font-family:'Courier New',monospace;color:var(--gold-light);font-weight:900;font-size:0.85rem;text-shadow:0 0 10px rgba(240,208,128,0.5)" id="hudBest">0</div>
-      </div>
-    </div>
-
-    <div id="boardWrap">
-      <canvas id="board" width="300" height="600"></canvas>
-      <div id="boardGlow"></div>
-      <div id="flash"></div>
-      <div id="comboFx"></div>
-      <div id="levelUp"><div class="lt">LEVEL UP!</div><div class="lv" id="lvlNum">2</div></div>
-    </div>
-
-    <div class="side">
-      <div class="side-card">
-        <div class="side-title">التالي</div>
-        <canvas id="nextCv" class="side-canvas" width="112" height="112"></canvas>
-      </div>
-      <div class="side-card">
-        <div class="side-title">🔥</div>
-        <div style="font-family:'Courier New',monospace;color:#ff9438;font-weight:900;font-size:0.85rem;text-shadow:0 0 10px rgba(255,140,60,0.5)" id="hudCombo">×0</div>
-      </div>
-    </div>
-  </div>
-
-  <!-- Gesture-only controls: tap = rotate, drag L/R = move, drag down = soft
-       drop, swipe up = hard drop, long-press = hold. The Hold preview is
-       also tappable as a fallback for the hold action. -->
-  <div id="gestureHint" aria-hidden="true">
-    <span class="ghk">👆</span> دوران &nbsp;·&nbsp;
-    <span class="ghk">↔</span> حركة &nbsp;·&nbsp;
-    <span class="ghk">↓</span> سقوط ناعم &nbsp;·&nbsp;
-    <span class="ghk">↑</span> سقوط حادّ &nbsp;·&nbsp;
-    <span class="ghk">⏳</span> Hold
+  <div id="boardWrap">
+    <canvas id="board" width="300" height="600"></canvas>
+    <div id="boardGlow"></div>
+    <div id="flash"></div>
+    <div id="comboFx"></div>
+    <div id="levelUp"><div class="lt">LEVEL UP!</div><div class="lv" id="lvlNum">2</div></div>
   </div>
 </div>
 
@@ -377,25 +330,21 @@ let CELL = 30, BW = 0, BH = 0;
 
 function fitBoard(){
   const wrap = document.getElementById('boardWrap');
-  const playArea = document.getElementById('playArea');
+  const game = document.getElementById('game');
   const dpr = Math.min(window.devicePixelRatio || 1, 2);
 
-  // Available width = playArea width - 2*side column - gaps
-  const sideW = parseInt(getComputedStyle(playArea).gridTemplateColumns.split(' ')[0]) || 70;
-  const availW = playArea.clientWidth - sideW*2 - 16;
-  // Available height = playArea height
-  const availH = playArea.clientHeight - 4;
+  const availW = Math.max(120, game.clientWidth - 4);
+  const availH = Math.max(240, wrap.clientHeight - 4);
   const cellByW = Math.floor(availW / COLS);
   const cellByH = Math.floor(availH / ROWS);
-  CELL = Math.max(12, Math.min(32, Math.min(cellByW, cellByH)));
+  CELL = Math.max(14, Math.min(cellByW, cellByH));
   BW = CELL * COLS; BH = CELL * ROWS;
-  wrap.style.maxWidth = BW + 'px';
   boardCv.width = BW * dpr; boardCv.height = BH * dpr;
   boardCv.style.width = BW + 'px'; boardCv.style.height = BH + 'px';
   bctx.setTransform(dpr, 0, 0, dpr, 0, 0);
 
   for (const [cv, ctx2] of [[holdCv, hctx], [nextCv, nctx]]){
-    const ss = cv.clientWidth;
+    const ss = cv.clientWidth || cv.width || 38;
     cv.width = ss * dpr; cv.height = ss * dpr;
     ctx2.setTransform(dpr, 0, 0, dpr, 0, 0);
   }
