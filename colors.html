@@ -1,0 +1,424 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
+<title>حرب الألوان السريعة | Wanees</title>
+<meta name="theme-color" content="#0a0a16">
+<meta name="description" content="حرب الألوان السريعة — تحدّي ردّة فعل للاعبين على جهاز واحد: انقر لونك بأسرع وقت وتجنّب لون الخصم. من أسرع يفوز!">
+<link rel="manifest" href="manifest.json">
+<link rel="icon" href="icon-192.png">
+<style>
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent;-webkit-touch-callout:none;-webkit-user-select:none;user-select:none}
+:root{
+  --bg:#06070d;
+  --gold:#c9a84c; --gold-light:#f0d080;
+  --blue:#3d9bff; --blue-glow:rgba(61,155,255,0.55);
+  --red:#ff4d63; --red-glow:rgba(255,77,99,0.55);
+}
+html,body{margin:0;padding:0;height:100%;height:100dvh;overflow:hidden;background:var(--bg);
+  font-family:'Tajawal','Cairo','Segoe UI',sans-serif;color:#fff;touch-action:none;overscroll-behavior:none}
+body::before{content:'';position:fixed;inset:-15%;z-index:-2;pointer-events:none;
+  background:
+    radial-gradient(circle 360px at 15% 15%,rgba(61,155,255,0.16),transparent 65%),
+    radial-gradient(circle 360px at 85% 85%,rgba(255,77,99,0.16),transparent 65%),
+    radial-gradient(circle 300px at 50% 50%,rgba(201,168,76,0.10),transparent 70%);
+  filter:blur(24px)}
+
+#app{position:fixed;inset:0;display:flex;flex-direction:column}
+.panel{flex:1;min-height:0;position:relative;display:flex;flex-direction:column;
+  padding:calc(8px + env(safe-area-inset-top,0)) 12px 8px;gap:8px;overflow:hidden}
+.panel.bot{padding:8px 12px calc(8px + env(safe-area-inset-bottom,0))}
+.panel.top{transform:rotate(180deg)}
+/* colour role per panel */
+.panel.bot{--own:var(--blue);--own-glow:var(--blue-glow);--opp:var(--red);--opp-glow:var(--red-glow)}
+.panel.top{--own:var(--red);--own-glow:var(--red-glow);--opp:var(--blue);--opp-glow:var(--blue-glow)}
+
+/* divider */
+#divider{height:2px;flex-shrink:0;background:linear-gradient(90deg,transparent,rgba(201,168,76,0.5),transparent);position:relative;z-index:5}
+
+/* panel header */
+.phead{display:flex;align-items:center;gap:8px;flex-shrink:0}
+.phead .tag{display:flex;align-items:center;gap:6px;font-weight:900;font-size:0.92rem;color:var(--own);
+  background:linear-gradient(165deg,rgba(20,22,38,0.9),rgba(10,12,22,0.85));border:1px solid rgba(255,255,255,0.1);
+  border-radius:12px;padding:6px 12px;box-shadow:0 3px 10px rgba(0,0,0,0.4)}
+.phead .tag .dot{width:12px;height:12px;border-radius:50%;background:var(--own);box-shadow:0 0 10px var(--own-glow)}
+.phead .time{margin-inline:auto;font-family:'Courier New',monospace;font-weight:900;font-size:1.1rem;color:var(--gold-light);
+  background:rgba(0,0,0,0.35);border:1px solid rgba(201,168,76,0.3);border-radius:12px;padding:5px 14px;min-width:64px;text-align:center}
+.phead .sc{font-family:'Courier New',monospace;font-weight:900;font-size:1.5rem;color:#fff;min-width:52px;text-align:center;
+  text-shadow:0 0 14px rgba(255,255,255,0.25);transition:transform .15s}
+.phead .sc.pop{animation:scpop .4s ease-out}
+@keyframes scpop{0%{transform:scale(1)}45%{transform:scale(1.4);color:var(--gold-light)}100%{transform:scale(1)}}
+
+/* grid */
+.grid{flex:1;min-height:0;display:grid;grid-template-columns:repeat(3,1fr);grid-template-rows:repeat(3,1fr);
+  gap:8px;align-content:stretch;justify-content:stretch}
+.cell{border-radius:14px;background:linear-gradient(160deg,rgba(30,33,50,0.7),rgba(14,16,26,0.8));
+  border:1.5px solid rgba(255,255,255,0.06);box-shadow:inset 0 2px 0 rgba(255,255,255,0.05),inset 0 -6px 12px rgba(0,0,0,0.4);
+  cursor:pointer;position:relative;overflow:hidden;transition:background .08s,box-shadow .12s,transform .06s;touch-action:none}
+.cell:active{transform:scale(0.97)}
+.cell.lit-own{background:radial-gradient(circle at 50% 40%,color-mix(in srgb,var(--own) 85%,#fff 15%),var(--own));
+  border-color:color-mix(in srgb,var(--own) 60%,#fff);
+  box-shadow:0 0 26px var(--own-glow),inset 0 0 22px rgba(255,255,255,0.2)}
+.cell.lit-opp{background:radial-gradient(circle at 50% 40%,color-mix(in srgb,var(--opp) 85%,#fff 15%),var(--opp));
+  border-color:color-mix(in srgb,var(--opp) 60%,#fff);
+  box-shadow:0 0 26px var(--opp-glow),inset 0 0 22px rgba(255,255,255,0.2)}
+.cell.fx-good::after,.cell.fx-bad::after,.cell.fx-miss::after{content:'';position:absolute;inset:0;border-radius:14px;
+  animation:fxflash .4s ease-out;pointer-events:none}
+.cell.fx-good::after{box-shadow:inset 0 0 0 3px #5edd72,inset 0 0 24px rgba(94,221,114,0.7)}
+.cell.fx-bad::after{box-shadow:inset 0 0 0 3px #ff3b3b,inset 0 0 24px rgba(255,59,59,0.7);animation:fxshake .4s ease-out}
+.cell.fx-miss::after{box-shadow:inset 0 0 0 2px rgba(255,255,255,0.25)}
+@keyframes fxflash{from{opacity:1}to{opacity:0}}
+@keyframes fxshake{0%,100%{transform:translateX(0)}25%{transform:translateX(-4px)}75%{transform:translateX(4px)}}
+.floaty{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);font-weight:900;font-size:1.6rem;pointer-events:none;
+  z-index:3;animation:floaty .7s ease-out forwards}
+.floaty.plus{color:#7dffa0;text-shadow:0 0 12px rgba(94,221,114,0.8)}
+.floaty.minus{color:#ff7d8c;text-shadow:0 0 12px rgba(255,59,59,0.8)}
+@keyframes floaty{0%{opacity:0;transform:translate(-50%,-30%) scale(0.5)}25%{opacity:1;transform:translate(-50%,-70%) scale(1.15)}100%{opacity:0;transform:translate(-50%,-140%) scale(1)}}
+
+/* ===== Overlays ===== */
+.overlay{position:fixed;inset:0;z-index:40;
+  background:linear-gradient(165deg,rgba(6,8,16,0.85),rgba(2,3,8,0.95));
+  backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px);
+  display:flex;align-items:center;justify-content:center;padding:20px}
+.overlay[hidden]{display:none}
+.card{background:linear-gradient(165deg,rgba(22,24,38,0.96),rgba(10,12,22,0.93));
+  border:1px solid rgba(201,168,76,0.3);border-radius:24px;padding:26px 22px;max-width:400px;width:100%;
+  box-shadow:0 26px 70px rgba(0,0,0,0.75),inset 0 1px 0 rgba(255,255,255,0.07);
+  text-align:center;position:relative;overflow:hidden;animation:cardIn .45s cubic-bezier(.34,1.4,.64,1);max-height:94dvh;overflow-y:auto}
+@keyframes cardIn{from{opacity:0;transform:scale(.92) translateY(20px)}to{opacity:1;transform:none}}
+.card::before{content:'';position:absolute;left:0;top:0;width:3px;height:100%;background:linear-gradient(180deg,var(--gold),transparent);opacity:.85}
+.card .ttl{font-size:1.9rem;font-weight:900;margin:0 0 6px;letter-spacing:0.5px;line-height:1.15;
+  background:linear-gradient(180deg,#fbe9a8,var(--gold-light) 45%,var(--gold) 74%,#8b6e1f);
+  -webkit-background-clip:text;background-clip:text;color:transparent;filter:drop-shadow(0 2px 12px rgba(201,168,76,0.4))}
+.card .desc{font-size:0.92rem;color:#c0c8d8;margin:0 0 14px;line-height:1.7;font-weight:600}
+.rules{background:linear-gradient(135deg,rgba(201,168,76,0.1),rgba(61,155,255,0.06));
+  border:1px solid rgba(201,168,76,0.22);border-radius:14px;padding:12px 14px;font-size:0.85rem;
+  color:#d8dae6;line-height:1.95;text-align:right;font-weight:600;margin:4px 0 16px}
+.rules b{color:var(--gold-light)}
+.rules .cdot{display:inline-block;width:11px;height:11px;border-radius:50%;vertical-align:middle}
+.seg{display:flex;gap:8px;margin:4px 0 14px}
+.seg .opt{flex:1;background:rgba(0,0,0,0.35);border:1.5px solid rgba(255,255,255,0.1);border-radius:13px;
+  padding:11px 6px;font-weight:800;font-size:0.86rem;color:#c8cfe0;cursor:pointer;transition:all .18s}
+.seg .opt .em{font-size:1.4rem;display:block;margin-bottom:3px}
+.seg .opt.active{border-color:var(--gold);background:linear-gradient(160deg,rgba(201,168,76,0.22),rgba(201,168,76,0.08));color:#fff;box-shadow:0 0 18px rgba(201,168,76,0.3)}
+.lbl{font-size:0.78rem;color:#8a92a8;font-weight:800;margin-bottom:6px;text-align:center}
+.roundsel{display:flex;gap:8px;justify-content:center;margin:2px 0 18px}
+.roundsel .r{width:58px;height:46px;border-radius:12px;background:rgba(0,0,0,0.35);border:1.5px solid rgba(255,255,255,0.1);
+  display:flex;flex-direction:column;align-items:center;justify-content:center;font-weight:900;font-size:1.05rem;color:#c8cfe0;cursor:pointer;transition:all .18s;line-height:1}
+.roundsel .r small{font-size:0.6rem;color:#8a92a8;font-weight:700;margin-top:2px}
+.roundsel .r.active{border-color:var(--gold);background:linear-gradient(160deg,rgba(201,168,76,0.22),rgba(201,168,76,0.08));color:#fff;box-shadow:0 0 16px rgba(201,168,76,0.3)}
+.btn{background:linear-gradient(180deg,#f4d488,var(--gold) 58%,#9c7c2e);
+  border:1px solid rgba(255,236,170,0.55);color:#1a1206;border-radius:16px;
+  padding:14px 30px;font-size:1.05rem;font-weight:900;cursor:pointer;font-family:inherit;
+  min-width:220px;box-shadow:0 5px 0 #8a6a18,inset 0 1px 0 rgba(255,255,255,0.45);transition:transform .08s,box-shadow .08s;margin:4px 0}
+.btn:active{transform:translateY(3px);box-shadow:0 2px 0 #8a6a18}
+.btn.secondary{background:linear-gradient(180deg,rgba(40,46,66,0.95),rgba(20,24,38,0.95));border-color:rgba(120,150,210,0.4);color:#dde6ff;box-shadow:0 5px 0 #14182a}
+.btn.secondary:active{box-shadow:0 2px 0 #14182a}
+.finalScores{display:flex;gap:12px;margin:10px 0 18px}
+.finalScores .fs{flex:1;background:rgba(0,0,0,0.4);border:1.5px solid var(--c);border-radius:16px;padding:14px 8px}
+.finalScores .fs .nm{font-size:0.82rem;font-weight:800;color:var(--c);margin-bottom:3px;display:flex;align-items:center;justify-content:center;gap:5px}
+.finalScores .fs .nm .dot{width:11px;height:11px;border-radius:50%;background:var(--c);box-shadow:0 0 8px var(--c)}
+.finalScores .fs .pt{font-family:'Courier New',monospace;font-size:2rem;font-weight:900;color:#fff}
+.finalScores .fs.win{box-shadow:0 0 26px color-mix(in srgb,var(--c) 60%,transparent)}
+.crown{font-size:2.6rem;margin-bottom:2px}
+
+/* Countdown */
+#countOv{background:rgba(4,5,11,0.55);backdrop-filter:blur(4px);-webkit-backdrop-filter:blur(4px)}
+#countNum{font-size:7rem;font-weight:900;line-height:1;
+  background:linear-gradient(180deg,#fff,var(--gold-light) 55%,var(--gold));
+  -webkit-background-clip:text;background-clip:text;color:transparent;
+  filter:drop-shadow(0 0 40px rgba(201,168,76,0.8));animation:countPulse .8s ease-out}
+@keyframes countPulse{0%{transform:scale(0.4);opacity:0}30%{transform:scale(1.15);opacity:1}100%{transform:scale(1);opacity:1}}
+
+.topLbl{position:fixed;top:calc(6px + env(safe-area-inset-top,0));left:50%;transform:translateX(-50%) rotate(180deg);
+  font-size:0.7rem;color:#6a7288;font-weight:800;z-index:6;letter-spacing:1px}
+</style>
+</head>
+<body>
+<div id="app">
+  <div class="panel top" id="panel1">
+    <div class="phead">
+      <span class="tag"><span class="dot"></span><span id="nm1">اللاعب ٢</span></span>
+      <span class="time" id="time1">٣٠</span>
+      <span class="sc" id="sc1">0</span>
+    </div>
+    <div class="grid" id="grid1"></div>
+  </div>
+
+  <div id="divider"></div>
+
+  <div class="panel bot" id="panel0">
+    <div class="phead">
+      <span class="tag"><span class="dot"></span><span id="nm0">اللاعب ١</span></span>
+      <span class="time" id="time0">٣٠</span>
+      <span class="sc" id="sc0">0</span>
+    </div>
+    <div class="grid" id="grid0"></div>
+  </div>
+</div>
+
+<!-- Start overlay -->
+<div class="overlay" id="startOv">
+  <div class="card">
+    <h1 class="ttl">⚡ حرب الألوان السريعة</h1>
+    <p class="desc">تحدّي ردّة فعلٍ للاعبين على جهاز واحد — الجهاز بينكما!</p>
+    <div class="rules">
+      🔵 <b>اللاعب ١</b> (الأسفل) لونه <span class="cdot" style="background:var(--blue)"></span> أزرق.<br>
+      🔴 <b>اللاعب ٢</b> (الأعلى) لونه <span class="cdot" style="background:var(--red)"></span> أحمر.<br>
+      ⚡ انقر مربّعات <b>لونك</b> بأسرع وقت = <b>+١</b>.<br>
+      ⛔ نقر <b>لون الخصم</b> في شبكتك = <b>−١</b>.<br>
+      🏁 عند انتهاء الوقت، صاحب أعلى رصيد يفوز!
+    </div>
+    <div class="lbl">طريقة اللعب</div>
+    <div class="seg" id="modeSeg">
+      <div class="opt active" data-mode="pvp" onclick="pickMode('pvp')"><span class="em">👥</span>لاعبان</div>
+      <div class="opt" data-mode="bot" onclick="pickMode('bot')"><span class="em">🤖</span>ضدّ الكمبيوتر</div>
+    </div>
+    <div class="lbl">مدة الجولة</div>
+    <div class="roundsel" id="durSel">
+      <div class="r" data-d="20" onclick="pickDur(20)">٢٠<small>ثانية</small></div>
+      <div class="r active" data-d="30" onclick="pickDur(30)">٣٠<small>ثانية</small></div>
+      <div class="r" data-d="45" onclick="pickDur(45)">٤٥<small>ثانية</small></div>
+    </div>
+    <button class="btn" onclick="startGame()">▶ ابدأ اللعب</button>
+    <button class="btn secondary" onclick="goHome()">🏠 الرئيسية</button>
+  </div>
+</div>
+
+<!-- Countdown overlay -->
+<div class="overlay" id="countOv" hidden>
+  <div id="countNum">٣</div>
+</div>
+
+<!-- Game over overlay -->
+<div class="overlay" id="overOv" hidden>
+  <div class="card">
+    <div class="crown" id="overCrown">🏆</div>
+    <h1 class="ttl" id="overTtl">انتهى الوقت!</h1>
+    <p class="desc" id="overDesc"></p>
+    <div class="finalScores">
+      <div class="fs" id="fs0" style="--c:var(--blue)"><div class="nm"><span class="dot"></span><span id="fnm0">اللاعب ١</span></div><div class="pt" id="fpt0">0</div></div>
+      <div class="fs" id="fs1" style="--c:var(--red)"><div class="nm"><span class="dot"></span><span id="fnm1">اللاعب ٢</span></div><div class="pt" id="fpt1">0</div></div>
+    </div>
+    <button class="btn" onclick="startGame()">🔄 مباراة جديدة</button>
+    <button class="btn secondary" onclick="showStart()">⚙️ تغيير الإعدادات</button>
+    <button class="btn secondary" onclick="goHome()">🏠 الرئيسية</button>
+  </div>
+</div>
+
+<div class="topLbl">↑ اللاعب ٢</div>
+
+<script>
+'use strict';
+/* ============================================================
+   حرب الألوان السريعة — Color Reaction (split-screen, 2 players)
+   Each player has an independent 3×3 grid that flashes BOTH colors.
+   Tap your own colour = +1 · tap the opponent's colour = −1.
+   Highest score when the timer ends wins. PvP or vs bot (top panel).
+   ============================================================ */
+const CELLS = 9;
+const S = {
+  mode:'pvp', dur:30, timeLeft:30, running:false,
+  scores:[0,0], names:['اللاعب ١','اللاعب ٢'],
+};
+const panels = [null,null]; // {cells:[{el,state,spawnT,offT,botLock}], grid}
+const timers = new Set();
+let tickInt = 0, botInt = 0;
+
+const $ = id => document.getElementById(id);
+const ar = n => String(n).replace(/\d/g,d=>'٠١٢٣٤٥٦٧٨٩'[d]);
+function goHome(){ location.href='index.html'; }
+window.goHome = goHome;
+function vibe(p){ try{ if(navigator.vibrate) navigator.vibrate(p); }catch(e){} }
+function T(fn,ms){ const id=setTimeout(()=>{ timers.delete(id); fn(); }, ms); timers.add(id); return id; }
+function clearTimers(){ timers.forEach(clearTimeout); timers.clear(); }
+
+/* ---- audio ---- */
+let AC=null;
+function initAudio(){ try{ AC=new (window.AudioContext||window.webkitAudioContext)(); }catch(e){ AC=null; } }
+function tone(f,d,type,vol){ if(!AC)return; const t=AC.currentTime,o=AC.createOscillator(),g=AC.createGain();
+  o.type=type||'sine';o.frequency.value=f;g.gain.value=vol||0.05;g.gain.exponentialRampToValueAtTime(0.0006,t+d);
+  o.connect(g);g.connect(AC.destination);o.start(t);o.stop(t+d+0.04); }
+function sndGood(){ tone(680,0.06,'triangle',0.05); }
+function sndBad(){ tone(150,0.14,'sawtooth',0.06); }
+function sndTick(){ tone(880,0.04,'sine',0.04); }
+function sndGo(){ [523,659,880].forEach((f,i)=>setTimeout(()=>tone(f,0.14,'sine',0.06),i*90)); }
+function sndEnd(){ [880,659,523,392].forEach((f,i)=>setTimeout(()=>tone(f,0.18,'triangle',0.05),i*130)); }
+
+/* ---- setup UI ---- */
+function pickMode(m){ S.mode=m; document.querySelectorAll('#modeSeg .opt').forEach(o=>o.classList.toggle('active',o.dataset.mode===m)); }
+function pickDur(d){ S.dur=d; document.querySelectorAll('#durSel .r').forEach(r=>r.classList.toggle('active',+r.dataset.d===d)); }
+window.pickMode=pickMode; window.pickDur=pickDur;
+function showStart(){ stopAll(); $('overOv').hidden=true; $('countOv').hidden=true; $('startOv').hidden=false; }
+window.showStart=showStart;
+
+function buildGrids(){
+  for(let p=0;p<2;p++){
+    const grid=$('grid'+p); grid.innerHTML='';
+    const cells=[];
+    for(let i=0;i<CELLS;i++){
+      const el=document.createElement('div');
+      el.className='cell';
+      const idx=i, pi=p;
+      el.addEventListener('pointerdown', e=>{ e.preventDefault(); tapCell(pi, idx); });
+      grid.appendChild(el);
+      cells.push({el, state:'off', spawnT:0, offT:0, botLock:false});
+    }
+    panels[p]={cells, grid};
+  }
+}
+
+function startGame(){
+  if(!AC) initAudio();
+  S.names   = S.mode==='bot' ? ['أنت','الكمبيوتر'] : ['اللاعب ١','اللاعب ٢'];
+  $('nm0').textContent=S.names[0]; $('nm1').textContent=S.names[1];
+  $('startOv').hidden=true; $('overOv').hidden=true;
+  buildGrids();
+  S.scores=[0,0]; updateScore(0); updateScore(1);
+  S.timeLeft=S.dur; $('time0').textContent=ar(S.dur); $('time1').textContent=ar(S.dur);
+  S.running=false;
+  runCountdown();
+}
+window.startGame=startGame;
+
+function runCountdown(){
+  let n=3;
+  $('countNum').textContent=ar(n);
+  $('countOv').hidden=false;
+  sndTick();
+  const step=()=>{
+    n--;
+    if(n>0){ $('countNum').textContent=ar(n); $('countNum').style.animation='none'; void $('countNum').offsetWidth; $('countNum').style.animation=''; sndTick(); T(step,800); }
+    else { $('countNum').textContent='هيّا!'; sndGo(); vibe(30); T(()=>{ $('countOv').hidden=true; beginPlay(); }, 650); }
+  };
+  T(step,800);
+}
+
+function beginPlay(){
+  S.running=true;
+  // start spawns on every cell
+  for(let p=0;p<2;p++) for(let i=0;i<CELLS;i++) scheduleCell(p,i, 200+Math.random()*900);
+  // second timer
+  tickInt=setInterval(()=>{
+    if(!S.running) return;
+    S.timeLeft--;
+    $('time0').textContent=ar(Math.max(0,S.timeLeft));
+    $('time1').textContent=ar(Math.max(0,S.timeLeft));
+    if(S.timeLeft<=5 && S.timeLeft>0) sndTick();
+    if(S.timeLeft<=0) endGame();
+  },1000);
+  // bot loop
+  if(S.mode==='bot') botInt=setInterval(botTick, 130);
+}
+
+function scheduleCell(p, i, delay){
+  const cell=panels[p].cells[i];
+  cell.spawnT=T(()=>lightCell(p,i), delay);
+}
+function lightCell(p, i){
+  if(!S.running) return;
+  const cell=panels[p].cells[i];
+  const isOwn = Math.random()<0.62;
+  cell.state = isOwn ? 'own' : 'opp';
+  cell.el.classList.add(isOwn ? 'lit-own' : 'lit-opp');
+  const win = 780 + Math.random()*720;
+  cell.offT = T(()=>{ extinguish(p,i); scheduleCell(p,i, 300+Math.random()*900); }, win);
+}
+function extinguish(p, i){
+  const cell=panels[p].cells[i];
+  clearTimeout(cell.offT);
+  cell.state='off';
+  cell.el.classList.remove('lit-own','lit-opp');
+  cell.botLock=false;
+}
+function tapCell(p, i){
+  if(!S.running) return;
+  const cell=panels[p].cells[i];
+  if(cell.state==='off'){ flashCell(p,i,'miss'); return; }
+  if(cell.state==='own'){
+    S.scores[p]++; updateScore(p,true); flashCell(p,i,'good'); floaty(p,i,'+1','plus'); sndGood(); if(p===0||S.mode==='pvp') vibe(8);
+  } else {
+    S.scores[p]=Math.max(0,S.scores[p]-1); updateScore(p,true); flashCell(p,i,'bad'); floaty(p,i,'-1','minus'); sndBad(); if(p===0||S.mode==='pvp') vibe([15,20,15]);
+  }
+  extinguish(p,i);
+  scheduleCell(p,i, 280+Math.random()*700);
+}
+
+function flashCell(p,i,kind){
+  const el=panels[p].cells[i].el; const cls='fx-'+kind;
+  el.classList.remove('fx-good','fx-bad','fx-miss'); void el.offsetWidth; el.classList.add(cls);
+  T(()=>el.classList.remove(cls), 420);
+}
+function floaty(p,i,txt,cls){
+  const el=panels[p].cells[i].el;
+  const f=document.createElement('div'); f.className='floaty '+cls; f.textContent=txt;
+  el.appendChild(f); T(()=>f.remove(), 720);
+}
+function updateScore(p, pop){
+  const el=$('sc'+p); el.textContent=S.scores[p];
+  if(pop){ el.classList.remove('pop'); void el.offsetWidth; el.classList.add('pop'); }
+}
+
+/* ---- bot (controls top panel = player 1) ---- */
+function botTick(){
+  if(!S.running || S.mode!=='bot') return;
+  const cells=panels[1].cells;
+  for(let i=0;i<CELLS;i++){
+    const c=cells[i];
+    if(c.botLock) continue;
+    if(c.state==='own'){
+      // react to own colour with a human-like delay; ~86% accurate
+      c.botLock=true;
+      const rt = 300 + Math.random()*380;
+      T(()=>{
+        if(!S.running){ c.botLock=false; return; }
+        if(c.state==='own' && Math.random()<0.86) tapCell(1,i);
+        c.botLock=false;
+      }, rt);
+    } else if(c.state==='opp' && Math.random()<0.015){
+      // rare mistake: bot taps opponent colour (gives human an edge)
+      c.botLock=true;
+      T(()=>{ if(S.running && c.state==='opp') tapCell(1,i); c.botLock=false; }, 260+Math.random()*260);
+    }
+  }
+}
+
+function stopAll(){
+  S.running=false;
+  clearTimers();
+  clearInterval(tickInt); tickInt=0;
+  clearInterval(botInt); botInt=0;
+}
+
+function endGame(){
+  stopAll();
+  // clear any lit cells
+  for(let p=0;p<2;p++) for(let i=0;i<CELLS;i++){ const c=panels[p].cells[i]; c.state='off'; c.el.classList.remove('lit-own','lit-opp'); }
+  sndEnd(); vibe([40,40,120]);
+  const [a,b]=S.scores;
+  $('fnm0').textContent=S.names[0]; $('fnm1').textContent=S.names[1];
+  $('fpt0').textContent=a; $('fpt1').textContent=b;
+  $('fs0').classList.toggle('win', a>b); $('fs1').classList.toggle('win', b>a);
+  let crown,ttl,desc;
+  if(a===b){ crown='🤝'; ttl='تعادل!'; desc=`تعادل ${ar(a)} — ${ar(b)}! من أسرع في الجولة القادمة؟`; }
+  else{
+    const w=a>b?0:1;
+    if(S.mode==='bot'){ crown=w===0?'🎉':'🤖'; ttl=w===0?'فزت! ردّة فعل خارقة ⚡':'فاز الكمبيوتر'; }
+    else{ crown='🏆'; ttl='فاز '+S.names[w]+' '+(w===0?'🔵':'🔴'); }
+    desc=`النتيجة ${ar(Math.max(a,b))} — ${ar(Math.min(a,b))}`;
+  }
+  $('overCrown').textContent=crown; $('overTtl').textContent=ttl; $('overDesc').textContent=desc;
+  $('overOv').hidden=false;
+}
+
+/* pause if the tab is hidden mid-game (prevents unfair frozen state) */
+document.addEventListener('visibilitychange', ()=>{
+  if(document.hidden && S.running){ stopAll(); showStart(); }
+});
+
+/* SW */
+if('serviceWorker' in navigator){ window.addEventListener('load',()=>navigator.serviceWorker.register('sw.js').catch(()=>{})); }
+</script>
+</body>
+</html>
