@@ -133,10 +133,50 @@ body::before{content:'';position:fixed;inset:-15%;z-index:-2;pointer-events:none
 
 .topLbl{position:fixed;top:calc(6px + env(safe-area-inset-top,0));left:50%;transform:translateX(-50%) rotate(180deg);
   font-size:0.7rem;color:#6a7288;font-weight:800;z-index:6;letter-spacing:1px}
+
+/* ===== Online UI ===== */
+.oinput{width:100%;background:rgba(0,0,0,0.38);border:1.5px solid rgba(255,255,255,0.12);border-radius:12px;
+  padding:12px 14px;font-family:inherit;font-size:0.95rem;color:#fff;text-align:center;margin-bottom:10px;font-weight:700;outline:none}
+.oinput:focus{border-color:var(--gold)}
+.oinput::placeholder{color:#7a8296}
+.oinput.code{letter-spacing:4px;font-family:'Courier New',monospace;font-size:1.2rem;margin-bottom:0;flex:1}
+.orow{display:flex;gap:8px;align-items:stretch}
+.ordiv{color:#8a92a8;font-weight:800;font-size:0.82rem;margin:8px 0 12px}
+.ostatus{min-height:20px;font-size:0.84rem;font-weight:800;color:var(--gold-light);margin:10px 0}
+.codebox{font-family:'Courier New',monospace;font-size:2.1rem;font-weight:900;letter-spacing:8px;color:var(--gold-light);
+  background:rgba(0,0,0,0.4);border:1.5px dashed rgba(201,168,76,0.45);border-radius:14px;padding:12px;margin:6px 0 14px;
+  text-shadow:0 0 16px rgba(240,208,128,0.4)}
+.lobbyPlayers{display:flex;flex-direction:column;gap:8px;margin:6px 0 16px}
+.lp{display:flex;align-items:center;gap:9px;background:rgba(0,0,0,0.3);border:1.5px solid rgba(255,255,255,0.1);
+  border-radius:12px;padding:11px 14px;font-weight:800;font-size:0.92rem}
+.lp .dot{width:14px;height:14px;border-radius:50%;box-shadow:0 0 10px currentColor;flex-shrink:0}
+.lp .you{margin-inline-start:auto;font-size:0.72rem;color:var(--gold-light);font-weight:800}
+.lp.empty{opacity:0.6;color:#8a92a8;justify-content:center;border-style:dashed}
+
+#onlineHud{position:absolute;top:calc(8px + env(safe-area-inset-top,0));left:0;right:0;z-index:20;
+  display:flex;align-items:center;justify-content:space-between;gap:8px;padding:0 12px;pointer-events:none}
+#onlineHud[hidden]{display:none}
+.ohud-side{display:flex;align-items:center;gap:7px;font-weight:900;
+  background:linear-gradient(165deg,rgba(20,22,38,0.94),rgba(10,12,22,0.9));border:1px solid rgba(255,255,255,0.12);
+  border-radius:12px;padding:6px 12px;box-shadow:0 3px 12px rgba(0,0,0,0.5)}
+.ohud-side .dot{width:12px;height:12px;border-radius:50%}
+.ohud-side b{font-weight:800;font-size:0.8rem;color:#c8cfe0;max-width:84px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+#ohMeSc,#ohOppSc{font-family:'Courier New',monospace;font-size:1.4rem;color:#fff;min-width:22px;text-align:center}
+.ohud-time{font-family:'Courier New',monospace;font-weight:900;font-size:1.2rem;color:var(--gold-light);
+  background:rgba(0,0,0,0.42);border:1px solid rgba(201,168,76,0.35);border-radius:12px;padding:5px 14px;min-width:56px;text-align:center}
+
+#app.online .phead{display:none}
+#app.online #panel1,#app.online #divider{display:none}
+#app.online #panel0{padding-top:calc(58px + env(safe-area-inset-top,0))}
 </style>
 </head>
 <body>
 <div id="app">
+  <div id="onlineHud" hidden>
+    <span class="ohud-side me" id="ohMe"><span class="dot"></span><b id="ohMeName">أنت</b><span id="ohMeSc">0</span></span>
+    <span class="ohud-time" id="ohTime">٣٠</span>
+    <span class="ohud-side opp" id="ohOpp"><span id="ohOppSc">0</span><b id="ohOppName">الخصم</b><span class="dot"></span></span>
+  </div>
   <div class="panel top" id="panel1">
     <div class="phead">
       <span class="tag"><span class="dot"></span><span id="nm1">اللاعب ٢</span></span>
@@ -173,7 +213,8 @@ body::before{content:'';position:fixed;inset:-15%;z-index:-2;pointer-events:none
     <div class="lbl">طريقة اللعب</div>
     <div class="seg" id="modeSeg">
       <div class="opt active" data-mode="pvp" onclick="pickMode('pvp')"><span class="em">👥</span>لاعبان</div>
-      <div class="opt" data-mode="bot" onclick="pickMode('bot')"><span class="em">🤖</span>ضدّ الكمبيوتر</div>
+      <div class="opt" data-mode="bot" onclick="pickMode('bot')"><span class="em">🤖</span>الكمبيوتر</div>
+      <div class="opt" data-mode="online" onclick="pickMode('online')"><span class="em">🌐</span>أونلاين</div>
     </div>
     <div class="lbl">مدة الجولة</div>
     <div class="roundsel" id="durSel">
@@ -201,14 +242,48 @@ body::before{content:'';position:fixed;inset:-15%;z-index:-2;pointer-events:none
       <div class="fs" id="fs0" style="--c:var(--blue)"><div class="nm"><span class="dot"></span><span id="fnm0">اللاعب ١</span></div><div class="pt" id="fpt0">0</div></div>
       <div class="fs" id="fs1" style="--c:var(--red)"><div class="nm"><span class="dot"></span><span id="fnm1">اللاعب ٢</span></div><div class="pt" id="fpt1">0</div></div>
     </div>
-    <button class="btn" onclick="startGame()">🔄 مباراة جديدة</button>
-    <button class="btn secondary" onclick="showStart()">⚙️ تغيير الإعدادات</button>
-    <button class="btn secondary" onclick="goHome()">🏠 الرئيسية</button>
+    <button class="btn" id="ovRematch" onclick="startGame()">🔄 مباراة جديدة</button>
+    <button class="btn secondary" id="ovSettings" onclick="showStart()">⚙️ تغيير الإعدادات</button>
+    <button class="btn secondary" id="ovHome" onclick="goHome()">🏠 الرئيسية</button>
   </div>
 </div>
 
-<div class="topLbl">↑ اللاعب ٢</div>
+<!-- Online: create / join -->
+<div class="overlay" id="onlineOv" hidden>
+  <div class="card">
+    <h1 class="ttl">🌐 اللعب أونلاين</h1>
+    <p class="desc">أنشئ غرفة وشارك الكود مع صديقك، أو ادخل بكوده — كلٌّ على جهازه.</p>
+    <input id="onName" class="oinput" placeholder="اكتب اسمك" maxlength="12" autocomplete="off">
+    <button class="btn" onclick="createRoom()">🎮 أنشئ غرفة جديدة</button>
+    <div class="ordiv">— أو —</div>
+    <div class="orow">
+      <input id="onCode" class="oinput code" placeholder="كود الغرفة" inputmode="numeric" maxlength="6" autocomplete="off">
+      <button class="btn" style="min-width:auto;padding:14px 18px;margin:0" onclick="joinRoom()">🔑 ادخل</button>
+    </div>
+    <div id="onStatus" class="ostatus"></div>
+    <button class="btn secondary" onclick="showStart()">↩ رجوع</button>
+  </div>
+</div>
 
+<!-- Online: lobby -->
+<div class="overlay" id="lobbyOv" hidden>
+  <div class="card">
+    <h1 class="ttl">🛋️ الغرفة</h1>
+    <p class="desc">شارك هذا الكود مع صديقك للانضمام:</p>
+    <div class="codebox" id="lobbyCode">------</div>
+    <div class="lobbyPlayers" id="lobbyPlayers"></div>
+    <div id="lobbyHostCtrl" style="display:none">
+      <button class="btn" id="lobbyStartBtn" onclick="hostStart()" disabled>▶ ابدأ المباراة</button>
+    </div>
+    <div id="lobbyWait" class="ostatus" style="display:none">⏳ بانتظار المضيف ليبدأ…</div>
+    <button class="btn secondary" onclick="leaveRoom()">↩ خروج من الغرفة</button>
+  </div>
+</div>
+
+<div class="topLbl" id="topLbl">↑ اللاعب ٢</div>
+
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-database-compat.js"></script>
 <script>
 'use strict';
 /* ============================================================
@@ -250,7 +325,9 @@ function sndEnd(){ [880,659,523,392].forEach((f,i)=>setTimeout(()=>tone(f,0.18,'
 function pickMode(m){ S.mode=m; document.querySelectorAll('#modeSeg .opt').forEach(o=>o.classList.toggle('active',o.dataset.mode===m)); }
 function pickDur(d){ S.dur=d; document.querySelectorAll('#durSel .r').forEach(r=>r.classList.toggle('active',+r.dataset.d===d)); }
 window.pickMode=pickMode; window.pickDur=pickDur;
-function showStart(){ stopAll(); $('overOv').hidden=true; $('countOv').hidden=true; $('startOv').hidden=false; }
+function showStart(){ stopAll(); resetLayout(); $('overOv').hidden=true; $('countOv').hidden=true;
+  const l=$('lobbyOv'); if(l) l.hidden=true; const o=$('onlineOv'); if(o) o.hidden=true;
+  $('startOv').hidden=false; }
 window.showStart=showStart;
 
 function buildGrids(){
@@ -271,6 +348,8 @@ function buildGrids(){
 
 function startGame(){
   if(!AC) initAudio();
+  resetLayout();
+  if(S.mode==='online'){ openOnline(); return; }
   S.names   = S.mode==='bot' ? ['أنت','الكمبيوتر'] : ['اللاعب ١','اللاعب ٢'];
   $('nm0').textContent=S.names[0]; $('nm1').textContent=S.names[1];
   $('startOv').hidden=true; $('overOv').hidden=true;
@@ -334,15 +413,21 @@ function extinguish(p, i){
 }
 function tapCell(p, i){
   if(!S.running) return;
-  const cell=panels[p].cells[i];
+  const cell=panels[p] && panels[p].cells[i];
+  if(!cell) return;
+  const canVibe = (S.mode==='pvp') || (S.mode==='online') || (S.mode==='bot' && p===0);
   if(cell.state==='off'){ flashCell(p,i,'miss'); return; }
   if(cell.state==='own'){
-    S.scores[p]++; updateScore(p,true); flashCell(p,i,'good'); floaty(p,i,'+1','plus'); sndGood(); if(p===0||S.mode==='pvp') vibe(8);
+    S.scores[p]++; afterScore(p); flashCell(p,i,'good'); floaty(p,i,'+1','plus'); sndGood(); if(canVibe) vibe(8);
   } else {
-    S.scores[p]=Math.max(0,S.scores[p]-1); updateScore(p,true); flashCell(p,i,'bad'); floaty(p,i,'-1','minus'); sndBad(); if(p===0||S.mode==='pvp') vibe([15,20,15]);
+    S.scores[p]=Math.max(0,S.scores[p]-1); afterScore(p); flashCell(p,i,'bad'); floaty(p,i,'-1','minus'); sndBad(); if(canVibe) vibe([15,20,15]);
   }
   extinguish(p,i);
   scheduleCell(p,i, 280+Math.random()*700);
+}
+function afterScore(p){
+  if(S.mode==='online'){ updateOnlineHud(); pushMyScore(); }
+  else updateScore(p, true);
 }
 
 function flashCell(p,i,kind){
@@ -389,6 +474,7 @@ function stopAll(){
   clearTimers();
   clearInterval(tickInt); tickInt=0;
   clearInterval(botInt); botInt=0;
+  clearInterval(onlineTimerInt); onlineTimerInt=0;
 }
 
 function endGame(){
@@ -412,10 +498,311 @@ function endGame(){
   $('overOv').hidden=false;
 }
 
-/* pause if the tab is hidden mid-game (prevents unfair frozen state) */
+/* pause if the tab is hidden mid-game (local modes only; online keeps running) */
 document.addEventListener('visibilitychange', ()=>{
-  if(document.hidden && S.running){ stopAll(); showStart(); }
+  if(document.hidden && S.running && S.mode!=='online'){ stopAll(); showStart(); }
 });
+
+/* ============================================================
+   ONLINE MODE — self-contained, Firebase Realtime DB
+   Rooms live under rooms/k<code> (the "k" prefix keeps them out of the
+   quiz app's open-room browser, which only lists t/x/c/m/d prefixes).
+   Host = blue (colour 0), guest = red (colour 1). Each player plays
+   their own full-screen grid; only scores + a shared start time sync.
+   ============================================================ */
+const CROOM = code => 'rooms/k'+code;
+const FB_CONFIG = {
+  apiKey: "AIzaSyB340BwmpiUKALuEAeYPn2IVJOeWRfBqb0",
+  authDomain: "questionsgame-18d1a.firebaseapp.com",
+  databaseURL: "https://questionsgame-18d1a-default-rtdb.europe-west1.firebasedatabase.app",
+  projectId: "questionsgame-18d1a",
+  storageBucket: "questionsgame-18d1a.firebasestorage.app",
+  messagingSenderId: "987065082442",
+  appId: "1:987065082442:web:c10204ac327b1bfb447cb3"
+};
+const CBLUE='#3d9bff', CBLUEG='rgba(61,155,255,0.55)', CRED='#ff4d63', CREDG='rgba(255,77,99,0.55)';
+let FB=null;
+const ON = { code:null, isHost:false, myId:null, name:'لاعب', myColor:0,
+  roomRef:null, offs:[], round:0, ended:false, oppPresent:false, oppDone:false, _scoreT:0 };
+let onlineTimerInt = 0;
+
+function fbReady(){
+  if(typeof firebase==='undefined') return false;
+  if(!FB){ try{ if(!firebase.apps.length) firebase.initializeApp(FB_CONFIG); FB=firebase.database(); }catch(e){ return false; } }
+  return !!FB;
+}
+function ostat(msg, ok){ const e=$('onStatus'); if(e){ e.textContent=msg||''; e.style.color= ok?'#7dffa0':'var(--gold-light)'; } }
+function genCode(){ return String(Math.floor(100000+Math.random()*900000)); }
+function myUid(){ return 'p'+Math.random().toString(36).slice(2,9); }
+
+function openOnline(){
+  $('overOv').hidden=true; $('lobbyOv').hidden=true; $('startOv').hidden=true;
+  $('onlineOv').hidden=false; ostat('');
+}
+window.openOnline=openOnline;
+
+async function createRoom(){
+  if(!fbReady()){ ostat('تعذّر الاتصال بالخادم — تأكّد من الإنترنت'); return; }
+  ON.name=($('onName').value.trim())||'المضيف';
+  ON.isHost=true; ON.myColor=0; ON.myId=myUid(); ON.code=genCode(); ON.round=0; ON.oppDone=false;
+  ON.roomRef=FB.ref(CROOM(ON.code));
+  ostat('…جاري الإنشاء');
+  try{
+    await ON.roomRef.set({
+      meta:{ status:'lobby', dur:S.dur, createdAt:firebase.database.ServerValue.TIMESTAMP },
+      state:{ phase:'lobby', startAt:0, round:0 }
+    });
+    await ON.roomRef.child('players/'+ON.myId).set({ name:ON.name, color:0, isHost:true, score:0, done:false, joinedAt:firebase.database.ServerValue.TIMESTAMP });
+    ON.roomRef.child('players/'+ON.myId).onDisconnect().remove();
+    ON.roomRef.child('meta/status').onDisconnect().set('closed');
+    attachRoom();
+    enterLobby(true);
+  }catch(e){ ostat('فشل إنشاء الغرفة — حاول ثانية'); }
+}
+async function joinRoom(){
+  if(!fbReady()){ ostat('تعذّر الاتصال بالخادم — تأكّد من الإنترنت'); return; }
+  const code=($('onCode').value.trim());
+  if(!/^\d{6}$/.test(code)){ ostat('الكود مكوّن من ٦ أرقام'); return; }
+  ON.name=($('onName').value.trim())||'الضيف';
+  const rRef=FB.ref(CROOM(code));
+  ostat('…جاري الدخول');
+  try{
+    const snap=await rRef.child('meta').once('value');
+    if(!snap.exists() || snap.val().status==='closed'){ ostat('غرفة غير موجودة'); return; }
+    const psnap=await rRef.child('players').once('value');
+    if(Object.keys(psnap.val()||{}).length>=2){ ostat('الغرفة ممتلئة (لاعبان فقط)'); return; }
+    ON.isHost=false; ON.myColor=1; ON.myId=myUid(); ON.code=code; ON.roomRef=rRef; ON.round=0; ON.oppDone=false;
+    S.dur = snap.val().dur||30;
+    await rRef.child('players/'+ON.myId).set({ name:ON.name, color:1, isHost:false, score:0, done:false, joinedAt:firebase.database.ServerValue.TIMESTAMP });
+    rRef.child('players/'+ON.myId).onDisconnect().remove();
+    attachRoom();
+    enterLobby(false);
+  }catch(e){ ostat('فشل الدخول — تأكّد من الكود'); }
+}
+window.createRoom=createRoom; window.joinRoom=joinRoom;
+
+function enterLobby(isHost){
+  $('onlineOv').hidden=true; $('lobbyOv').hidden=false;
+  $('lobbyCode').textContent=ON.code;
+  $('lobbyHostCtrl').style.display=isHost?'block':'none';
+  $('lobbyWait').style.display=isHost?'none':'block';
+}
+
+function attachRoom(){
+  const pRef=ON.roomRef.child('players');
+  const sRef=ON.roomRef.child('state');
+  const ph=pRef.on('value', snap=>{
+    const players=snap.val()||{};
+    renderLobbyPlayers(players);
+    let opp=null; for(const id in players){ if(id!==ON.myId) opp=players[id]; }
+    ON.oppPresent=!!opp;
+    ON.oppDone = opp ? !!opp.done : false;
+    S.names[ON.myColor]=ON.name;
+    if(opp){ S.names[opp.color]=opp.name; S.scores[opp.color]=opp.score||0; }
+    updateOnlineHud();
+    const btn=$('lobbyStartBtn'); if(btn) btn.disabled = Object.keys(players).length<2;
+    if(S.running && S.mode==='online' && !opp){ opponentLeft(); }
+    if(ON.ended && S.mode==='online' && !$('overOv').hidden){ renderOnlineResults(); }
+  });
+  const sh=sRef.on('value', snap=>{ const st=snap.val(); if(st) onState(st); });
+  ON.offs.push(()=>pRef.off('value',ph), ()=>sRef.off('value',sh));
+}
+
+function renderLobbyPlayers(players){
+  const box=$('lobbyPlayers'); if(!box) return;
+  const arr=Object.keys(players).map(id=>({id,...players[id]})).sort((a,b)=>(a.color||0)-(b.color||0));
+  box.innerHTML='';
+  const slots=[0,1];
+  slots.forEach(col=>{
+    const pl=arr.find(p=>p.color===col);
+    const div=document.createElement('div');
+    if(pl){
+      div.className='lp';
+      div.style.color = col===0?CBLUE:CRED;
+      div.innerHTML=`<span class="dot" style="background:${col===0?CBLUE:CRED}"></span>`+
+        `<span style="color:#fff">${escapeHtml(pl.name)}</span>`+
+        (pl.isHost?'<span class="you">مضيف</span>':'')+
+        (pl.id===ON.myId?'<span class="you">أنت</span>':'');
+    } else {
+      div.className='lp empty';
+      div.textContent = col===0?'بانتظار اللاعب الأزرق…':'بانتظار اللاعب الأحمر…';
+    }
+    box.appendChild(div);
+  });
+}
+function escapeHtml(s){ return String(s||'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
+
+function hostStart(){
+  if(!ON.isHost || !ON.oppPresent) return;
+  const newRound=(ON.round||0)+1;
+  ON.roomRef.child('state').set({ phase:'playing', startAt:firebase.database.ServerValue.TIMESTAMP, dur:S.dur, round:newRound });
+}
+window.hostStart=hostStart;
+
+function onState(st){
+  if(st.phase==='playing' && st.round && st.round!==ON.round && st.startAt){
+    ON.round=st.round;
+    startOnlineRound(st.startAt, st.dur||S.dur);
+  }
+}
+
+function setupOnlineLayout(){
+  $('app').classList.add('online');
+  $('onlineHud').hidden=false;
+  $('startOv').hidden=true; $('overOv').hidden=true; $('lobbyOv').hidden=true; $('onlineOv').hidden=true;
+  const mine   = ON.myColor===0 ? [CBLUE,CBLUEG] : [CRED,CREDG];
+  const theirs = ON.myColor===0 ? [CRED,CREDG] : [CBLUE,CBLUEG];
+  const p0=$('panel0');
+  p0.style.setProperty('--own',mine[0]);   p0.style.setProperty('--own-glow',mine[1]);
+  p0.style.setProperty('--opp',theirs[0]); p0.style.setProperty('--opp-glow',theirs[1]);
+  $('ohMe').querySelector('.dot').style.background=mine[0];
+  $('ohOpp').querySelector('.dot').style.background=theirs[0];
+}
+function resetLayout(){
+  const app=$('app'); if(app) app.classList.remove('online');
+  const hud=$('onlineHud'); if(hud) hud.hidden=true;
+  const p0=$('panel0');
+  if(p0){ ['--own','--own-glow','--opp','--opp-glow'].forEach(v=>p0.style.removeProperty(v)); }
+}
+window.resetLayout=resetLayout;
+
+function buildGridsOnline(){
+  panels[0]=null; panels[1]=null;
+  const p=ON.myColor;
+  const grid=$('grid0'); grid.innerHTML='';
+  const cells=[];
+  for(let i=0;i<CELLS;i++){
+    const el=document.createElement('div'); el.className='cell';
+    const idx=i;
+    el.addEventListener('pointerdown', e=>{ e.preventDefault(); tapCell(p, idx); });
+    grid.appendChild(el);
+    cells.push({el, state:'off', spawnT:0, offT:0, botLock:false});
+  }
+  panels[p]={cells, grid};
+}
+
+function startOnlineRound(startAt, dur){
+  S.mode='online'; S.dur=dur; ON.ended=false; ON.oppDone=false;
+  const oppColor=1-ON.myColor;
+  S.scores=[0,0];
+  setupOnlineLayout();
+  buildGridsOnline();
+  updateOnlineHud();
+  try{ ON.roomRef.child('players/'+ON.myId).update({score:0, done:false}); }catch(e){}
+  runOnlineTiming(startAt, dur);
+}
+
+function runOnlineTiming(startAt, dur){
+  clearInterval(onlineTimerInt);
+  const playAt=startAt+3000, endAt=playAt+dur*1000;
+  let started=false, lastC=null, lastSec=null;
+  $('countNum').textContent='٣'; $('countOv').hidden=false;
+  onlineTimerInt=setInterval(()=>{
+    const now=Date.now();
+    if(now<playAt){
+      const c=Math.max(1,Math.ceil((playAt-now)/1000));
+      if(c!==lastC){ lastC=c; $('countNum').textContent=ar(c); $('countNum').style.animation='none'; void $('countNum').offsetWidth; $('countNum').style.animation=''; sndTick(); }
+    } else if(now<endAt){
+      if(!started){ started=true; $('countNum').textContent='هيّا!'; sndGo(); vibe(30); T(()=>{ $('countOv').hidden=true; }, 450); beginOnlinePlay(); }
+      const sec=Math.max(0,Math.ceil((endAt-now)/1000));
+      $('ohTime').textContent=ar(sec);
+      if(sec!==lastSec){ lastSec=sec; if(sec<=5 && sec>0) sndTick(); }
+    } else {
+      clearInterval(onlineTimerInt); onlineTimerInt=0;
+      finishOnline();
+    }
+  }, 100);
+}
+
+function beginOnlinePlay(){
+  S.running=true;
+  const p=ON.myColor;
+  for(let i=0;i<CELLS;i++) scheduleCell(p, i, 200+Math.random()*900);
+}
+
+function updateOnlineHud(){
+  if(S.mode!=='online') return;
+  const my=ON.myColor, opp=1-ON.myColor;
+  $('ohMeName').textContent = ON.name || 'أنت';
+  $('ohOppName').textContent = S.names[opp] || 'الخصم';
+  $('ohMeSc').textContent = S.scores[my]||0;
+  $('ohOppSc').textContent = S.scores[opp]||0;
+}
+function pushMyScore(){
+  if(!ON.roomRef || ON._scoreT) return;
+  ON._scoreT=setTimeout(()=>{
+    ON._scoreT=0;
+    try{ ON.roomRef.child('players/'+ON.myId+'/score').set(S.scores[ON.myColor]||0); }catch(e){}
+  }, 170);
+}
+
+function finishOnline(){
+  S.running=false;
+  clearTimers();
+  const p=ON.myColor;
+  if(panels[p]) for(let i=0;i<CELLS;i++){ const c=panels[p].cells[i]; c.state='off'; c.el.classList.remove('lit-own','lit-opp'); }
+  ON.ended=true;
+  try{ ON.roomRef.child('players/'+ON.myId).update({ score:S.scores[p]||0, done:true }); }catch(e){}
+  sndEnd(); vibe([40,40,120]);
+  renderOnlineResults();
+  $('overOv').hidden=false;
+}
+
+function renderOnlineResults(){
+  const a=S.scores[0]||0, b=S.scores[1]||0;
+  $('fnm0').textContent=S.names[0]||'الأزرق'; $('fnm1').textContent=S.names[1]||'الأحمر';
+  $('fs0').style.setProperty('--c', CBLUE); $('fs1').style.setProperty('--c', CRED);
+  $('fpt0').textContent=a; $('fpt1').textContent=b;
+  $('fs0').classList.toggle('win', a>b); $('fs1').classList.toggle('win', b>a);
+  let crown, ttl;
+  if(a===b){ crown='🤝'; ttl='تعادل!'; }
+  else{ const winColor=a>b?0:1; const iWon=winColor===ON.myColor; crown=iWon?'🎉':'😞'; ttl=iWon?'فزت! ⚡':'خسرت هذه الجولة'; }
+  const waiting = !ON.oppDone;
+  $('overCrown').textContent=crown; $('overTtl').textContent=ttl;
+  $('overDesc').textContent = `النتيجة ${ar(Math.max(a,b))} — ${ar(Math.min(a,b))}` + (waiting?'  · ⏳ بانتظار الخصم…':'');
+  // online-specific buttons
+  const rematch=$('ovRematch'), settings=$('ovSettings'), home=$('ovHome');
+  settings.style.display='none';
+  if(ON.isHost){ rematch.style.display=''; rematch.disabled=false; rematch.textContent='🔄 مباراة جديدة'; rematch.onclick=hostStart; }
+  else { rematch.style.display=''; rematch.disabled=true; rematch.textContent='⏳ بانتظار المضيف…'; rematch.onclick=null; }
+  home.textContent='↩ خروج من الغرفة'; home.onclick=leaveRoom;
+}
+
+function opponentLeft(){
+  if(ON.ended) return;
+  stopAll(); ON.ended=true;
+  const p=ON.myColor;
+  if(panels[p]) for(let i=0;i<CELLS;i++){ const c=panels[p].cells[i]; c.state='off'; c.el.classList.remove('lit-own','lit-opp'); }
+  $('overCrown').textContent='🚪'; $('overTtl').textContent='غادر الخصم';
+  $('overDesc').textContent='انتهت المباراة — خصمك غادر الغرفة.';
+  const rematch=$('ovRematch'), settings=$('ovSettings'), home=$('ovHome');
+  rematch.style.display='none'; settings.style.display='none';
+  home.textContent='↩ خروج'; home.onclick=leaveRoom;
+  $('overOv').hidden=false;
+}
+
+function leaveRoom(){
+  try{ ON.offs.forEach(f=>{ try{f();}catch(e){} }); }catch(e){} ON.offs=[];
+  try{
+    if(ON.roomRef){
+      ON.roomRef.child('players/'+ON.myId).onDisconnect().cancel();
+      ON.roomRef.child('players/'+ON.myId).remove();
+      if(ON.isHost){ ON.roomRef.child('meta/status').onDisconnect().cancel(); ON.roomRef.child('meta/status').set('closed'); }
+    }
+  }catch(e){}
+  stopAll();
+  ON.code=null; ON.roomRef=null; ON.ended=false; ON.oppPresent=false;
+  S.mode='online'; S.scores=[0,0];
+  resetLayout();
+  // restore default over buttons for local play
+  const rematch=$('ovRematch'), settings=$('ovSettings'), home=$('ovHome');
+  rematch.style.display=''; rematch.disabled=false; rematch.textContent='🔄 مباراة جديدة'; rematch.onclick=()=>startGame();
+  settings.style.display=''; settings.textContent='⚙️ تغيير الإعدادات'; settings.onclick=()=>showStart();
+  home.textContent='🏠 الرئيسية'; home.onclick=goHome;
+  $('overOv').hidden=true;
+  showStart();
+}
+window.leaveRoom=leaveRoom;
 
 /* SW */
 if('serviceWorker' in navigator){ window.addEventListener('load',()=>navigator.serviceWorker.register('sw.js').catch(()=>{})); }
