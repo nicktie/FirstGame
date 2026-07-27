@@ -11,32 +11,19 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;700;900&family=Cairo:wght@400;700&display=swap" rel="stylesheet">
+<!-- Shared Wanees game framework (design system + runtime) -->
+<link rel="stylesheet" href="game-core.css">
 <style>
-:root{
-  --gold:#c9a84c; --gold-light:#f0d080; --dark:#0b0b0f; --card-bg:#13131a;
-  --border:#252535; --text:#e8e0d0; --muted:#8a8580; --option-bg:#1a1a24;
-  --correct:#3dba7a; --wrong:#e05c5c;
-  --p1:#6495ed; --p1-glow:rgba(100,149,237,0.5);
-  --p2:#e07050; --p2-glow:rgba(224,112,80,0.5);
-}
-*{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent;-webkit-user-select:none;user-select:none}
-html,body{height:100%;height:100dvh;overflow:hidden;overscroll-behavior:none;touch-action:none}
-body{background:var(--dark);color:var(--text);font-family:'Cairo',sans-serif;
-  background-image:
-    radial-gradient(ellipse at 15% 5%,rgba(100,149,237,0.06) 0%,transparent 45%),
-    radial-gradient(ellipse at 85% 95%,rgba(224,112,80,0.06) 0%,transparent 45%),
-    radial-gradient(ellipse at 50% 50%,rgba(201,168,76,0.04) 0%,transparent 60%)}
+/* Tokens, reset, body background, overlays, modals, buttons, .wg-seg,
+   reduced-motion + focus ring all come from game-core.css.
+   Only game-specific styles live below. */
+*{margin:0;padding:0}
 
 #app{position:fixed;inset:0;display:flex;flex-direction:column;max-width:620px;margin:0 auto;
   padding:calc(10px + env(safe-area-inset-top,0)) 12px calc(12px + env(safe-area-inset-bottom,0));gap:10px}
 
 /* ===== Top bar ===== */
 #topbar{display:flex;align-items:center;gap:8px;flex-shrink:0}
-.hbtn{width:40px;height:40px;border-radius:12px;background:var(--card-bg);border:1.5px solid var(--border);
-  color:var(--text);font-size:1.05rem;cursor:pointer;display:flex;align-items:center;justify-content:center;
-  transition:border-color .15s,color .15s,transform .1s;box-shadow:0 2px 8px rgba(0,0,0,0.25)}
-.hbtn:hover{border-color:var(--gold);color:var(--gold)}
-.hbtn:active{transform:scale(0.93)}
 #gTimer{margin-inline:auto;font-family:'Tajawal',sans-serif;font-weight:900;font-size:1.35rem;color:var(--gold);
   background:var(--card-bg);border:1.5px solid rgba(201,168,76,0.35);border-radius:12px;padding:6px 22px;min-width:80px;
   text-align:center;box-shadow:0 2px 10px rgba(0,0,0,0.3);text-shadow:0 0 14px rgba(201,168,76,0.35)}
@@ -81,40 +68,14 @@ body{background:var(--dark);color:var(--text);font-family:'Cairo',sans-serif;
 .floaty.minus{color:#ff9aa6;text-shadow:0 0 12px rgba(224,92,92,0.8)}
 @keyframes floaty{0%{opacity:0;transform:translate(-50%,-30%) scale(0.5)}25%{opacity:1;transform:translate(-50%,-70%) scale(1.15)}100%{opacity:0;transform:translate(-50%,-140%) scale(1)}}
 
-/* ===== Overlays / modals (site style) ===== */
-.overlay{position:fixed;inset:0;z-index:40;background:rgba(0,0,0,0.78);backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);
-  display:flex;align-items:center;justify-content:center;padding:18px}
-.overlay[hidden]{display:none}
-.modal{background:var(--card-bg);border:2px solid var(--gold);border-radius:22px;padding:26px 22px 22px;max-width:420px;width:100%;
-  max-height:92dvh;overflow-y:auto;text-align:center;box-shadow:0 20px 60px rgba(0,0,0,0.6);animation:mIn .35s ease}
-@keyframes mIn{from{opacity:0;transform:translateY(14px) scale(0.98)}to{opacity:1;transform:none}}
-.mtitle{font-family:'Tajawal',sans-serif;font-weight:900;color:var(--gold);font-size:1.7rem;line-height:1.2;margin-bottom:6px;
-  text-shadow:0 0 22px rgba(201,168,76,0.3)}
-.mdesc{color:var(--text);font-size:0.92rem;line-height:1.7;margin-bottom:14px;opacity:0.9}
-.rules{background:var(--option-bg);border:1px solid var(--border);border-radius:14px;padding:12px 15px;font-size:0.86rem;
-  color:var(--text);line-height:1.95;text-align:right;margin:2px 0 16px}
-.rules b{color:var(--gold-light)}
-.rules .cdot{display:inline-block;width:11px;height:11px;border-radius:50%;vertical-align:middle}
-.lbl{font-size:0.78rem;color:var(--muted);margin-bottom:8px;letter-spacing:0.4px}
-.seg{display:flex;gap:8px;margin:2px 0 16px}
-.seg .opt{flex:1;background:var(--card-bg);border:1.5px solid var(--border);border-radius:14px;padding:12px 6px;
-  font-family:'Tajawal',sans-serif;font-weight:700;font-size:0.9rem;color:var(--muted);cursor:pointer;transition:all .18s}
-.seg .opt .em{font-size:1.5rem;display:block;margin-bottom:4px}
-.seg .opt.active{border-color:var(--gold);background:rgba(201,168,76,0.13);color:var(--gold);box-shadow:0 4px 16px rgba(201,168,76,0.18)}
+/* rules-box coloured dot (game-core provides .wg-rules itself) */
+.wg-rules .cdot{display:inline-block;width:11px;height:11px;border-radius:50%;vertical-align:middle}
 .roundsel{display:flex;gap:8px;justify-content:center;margin:2px 0 18px}
 .roundsel .r{flex:1;background:var(--card-bg);border:1.5px solid var(--border);border-radius:12px;padding:12px 4px;
   font-family:'Tajawal',sans-serif;font-weight:900;font-size:1.15rem;color:var(--text);cursor:pointer;transition:all .18s;line-height:1}
 .roundsel .r small{display:block;font-family:'Cairo',sans-serif;font-size:0.6rem;color:var(--muted);font-weight:400;margin-top:3px}
 .roundsel .r.active{border-color:var(--gold);background:rgba(201,168,76,0.13);color:var(--gold);box-shadow:0 4px 16px rgba(201,168,76,0.18)}
 .roundsel .r.active small{color:var(--gold-light)}
-.btn{width:100%;padding:14px;background:linear-gradient(135deg,var(--gold),#a8720c);color:var(--dark);border:none;border-radius:14px;
-  font-family:'Tajawal',sans-serif;font-size:1.05rem;font-weight:900;cursor:pointer;transition:transform .15s,box-shadow .2s,opacity .2s;
-  box-shadow:0 6px 20px rgba(201,168,76,0.28);margin:5px 0}
-.btn:hover{transform:translateY(-2px);box-shadow:0 10px 28px rgba(201,168,76,0.36)}
-.btn:active{transform:translateY(0)}
-.btn:disabled{opacity:0.45;cursor:default;transform:none;box-shadow:none;background:var(--option-bg);color:var(--muted)}
-.btn.sec{background:var(--option-bg);border:1.5px solid var(--border);color:var(--text);box-shadow:none}
-.btn.sec:hover{border-color:var(--gold);color:var(--gold);transform:none;box-shadow:none}
 .finalScores{display:flex;gap:12px;margin:10px 0 18px}
 .finalScores .fs{flex:1;background:var(--option-bg);border:1.5px solid var(--c);border-radius:16px;padding:14px 8px;position:relative}
 .finalScores .fs .nm{font-size:0.82rem;font-weight:700;color:var(--c);margin-bottom:4px;display:flex;align-items:center;justify-content:center;gap:5px}
@@ -137,7 +98,7 @@ body{background:var(--dark);color:var(--text);font-family:'Cairo',sans-serif;
 .oinput::placeholder{color:var(--muted)}
 .oinput.code{letter-spacing:5px;font-family:'Tajawal',monospace;font-weight:900;font-size:1.25rem;margin-bottom:0;flex:1}
 .orow{display:flex;gap:8px;align-items:stretch}
-.orow .btn{width:auto;padding:12px 18px;margin:0;white-space:nowrap}
+.orow .wg-btn{width:auto;padding:12px 18px;margin:0;white-space:nowrap}
 .ordiv{color:var(--muted);font-weight:700;font-size:0.82rem;margin:10px 0 12px}
 .ostatus{min-height:20px;font-size:0.85rem;font-weight:700;color:var(--gold-light);margin:8px 0}
 .codebox{font-family:'Tajawal',monospace;font-size:2.2rem;font-weight:900;letter-spacing:9px;color:var(--gold-light);
@@ -152,21 +113,17 @@ body{background:var(--dark);color:var(--text);font-family:'Cairo',sans-serif;
 
 @media (max-height:640px){
   .scard .pts{font-size:1.6rem}
-  .mtitle{font-size:1.45rem}
+  .wg-title{font-size:1.45rem}
   #countNum{font-size:4.5rem}
 }
-@media (prefers-reduced-motion:reduce){
-  *,*::before,*::after{animation-duration:.001ms!important;animation-iteration-count:1!important;transition-duration:.001ms!important}
-}
-:focus-visible{outline:2px solid var(--gold);outline-offset:2px}
 </style>
 </head>
 <body>
 <div id="app">
   <div id="topbar">
-    <button class="hbtn" onclick="goHome()" aria-label="الرئيسية">🏠</button>
+    <button class="wg-ico" onclick="goHome()" aria-label="الرئيسية">🏠</button>
     <div id="gTimer">٣٠</div>
-    <button class="hbtn" onclick="quitToStart()" aria-label="خروج">↩</button>
+    <button class="wg-ico" onclick="quitToStart()" aria-label="خروج">↩</button>
   </div>
 
   <div id="scoreRow">
@@ -185,85 +142,86 @@ body{background:var(--dark);color:var(--text);font-family:'Cairo',sans-serif;
 </div>
 
 <!-- Start overlay -->
-<div class="overlay" id="startOv">
-  <div class="modal">
-    <div class="mtitle">⚡ حرب الألوان السريعة</div>
-    <p class="mdesc">تحدّي ردّة فعل — انقر لونك بأسرع وقت، وتجنّب لون خصمك!</p>
-    <div class="rules">
+<div class="wg-overlay" id="startOv">
+  <div class="wg-modal">
+    <div class="wg-title">⚡ حرب الألوان السريعة</div>
+    <p class="wg-desc">تحدّي ردّة فعل — انقر لونك بأسرع وقت، وتجنّب لون خصمك!</p>
+    <div class="wg-rules">
       🔵 لونك <span class="cdot" style="background:var(--p1)"></span> والخصم <span class="cdot" style="background:var(--p2)"></span>.<br>
       ⚡ انقر مربّعات <b>لونك</b> = <b>+١</b> لكل مربّع.<br>
       ⛔ نقر <b>لون الخصم</b> = <b>−١</b>.<br>
       🏁 عند انتهاء الوقت، صاحب أعلى رصيد يفوز!
     </div>
-    <div class="lbl">طريقة اللعب</div>
-    <div class="seg" id="modeSeg">
+    <div class="wg-lbl">طريقة اللعب</div>
+    <div class="wg-seg" id="modeSeg">
       <div class="opt active" data-mode="online" onclick="pickMode('online')"><span class="em">👥</span>لاعبان<br><small style="font-size:0.7rem;color:inherit;opacity:0.7">أونلاين</small></div>
       <div class="opt" data-mode="bot" onclick="pickMode('bot')"><span class="em">🤖</span>ضدّ<br><small style="font-size:0.7rem;color:inherit;opacity:0.7">الكمبيوتر</small></div>
     </div>
-    <div class="lbl">مدة الجولة</div>
+    <div class="wg-lbl">مدة الجولة</div>
     <div class="roundsel" id="durSel">
       <div class="r" data-d="20" onclick="pickDur(20)">٢٠<small>ثانية</small></div>
       <div class="r active" data-d="30" onclick="pickDur(30)">٣٠<small>ثانية</small></div>
       <div class="r" data-d="45" onclick="pickDur(45)">٤٥<small>ثانية</small></div>
     </div>
-    <button class="btn" onclick="startGame()">▶ ابدأ اللعب</button>
-    <button class="btn sec" onclick="goHome()">🏠 الرئيسية</button>
+    <button class="wg-btn" onclick="startGame()">▶ ابدأ اللعب</button>
+    <button class="wg-btn sec" onclick="goHome()">🏠 الرئيسية</button>
   </div>
 </div>
 
 <!-- Online: create / join -->
-<div class="overlay" id="onlineOv" hidden>
-  <div class="modal">
-    <div class="mtitle">🌐 اللعب أونلاين</div>
-    <p class="mdesc">أنشئ غرفة وشارك الكود مع صديقك، أو ادخل بكوده — كلٌّ على جهازه.</p>
+<div class="wg-overlay" id="onlineOv" hidden>
+  <div class="wg-modal">
+    <div class="wg-title">🌐 اللعب أونلاين</div>
+    <p class="wg-desc">أنشئ غرفة وشارك الكود مع صديقك، أو ادخل بكوده — كلٌّ على جهازه.</p>
     <input id="onName" class="oinput" placeholder="اكتب اسمك" maxlength="12" autocomplete="off">
-    <button class="btn" onclick="createRoom()">🎮 أنشئ غرفة جديدة</button>
+    <button class="wg-btn" onclick="createRoom()">🎮 أنشئ غرفة جديدة</button>
     <div class="ordiv">— أو —</div>
     <div class="orow">
       <input id="onCode" class="oinput code" placeholder="كود الغرفة" inputmode="numeric" maxlength="6" autocomplete="off">
-      <button class="btn" onclick="joinRoom()">🔑 ادخل</button>
+      <button class="wg-btn" onclick="joinRoom()">🔑 ادخل</button>
     </div>
     <div id="onStatus" class="ostatus"></div>
-    <button class="btn sec" onclick="showStart()">↩ رجوع</button>
+    <button class="wg-btn sec" onclick="showStart()">↩ رجوع</button>
   </div>
 </div>
 
 <!-- Online: lobby -->
-<div class="overlay" id="lobbyOv" hidden>
-  <div class="modal">
-    <div class="mtitle">🛋️ الغرفة</div>
-    <p class="mdesc">شارك هذا الكود مع صديقك للانضمام:</p>
+<div class="wg-overlay" id="lobbyOv" hidden>
+  <div class="wg-modal">
+    <div class="wg-title">🛋️ الغرفة</div>
+    <p class="wg-desc">شارك هذا الكود مع صديقك للانضمام:</p>
     <div class="codebox" id="lobbyCode">------</div>
     <div class="lobbyPlayers" id="lobbyPlayers"></div>
     <div id="lobbyHostCtrl" style="display:none">
-      <button class="btn" id="lobbyStartBtn" onclick="hostStart()" disabled>▶ ابدأ المباراة</button>
+      <button class="wg-btn" id="lobbyStartBtn" onclick="hostStart()" disabled>▶ ابدأ المباراة</button>
     </div>
     <div id="lobbyWait" class="ostatus" style="display:none">⏳ بانتظار المضيف ليبدأ…</div>
-    <button class="btn sec" onclick="leaveRoom()">↩ خروج من الغرفة</button>
+    <button class="wg-btn sec" onclick="leaveRoom()">↩ خروج من الغرفة</button>
   </div>
 </div>
 
 <!-- Countdown -->
-<div class="overlay" id="countOv" hidden><div id="countNum">٣</div></div>
+<div class="wg-overlay" id="countOv" hidden><div id="countNum">٣</div></div>
 
 <!-- Game over -->
-<div class="overlay" id="overOv" hidden>
-  <div class="modal">
+<div class="wg-overlay" id="overOv" hidden>
+  <div class="wg-modal">
     <div class="crown" id="overCrown">🏆</div>
-    <div class="mtitle" id="overTtl">انتهى الوقت!</div>
-    <p class="mdesc" id="overDesc"></p>
+    <div class="wg-title" id="overTtl">انتهى الوقت!</div>
+    <p class="wg-desc" id="overDesc"></p>
     <div class="finalScores">
       <div class="fs" id="fs0" style="--c:var(--p1)"><div class="nm"><span class="dot"></span><span id="fnm0">أنت</span></div><div class="pt" id="fpt0">0</div></div>
       <div class="fs" id="fs1" style="--c:var(--p2)"><div class="nm"><span class="dot"></span><span id="fnm1">الخصم</span></div><div class="pt" id="fpt1">0</div></div>
     </div>
-    <button class="btn" id="ovRematch" onclick="startGame()">🔄 مرّة أخرى</button>
-    <button class="btn sec" id="ovSettings" onclick="showStart()">⚙️ تغيير الإعدادات</button>
-    <button class="btn sec" id="ovHome" onclick="goHome()">🏠 الرئيسية</button>
+    <button class="wg-btn" id="ovRematch" onclick="startGame()">🔄 مرّة أخرى</button>
+    <button class="wg-btn sec" id="ovSettings" onclick="showStart()">⚙️ تغيير الإعدادات</button>
+    <button class="wg-btn sec" id="ovHome" onclick="goHome()">🏠 الرئيسية</button>
   </div>
 </div>
 
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-database-compat.js"></script>
+<script src="game-core.js"></script>
 <script>
 'use strict';
 /* ============================================================
@@ -283,24 +241,18 @@ const timers=new Set();
 let tickInt=0, botTimer=0, onlineTimerInt=0;
 
 const $=id=>document.getElementById(id);
-const ar=n=>String(n).replace(/\d/g,d=>'٠١٢٣٤٥٦٧٨٩'[d]);
-function goHome(){ location.href='index.html'; }
+const ar=WG.ar, vibe=WG.vibe;          // shared helpers from game-core
+function goHome(){ WG.goHome(); }
 window.goHome=goHome;
-function vibe(p){ try{ if(navigator.vibrate) navigator.vibrate(p); }catch(e){} }
 function T(fn,ms){ const id=setTimeout(()=>{ timers.delete(id); fn(); },ms); timers.add(id); return id; }
 function clearTimers(){ timers.forEach(clearTimeout); timers.clear(); }
 
-/* ---- audio ---- */
-let AC=null;
-function initAudio(){ try{ AC=new (window.AudioContext||window.webkitAudioContext)(); }catch(e){ AC=null; } }
-function tone(f,d,type,vol){ if(!AC)return; const t=AC.currentTime,o=AC.createOscillator(),g=AC.createGain();
-  o.type=type||'sine';o.frequency.value=f;g.gain.value=vol||0.05;g.gain.exponentialRampToValueAtTime(0.0006,t+d);
-  o.connect(g);g.connect(AC.destination);o.start(t);o.stop(t+d+0.04); }
-function sndGood(){ tone(680,0.06,'triangle',0.05); }
-function sndBad(){ tone(150,0.14,'sawtooth',0.06); }
-function sndTick(){ tone(880,0.04,'sine',0.04); }
-function sndGo(){ [523,659,880].forEach((f,i)=>setTimeout(()=>tone(f,0.14,'sine',0.06),i*90)); }
-function sndEnd(){ [880,659,523,392].forEach((f,i)=>setTimeout(()=>tone(f,0.18,'triangle',0.05),i*130)); }
+/* ---- audio (shared engine via game-core WG) ---- */
+function sndGood(){ WG.sfx.good(); }
+function sndBad(){ WG.sfx.bad(); }
+function sndTick(){ WG.sfx.tick(); }
+function sndGo(){ [523,659,880].forEach((f,i)=>setTimeout(()=>WG.tone(f,0.14,{type:'sine',vol:0.06}),i*90)); }
+function sndEnd(){ [880,659,523,392].forEach((f,i)=>setTimeout(()=>WG.tone(f,0.18,{type:'triangle',vol:0.05}),i*130)); }
 
 /* ---- setup ---- */
 function pickMode(m){ S.mode=m; document.querySelectorAll('#modeSeg .opt').forEach(o=>o.classList.toggle('active',o.dataset.mode===m)); }
@@ -389,7 +341,7 @@ function updateScoreUI(bump){
 
 /* ================= LOCAL (vs bot) ================= */
 function startGame(){
-  if(!AC) initAudio();
+  WG.initAudio();
   if(S.mode==='online'){ openOnline(); return; }
   // bot mode
   S.names=['أنت','الكمبيوتر']; S.scores=[0,0]; S.timeLeft=S.dur;
@@ -681,7 +633,7 @@ function leaveRoom(){
 window.leaveRoom=leaveRoom;
 
 /* SW */
-if('serviceWorker' in navigator){ window.addEventListener('load',()=>navigator.serviceWorker.register('sw.js').catch(()=>{})); }
+WG.registerSW();
 </script>
 </body>
 </html>
