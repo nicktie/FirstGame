@@ -307,6 +307,7 @@ kbd{background:rgba(255,255,255,0.12);border:1px solid rgba(255,255,255,0.2);bor
   </div>
 </div>
 
+<script src="game-core.js"></script>
 <script>
 'use strict';
 /* ============================================================
@@ -399,7 +400,7 @@ let UNLOCKED = loadProgress();
 
 /* ===== Audio ===== */
 let AC = null;
-function initAudio(){ try { AC = new (window.AudioContext||window.webkitAudioContext)(); } catch(e){ AC=null; } }
+function initAudio(){ AC = WG.initAudio(); }   // shared AudioContext from game-core
 function tone(freq, dur, delayMs, type, vol){
   if (!AC) return;
   const run = () => {
@@ -1598,9 +1599,7 @@ window.quitToMap = function(){
 document.addEventListener('visibilitychange', () => {
   if (document.hidden && (G.state==='swinging'||G.state==='falling')) togglePause();
 });
-if ('serviceWorker' in navigator){
-  window.addEventListener('load', () => navigator.serviceWorker.register('sw.js').catch(()=>{}));
-}
+WG.registerSW();
 
 // Boot
 G.B = BUILDINGS[0];

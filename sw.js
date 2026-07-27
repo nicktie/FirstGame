@@ -1,4 +1,4 @@
-const CACHE = 'wanees-v114';
+const CACHE = 'wanees-v115';
 const RUNTIME = 'wanees-runtime-v5';
 
 // Standalone game files come from the shared registry (games.js) so adding a

@@ -122,6 +122,7 @@ canvas{display:block}
 </div>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script src="game-core.js"></script>
 <script>
 'use strict';
 /* ============================================================
@@ -472,7 +473,7 @@ function onResize(){
 
 /* ===== Audio (tiny) ===== */
 let AC=null;
-function initAudio(){ try{ AC=new (window.AudioContext||window.webkitAudioContext)(); }catch(e){ AC=null; } }
+function initAudio(){ AC=WG.initAudio(); }   // shared AudioContext from game-core
 function blip(f,d,delay,type,v){
   if(!AC) return;
   const run=()=>{ const t=AC.currentTime,o=AC.createOscillator(),g=AC.createGain();
@@ -749,10 +750,8 @@ function boot(){
 if (THREE_OK) boot();
 else window.addEventListener('load', () => { THREE_OK = (typeof THREE !== 'undefined'); boot(); });
 
-// SW
-if ('serviceWorker' in navigator){
-  window.addEventListener('load', ()=>navigator.serviceWorker.register('sw.js').catch(()=>{}));
-}
+// SW (shared)
+WG.registerSW();
 </script>
 </body>
 </html>
