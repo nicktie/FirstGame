@@ -302,6 +302,7 @@ body::after{content:'';position:fixed;inset:0;z-index:-1;pointer-events:none;
   </div>
 </div>
 
+<script src="game-core.js"></script>
 <script>
 'use strict';
 /* ============================================================
@@ -595,9 +596,7 @@ function updateDangerGlow(){
   el.classList.toggle('warn', ratio >= 0.65 && ratio < 0.82);
   el.classList.toggle('danger', ratio >= 0.82);
 }
-function vibe(pattern){
-  try { if (navigator.vibrate) navigator.vibrate(pattern); } catch(e){}
-}
+const vibe = WG.vibe;   // shared haptics from game-core
 
 /* ===== Drawing ===== */
 function lighten(hex, amt){
@@ -697,17 +696,12 @@ function drawPreviews(){
 }
 
 /* ===== Audio ===== */
-let AC = null;
-function initAudio(){ try { AC = new (window.AudioContext||window.webkitAudioContext)(); } catch(e){ AC = null; } }
+// Audio uses the shared WG engine; tone() keeps tetris's delay-capable signature.
+function initAudio(){ WG.initAudio(); }
 function tone(freq, dur, delayMs, type, vol){
-  if (!AC) return;
-  const fn = () => {
-    const t = AC.currentTime, o = AC.createOscillator(), g = AC.createGain();
-    o.type = type||'square'; o.frequency.value = freq;
-    g.gain.value = vol||0.05; g.gain.exponentialRampToValueAtTime(0.0008, t + dur);
-    o.connect(g); g.connect(AC.destination); o.start(t); o.stop(t + dur + 0.05);
-  };
-  if (delayMs) setTimeout(fn, delayMs); else fn();
+  const opts = { type: type || 'square', vol: vol == null ? 0.05 : vol };
+  if (delayMs) setTimeout(() => WG.tone(freq, dur, opts), delayMs);
+  else WG.tone(freq, dur, opts);
 }
 function sndMove(){ tone(280, 0.04, 0, 'square', 0.03); }
 function sndRot(){ tone(440, 0.05, 0, 'triangle', 0.04); }
@@ -868,7 +862,7 @@ function startGame(){
   document.getElementById('overOv').style.display = 'none';
   document.getElementById('pauseOv').style.display = 'none';
   document.getElementById('boardGlow').classList.remove('warn','danger');
-  if (!AC) initAudio();
+  WG.initAudio();
   updateHud(); drawPreviews(); draw();
   cancelAnimationFrame(G.raf); G.raf = requestAnimationFrame(loop);
 }
@@ -908,10 +902,8 @@ window.addEventListener('orientationchange', () => setTimeout(() => {
   if (G.state === 'playing') { draw(); drawPreviews(); }
 }, 200));
 
-// SW
-if ('serviceWorker' in navigator){
-  window.addEventListener('load', () => navigator.serviceWorker.register('sw.js').catch(()=>{}));
-}
+// SW (shared)
+WG.registerSW();
 
 // Boot
 fitBoard();
