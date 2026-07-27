@@ -1,0 +1,100 @@
+/* =========================================================================
+   Wanees Game Core — shared design system for standalone games
+   Import once: <link rel="stylesheet" href="game-core.css">
+   Gives every game the same tokens, background, overlays, buttons and HUD
+   as the main site (index.html), so new games look consistent by default.
+   Prefix: .wg-*  ·  Tokens mirror index.html :root exactly.
+   ========================================================================= */
+:root{
+  --gold:#c9a84c; --gold-light:#f0d080; --dark:#0b0b0f; --card-bg:#13131a;
+  --border:#252535; --text:#e8e0d0; --muted:#8a8580; --option-bg:#1a1a24;
+  --correct:#3dba7a; --wrong:#e05c5c;
+  --p1:#6495ed; --p1-glow:rgba(100,149,237,0.5);
+  --p2:#e07050; --p2-glow:rgba(224,112,80,0.5);
+  --wg-radius:16px;
+}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent;-webkit-user-select:none;user-select:none}
+html,body{margin:0;padding:0;height:100%;height:100dvh;overflow:hidden;overscroll-behavior:none;touch-action:none}
+body{
+  background:var(--dark);color:var(--text);font-family:'Cairo',sans-serif;
+  background-image:
+    radial-gradient(ellipse at 15% 5%,rgba(100,149,237,0.06) 0%,transparent 45%),
+    radial-gradient(ellipse at 85% 95%,rgba(224,112,80,0.06) 0%,transparent 45%),
+    radial-gradient(ellipse at 50% 50%,rgba(201,168,76,0.04) 0%,transparent 60%);
+}
+
+/* ---- App shell ---- */
+.wg-app{position:fixed;inset:0;display:flex;flex-direction:column;max-width:620px;margin:0 auto;
+  padding:calc(10px + env(safe-area-inset-top,0)) 12px calc(12px + env(safe-area-inset-bottom,0));gap:10px}
+
+/* ---- Top bar + icon buttons ---- */
+.wg-top{display:flex;align-items:center;gap:8px;flex-shrink:0}
+.wg-ico{width:40px;height:40px;border-radius:12px;background:var(--card-bg);border:1.5px solid var(--border);
+  color:var(--text);font-size:1.05rem;cursor:pointer;display:flex;align-items:center;justify-content:center;
+  transition:border-color .15s,color .15s,transform .1s;box-shadow:0 2px 8px rgba(0,0,0,0.25)}
+.wg-ico:hover{border-color:var(--gold);color:var(--gold)}
+.wg-ico:active{transform:scale(0.93)}
+
+/* ---- Pills / HUD chips ---- */
+.wg-pill{background:var(--card-bg);border:1.5px solid var(--border);border-radius:12px;padding:6px 14px;
+  font-family:'Tajawal',sans-serif;font-weight:900;display:flex;gap:6px;align-items:center;line-height:1.2;
+  box-shadow:0 2px 10px rgba(0,0,0,0.3)}
+.wg-pill .lbl{color:var(--muted);font-weight:700;font-size:0.8em}
+.wg-pill .val{color:var(--gold-light);font-family:'Tajawal',monospace;font-variant-numeric:tabular-nums}
+
+/* ---- Score cards ---- */
+.wg-scard{flex:1;background:var(--card-bg);border:1.5px solid var(--border);border-radius:var(--wg-radius);
+  padding:10px 12px;text-align:center;position:relative;transition:transform .25s,box-shadow .25s;
+  border-color:color-mix(in srgb,var(--c,var(--gold)) 40%,var(--border))}
+.wg-scard::before{content:'';position:absolute;top:0;left:0;right:0;height:3px;border-radius:var(--wg-radius) var(--wg-radius) 0 0;background:var(--c,var(--gold))}
+.wg-scard .nm{font-size:0.82rem;font-weight:700;color:var(--c,var(--text));display:flex;align-items:center;justify-content:center;gap:6px}
+.wg-scard .pts{font-family:'Tajawal',sans-serif;font-size:1.9rem;font-weight:900;line-height:1.1;margin-top:3px;color:var(--text)}
+.wg-scard.bump .pts{animation:wgBump .45s ease-out}
+@keyframes wgBump{0%{transform:scale(1)}45%{transform:scale(1.35);color:var(--gold-light)}100%{transform:scale(1)}}
+
+/* ---- Overlays / modals (matches index.html modal aesthetic) ---- */
+.wg-overlay{position:fixed;inset:0;z-index:40;background:rgba(0,0,0,0.78);
+  backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);
+  display:flex;align-items:center;justify-content:center;padding:18px}
+.wg-overlay[hidden]{display:none}
+.wg-modal{background:var(--card-bg);border:2px solid var(--gold);border-radius:22px;padding:26px 22px 22px;
+  max-width:420px;width:100%;max-height:92dvh;overflow-y:auto;text-align:center;
+  box-shadow:0 20px 60px rgba(0,0,0,0.6);animation:wgIn .35s ease}
+@keyframes wgIn{from{opacity:0;transform:translateY(14px) scale(0.98)}to{opacity:1;transform:none}}
+.wg-title{font-family:'Tajawal',sans-serif;font-weight:900;color:var(--gold);font-size:1.7rem;line-height:1.2;
+  margin-bottom:6px;text-shadow:0 0 22px rgba(201,168,76,0.3)}
+.wg-desc{color:var(--text);font-size:0.92rem;line-height:1.7;margin-bottom:14px;opacity:0.9}
+.wg-rules{background:var(--option-bg);border:1px solid var(--border);border-radius:14px;padding:12px 15px;
+  font-size:0.86rem;color:var(--text);line-height:1.95;text-align:right;margin:2px 0 16px}
+.wg-rules b{color:var(--gold-light)}
+.wg-lbl{font-size:0.78rem;color:var(--muted);margin-bottom:8px;letter-spacing:0.4px}
+
+/* ---- Segmented selector (mode / difficulty) ---- */
+.wg-seg{display:flex;gap:8px;margin:2px 0 16px}
+.wg-seg .opt{flex:1;background:var(--card-bg);border:1.5px solid var(--border);border-radius:14px;padding:12px 6px;
+  font-family:'Tajawal',sans-serif;font-weight:700;font-size:0.9rem;color:var(--muted);cursor:pointer;transition:all .18s}
+.wg-seg .opt .em{font-size:1.5rem;display:block;margin-bottom:4px}
+.wg-seg .opt.active{border-color:var(--gold);background:rgba(201,168,76,0.13);color:var(--gold);box-shadow:0 4px 16px rgba(201,168,76,0.18)}
+
+/* ---- Buttons (matches .start-btn) ---- */
+.wg-btn{width:100%;padding:14px;background:linear-gradient(135deg,var(--gold),#a8720c);color:var(--dark);border:none;
+  border-radius:14px;font-family:'Tajawal',sans-serif;font-size:1.05rem;font-weight:900;cursor:pointer;
+  transition:transform .15s,box-shadow .2s,opacity .2s;box-shadow:0 6px 20px rgba(201,168,76,0.28);margin:5px 0}
+.wg-btn:hover{transform:translateY(-2px);box-shadow:0 10px 28px rgba(201,168,76,0.36)}
+.wg-btn:active{transform:translateY(0)}
+.wg-btn:disabled{opacity:0.45;cursor:default;transform:none;box-shadow:none;background:var(--option-bg);color:var(--muted)}
+.wg-btn.sec{background:var(--option-bg);border:1.5px solid var(--border);color:var(--text);box-shadow:none}
+.wg-btn.sec:hover{border-color:var(--gold);color:var(--gold);transform:none;box-shadow:none}
+
+/* ---- Toast ---- */
+.wg-toast{position:fixed;top:16px;left:50%;transform:translateX(-50%);background:#13131a;border:1.5px solid var(--gold);
+  border-radius:50px;padding:9px 20px;font-size:0.85rem;font-weight:700;z-index:9999;pointer-events:none;
+  max-width:90vw;text-align:center;opacity:0;transition:opacity .3s}
+.wg-toast.show{opacity:1}
+
+/* ---- Accessibility: honour reduced-motion everywhere ---- */
+@media (prefers-reduced-motion:reduce){
+  *,*::before,*::after{animation-duration:.001ms!important;animation-iteration-count:1!important;transition-duration:.001ms!important}
+}
+/* ---- Keyboard focus ring for accessibility ---- */
+:focus-visible{outline:2px solid var(--gold);outline-offset:2px}

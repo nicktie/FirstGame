@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
+<title>قالب لعبة | Wanees</title>
+<meta name="theme-color" content="#0b0b0f">
+<meta name="description" content="قالب مرجعي لبناء لعبة جديدة على منصّة ونيس باستخدام game-core.">
+<link rel="manifest" href="manifest.json">
+<link rel="icon" href="icon-192.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;700;900&family=Cairo:wght@400;700&display=swap" rel="stylesheet">
+<!-- 1) Shared design system → instant visual consistency with the site -->
+<link rel="stylesheet" href="game-core.css">
+<style>
+  /* 2) Only game-specific styles live here. Everything shared is in game-core.css */
+  #tapPad{flex:1;min-height:0;display:flex;align-items:center;justify-content:center}
+  #tapBtn{width:min(60vw,240px);aspect-ratio:1;border-radius:28px;border:2px solid var(--gold);
+    background:radial-gradient(circle at 50% 38%,rgba(201,168,76,0.25),var(--option-bg));color:var(--gold-light);
+    font-family:'Tajawal',sans-serif;font-weight:900;font-size:2.4rem;cursor:pointer;transition:transform .06s;
+    box-shadow:0 0 30px rgba(201,168,76,0.2),inset 0 0 20px rgba(201,168,76,0.1)}
+  #tapBtn:active{transform:scale(0.95)}
+</style>
+</head>
+<body>
+<div class="wg-app">
+  <div class="wg-top">
+    <button class="wg-ico" onclick="WG.goHome()" aria-label="الرئيسية">🏠</button>
+    <div class="wg-pill" style="margin-inline:auto"><span class="lbl">⏱</span><span class="val" id="hudTime">١٠</span></div>
+    <div class="wg-pill"><span class="lbl">⭐</span><span class="val" id="hudScore">٠</span></div>
+  </div>
+
+  <div id="tapPad"><button id="tapBtn">اضغط!</button></div>
+</div>
+
+<!-- Start overlay -->
+<div class="wg-overlay" id="startOv">
+  <div class="wg-modal">
+    <div class="wg-title">🎯 قالب اللعبة</div>
+    <p class="wg-desc">مثال بسيط: اضغط الزرّ أكبر عدد من المرّات خلال ١٠ ثوانٍ.</p>
+    <div class="wg-rules">👆 كل ضغطة = <b>+١</b><br>⏱ لديك <b>١٠ ثوانٍ</b><br>🏆 حطّم رقمك القياسي!</div>
+    <button class="wg-btn" onclick="startGame()">▶ ابدأ</button>
+    <button class="wg-btn sec" onclick="WG.goHome()">🏠 الرئيسية</button>
+  </div>
+</div>
+
+<!-- Game over -->
+<div class="wg-overlay" id="overOv" hidden>
+  <div class="wg-modal">
+    <div class="wg-title" id="overTtl">انتهى الوقت!</div>
+    <p class="wg-desc" id="overDesc"></p>
+    <button class="wg-btn" onclick="startGame()">🔄 مرّة أخرى</button>
+    <button class="wg-btn sec" onclick="WG.goHome()">🏠 الرئيسية</button>
+  </div>
+</div>
+
+<script src="game-core.js"></script>
+<script>
+'use strict';
+/* Minimal game using the standard hooks from window.WG.
+   State → scoring → audio → input, all through the shared core. */
+const GAME = 'template';
+const S = { score: 0, timeLeft: 10, running: false };
+let timerInt = 0;
+
+const $ = id => document.getElementById(id);
+
+function startGame(){
+  WG.initAudio();
+  S.score = 0; S.timeLeft = 10; S.running = true;
+  $('startOv').hidden = true; $('overOv').hidden = true;
+  updateHud();
+  clearInterval(timerInt);
+  timerInt = setInterval(() => {
+    S.timeLeft--; updateHud();
+    if (S.timeLeft <= 3 && S.timeLeft > 0) WG.sfx.tick();
+    if (S.timeLeft <= 0) endGame();
+  }, 1000);
+}
+function endGame(){
+  S.running = false; clearInterval(timerInt);
+  const isRecord = WG.recordBest(GAME, S.score);
+  WG.sfx.win(); WG.vibe([40,40,120]);
+  $('overTtl').textContent = isRecord ? '🎉 رقم قياسي جديد!' : 'انتهى الوقت!';
+  $('overDesc').textContent = 'نتيجتك ' + WG.ar(S.score) + ' · الأفضل ' + WG.ar(WG.loadBest(GAME));
+  $('overOv').hidden = false;
+}
+function updateHud(){
+  $('hudScore').textContent = WG.ar(S.score);
+  $('hudTime').textContent = WG.ar(Math.max(0, S.timeLeft));
+}
+$('tapBtn').addEventListener('pointerdown', e => {
+  e.preventDefault();
+  if (!S.running) return;
+  S.score++; updateHud(); WG.sfx.good(); WG.vibe(8);
+});
+
+// Pause-safety + SW registration handled by the shared core.
+WG.onHidden(() => { if (S.running) { clearInterval(timerInt); S.running = false; $('startOv').hidden = false; } });
+WG.registerSW();
+</script>
+</body>
+</html>
