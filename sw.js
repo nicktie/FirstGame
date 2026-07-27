@@ -1,6 +1,16 @@
-const CACHE = 'wanees-v111';
+const CACHE = 'wanees-v112';
 const RUNTIME = 'wanees-runtime-v5';
-const ASSETS = ['./', './index.html', './iram.html', './borj.html', './wanees3d.html', './tetris.html', './colors.html', './game-core.css', './game-core.js', './manifest.json', './icon-192.png', './icon-512.png', './questions.json', './wanees-logo-base.png?v=1', './wanees-logo-text.png?v=1', './char-wanees.png', './char-lulu.png', './char-kaaboul.png'];
+
+// Standalone game files come from the shared registry (games.js) so adding a
+// game needs no edit here. Fall back to a static list if the import fails.
+let GAME_FILES = ['./colors.html', './iram.html', './borj.html', './wanees3d.html', './tetris.html'];
+try { importScripts('games.js'); if (self.WANEES_GAME_FILES && self.WANEES_GAME_FILES.length) GAME_FILES = self.WANEES_GAME_FILES; } catch (e) { /* keep fallback */ }
+
+const CORE = ['./', './index.html', './games.js', './game-core.css', './game-core.js', './manifest.json',
+  './icon-192.png', './icon-512.png', './questions.json',
+  './wanees-logo-base.png?v=1', './wanees-logo-text.png?v=1',
+  './char-wanees.png', './char-lulu.png', './char-kaaboul.png'];
+const ASSETS = CORE.concat(GAME_FILES);
 
 self.addEventListener('install', e => {
   e.waitUntil(caches.open(CACHE).then(c => c.addAll(ASSETS)).then(() => self.skipWaiting()));

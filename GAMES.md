@@ -40,7 +40,13 @@ WG.goHome() / WG.registerSW()  // العودة للرئيسية · تسجيل ا
 
 1. **انسخ** `game-template.html` إلى `mygame.html` وابنِ لعبتك داخله.
    استخدم أصناف `.wg-*` للواجهة و`window.WG` للتشغيل — لا تعِد كتابة الصوت/الاهتزاز/الـSW.
-2. **بطاقة في الشبكة** — أضف كرتاً في شبكة الألعاب داخل `index.html` (ابحث عن `games-grid`):
+2. **سجّلها** — أضف سطراً واحداً في `games.js` (السجلّ المصدر الوحيد):
+   ```js
+   { id:'mygame', title:'اسم اللعبة', icon:'🎲', launch:{ href:'mygame.html' }, file:'./mygame.html' },
+   ```
+   بهذا يلتقطها الـservice worker **تلقائياً** في الكاش (لا تعديل يدوي في `sw.js`)،
+   ويصبح عدد الألعاب `WANEES_GAME_COUNT` صحيحاً.
+3. **بطاقة في الشبكة** — أضف كرتاً في شبكة الألعاب داخل `index.html` (ابحث عن `games-grid`):
    ```html
    <div class="game-page-card" onclick="location.href='mygame.html'">
      <div class="gpc-icon">🎲</div>
@@ -49,11 +55,11 @@ WG.goHome() / WG.registerSW()  // العودة للرئيسية · تسجيل ا
        <button class="gpc-btn">العب ▶</button></div>
    </div>
    ```
-3. **الكاش** — أضف `'./mygame.html'` إلى مصفوفة `ASSETS` في `sw.js`، وارفع رقم `CACHE`
-   (`wanees-vNNN` → التالي) حتى يصل التحديث للمستخدمين.
-4. **العدّاد** — حدّث عدد الألعاب (`NN لعبة`) في `index.html` و`manifest.json`.
+4. **ارفع رقم الكاش** — `CACHE = 'wanees-vNNN'` في `sw.js` إلى التالي حتى يصل التحديث،
+   وحدّث العدّاد النصّي (`NN لعبة`) في واجهة `index.html` و`manifest.json`.
 
-> نصيحة: `game-core.css` و`game-core.js` مُدرجان أصلاً في كاش الـSW، فلا حاجة لإضافتهما.
+> السجلّ (`games.js`) هو مصدر الحقيقة لقائمة كاش الألعاب والعدد. `game-core.css/js`
+> و`games.js` مُدرجة أصلاً في كاش الـSW.
 
 ## الأونلاين (اختياري)
 
