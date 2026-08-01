@@ -1,0 +1,289 @@
+
+.wanees-screen{display:none;flex-direction:column;position:fixed;inset:0;background:#5b9bd5;overflow:hidden;z-index:9350;font-family:'Tajawal',sans-serif;direction:rtl;color:#fff;--bg:#5b9bd5;--text:#fff;--muted:#a0c0e0;--border:#2a4a70;--card-bg:#1a2540;--gold:#ffd200;--dark:#0e1a2c}
+.wanees-screen.active{display:flex}
+body.wanees-active{overflow:hidden}
+.wn-topbar{display:flex;align-items:center;justify-content:space-between;padding:calc(10px + env(safe-area-inset-top,0px)) calc(14px + env(safe-area-inset-right,0px)) 10px calc(14px + env(safe-area-inset-left,0px));gap:10px;background:rgba(0,0,0,0.45);border-bottom:2px solid #ffd200;flex-shrink:0;color:#fff}
+.wn-back-btn{padding:7px 14px;background:rgba(255,210,0,0.15);border:2px solid #ffd200;color:#ffd200;border-radius:8px;font-family:'Tajawal',sans-serif;font-weight:900;font-size:0.85rem;cursor:pointer;flex-shrink:0}
+.wn-hud{flex:1;display:flex;align-items:center;justify-content:center;gap:14px;font-family:'Courier New',monospace;font-weight:900;direction:ltr;flex-wrap:wrap;color:#fff}
+.wn-hud-item{display:flex;align-items:center;gap:4px;font-size:0.9rem;letter-spacing:1px}
+.wn-hud-coin{color:#ffd200;text-shadow:0 0 6px rgba(255,210,0,0.5)}
+.wn-hud-time{color:#fff}
+.wn-mute{width:32px;height:32px;background:rgba(255,210,0,0.15);border:2px solid #ffd200;color:#ffd200;border-radius:50%;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:0.9rem;flex-shrink:0}
+.wn-lock.active{background:rgba(61,186,122,0.25);border-color:#3dba7a;color:#3dba7a;box-shadow:0 0 10px rgba(61,186,122,0.45)}
+/* When fullscreen-locked, kill any browser scroll/pull behaviour on the
+   wanees screen so horizontal joystick drags can't trigger back-swipe. */
+body.wn-locked,html.wn-locked{overflow:hidden !important;overscroll-behavior:none !important;
+  touch-action:none !important;position:fixed;inset:0;width:100%;height:100%}
+body.wn-locked #waneesScreen{width:100vw;height:100vh;height:100dvh}
+body.wn-locked .top-nav{display:none !important}
+.wn-arena{position:relative;flex:1;display:flex;align-items:center;justify-content:center;padding:6px;touch-action:none;user-select:none;-webkit-user-select:none}
+.wn-arena canvas{width:100%;max-width:min(720px,calc((100dvh - 230px) * 16 / 9));aspect-ratio:16/9;height:auto;background:#5b9bd5;border-radius:6px;border:2px solid #2a4a70;display:block;image-rendering:pixelated;direction:ltr;cursor:pointer}
+.wn-overlay{position:absolute;inset:6px;background:rgba(14,26,44,0.92);backdrop-filter:blur(8px);display:flex;flex-direction:column;align-items:center;justify-content:center;padding:20px;text-align:center;color:#fff;border-radius:6px;z-index:20}
+.wno-emoji{font-size:3.4rem;line-height:1;margin-bottom:8px;filter:drop-shadow(0 0 18px rgba(255,210,0,0.5))}
+.wno-title{font-family:'Tajawal',sans-serif;font-weight:900;color:#ffd200;font-size:1.6rem;margin-bottom:8px;text-shadow:0 0 14px rgba(255,210,0,0.5)}
+.wno-desc{font-size:0.96rem;line-height:1.7;margin-bottom:14px;max-width:380px}
+.wno-hint{font-size:0.82rem;color:#a0c0e0;line-height:1.9;margin-bottom:18px;max-width:340px}
+.wno-hint b{color:#ffd200}
+.wno-stat{font-family:'Courier New',monospace;font-size:1.2rem;color:#ffd200;margin:6px 0;text-shadow:0 0 10px rgba(255,210,0,0.4)}
+.wno-stat .lbl{color:#a0c0e0;font-size:0.85rem}
+.wno-newrec{color:#7dff7d;font-weight:900;font-size:1rem;margin-bottom:10px;animation:wnBlink 0.7s infinite alternate}
+@keyframes wnBlink{from{opacity:0.6}to{opacity:1}}
+.wn-btn-primary{background:linear-gradient(135deg,#ffd200,#cc9900);color:#000;border:none;border-radius:12px;padding:13px 30px;font-family:'Tajawal',sans-serif;font-weight:900;font-size:1rem;cursor:pointer;box-shadow:0 6px 20px rgba(255,210,0,0.4);letter-spacing:1px}
+.wn-btn-primary:active{transform:translateY(2px)}
+.wn-btn-secondary{background:transparent;color:#fff;border:2px solid #ffd200;border-radius:12px;padding:12px 22px;font-family:'Tajawal',sans-serif;font-weight:700;font-size:0.95rem;cursor:pointer}
+.wn-btn-row{display:flex;gap:10px;flex-wrap:wrap;justify-content:center;margin-top:8px}
+.wn-controls{display:flex;justify-content:space-between;align-items:center;padding:6px calc(14px + env(safe-area-inset-right,0px)) calc(24px + env(safe-area-inset-bottom,0px)) calc(14px + env(safe-area-inset-left,0px));gap:8px;flex-shrink:0;direction:ltr;flex-direction:row-reverse}
+.wn-char-label{font-family:'Tajawal',sans-serif;font-weight:700;font-size:0.85rem;color:#e8e0d0;margin:14px 0 8px;letter-spacing:1px;opacity:0.85}
+.wn-char-picker{display:flex;gap:14px;justify-content:center;margin-bottom:14px;flex-wrap:wrap}
+.wn-coop-pick{display:flex;gap:8px;justify-content:center;margin:10px 0 14px;flex-wrap:wrap;max-width:420px}
+.wn-coop-btn{background:rgba(20,20,32,0.7);border:2px solid #3a3a52;border-radius:10px;padding:8px 14px;cursor:pointer;
+  font-family:'Tajawal',sans-serif;font-weight:800;font-size:0.85rem;color:#cfd6e6;transition:all 0.15s}
+.wn-coop-btn:hover{transform:translateY(-1px)}
+.wn-coop-btn.active{border-color:#c9a84c;background:linear-gradient(180deg,rgba(201,168,76,0.28),rgba(122,90,30,0.22));color:#ffd200;box-shadow:0 5px 16px rgba(201,168,76,0.3)}
+.wn-coop-btn[data-coop="1"].active{border-color:#ff5e9c;background:linear-gradient(180deg,rgba(255,94,156,0.28),rgba(170,30,80,0.2));color:#ffb0d2;box-shadow:0 5px 16px rgba(255,94,156,0.3)}
+.wn-char-btn{background:rgba(20,20,32,0.7);border:2px solid #3a3a52;border-radius:14px;padding:10px 14px;cursor:pointer;
+  display:flex;flex-direction:column;align-items:center;gap:6px;min-width:88px;transition:transform 0.15s,border-color 0.2s,box-shadow 0.2s}
+.wn-char-btn:hover{transform:translateY(-2px)}
+.wn-char-btn.active{border-color:#c9a84c;background:rgba(201,168,76,0.18);box-shadow:0 6px 20px rgba(201,168,76,0.25)}
+.wn-char-btn[data-char="suha"].active{border-color:#ff5e9c;background:rgba(255,94,156,0.18);box-shadow:0 6px 20px rgba(255,94,156,0.3)}
+.wn-char-name{font-family:'Tajawal',sans-serif;font-weight:900;font-size:0.85rem;color:#fff}
+.wn-char-avatar{position:relative;width:24px;height:28px;image-rendering:pixelated}
+/* Wanees avatar (pixel art via box-shadows on a 1px seed) */
+.wn-char-wanees::before{content:'';position:absolute;left:0;top:0;width:2px;height:2px;background:transparent;
+  box-shadow:
+    /* row0: hat */ 2px 0 #dd2222, 4px 0 #dd2222, 6px 0 #dd2222, 8px 0 #dd2222, 10px 0 #dd2222, 12px 0 #dd2222, 14px 0 #dd2222, 16px 0 #dd2222, 18px 0 #dd2222,
+    /* row1: hat brim */ 0 2px #dd2222, 2px 2px #aa0a0a, 4px 2px #aa0a0a, 6px 2px #aa0a0a, 8px 2px #aa0a0a, 10px 2px #aa0a0a, 12px 2px #aa0a0a, 14px 2px #aa0a0a, 16px 2px #aa0a0a, 18px 2px #aa0a0a, 20px 2px #dd2222,
+    /* row2-3 face */ 4px 4px #f0c090, 6px 4px #f0c090, 8px 4px #222, 10px 4px #f0c090, 12px 4px #f0c090, 14px 4px #f0c090, 16px 4px #222, 18px 4px #f0c090,
+    4px 6px #3a1a0a, 6px 6px #f0c090, 8px 6px #f0c090, 10px 6px #f0c090, 12px 6px #f0c090, 14px 6px #f0c090, 16px 6px #f0c090, 18px 6px #3a1a0a,
+    /* overalls */ 2px 8px #dd2222, 4px 8px #2a5ea8, 6px 8px #2a5ea8, 8px 8px #2a5ea8, 10px 8px #ffd200, 12px 8px #2a5ea8, 14px 8px #2a5ea8, 16px 8px #2a5ea8, 18px 8px #2a5ea8, 20px 8px #dd2222,
+    2px 10px #dd2222, 4px 10px #2a5ea8, 6px 10px #2a5ea8, 8px 10px #2a5ea8, 10px 10px #2a5ea8, 12px 10px #2a5ea8, 14px 10px #2a5ea8, 16px 10px #2a5ea8, 18px 10px #2a5ea8, 20px 10px #dd2222,
+    /* legs */ 4px 12px #3a1a0a, 6px 12px #3a1a0a, 14px 12px #3a1a0a, 16px 12px #3a1a0a}
+/* Suha avatar — pink dress girl */
+.wn-char-suha::before{content:'';position:absolute;left:0;top:0;width:2px;height:2px;background:transparent;
+  box-shadow:
+    /* bow + hair top */ 4px 0 #ff5e9c, 6px 0 #ff5e9c, 14px 0 #ff5e9c, 16px 0 #ff5e9c,
+    2px 2px #5a2a18, 4px 2px #ff90c0, 6px 2px #ff5e9c, 8px 2px #5a2a18, 10px 2px #5a2a18, 12px 2px #5a2a18, 14px 2px #ff5e9c, 16px 2px #ff90c0, 18px 2px #5a2a18,
+    /* face */ 2px 4px #5a2a18, 4px 4px #f0c090, 6px 4px #f0c090, 8px 4px #222, 10px 4px #f0c090, 12px 4px #f0c090, 14px 4px #222, 16px 4px #f0c090, 18px 4px #5a2a18,
+    2px 6px #5a2a18, 4px 6px #f0c090, 6px 6px #f0c090, 8px 6px #f0c090, 10px 6px #f0c090, 12px 6px #f0c090, 14px 6px #f0c090, 16px 6px #f0c090, 18px 6px #5a2a18,
+    /* dress top + heart */ 4px 8px #ff7eb3, 6px 8px #ff7eb3, 8px 8px #ff7eb3, 10px 8px #ffd200, 12px 8px #ff7eb3, 14px 8px #ff7eb3, 16px 8px #ff7eb3,
+    /* dress flare */ 2px 10px #ff4585, 4px 10px #ff7eb3, 6px 10px #ff7eb3, 8px 10px #ff7eb3, 10px 10px #ff7eb3, 12px 10px #ff7eb3, 14px 10px #ff7eb3, 16px 10px #ff7eb3, 18px 10px #ff4585,
+    /* legs + pink shoes */ 6px 12px #f0c090, 8px 12px #f0c090, 12px 12px #f0c090, 14px 12px #f0c090,
+    4px 14px #ff4585, 6px 14px #ff4585, 8px 14px #ff4585, 12px 14px #ff4585, 14px 14px #ff4585, 16px 14px #ff4585}
+/* Live spectate banner */
+.wn-spec-banner{position:absolute;top:8px;left:50%;transform:translateX(-50%);z-index:5;
+  background:rgba(8,8,16,0.85);border:1.5px solid rgba(255,80,80,0.6);border-radius:20px;
+  padding:5px 12px 5px 8px;display:flex;align-items:center;gap:8px;
+  color:#fff;font-family:'Tajawal',sans-serif;font-weight:700;font-size:0.78rem;
+  box-shadow:0 4px 18px rgba(0,0,0,0.5),0 0 22px rgba(255,80,80,0.18);
+  backdrop-filter:blur(4px);-webkit-backdrop-filter:blur(4px)}
+.wn-spec-dot{width:8px;height:8px;border-radius:50%;background:#ff3838;
+  box-shadow:0 0 8px rgba(255,56,56,0.8);animation:wnSpecPulse 1.4s infinite ease-in-out}
+.wn-spec-banner.broadcasting .wn-spec-dot{background:#ff3838}
+.wn-spec-banner.watching .wn-spec-dot{background:#3dba7a;box-shadow:0 0 8px rgba(61,186,122,0.8)}
+@keyframes wnSpecPulse{0%,100%{transform:scale(1);opacity:1}50%{transform:scale(1.35);opacity:0.7}}
+.wn-spec-close{background:transparent;border:none;color:#fff;cursor:pointer;font-size:0.95rem;
+  padding:0 4px;opacity:0.7;transition:opacity 0.15s}
+.wn-spec-close:hover{opacity:1}
+.wn-spec-banner b{color:#ffd200;letter-spacing:2px;font-family:monospace}
+.wn-spec-actions{display:flex;flex-direction:column;gap:8px;margin-top:10px;width:100%;max-width:280px}
+.wn-btn-spec{background:linear-gradient(160deg,rgba(40,28,68,0.9),rgba(20,14,38,0.9));
+  border:1.5px solid #5a4a8a;border-radius:12px;padding:10px 14px;color:#dcd0ff;
+  font-family:'Tajawal',sans-serif;font-weight:700;font-size:0.85rem;cursor:pointer;
+  transition:border-color 0.2s,transform 0.12s,box-shadow 0.2s}
+.wn-btn-spec:hover{border-color:#a78cff;box-shadow:0 4px 18px rgba(167,140,255,0.25);transform:translateY(-1px)}
+.wn-btn-spec:active{transform:translateY(0)}
+@media (prefers-reduced-motion:reduce){.wn-spec-dot{animation:none}}
+
+/* (suha-layout overrides removed: analog joystick layout works for both characters) */
+.wn-ctrl-btn{min-width:84px;min-height:84px;background:linear-gradient(180deg,rgba(255,210,0,0.18),rgba(255,210,0,0.08));border:2px solid #ffd200;border-radius:18px;color:#ffd200;font-family:'Tajawal',sans-serif;font-weight:900;font-size:2.1rem;cursor:pointer;display:flex;align-items:center;justify-content:center;user-select:none;-webkit-user-select:none;-webkit-touch-callout:none;touch-action:none}
+.wn-ctrl-btn:active,.wn-ctrl-btn.pressed{background:linear-gradient(180deg,#ffd200,#cc9900);color:#000;transform:translateY(2px)}
+.wn-jump-btn{min-width:110px;min-height:110px;font-size:1.8rem;flex-direction:column;gap:2px;border-radius:50% !important;
+  box-shadow:0 6px 16px rgba(255,210,0,0.25),inset 0 -4px 0 rgba(0,0,0,0.25)}
+.wn-jump-btn .wn-jump-label{font-size:0.82rem;letter-spacing:1px}
+/* ===== Full-arena touch zones + floating analog joystick ===== */
+.wn-tap-zone{position:absolute;top:48px;bottom:0;width:50%;z-index:3;
+  touch-action:none;user-select:none;-webkit-user-select:none;-webkit-touch-callout:none;
+  background:transparent;pointer-events:auto;display:flex;align-items:flex-end;justify-content:center}
+.wn-tap-left{left:0;border-top-right-radius:14px;
+  background:linear-gradient(to right,rgba(255,210,0,0.04),transparent 70%)}
+.wn-tap-right{right:0;border-top-left-radius:14px;
+  background:linear-gradient(to left,rgba(255,210,0,0.06),transparent 70%)}
+.wn-tap-right.held{background:linear-gradient(to left,rgba(255,210,0,0.18),transparent 70%)}
+/* Coop-only P2 (لُولُو) zones, hidden by default */
+.wn-tap-p2-jump,.wn-tap-p2-joy{display:none;position:absolute;top:48px;bottom:0;width:25%;z-index:3;
+  touch-action:none;user-select:none;-webkit-user-select:none;-webkit-touch-callout:none;
+  pointer-events:auto;align-items:flex-end;justify-content:center}
+.wn-tap-p2-jump{left:50%;border-top-left-radius:14px;border-top-right-radius:14px;
+  background:linear-gradient(to top,rgba(255,94,156,0.10),transparent 70%)}
+.wn-tap-p2-jump.held{background:linear-gradient(to top,rgba(255,94,156,0.28),transparent 70%)}
+.wn-tap-p2-joy{right:0;border-top-left-radius:14px;
+  background:linear-gradient(to left,rgba(255,94,156,0.04),transparent 70%)}
+/* Coop arena layout: split each side into joystick + jump strips */
+.wn-arena.coop .wn-tap-left{width:25%}
+.wn-arena.coop .wn-tap-right{right:auto;left:25%;width:25%;
+  background:linear-gradient(to top,rgba(255,210,0,0.10),transparent 70%)}
+.wn-arena.coop .wn-tap-right.held{background:linear-gradient(to top,rgba(255,210,0,0.28),transparent 70%)}
+.wn-arena.coop .wn-tap-p2-jump,.wn-arena.coop .wn-tap-p2-joy{display:flex}
+/* P2 joystick base uses a pink tint to distinguish from P1's gold */
+#wnJoyBase2 .wn-joy-thumb{background:radial-gradient(circle at 35% 30%,#ffd6e8,#ff5e9c 55%,#aa1166);
+  border-color:#ffc8d8}
+#wnJoyBase2{border-color:rgba(255,94,156,0.6)}
+.wn-tap-hint{color:rgba(255,210,0,0.45);font-family:'Tajawal',sans-serif;font-size:0.78rem;font-weight:700;
+  pointer-events:none;letter-spacing:1px;text-align:center;padding-bottom:14px;
+  text-shadow:0 1px 3px rgba(0,0,0,0.6);transition:opacity 0.2s;max-width:90%;line-height:1.4}
+.wn-tap-zone.active .wn-tap-hint{opacity:0}
+.wn-tap-hint-left{position:absolute;left:0;right:50%;bottom:0;top:48px;display:flex;align-items:flex-end;
+  justify-content:center;padding-bottom:14px;pointer-events:none;color:rgba(255,210,0,0.45);
+  font-family:'Tajawal',sans-serif;font-size:0.78rem;font-weight:700;letter-spacing:1px;
+  text-shadow:0 1px 3px rgba(0,0,0,0.6);transition:opacity 0.2s;z-index:4}
+.wn-tap-hint-left.hidden{opacity:0}
+
+.wn-joy-base{position:fixed;width:120px;height:120px;border-radius:50%;
+  background:radial-gradient(circle,rgba(20,20,30,0.7) 0%,rgba(20,20,30,0.45) 65%,rgba(20,20,30,0.0) 100%);
+  border:2.5px solid rgba(255,210,0,0.55);box-shadow:0 0 22px rgba(255,210,0,0.18),inset 0 0 18px rgba(0,0,0,0.4);
+  display:none;pointer-events:none;transform:translate(-50%,-50%);z-index:8}
+.wn-joy-base.on{display:block}
+.wn-joy-thumb{position:absolute;left:50%;top:50%;width:54px;height:54px;border-radius:50%;
+  background:radial-gradient(circle at 35% 30%,#ffeb70,#ffd200 55%,#cc9900 100%);
+  border:2.5px solid #fff;box-shadow:0 4px 14px rgba(0,0,0,0.4),inset 0 -3px 0 rgba(0,0,0,0.25);
+  transform:translate(-50%,-50%);pointer-events:none;will-change:transform}
+/* ===== Story dialogue overlay (Wanees / Suha narrating between levels) ===== */
+.wn-dlg{position:absolute;inset:0;z-index:25;background:linear-gradient(180deg,rgba(8,10,18,0.55),rgba(8,10,18,0.78));
+  backdrop-filter:blur(4px);-webkit-backdrop-filter:blur(4px);
+  display:flex;align-items:flex-end;justify-content:center;
+  padding:16px calc(16px + env(safe-area-inset-right,0px)) calc(16px + env(safe-area-inset-bottom,0px)) calc(16px + env(safe-area-inset-left,0px));
+  animation:wnDlgFade 0.32s ease-out}
+@keyframes wnDlgFade{from{opacity:0}to{opacity:1}}
+.wn-dlg-card{display:flex;align-items:flex-end;gap:14px;width:100%;max-width:640px}
+.wn-dlg-portrait{flex-shrink:0;width:92px;height:92px;border-radius:18px;
+  background:linear-gradient(160deg,#fff6c8,#ffd24a 60%,#ff8838);
+  border:3px solid #ffd200;display:flex;align-items:center;justify-content:center;
+  font-size:3.2rem;line-height:1;box-shadow:0 10px 30px rgba(0,0,0,0.55),inset 0 -4px 0 rgba(0,0,0,0.18);
+  animation:wnDlgBob 1.8s infinite ease-in-out;overflow:hidden}
+.wn-dlg-portrait svg,.wn-dlg-portrait img{width:100%;height:100%;display:block;object-fit:cover;object-position:center top}
+@keyframes wnDlgBob{0%,100%{transform:translateY(0) rotate(-2deg)}50%{transform:translateY(-4px) rotate(2deg)}}
+.wn-dlg-body{flex:1;background:#fff8e8;color:#2a1810;border:3px solid #c9a84c;border-radius:18px;
+  padding:12px 14px 10px;position:relative;box-shadow:0 12px 40px rgba(0,0,0,0.55);
+  font-family:'Tajawal','Cairo',sans-serif}
+.wn-dlg-body::before{content:'';position:absolute;left:-12px;bottom:18px;width:0;height:0;
+  border:10px solid transparent;border-right-color:#c9a84c;border-left:0}
+.wn-dlg-body::after{content:'';position:absolute;left:-7px;bottom:21px;width:0;height:0;
+  border:8px solid transparent;border-right-color:#fff8e8;border-left:0}
+.wn-dlg-name{font-weight:900;font-size:0.95rem;color:#b45a10;margin-bottom:4px;letter-spacing:1px}
+.wn-dlg-text{font-weight:700;font-size:1.05rem;line-height:1.6;min-height:62px;white-space:pre-wrap;
+  color:#231510}
+.wn-dlg-row{display:flex;align-items:center;justify-content:space-between;margin-top:8px;gap:8px}
+.wn-dlg-step{font-size:0.72rem;color:#8a6a30;font-weight:700;letter-spacing:1px;font-family:'Courier New',monospace}
+.wn-dlg-actions{display:flex;gap:8px}
+.wn-dlg-skip{background:transparent;border:1.5px solid #b48a30;color:#b48a30;border-radius:10px;
+  padding:5px 12px;font-size:0.82rem;font-weight:700;cursor:pointer;font-family:'Tajawal',sans-serif}
+.wn-dlg-skip:hover,.wn-dlg-skip:active{background:#fff;color:#7a5a18}
+.wn-dlg-next{background:linear-gradient(180deg,#ffd200,#cc9900);border:2px solid #b48a30;color:#231510;
+  border-radius:50%;width:38px;height:38px;font-size:1rem;font-weight:900;cursor:pointer;
+  display:flex;align-items:center;justify-content:center;box-shadow:0 3px 0 #8a6a18;
+  animation:wnDlgNextPulse 1.1s infinite ease-in-out}
+.wn-dlg-next:active{transform:translateY(2px);box-shadow:0 1px 0 #8a6a18}
+@keyframes wnDlgNextPulse{0%,100%{transform:translateY(0)}50%{transform:translateY(-3px)}}
+@media (max-width:380px){
+  .wn-dlg-portrait{width:72px;height:72px;font-size:2.4rem}
+  .wn-dlg-text{font-size:0.95rem;min-height:54px}
+  .wn-dlg-name{font-size:0.85rem}
+  .wn-cin-portrait{width:130px;height:175px}
+}
+@media (prefers-reduced-motion:reduce){
+  .wn-dlg{animation:none}
+  .wn-dlg-portrait,.wn-dlg-next{animation:none}
+}
+/* ===== Villain speaker variant ===== */
+.wn-dlg-portrait.villain-face{
+  background:linear-gradient(160deg,#2a0018,#7a001a 55%,#3a0040);
+  border-color:#cc1144;
+  animation:wnVillainShake 0.45s infinite ease-in-out}
+@keyframes wnVillainShake{0%,100%{transform:rotate(-4deg) scale(1)}50%{transform:rotate(4deg) scale(1.06)}}
+.wn-dlg-body.villain-body{background:#140010;color:#ffd0e0;border-color:#cc1144}
+.wn-dlg-body.villain-body::before{border-right-color:#cc1144}
+.wn-dlg-body.villain-body::after{border-right-color:#140010}
+.wn-dlg-name.villain-name{color:#ff5577}
+.wn-dlg-text.villain-text{color:#ffd0e0}
+.wn-dlg-body.villain-body .wn-dlg-step{color:#aa6680}
+.wn-dlg-body.villain-body .wn-dlg-skip{border-color:#cc1144;color:#ff5577}
+.wn-dlg-body.villain-body .wn-dlg-next{background:linear-gradient(180deg,#cc1144,#880022);border-color:#ff5577;color:#fff;box-shadow:0 3px 0 #440011}
+/* ===== Cinematic reunion overlay ===== */
+#wnReunion{position:absolute;inset:0;z-index:30;
+  background:radial-gradient(ellipse at 50% 40%,#0e0a2e 0%,#000810 80%);
+  display:flex;flex-direction:column;align-items:center;justify-content:center;
+  gap:18px;animation:wnCinFade 0.7s ease-out}
+@keyframes wnCinFade{from{opacity:0;transform:scale(1.04)}to{opacity:1;transform:scale(1)}}
+.wn-cin-stars{position:absolute;inset:0;overflow:hidden;pointer-events:none}
+.wn-cin-star{position:absolute;border-radius:50%;background:#fff;animation:wnStarTwinkle 1.8s infinite ease-in-out}
+@keyframes wnStarTwinkle{0%,100%{opacity:0.2;transform:scale(0.8)}50%{opacity:1;transform:scale(1.2)}}
+.wn-cin-portraits{display:flex;gap:32px;align-items:flex-end;position:relative;z-index:1}
+.wn-cin-portrait{width:170px;height:230px;line-height:1;
+  filter:drop-shadow(0 0 18px rgba(255,215,80,0.9));
+  animation:wnCinFloat 2.2s infinite ease-in-out;
+  border-radius:18px;overflow:hidden;border:3px solid rgba(255,210,0,0.6);
+  background:rgba(0,0,0,0.25)}
+.wn-cin-portrait svg,.wn-cin-portrait img{width:100%;height:100%;display:block;object-fit:contain;object-position:center}
+.wn-cin-portrait:nth-child(3){animation-delay:-1.1s}
+.wn-cin-hearts{font-size:2rem;align-self:center;animation:wnCinHeartBeat 1.2s infinite ease-in-out}
+@keyframes wnCinFloat{0%,100%{transform:translateY(0) rotate(-2deg)}50%{transform:translateY(-10px) rotate(2deg)}}
+@keyframes wnCinHeartBeat{0%,100%{transform:scale(1)}50%{transform:scale(1.25)}}
+.wn-cin-walk-char{width:64px;height:80px;display:inline-block;vertical-align:middle;border-radius:10px;overflow:hidden}
+.wn-cin-walk-char svg,.wn-cin-walk-char img{width:100%;height:100%;object-fit:contain}
+.wn-cin-title{font-size:1.6rem;font-weight:900;color:#ffd200;letter-spacing:2px;
+  font-family:'Tajawal','Cairo',sans-serif;text-align:center;
+  text-shadow:0 0 24px rgba(255,210,0,0.9),0 0 48px rgba(255,160,0,0.5);
+  animation:wnCinGlow 2s infinite ease-in-out;position:relative;z-index:1}
+@keyframes wnCinGlow{0%,100%{text-shadow:0 0 24px rgba(255,210,0,0.9)}50%{text-shadow:0 0 48px rgba(255,210,0,1),0 0 80px rgba(255,140,0,0.7)}}
+.wn-cin-sub{font-size:1.05rem;color:#ffccdd;font-family:'Tajawal','Cairo',sans-serif;
+  font-weight:700;text-align:center;max-width:320px;line-height:1.55;
+  position:relative;z-index:1}
+.wn-cin-walk{display:flex;gap:12px;align-items:center;font-size:2.2rem;
+  position:relative;z-index:1;
+  animation:wnCinWalkIn 1s ease-out both}
+@keyframes wnCinWalkIn{from{opacity:0;transform:translateX(-30px)}to{opacity:1;transform:translateX(0)}}
+.wn-cin-btn{background:linear-gradient(180deg,#ffd200,#cc9900);border:2px solid #b48a30;
+  color:#231510;border-radius:50px;padding:11px 32px;
+  font-size:1.05rem;font-weight:900;cursor:pointer;
+  font-family:'Tajawal','Cairo',sans-serif;
+  box-shadow:0 4px 0 #8a6a18;position:relative;z-index:1;
+  animation:wnDlgNextPulse 1.1s infinite ease-in-out}
+.wn-cin-btn:active{transform:translateY(2px);box-shadow:0 2px 0 #8a6a18}
+@media(max-width:380px){
+  .wn-cin-portrait{font-size:3.6rem}
+  .wn-cin-title{font-size:1.3rem}
+  .wn-cin-sub{font-size:0.95rem}
+}
+
+/* Fire button: floats above the right tap zone when player has Fire Flower power */
+.wn-fire-btn{position:absolute;top:8px;right:14px;z-index:9;
+  width:60px;height:60px;border-radius:50%;border:2.5px solid #ffd200;
+  background:radial-gradient(circle at 35% 30%,#ffa820,#e03010 55%,#7a1010 100%);
+  display:flex;align-items:center;justify-content:center;cursor:pointer;
+  box-shadow:0 0 22px rgba(255,80,0,0.55),inset 0 -4px 0 rgba(0,0,0,0.3),0 4px 12px rgba(0,0,0,0.4);
+  animation:wnFirePulse 1.3s infinite ease-in-out;touch-action:none;user-select:none;
+  -webkit-user-select:none;padding:0}
+.wn-fire-btn:active,.wn-fire-btn.pressed{transform:scale(0.92);box-shadow:0 0 10px rgba(255,80,0,0.4)}
+.wn-fire-icon{font-size:1.7rem;line-height:1;filter:drop-shadow(0 1px 2px rgba(0,0,0,0.7))}
+.wn-fire-count{position:absolute;bottom:-6px;right:-6px;background:#0b0b0f;color:#ffd200;
+  border:1.5px solid #ffd200;border-radius:10px;padding:1px 6px;font-size:0.72rem;font-weight:900;
+  font-family:'Courier New',monospace;min-width:18px;text-align:center;line-height:1}
+@keyframes wnFirePulse{
+  0%,100%{box-shadow:0 0 22px rgba(255,80,0,0.55),inset 0 -4px 0 rgba(0,0,0,0.3),0 4px 12px rgba(0,0,0,0.4)}
+  50%{box-shadow:0 0 36px rgba(255,140,0,0.85),inset 0 -4px 0 rgba(0,0,0,0.3),0 4px 12px rgba(0,0,0,0.4)}
+}
+@media (prefers-reduced-motion:reduce){.wn-fire-btn{animation:none}}
+
+/* Pulse ring shown on the right zone when held, sells the tap feedback */
+.wn-tap-right::after{content:'';position:absolute;width:90px;height:90px;border-radius:50%;
+  bottom:38px;right:38px;background:radial-gradient(circle,rgba(255,210,0,0.25) 0%,transparent 70%);
+  opacity:0;transition:opacity 0.1s;pointer-events:none}
+.wn-tap-right.held::after{opacity:1}
+@media(max-width:640px){
+  .wn-topbar{padding:8px 12px;gap:6px}
+  .wn-hud-item{font-size:0.78rem}
+  .wno-title{font-size:1.3rem}
+  .wn-joy-base{width:110px;height:110px}
+  .wn-joy-thumb{width:48px;height:48px}
+  .wn-tap-hint,.wn-tap-hint-left{font-size:0.72rem;padding-bottom:10px}
+}

@@ -1,4 +1,4 @@
-const CACHE = 'wanees-v115';
+const CACHE = 'wanees-v116';
 const RUNTIME = 'wanees-runtime-v5';
 
 // Standalone game files come from the shared registry (games.js) so adding a
@@ -7,6 +7,9 @@ let GAME_FILES = ['./colors.html', './iram.html', './borj.html', './wanees3d.htm
 try { importScripts('games.js'); if (self.WANEES_GAME_FILES && self.WANEES_GAME_FILES.length) GAME_FILES = self.WANEES_GAME_FILES; } catch (e) { /* keep fallback */ }
 
 const CORE = ['./', './index.html', './games.js', './game-core.css', './game-core.js', './manifest.json',
+  // split-out styles/scripts of index.html (extracted 1:1, same load order)
+  './app.css', './app.js', './dino.css', './dino.js', './brainrot.css', './brainrot.js',
+  './space.css', './space.js', './waneesgame.css', './waneesgame.js', './boards-polish.css',
   './icon-192.png', './icon-512.png', './questions.json',
   './wanees-logo-base.png?v=1', './wanees-logo-text.png?v=1',
   './char-wanees.png', './char-lulu.png', './char-kaaboul.png'];
