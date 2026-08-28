@@ -274,12 +274,42 @@ function celebrate(){
   }
 }
 
+/* Swap the whole document for the decrypted letter.
+   document.write() is not used on purpose: with a payload this large the parser
+   never gets around to running the letter's inline script, so the countdown and
+   the interactions stay dead. Parsing it and re-creating the script nodes runs
+   them deterministically. */
+function install(html){
+  const doc = new DOMParser().parseFromString(html, 'text/html');
+
+  document.title = doc.title || document.title;
+  document.head.querySelectorAll('style, link[rel="stylesheet"]').forEach(n => n.remove());
+  Array.from(doc.head.children).forEach(n => {
+    if (n.tagName === 'TITLE') return;
+    document.head.appendChild(document.importNode(n, true));
+  });
+
+  const scripts = Array.from(doc.body.querySelectorAll('script'));
+  scripts.forEach(s => s.remove());              // inert copies would never run
+  document.body.className = doc.body.className;
+  document.body.innerHTML = doc.body.innerHTML;
+
+  scripts.forEach(old => {                       // re-created nodes DO run
+    const s = document.createElement('script');
+    Array.from(old.attributes).forEach(a => s.setAttribute(a.name, a.value));
+    s.textContent = old.textContent;
+    document.body.appendChild(s);
+  });
+
+  window.scrollTo(0, 0);
+}
+
 function reveal(html){
   document.body.classList.add('opened');
   msg.textContent = 'أهلاً بكِ يا سُهى 💕'; msg.className = 'msg ok';
   celebrate();
   if (navigator.vibrate) try { navigator.vibrate([15,40,15,40,60]); } catch(e){}
-  setTimeout(() => { document.open(); document.write(html); document.close(); }, 1150);
+  setTimeout(() => install(html), 1150);
 }
 
 form.addEventListener('submit', async e => {
@@ -307,7 +337,7 @@ form.addEventListener('submit', async e => {
   if (!saved) return;
   try {
     const html = await unlock(saved);
-    document.open(); document.write(html); document.close();
+    install(html);
   } catch(e){ try { sessionStorage.removeItem(KEEP); } catch(err){} }
 })();
 </script>
