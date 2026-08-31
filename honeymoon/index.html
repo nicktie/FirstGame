@@ -124,6 +124,48 @@
 
   .foot{margin-top:16px; font-family:'Aref Ruqaa',serif; font-size:15px; color:var(--gold)}
 
+  /* ---- memory game ---- */
+  .playlink{
+    display:block; width:100%; margin-top:14px; background:none; border:none; cursor:pointer;
+    font-family:'Tajawal',sans-serif; font-size:12.5px; font-weight:700; color:var(--wine);
+    opacity:.85; text-decoration:underline; text-underline-offset:4px;
+    text-decoration-color:var(--gold-soft); padding:6px;
+  }
+  .playlink[hidden]{display:none}   /* explicit display would otherwise beat [hidden] */
+  .playlink:hover{opacity:1}
+  .game[hidden]{display:none}
+  .game{margin-top:6px; animation:pop .45s cubic-bezier(.34,1.4,.64,1)}
+  .g-bar{height:5px; border-radius:999px; background:var(--ivory-2); overflow:hidden; margin-bottom:10px}
+  .g-bar i{display:block; height:100%; width:0; border-radius:999px;
+    background:linear-gradient(90deg,#E39CBC,var(--wine)); transition:width .45s cubic-bezier(.34,1.2,.64,1)}
+  .g-step{font-size:11.5px; color:var(--ink-soft); letter-spacing:.12em; margin-bottom:10px}
+  .g-q{font-family:'Amiri',serif; font-size:19px; font-weight:700; line-height:1.5; margin-bottom:14px}
+  .g-opts{display:flex; flex-direction:column; gap:8px}
+  .g-opt{
+    width:100%; padding:12px 14px; border-radius:14px; cursor:pointer;
+    font-family:'Tajawal',sans-serif; font-size:13.5px; font-weight:700; color:var(--ink);
+    background:#fff; border:1.6px solid var(--gold-soft); transition:.18s; text-align:center;
+  }
+  .g-opt:hover{border-color:var(--gold); transform:translateY(-1px)}
+  .g-opt.right{background:#EAF8F1; border-color:#3E9E7A; color:#2C7A5C}
+  .g-opt.wrong{background:#FDECF2; border-color:#E2799C; color:#C2456F; animation:shake .4s}
+  .g-opt:disabled{cursor:default; transform:none}
+  .g-love{font-size:13.5px; line-height:1.9; color:var(--ink); margin:2px 0 12px}
+  .g-hint{
+    display:flex; gap:9px; align-items:flex-start; text-align:right;
+    background:linear-gradient(135deg,#FFF6E6,#FDEBF3);
+    border:1.5px dashed var(--gold); border-radius:16px; padding:12px 14px;
+    font-size:13px; font-weight:700; color:#8A5B2E; margin-bottom:14px;
+  }
+  .g-bulb{flex:0 0 auto; font-size:16px}
+  .g-done-h{font-family:'Amiri',serif; font-size:20px; font-weight:700; color:var(--wine); margin-bottom:12px}
+  .g-hints{list-style:none; text-align:right; margin-bottom:14px}
+  .g-hints li{
+    font-size:12.5px; color:var(--ink-soft); line-height:1.8; padding:7px 12px; margin-bottom:6px;
+    background:var(--ivory); border-radius:12px; border-right:3px solid var(--gold-soft);
+  }
+  .g-hints li.last{color:var(--wine); font-weight:700; border-right-color:var(--wine); background:#FFF3F9}
+
   /* ---- slide to open ---- */
   .slide[hidden]{display:none}
   .slide{margin-top:4px;animation:slideIn .45s cubic-bezier(.34,1.4,.64,1)}
@@ -224,6 +266,33 @@
     </div>
   </div>
 
+  <button class="playlink" id="playLink" type="button">🎀 ما تذكرين الرمز؟ العبي معي</button>
+
+  <!-- little memory game: each right answer gives a hint about the code -->
+  <div class="game" id="game" hidden>
+    <div class="g-bar"><i id="gBar"></i></div>
+    <div class="g-step" id="gStep"></div>
+
+    <div id="gAsk">
+      <div class="g-q" id="gQ"></div>
+      <div class="g-opts" id="gOpts"></div>
+    </div>
+
+    <div id="gFeed" hidden>
+      <div class="g-love" id="gLove"></div>
+      <div class="g-hint"><span class="g-bulb">💡</span><span id="gHint"></span></div>
+      <button class="go" id="gNext" type="button">التالي ←</button>
+    </div>
+
+    <div id="gDone" hidden>
+      <div class="g-done-h">كل التلميحات معك الحين 💕</div>
+      <ul class="g-hints" id="gHints"></ul>
+      <button class="go" id="gGo" type="button">أدخلي الرمز 💌</button>
+    </div>
+
+    <button class="playlink" id="gClose" type="button">↩ رجوع للرمز</button>
+  </div>
+
   <div class="foot">أسامة ♥ سُهى</div>
 </main>
 
@@ -232,6 +301,7 @@
 const ITER = 300000, ENC_URL = 'journey.enc', KEEP = 'hm_open';
 
 const $ = id => document.getElementById(id);
+const ar = n => String(n).replace(/[0-9]/g, d => '\u0660\u0661\u0662\u0663\u0664\u0665\u0666\u0667\u0668\u0669'[d]);
 const pin = [...$('pin').querySelectorAll('input')];
 const msg = $('msg'), go = $('go'), form = $('form');
 
@@ -351,6 +421,95 @@ function install(html){
   window.scrollTo(0, 0);
 }
 
+/* ---- memory game: every right answer earns a hint toward the code ---- */
+const QUIZ = [
+  { q:'اول شي… متى كان يوم زواجنا؟',
+    opts:['٧ اغسطس ٢٠٢٦ — الجمعة','١٧ اغسطس ٢٠٢٦ — الاحد','٧ سبتمبر ٢٠٢٦ — الاثنين'], ans:0,
+    love:'صح يا حياتي 💍 من ذاك اليوم وانا احسب نفسي اسعد رجل في الدنيا، وكل يوم يمر احبك اكثر من اللي قبله.',
+    hint:'الرمز اربعة ارقام… وانت تعرفينها من دون ما تفكرين.' },
+
+  { q:'وش اسم الفندق اللي نزلنا فيه بعد الزواج؟',
+    opts:['Four Seasons','DoubleTree by Hilton','Marriott'], ans:1,
+    love:'صح 🏨 اول مكان جمعنا لحالنا… وكانت اجمل ايام، ولا زلت اتذكر ضحكتك فيه.',
+    hint:'الارقام مو من تاريخ، ولا من عيد ميلاد… شي ثاني تماما.' },
+
+  { q:'اول لعبة لعبناها سوا؟',
+    opts:['It Takes Two','Overcooked','Split Fiction'], ans:2,
+    love:'صح 🎮 حتى في اللعب ما نفترق — نلعب سوا، ونكمل بعض، ونضحك لين ننسى الوقت.',
+    hint:'شي تحملينه معك كل يوم… واول ما اشتاق لك امسكه واتصل فيه 📱' },
+
+  { q:'اكثر اكلة احبها انا؟',
+    opts:['البامية','الكبسة','المندي'], ans:0,
+    love:'صح 😋 تعرفينني اكثر من نفسي، وهذي اكثر حاجة تطمني — ان في شخص يعرفني عن ظهر قلب.',
+    hint:'من رقم جوالك… بس مو الرقم كامل.' },
+
+  { q:'كم سنة ونحنا نحب بعض؟',
+    opts:['سنة','سنتين','ثلاث سنوات'], ans:1,
+    love:'سنتين 💗 مرينا فيها بصعوبات كثيرة وتجاوزناها سوا، وكل مرة نطلع منها اقوى واقرب. والجاي عمر كامل ان شاء الله.',
+    hint:'اخر ٤ ارقام من رقم جوالك 💕 — هذا هو الرمز.' },
+];
+
+const game=$('game'), playLink=$('playLink');
+let qi=0, earned=[];
+
+function showGame(on){
+  game.hidden = !on;
+  form.hidden = on;
+  playLink.hidden = on;
+  if (on){ qi=0; earned=[]; renderQ(); }
+}
+function renderQ(){
+  $('gAsk').hidden=false; $('gFeed').hidden=true; $('gDone').hidden=true;
+  const item = QUIZ[qi];
+  $('gStep').textContent = 'سؤال ' + ar(qi+1) + ' من ' + ar(QUIZ.length);
+  $('gBar').style.width = (qi / QUIZ.length * 100) + '%';
+  $('gQ').textContent = item.q;
+  const box=$('gOpts'); box.innerHTML='';
+  item.opts.forEach((text,i) => {
+    const b=document.createElement('button');
+    b.type='button'; b.className='g-opt'; b.textContent=text;
+    b.addEventListener('click', () => answer(i, b));
+    box.appendChild(b);
+  });
+}
+function answer(i, btn){
+  const item = QUIZ[qi];
+  if (i !== item.ans){
+    btn.classList.add('wrong'); btn.disabled = true;
+    if (navigator.vibrate) try { navigator.vibrate([20,40,20]); } catch(e){}
+    return;
+  }
+  btn.classList.add('right');
+  [...$('gOpts').children].forEach(b => b.disabled = true);
+  if (navigator.vibrate) try { navigator.vibrate([12,30,12,30,60]); } catch(e){}
+  earned.push(item.hint);
+  setTimeout(() => {
+    $('gAsk').hidden = true; $('gFeed').hidden = false;
+    $('gLove').textContent = item.love;
+    $('gHint').textContent = item.hint;
+    $('gBar').style.width = ((qi+1) / QUIZ.length * 100) + '%';
+    $('gNext').textContent = (qi === QUIZ.length-1) ? 'خلصنا 💕' : 'التالي ←';
+  }, 520);
+}
+$('gNext').addEventListener('click', () => {
+  qi++;
+  if (qi < QUIZ.length) renderQ(); else finishGame();
+});
+function finishGame(){
+  $('gAsk').hidden=true; $('gFeed').hidden=true; $('gDone').hidden=false;
+  $('gStep').textContent='';
+  const ul=$('gHints'); ul.innerHTML='';
+  earned.forEach((h,i) => {
+    const li=document.createElement('li');
+    li.textContent=h;
+    if (i === earned.length-1) li.className='last';
+    ul.appendChild(li);
+  });
+}
+playLink.addEventListener('click', () => showGame(true));
+$('gClose').addEventListener('click', () => showGame(false));
+$('gGo').addEventListener('click', () => { showGame(false); pin[0].focus(); });
+
 /* ---- slide-to-open: the code is right, now she drags the seal across ---- */
 const slide = $('slide'), track = $('slideTrack'), knob = $('slideKnob');
 let _pendingHtml = null, dragging = false, startX = 0, travel = 0, maxX = 0, opened = false;
@@ -358,6 +517,7 @@ let _pendingHtml = null, dragging = false, startX = 0, travel = 0, maxX = 0, ope
 function armSlider(html){
   _pendingHtml = html;
   form.hidden = true;                 // the keypad has done its job
+  game.hidden = true; playLink.hidden = true;
   slide.hidden = false;
   msg.textContent = 'الرمز صحيح ✨ اسحبي الختم لتفتحيها';
   msg.className = 'msg ok';
